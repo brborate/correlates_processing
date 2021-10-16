@@ -9,7 +9,7 @@ immuno_report: immuno_analysis
 
 ## risk_analysis          : builds Baseline Risk Score analysis
 risk_analysis: data_processed
-	$(MAKE) -k -C base_riskscore all
+	$(MAKE) -k -C riskscore_baseline all
 
 ## risk_report            : builds the CoVPN baseline risk score report
 risk_report: risk_analysis
@@ -46,7 +46,7 @@ cor_report: cor_analysis
 	bash ./_build.sh cor
 
 ## cop_analysis           : builds Correlates of Protection analyses
-cop_analysis: 
+cop_analysis:
 #	$(MAKE) -k -C cop_prinstrat all
 #	$(MAKE) -k -C cop_controlled all
 	$(MAKE) -k -C cop_stochastic all

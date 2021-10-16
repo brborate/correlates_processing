@@ -12,8 +12,8 @@ output:
 
 ```{r, include = FALSE}
 library(here)
-here::i_am("base_riskscore/report.Rmd")
+here::i_am("riskscore_baseline/report.Rmd")
 ```
 
-```{r, child=here("base_riskscore", 'report_sub.Rmd')}
+```{r, child=here("riskscore_baseline", 'report_sub.Rmd')}
 ```

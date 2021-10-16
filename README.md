@@ -10,7 +10,7 @@ Forthcoming.
   * `immuno_tabular`: Tabular descriptions of marker immunogenicity.
   * `immuno_graphical`: Graphical descriptions of marker immunogenicity.
 * Baseline Risk Score
-  * `base_riskscore`: Super Learner baseline risk score for exposure.
+  * `riskscore_baseline`: Super Learner baseline risk score for exposure.
 
 ## Collaboration Guide
 

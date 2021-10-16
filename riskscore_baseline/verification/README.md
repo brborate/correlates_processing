@@ -17,9 +17,9 @@ To create the verification report, execute the following commands.
 # from correlates_reporting directory
 make data_processed
 # programmer
-make -C base_riskscore all
+make -C riskscore_baseline all
 # tester
-make -C base_riskscore/verification/verification_code all
+make -C riskscore_baseline/verification/verification_code all
 # report
-make -C base_riskscore/verification report
+make -C riskscore_baseline/verification report
 ```
