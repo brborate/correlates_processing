@@ -19,8 +19,7 @@ cache:
 # which versions of R should we build on
 r:
   #- release
-  # NOTE: can we grab this from the renv.lockfile?
-  - 4.0.4
+  - 4.1.1
 
 # public key to allow Travis to push to gh-pages
 env:
@@ -30,63 +29,36 @@ env:
 # build reports via included Make recipes, in independent simultaneous jobs
 jobs:
   include:
-    - name: Moderna CoR Report
+    - name: Janssen Data Processing
       env:
-        - REPORT_TYPE=COR
-        - TRIAL=moderna_mock
-      script:
-        - echo "Building correlates of risk report"
-       #- make data_processed
-       #- make risk_report
-        - make cor_report
-    - name: Janssen Pooled CoR Report
-      env:
-        - REPORT_TYPE=COR
+        - REPORT_TYPE=IMMUNO
         - TRIAL=janssen_pooled_mock
       script:
-        - echo "Building correlates of risk report"
-       #- make data_processed
-       #- make risk_report
-        - make cor_report
-    # - name: Moderna CoP Report
-    #   env:
-    #     - REPORT_TYPE=COP
-    #     - TRIAL=moderna_mock
-    #   script:
-    #     - echo "Building correlates of protection report"
-    #     - make data_processed
-    #     - make risk_report
-    #     - make cop_report
-    #- name: Janssen Data Processing
-    #  env:
-    #    - REPORT_TYPE=IMMUNO
-    #    - TRIAL=janssen_pooled_mock
-    #  script:
-    #    - echo "Processing data"
-    #    - make data_processed
-    #- name: Moderna Immuno Report
-    #  env:
-    #    - REPORT_TYPE=IMMUNO
-    #    - TRIAL=moderna_mock
-    #  script:
-    #    - echo "Building immunogenicity report"
-    #    - make data_processed
-    #    - make immuno_report
-    #- name: Janssen Pooled Immuno Report
-    #  env:
-    #    - REPORT_TYPE=IMMUNO
-    #    - TRIAL=janssen_pooled_mock
-    #  script:
-    #    - echo "Building immunogenicity report"
-    #    - make data_processed
-    #    - make immuno_report
-     # - name: Janssen Pooled Risk Score Report
-     # env:
-     #   - REPORT_TYPE=RISK
-     #   - TRIAL=janssen_pooled_mock
-     # script:
-     #   - echo "Building risk score report"
-     #   - make risk_report
+        - echo "Processing data"
+        - make data_processed
+    - name: Moderna Immuno Report
+      env:
+        - REPORT_TYPE=IMMUNO
+        - TRIAL=moderna_mock
+      script:
+        - echo "Building immunogenicity report"
+        - make data_processed
+        - make immuno_report
+    - name: Janssen Pooled Immuno Report
+      env:
+        - REPORT_TYPE=IMMUNO
+        - TRIAL=janssen_pooled_mock
+      script:
+        - echo "Building immunogenicity report"
+        - make data_processed
+        - make immuno_report
+    - name: Janssen Pooled Risk Score Report
+      env:
+        - REPORT_TYPE=RISK
+        - TRIAL=janssen_pooled_mock
+      script:
+        - echo "Building risk score report"
+        - make risk_report
 
 apt_packages:
   - libxml2-dev
@@ -104,12 +76,6 @@ install:
   - echo insecure >> ~/.curlrc && Rscript -e "tinytex::install_tinytex()"
   - export PATH=$HOME/bin:${PATH}
   - cd $TRAVIS_BUILD_DIR && Rscript -e "renv::restore()"
-
-# turn down number of bootstraps and permutations in CoR for faster builds
-before_script:
-  - echo "B <- 5" >> $TRAVIS_BUILD_DIR/cor_coxph/code/params.R
-  - echo "numPerm <- 5" >> $TRAVIS_BUILD_DIR/cor_coxph/code/params.R
-  - echo "B <- 5" >> $TRAVIS_BUILD_DIR/cor_nonlinear/code/params.R
 
 # push reports to gh-pages branch
 after_script:
