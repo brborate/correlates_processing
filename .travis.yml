@@ -29,25 +29,17 @@ env:
 # build reports via included Make recipes, in independent simultaneous jobs
 jobs:
   include:
-    - name: Janssen Data Processing
+    - name: Moderna Risk Score Report
       env:
-        - REPORT_TYPE=IMMUNO
-        - TRIAL=janssen_pooled_mock
+        - REPORT_TYPE=RISK
+        - TRIAL=moderna_mock
       script:
-        - echo "Processing data"
-        - make data_processed
+        - echo "Building risk score report"
+        - make risk_report
     - name: Moderna Immuno Report
       env:
         - REPORT_TYPE=IMMUNO
         - TRIAL=moderna_mock
-      script:
-        - echo "Building immunogenicity report"
-        - make data_processed
-        - make immuno_report
-    - name: Janssen Pooled Immuno Report
-      env:
-        - REPORT_TYPE=IMMUNO
-        - TRIAL=janssen_pooled_mock
       script:
         - echo "Building immunogenicity report"
         - make data_processed
@@ -59,6 +51,14 @@ jobs:
       script:
         - echo "Building risk score report"
         - make risk_report
+    - name: Janssen Pooled Immuno Report
+      env:
+        - REPORT_TYPE=IMMUNO
+        - TRIAL=janssen_pooled_mock
+      script:
+        - echo "Building immunogenicity report"
+        - make data_processed
+        - make immuno_report
 
 apt_packages:
   - libxml2-dev
