@@ -1,9 +1,6 @@
-# which branches to trigger builds on
 branches:
   only:
   - master
-
-# language settings
 language: r
 sudo: required
 cran: http://cran.rstudio.com
@@ -15,76 +12,60 @@ cache:
   - "$HOME/.local/share/renv"
   - "$TRAVIS_BUILD_DIR/renv/library"
   - "$HOME/.TinyTeX/"
-
-# which versions of R should we build on
 r:
-  #- release
-  - 4.1.1
-
-# public key to allow Travis to push to gh-pages
+- 4.1.1
 env:
   global:
-    secure: qi7eIEkOEJsuuUj3WwkAGe+kWr3zeDrDz8GYnPQhVOzYAtEWTbImylZYEHhkhBruIipHjzPTIpOM3xfm9SKKnJEQzpCbSLSbKZwMtwHTn3f2Dfd9KZ8dLgVdXG34+8CChksH4zWQkn/7Sgx7rCB3VJvxquOiQA05TsroLnZiJKxxVsBYjww7m4iuYjFc6HsWSLoT/XicZi7GUqN9m+C0eoSJ5kUWfXopSZLCiusTT1+Lc/wdKI9g3QckOINznmZ2ZptaBbdkBeOzzSQhGFuOufnyZD6qJ7RpfCg8nxnQ9ksNOi6SohCBWyRp4TmvPLPsmszZhYkRhmB0K0hoTsYXkEgsSHVMzInRfHk3VHbYz1SFbksHzVM+ZEEDhIFJEoCbwd5n31y9RotzePVKEVIajS3pgxWWAyjiQiRC/dwe7clO5Ser0URPulPuWjURZId8fhOkZK8gJAKVBEmr5Qr3VTKFUSntSa+0rDulHL/TmM2MZnAnVKkeJl9qB5qYB/Q7DjkESAUmNo8IwHnBkFW/6eXB0IleV4gfTej0WeMgR/64XWKCRcLCX5vGtF/dgG8eCAThSgpJmHzzO2iw0gkuJ0sgpRecqUYK+aNRarRw5DSYFgd51WkEaMx8bAHYuhb8lMytmBWI+rilYwXTZC82klNZvzQC/Xj2+NMzmeU/UPo=
-
-# build reports via included Make recipes, in independent simultaneous jobs
+    secure: VNqbsqmxsR4xZFbEwtSJLSDVTNHW2Llpam67GqW/7P1K11RbF9jpMeng7Tw6Xl2B2gZu06JzmOH6EUxzURzfoTN/jRu6v9lphrJQRbbxeu0OL6f6aTR91CCUV7ptRqBtWT5XI9/l8aE8IOs8MislUZw1YHX/LXtdH/t6txyRKIKCWfrCn219dHpDxhCAeGEEyONUqNgxSj6AOn3zkBqfKElkHRb+KxysjekJBELdP1YMKQN0cpiW6oo9B+3SYVIsON4UBCMpLAzk8hY1LOynHcWeOwYZclBgX8Q1+8ENl/01l+lXh8DZgs+0jSTbfVVzLD+/eyxMyzkVHmrT9xpZXYyA7CRVIMJIWdfSK+MM81hkEgR8aWApVEHrey7qZlLkHDsSRUMkNoOzOxPZo0XABLnUovBwN/2W/qCbLB8OezvlQ6APP8/sOLSO7hu0udymVPGrRPF4nAQXg7evNj0pIK8kYooOez6Iwf8y9hP+tuYdkxrikVw1K0D0v1URfITdT6neng8OQQtqrMqQxAsc8DrxkFChUs8EdHanA8YeHc+Ild4W4kcL3c2atFDvtw7O+5OHL5cMhBCORqJoQIfxWJR/ug25rg/WEkiAXZQVJsxbKW7Lmnp9x6DnRzpWJEezCu4vsMT3uxjg0bJQtBERkX4w+MdLGeWGIZUQU7N6y7M=
 jobs:
   include:
-    - name: Janssen Data Processing
-      env:
-        - REPORT_TYPE=IMMUNO
-        - TRIAL=janssen_pooled_mock
-      script:
-        - echo "Processing data"
-        - make data_processed
-    - name: Moderna Immuno Report
-      env:
-        - REPORT_TYPE=IMMUNO
-        - TRIAL=moderna_mock
-      script:
-        - echo "Building immunogenicity report"
-        - make data_processed
-        - make immuno_report
-    - name: Janssen Pooled Immuno Report
-      env:
-        - REPORT_TYPE=IMMUNO
-        - TRIAL=janssen_pooled_mock
-      script:
-        - echo "Building immunogenicity report"
-        - make data_processed
-        - make immuno_report
-    - name: Janssen Pooled Risk Score Report
-      env:
-        - REPORT_TYPE=RISK
-        - TRIAL=janssen_pooled_mock
-      script:
-        - echo "Building risk score report"
-        - make risk_report
-
+  - name: Janssen Data Processing
+    env:
+    - REPORT_TYPE=IMMUNO
+    - TRIAL=janssen_pooled_mock
+    script:
+    - echo "Processing data"
+    - make data_processed
+  - name: Moderna Immuno Report
+    env:
+    - REPORT_TYPE=IMMUNO
+    - TRIAL=moderna_mock
+    script:
+    - echo "Building immunogenicity report"
+    - make data_processed
+    - make immuno_report
+  - name: Janssen Pooled Immuno Report
+    env:
+    - REPORT_TYPE=IMMUNO
+    - TRIAL=janssen_pooled_mock
+    script:
+    - echo "Building immunogenicity report"
+    - make data_processed
+    - make immuno_report
+  - name: Janssen Pooled Risk Score Report
+    env:
+    - REPORT_TYPE=RISK
+    - TRIAL=janssen_pooled_mock
+    script:
+    - echo "Building risk score report"
+    - make risk_report
 apt_packages:
-  - libxml2-dev
-  - libssl-dev
-  - libcurl4-openssl-dev
-
+- libxml2-dev
+- libssl-dev
+- libcurl4-openssl-dev
 before_install:
-  - sudo apt-get install -y texlive-extra-utils ghostscript
-
-# R packages cannot be installed in TRAVIS_BUILD_DIR; they need to be installed
-# separately from the lockfile
-# tinytex installs tlmgr to a directory that is symlinked to $HOME/bin
+- sudo apt-get install -y texlive-extra-utils ghostscript
 install:
-  - cd .. && Rscript -e "install.packages(c('here', 'renv', 'tinytex'))"
-  - echo insecure >> ~/.curlrc && Rscript -e "tinytex::install_tinytex()"
-  - export PATH=$HOME/bin:${PATH}
-  - cd $TRAVIS_BUILD_DIR && Rscript -e "renv::restore()"
-
-# push reports to gh-pages branch
+- cd .. && Rscript -e "install.packages(c('here', 'renv', 'tinytex'))"
+- echo insecure >> ~/.curlrc && Rscript -e "tinytex::install_tinytex()"
+- export PATH=$HOME/bin:${PATH}
+- cd $TRAVIS_BUILD_DIR && Rscript -e "renv::restore()"
 after_script:
-  - chmod +x _deploy_reports.sh && ./_deploy_reports.sh
-
+- chmod +x _deploy_reports.sh && ./_deploy_reports.sh
 notifications:
   email:
     on_success: change
     on_failure: always
     recipients:
-      - benkeser@emory.edu
-      - nh@nimahejazi.org
+    - benkeser@emory.edu
+    - nh@nimahejazi.org
