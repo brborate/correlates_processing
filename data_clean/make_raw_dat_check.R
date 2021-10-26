@@ -8,8 +8,16 @@ source(here::here("_common.R"))
 library(here)
 
 
+if (startsWith(tolower(study_name), "mock")) {
+    path_to_data <- here("data_raw", data_raw_dir, data_in_file)
+} else {
+    path_to_data <- data_in_file
+}
+print(path_to_data)
+if (!file.exists(path_to_data)) stop ("make raw dat check: dataset not available ===========================================")
+dat_proc <- read.csv(path_to_data)
+
 # load data and rename first column (ID)
-dat_proc <- read.csv(here("data_raw", data_raw_dir, data_in_file))
 colnames(dat_proc)[1] <- "Ptid"
 
 
