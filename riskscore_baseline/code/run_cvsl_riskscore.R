@@ -1,4 +1,4 @@
-# Sys.setenv(TRIAL = "moderna_real")  
+# Sys.setenv(TRIAL = "moderna_mock")  
 #-----------------------------------------------
 # obligatory to append to the top of each script
 renv::activate(project = here::here(".."))
@@ -39,7 +39,8 @@ source(here("code", "utils.R")) # get CV-AUC for all algs
 
 ############ SETUP INPUT #######################
 # Read in data file
-inputFile <- read.csv(here::here("..", "data_clean", paste0(attr(config, "config"), "_data_processed.csv"))) 
+# inputFile <- read.csv(here::here("..", "data_clean", paste0(attr(config, "config"), "_data_processed.csv"))) 
+inputFile <- dat.mock
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
