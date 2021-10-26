@@ -517,16 +517,16 @@ assays.includeN=c(assays, "bindN")
 
 ###############################################################################
 # converting binding variables from AU to IU for binding assays
-# THIS IS NO LONGER NEEDED AS WE EXPECT THE INPUT DATA TO BE ON INTERNATIONAL UNIT SCALES
+# moderna_real immune.csv file is not on international scale. other raw data files are.
 ###############################################################################
 
-#if(study_name=="MockCOVE" | study_name=="MockENSEMBLE"){
-#    for (a in assays.includeN) {
-#      for (t in c("B", if(has29) "Day29", if(has57) "Day57") ) {
-#          dat_proc[[t %.% a]] <- dat_proc[[t %.% a]] + log10(convf[a])
-#      }
-#    }
-#}
+if(study_name=="COVE"){
+    for (a in assays.includeN) {
+      for (t in c("B", if(has29) "Day29", if(has57) "Day57") ) {
+          dat_proc[[t %.% a]] <- dat_proc[[t %.% a]] + log10(convf[a])
+      }
+    }
+}
 
 
 ###############################################################################
