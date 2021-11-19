@@ -58,7 +58,7 @@ janssen_trial: &janssen_trial
 
 janssen_trial_real: &janssen_trial_real
   <<: *janssen_trial
-  data_in_file: COVID_ENSEMBLE_realdata.csv   #  ../../../mapping_immune_correlates/adata/COVID_ENSEMBLE_realdata.csv
+  data_in_file: /trials/covpn/p3003/mapping_immune_correlates/adata/COVID_ENSEMBLE_realdata.csv
   study_name: ENSEMBLE
   num_boot_replicates: 1000
   num_perm_replicates: 10000
