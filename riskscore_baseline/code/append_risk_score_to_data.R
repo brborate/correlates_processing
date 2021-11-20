@@ -18,7 +18,8 @@ vaccinees_risk <- read.csv(here("output", "vaccine_ptids_with_riskscores.csv"))
 # merge risk score with cleaned data by IDs, then save updated data file
 risk_scores <- rbind(placebos_risk, vaccinees_risk) %>%
   select(Ptid, risk_score, standardized_risk_score)
-dat_with_riskscore <- left_join(dat_cleaned, risk_scores, by = "Ptid")
+dat_with_riskscore <- left_join(dat_cleaned, risk_scores, by = "Ptid") %>%
+  filter(Riskscorecohortflag == 1)
 data_name_amended <- paste0(str_remove(paste0(attr(config, "config"), "_data_processed.csv"), ".csv"), "_with_riskscore")
 
 # Ensure all baseline negative and PP subjects have a risk score!
@@ -37,11 +38,12 @@ if(study_name_code == "COVE"){
 }
 
 if(study_name_code == "ENSEMBLE"){
-  endpoint <- "EventIndPrimaryIncludeNotMolecConfirmedD29"
+  endpoint <- "EventIndPrimaryD29"
 }
 
 tab <- dat_with_riskscore %>%
-  filter(Perprotocol == 1 & Bserostatus == 0) %>%
+  filter(Riskscorecohortflag == 1) %>%
+  drop_na(Ptid, Trt, all_of(endpoint)) %>%
   mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
 table(tab$Trt, tab %>% pull(endpoint)) %>%
   write.csv(file = here("output", "cases_post_riskScoreAnalysis.csv"))

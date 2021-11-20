@@ -1,4 +1,4 @@
-# Sys.setenv(TRIAL = "moderna_mock")  
+# Sys.setenv(TRIAL = "janssen_pooled_real")  
 #-----------------------------------------------
 # obligatory to append to the top of each script
 renv::activate(project = here::here(".."))
@@ -39,8 +39,7 @@ source(here("code", "utils.R")) # get CV-AUC for all algs
 
 ############ SETUP INPUT #######################
 # Read in data file
-# inputFile <- read.csv(here::here("..", "data_clean", paste0(attr(config, "config"), "_data_processed.csv"))) 
-inputFile <- dat.mock
+inputFile <- read.csv(here::here("..", "data_clean", paste0(attr(config, "config"), "_data_processed.csv"))) 
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
@@ -72,14 +71,14 @@ if(study_name_code == "ENSEMBLE"){
     risk_vars <- append(risk_vars, c("CalDtEnrollIND.X2", "CalDtEnrollIND.X3"))
   }
   
-  endpoint <- "EventIndPrimaryIncludeNotMolecConfirmedD29"
+  endpoint <- "EventIndPrimaryD29"
   studyName_for_report <- "ENSEMBLE"
 
   # Create binary indicator variables for Country and Region
   inputFile <- inputFile %>%
     filter(!is.na(CalendarDateEnrollment)) %>%
     mutate(Sex.rand = sample(0:1, n(), replace = TRUE),
-           Sex = ifelse(Sex %in% c(2, 3), Sex.rand, Sex),
+           Sex = ifelse(Sex %in% c(2, 3), Sex.rand, Sex), # assign Sex randomly as 0 or 1 if Sex is 2 or 3.
            Country = as.factor(Country),
            Region = as.factor(Region),
            CalDtEnrollIND = case_when(CalendarDateEnrollment < 28 ~ 0,
@@ -116,26 +115,36 @@ if(study_name_code == "ENSEMBLE"){
 
 ################################################
 
-# Consider only placebo data for risk score analysis
-if("Riskscorecohortflag" %in% names(inputFile) & study_name_code != "COVE"){
-  assertthat::assert_that(
-    all(!is.na(inputFile$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag in inputFile!"
-  )
-}else{
-  if(study_name_code == "COVE"){
-    inputFile <- inputFile %>%
-      select(-Riskscorecohortflag) %>% # For Moderna, drop Riskscorecohortflag created in data_processing step and create a new simpler one!
-      mutate(Riskscorecohortflag = ifelse(Bserostatus == 0 & Perprotocol == 1, 1, 0))
-  }
-  if(study_name_code == "ENSEMBLE"){
-    inputFile <- inputFile %>%
-      mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1 & EarlyendpointD29==0 & EventTimePrimaryD29>=1, 1, 0)) 
-  }
-  
+# # Consider only placebo data for risk score analysis
+# if("Riskscorecohortflag" %in% names(inputFile) & study_name_code != "COVE"){
+#   assertthat::assert_that(
+#     all(!is.na(inputFile$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag in inputFile!"
+#   )
+# }else{
+#   if(study_name_code == "COVE"){
+#     inputFile <- inputFile %>%
+#       select(-Riskscorecohortflag) %>% # For Moderna, drop Riskscorecohortflag created in data_processing step and create a new simpler one!
+#       mutate(Riskscorecohortflag = ifelse(Bserostatus == 0 & Perprotocol == 1, 1, 0))
+#   }
+#   if(study_name_code == "ENSEMBLE"){
+#     inputFile <- inputFile %>%
+#       mutate(Riskscorecohortflag = ifelse(Bserostatus == 0 & Perprotocol == 1, 1, 0)) 
+#   }
+#   
   assertthat::assert_that(
     all(!is.na(inputFile$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag when created in inputFile!"
     )
-}
+# }
+
+# Create table of cases in both arms (prior to applying Riskscorecohortflag filter)
+tab <- inputFile %>%
+  drop_na(Ptid, Trt, all_of(endpoint)) %>%
+  mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
+
+table(tab$Trt, tab %>% pull(endpoint)) %>%
+  write.csv(file = here("output", "cases_prior_to_applying_Riskscorecohortflag.csv"))
+rm(tab)
+
 
 dat.ph1 <- inputFile %>% filter(Riskscorecohortflag == 1 & Trt == 0)
 
