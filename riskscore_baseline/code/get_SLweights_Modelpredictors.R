@@ -41,6 +41,7 @@ top_models <- sl_weights %>%
 
 # Get predictors selected in the models with highest weights
 for (i in seq_along(top_models)) {
+  #print(i)
   if(top_models[i] %in% c("SL.glm_screen_univariate_logistic_pval", 
                           "SL.glm.interaction_screen_highcor_random",
                           "SL.glm_screen_all",
@@ -61,11 +62,11 @@ for (i in seq_along(top_models)) {
   }
 
   if (top_models[i] %in% c("SL.glmnet_screen_all")) {
-    model <- coef(sl_riskscore_slfits[["fitLibrary"]][[top_models[i]]]$object) %>%
+    model <- coef(sl_riskscore_slfits[["fitLibrary"]][[top_models[i]]]$object, s = "lambda.min") %>%
       as.matrix() %>%
       as.data.frame() %>%
       tibble::rownames_to_column(var = "Predictors") %>%
-      rename(`Coefficient` = "1") %>%
+      rename(`Coefficient` = "s1") %>%
       mutate(`Odds Ratio` = exp(`Coefficient`),
              Learner = top_models[i])
   }
