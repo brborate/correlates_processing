@@ -73,6 +73,13 @@ tmp=list(
         ULOD = NA,
         LLOQ = 117.35,
         ULOQ = 18976.19)
+        ,
+    adcp=c( 
+        pos.cutoff=11.57,# as same lod
+        LLOD = 11.57,
+        ULOD = NA,
+        LLOQ = 8.87,
+        ULOQ = 211.56)
 )
 
 pos.cutoffs=sapply(tmp, function(x) unname(x["pos.cutoff"]))
