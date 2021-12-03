@@ -48,9 +48,6 @@ janssen_trial: &janssen_trial
   <<: *ows_trial
   two_marker_timepoints: no
   timepoints: [29]
-  assays: [bindSpike, bindRBD, ADCP]
-  assay_labels: [Binding Antibody to Spike, Binding Antibody to RBD, Phagocytic Score]
-  assay_labels_short: [Anti Spike IgG (BAU/ml), Anti RBD IgG (BAU/ml), Phagocytic Score]
   times: [B, Day29, Delta29overB]
   time_labels: [Day 1, Day 29, D29 fold-rise over D1]
   data_raw_dir: janssen
@@ -58,14 +55,20 @@ janssen_trial: &janssen_trial
 
 janssen_trial_real: &janssen_trial_real
   <<: *janssen_trial
-  data_in_file: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_realdata.csv
+  data_in_file: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_realdata.csv # raw data
+  assays: [bindSpike, bindRBD, ADCP]
+  assay_labels: [Binding Antibody to Spike, Binding Antibody to RBD, Phagocytic Score]
+  assay_labels_short: [Anti Spike IgG (BAU/ml), Anti RBD IgG (BAU/ml), Phagocytic Score]
   study_name: ENSEMBLE
   num_boot_replicates: 1000
   num_perm_replicates: 10000
 
 janssen_trial_mock: &janssen_trial_mock
   <<: *janssen_trial
-  data_in_file: COVID_ENSEMBLE_practicedata.csv
+  data_in_file: COVID_ENSEMBLE_practicedata.csv # raw data
+  assays: [bindSpike, bindRBD]
+  assay_labels: [Binding Antibody to Spike, Binding Antibody to RBD]
+  assay_labels_short: [Anti Spike IgG (BAU/ml), Anti RBD IgG (BAU/ml)]
   study_name: MockENSEMBLE
   num_boot_replicates: 10
   num_perm_replicates: 10
