@@ -1,4 +1,4 @@
-# Sys.setenv(TRIAL = "moderna_real")  
+# Sys.setenv(TRIAL = "janssen_pooled_real")  
 #-----------------------------------------------
 # obligatory to append to the top of each script
 renv::activate(project = here::here(".."))
@@ -76,9 +76,9 @@ if(study_name_code == "ENSEMBLE"){
 
   # Create binary indicator variables for Country and Region
   inputFile <- inputFile %>%
-    filter(!is.na(CalendarDateEnrollment)) %>%
+    drop_na(CalendarDateEnrollment, EventIndPrimaryIncludeNotMolecConfirmedD29) %>%
     mutate(Sex.rand = sample(0:1, n(), replace = TRUE),
-           Sex = ifelse(Sex %in% c(2, 3), Sex.rand, Sex),
+           Sex = ifelse(Sex %in% c(2, 3), Sex.rand, Sex), # assign Sex randomly as 0 or 1 if Sex is 2 or 3.
            Country = as.factor(Country),
            Region = as.factor(Region),
            CalDtEnrollIND = case_when(CalendarDateEnrollment < 28 ~ 0,
@@ -115,26 +115,36 @@ if(study_name_code == "ENSEMBLE"){
 
 ################################################
 
-# Consider only placebo data for risk score analysis
-if("Riskscorecohortflag" %in% names(inputFile) & study_name_code != "COVE"){
-  assertthat::assert_that(
-    all(!is.na(inputFile$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag in inputFile!"
-  )
-}else{
-  if(study_name_code == "COVE"){
-    inputFile <- inputFile %>%
-      select(-Riskscorecohortflag) %>% # For Moderna, drop Riskscorecohortflag created in data_processing step and create a new simpler one!
-      mutate(Riskscorecohortflag = ifelse(Bserostatus == 0 & Perprotocol == 1, 1, 0))
-  }
-  if(study_name_code == "ENSEMBLE"){
-    inputFile <- inputFile %>%
-      mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1 & EarlyendpointD29==0 & EventTimePrimaryD29>=1, 1, 0)) 
-  }
-  
+# # Consider only placebo data for risk score analysis
+# if("Riskscorecohortflag" %in% names(inputFile) & study_name_code != "COVE"){
+#   assertthat::assert_that(
+#     all(!is.na(inputFile$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag in inputFile!"
+#   )
+# }else{
+#   if(study_name_code == "COVE"){
+#     inputFile <- inputFile %>%
+#       select(-Riskscorecohortflag) %>% # For Moderna, drop Riskscorecohortflag created in data_processing step and create a new simpler one!
+#       mutate(Riskscorecohortflag = ifelse(Bserostatus == 0 & Perprotocol == 1, 1, 0))
+#   }
+#   if(study_name_code == "ENSEMBLE"){
+#     inputFile <- inputFile %>%
+#       mutate(Riskscorecohortflag = ifelse(Bserostatus == 0 & Perprotocol == 1, 1, 0)) 
+#   }
+#   
   assertthat::assert_that(
     all(!is.na(inputFile$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag when created in inputFile!"
     )
-}
+# }
+
+# Create table of cases in both arms (prior to applying Riskscorecohortflag filter)
+tab <- inputFile %>%
+  drop_na(Ptid, Trt, all_of(endpoint)) %>%
+  mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
+
+table(tab$Trt, tab %>% pull(endpoint)) %>%
+  write.csv(file = here("output", "cases_prior_to_applying_Riskscorecohortflag.csv"))
+rm(tab)
+
 
 dat.ph1 <- inputFile %>% filter(Riskscorecohortflag == 1 & Trt == 0)
 
@@ -218,6 +228,10 @@ blas_set_num_threads(1)
 #print(blas_get_num_procs())
 stopifnot(blas_get_num_procs() == 1)
 
+# CV.SL inputs
+family = "binomial"
+method = "method.CC_nloglik"
+scale = "identity"
 
 # run super learner ensemble
 fits <- run_cv_sl_once(
@@ -225,11 +239,11 @@ fits <- run_cv_sl_once(
   Y = Y,
   X_mat = X_riskVars,
   family = "binomial",
-  sl_lib = SL_library,
   method = "method.CC_nloglik",
+  scale = "identity",
+  sl_lib = SL_library,
   cvControl = list(V = V_outer, stratifyCV = TRUE),
   innerCvControl = list(list(V = V_inner)),
-  scale = "identity",
   vimp = FALSE
 )
 
@@ -242,4 +256,4 @@ saveRDS(cvaucs, here("output", "cvsl_riskscore_cvaucs.rds"))
 save(cvfits, file = here("output", "cvsl_riskscore_cvfits.rda"))
 save(risk_placebo_ptids, file = here("output", "risk_placebo_ptids.rda"))
 save(run_prod, Y, X_riskVars, weights, inputFile, risk_vars, all_risk_vars, endpoint, maxVar,
-     V_outer, studyName_for_report, file = here("output", "objects_for_running_SL.rda"))
+     V_outer, V_inner, family, method, scale, studyName_for_report, file = here("output", "objects_for_running_SL.rda"))

@@ -188,6 +188,7 @@ local({
       !identical(.Platform$pkgType, "source") &&
       !identical(getOption("pkgType"), "source") &&
       Sys.info()[["sysname"]] %in% c("Darwin", "Windows")
+
   
     types <- c(if (binary) "binary", "source")
   

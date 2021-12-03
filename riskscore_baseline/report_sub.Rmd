@@ -67,7 +67,7 @@ if(vars.with.imputed.values == "None"){
 
 if(endpoint=="EventIndPrimaryD57")
   day = "Day 57"
-if(endpoint=="EventIndPrimaryIncludeNotMolecConfirmedD29")
+if(endpoint %in% c("EventIndPrimaryD29", "EventIndPrimaryIncludeNotMolecConfirmedD29"))
   day = "Day 29"
 
 caption <- "Variables considered for risk score analysis."
@@ -360,8 +360,45 @@ knitr::include_graphics(here::here("riskscore_baseline", "figs", "ROCcurve_risks
 
 \clearpage
 
+## Analysis details towards deriving baseline risk score
+
+The Baseline Risk Score analysis is conducted in baseline SARS-CoV-2 sero-negative per-protocol participants. The analysis considers the following as input:
+
+1. data_processed.csv file (created by the data processing step)
+
+2. Riskscorecohortflag (created by the data processing step): This flag identifies the subjects from both arms (placebo and vaccine) that are to be considered for risk score analysis. So, all subjects with Riskscorecohortflag == 1 have a risk score.
+
+3. Risk score variables (shown in Table 1)
+
+4. Endpoint: The endpoint used is `r endpoint`
+
+Tables 5, 6 and 7 (below) show the number of subjects by study arm and endpoint status in the data before applying the Riskscorecohortflag, after applying the Riskscorecohortflag and after conducting the risk score analysis, respectively. 
+
+The risk score analysis code appends two columns (risk_score and standardized_risk_score) to the data_processed.csv file and drops out subjects that do not have a risk score (thus keeps only subjects with Riskscorecohortflag == 1 and no missing value for the endpoint). 
+
+```{r cases-beforeRiskscorecohortFLAG, warning=FALSE, echo=FALSE, message=FALSE}
+caption <- "Cases per treatment arm in data\\_processed.csv before applying RiskscorecohortFLAG."
+new_colnames = c("Non-Cases", paste0("Post-", day, "-Cases"))
+
+read.csv(here("riskscore_baseline", "output", "cases_prior_to_applying_Riskscorecohortflag.csv"), row.names = 1,
+         header = TRUE) %>%
+  tibble::rownames_to_column(var = "Study-Arm") %>%
+  rename_with(~new_colnames, c("X0", "X1")) %>%
+  kable(
+    booktabs = TRUE,
+    linesep = "",
+    caption = caption) %>%
+  kable_styling(latex_options = c("hold_position"),
+                font_size = 9) %>%
+  footnote(c("Post-Day 29 Cases: COVID-19 primary endpoints that occur at least 7 days after the Day 29 visit."),
+             threeparttable = TRUE)
+
+```
+
+
+
 ```{r cases-prior, warning=FALSE, echo=FALSE, message=FALSE}
-caption <- "Cases per treatment arm prior to risk score analysis."
+caption <- "Cases per treatment arm after applying RiskscorecohortFLAG (prior to risk score analysis). 18 subjects with missing value for endpoint were dropped from analysis."
 new_colnames = c("Non-Cases", paste0("Post-", day, "-Cases"))
 
 read.csv(here("riskscore_baseline", "output", "cases_prior_riskScoreAnalysis.csv"), row.names = 1,
@@ -373,7 +410,9 @@ read.csv(here("riskscore_baseline", "output", "cases_prior_riskScoreAnalysis.csv
     linesep = "",
     caption = caption) %>%
   kable_styling(latex_options = c("hold_position"),
-                font_size = 9)
+                font_size = 9) %>%
+  footnote(c("Post-Day 29 Cases: COVID-19 primary endpoints that occur at least 7 days after the Day 29 visit."),
+             threeparttable = TRUE)
 
 ```
 
@@ -390,6 +429,31 @@ read.csv(here("riskscore_baseline", "output", "cases_post_riskScoreAnalysis.csv"
     linesep = "",
     caption = caption) %>%
   kable_styling(latex_options = c("hold_position"),
-                font_size = 9)
+                font_size = 9) %>%
+  footnote(c("Post-Day 29 Cases: COVID-19 primary endpoints that occur at least 7 days after the Day 29 visit."),
+             threeparttable = TRUE)
 
 ```
+
+<!-- \clearpage -->
+
+<!-- ## Superlearner details  -->
+
+
+<!-- ```{r cvsl-details, warning=FALSE, echo=FALSE, message=FALSE} -->
+<!-- caption <- "Arguments provided to CV-Superlearner function." -->
+
+<!-- read.csv(here("riskscore_baseline", "output", "cases_post_riskScoreAnalysis.csv"), row.names = 1, -->
+<!--          header = TRUE) %>% -->
+<!--   tibble::rownames_to_column(var = "Study-Arm") %>% -->
+<!--   rename_with(~new_colnames, c("X0", "X1")) %>% -->
+<!--   kable( -->
+<!--     booktabs = TRUE, -->
+<!--     linesep = "", -->
+<!--     caption = caption) %>% -->
+<!--   kable_styling(latex_options = c("hold_position"), -->
+<!--                 font_size = 9) %>% -->
+<!--   footnote(c("Post-Day 29 Cases: COVID-19 primary endpoints that occur at least 7 days after the Day 29 visit."), -->
+<!--              threeparttable = TRUE) -->
+
+<!-- ``` -->
