@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "moderna_real")
+#Sys.setenv(TRIAL = "janssen_pooled_realADCP")
 renv::activate(here::here())
     # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
     if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -285,16 +285,19 @@ dat_proc <- dat_proc %>%
         if("bindRBD" %in% must_have_assays) BbindRBD,
         if("pseudoneutid50" %in% must_have_assays) Bpseudoneutid50,
         if("pseudoneutid80" %in% must_have_assays) Bpseudoneutid80,
+        if("ADCP" %in% must_have_assays) BADCP,
 
         if("bindSpike" %in% must_have_assays) Day57bindSpike,
         if("bindRBD" %in% must_have_assays) Day57bindRBD,
         if("pseudoneutid50" %in% must_have_assays) Day57pseudoneutid50,
         if("pseudoneutid80" %in% must_have_assays) Day57pseudoneutid80,
+        if("ADCP" %in% must_have_assays) Day57ADCP,
 
         if("bindSpike" %in% must_have_assays & has29) Day29bindSpike,
         if("bindRBD" %in% must_have_assays & has29) Day29bindRBD,
         if("pseudoneutid50" %in% must_have_assays & has29) Day29pseudoneutid50,
-        if("pseudoneutid80" %in% must_have_assays & has29) Day29pseudoneutid80
+        if("pseudoneutid80" %in% must_have_assays & has29) Day29pseudoneutid80,
+        if("ADCP" %in% must_have_assays & has29) Day29ADCP
       ))
   )
 
@@ -307,11 +310,13 @@ if(has29) dat_proc <- dat_proc %>%
         if("bindRBD" %in% must_have_assays) BbindRBD, 
         if("pseudoneutid50" %in% must_have_assays) Bpseudoneutid50, 
         if("pseudoneutid80" %in% must_have_assays) Bpseudoneutid80, 
+        if("ADCP" %in% must_have_assays) BADCP, 
         
         if("bindSpike" %in% must_have_assays) Day29bindSpike,
         if("bindRBD" %in% must_have_assays) Day29bindRBD,
         if("pseudoneutid50" %in% must_have_assays) Day29pseudoneutid50, 
-        if("pseudoneutid80" %in% must_have_assays) Day29pseudoneutid80
+        if("pseudoneutid80" %in% must_have_assays) Day29pseudoneutid80,
+        if("ADCP" %in% must_have_assays) Day29ADCP
       ))
   )
   
