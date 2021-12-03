@@ -11,6 +11,7 @@ source(here::here("..", "_common.R"))
 # load required libraries, cleaned data, and risk score estimates
 library(here)
 library(tidyverse)
+load(here("output", "objects_for_running_SL.rda"))
 dat_cleaned <- read.csv(here("..", "data_clean", paste0(attr(config, "config"), "_data_processed.csv"))) %>% as_tibble() 
 placebos_risk <- read.csv(here("output", "placebo_ptids_with_riskscores.csv"))
 vaccinees_risk <- read.csv(here("output", "vaccine_ptids_with_riskscores.csv"))
@@ -18,12 +19,14 @@ vaccinees_risk <- read.csv(here("output", "vaccine_ptids_with_riskscores.csv"))
 # merge risk score with cleaned data by IDs, then save updated data file
 risk_scores <- rbind(placebos_risk, vaccinees_risk) %>%
   select(Ptid, risk_score, standardized_risk_score)
-dat_with_riskscore <- left_join(dat_cleaned, risk_scores, by = "Ptid")
+dat_with_riskscore <- left_join(dat_cleaned, risk_scores, by = "Ptid") %>%
+  filter(Riskscorecohortflag == 1) %>% 
+  drop_na(all_of(endpoint))
 data_name_amended <- paste0(str_remove(paste0(attr(config, "config"), "_data_processed.csv"), ".csv"), "_with_riskscore")
 
 # Ensure all baseline negative and PP subjects have a risk score!
 if(assertthat::assert_that(
-  all(!is.na(dat_with_riskscore %>% filter(Riskscorecohortflag==1) %>% .$risk_score)), 
+  all(!is.na(dat_with_riskscore %>% .$risk_score)), 
           msg = "Some baseline negative and PP subjects have NA values in risk score!"
 )){
   write_csv(dat_with_riskscore,
@@ -32,16 +35,9 @@ if(assertthat::assert_that(
 
 
 # Create table of cases in both arms (post Risk score analyses)
-if(study_name_code == "COVE"){
-  endpoint <- "EventIndPrimaryD57"
-}
-
-if(study_name_code == "ENSEMBLE"){
-  endpoint <- "EventIndPrimaryIncludeNotMolecConfirmedD29"
-}
-
 tab <- dat_with_riskscore %>%
-  filter(Perprotocol == 1 & Bserostatus == 0) %>%
+  filter(Riskscorecohortflag == 1) %>%
+  drop_na(Ptid, Trt, all_of(endpoint)) %>%
   mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
 table(tab$Trt, tab %>% pull(endpoint)) %>%
   write.csv(file = here("output", "cases_post_riskScoreAnalysis.csv"))

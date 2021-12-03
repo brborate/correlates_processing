@@ -1,4 +1,7 @@
 report.pdf
+report.aux
+report.log
+report.out
 figs/*.png
 output/*.csv
 output/*.rds
@@ -6,3 +9,6 @@ output/*.rda
 output/*.png
 output/*.jpg
 data_clean/*.csv
+output/*
+figs/*
+
