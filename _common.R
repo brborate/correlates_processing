@@ -101,7 +101,7 @@ if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
 
 
 must_have_assays <- c("bindSpike", "bindRBD")
-if (endsWith(attr(config, "config"),"ADCP")) must_have_assays <- c("ADCP")    
+#if (endsWith(attr(config, "config"),"ADCP")) must_have_assays <- c("ADCP")    
 
 
 #assays_to_be_censored_at_uloq_cor <- c(
