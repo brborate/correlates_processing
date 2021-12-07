@@ -1,4 +1,4 @@
-# Sys.setenv(TRIAL = "janssen_pooled_real")  
+# Sys.setenv(TRIAL = "janssen_pooled_realADCP")  
 #-----------------------------------------------
 # obligatory to append to the top of each script
 renv::activate(project = here::here(".."))
@@ -40,6 +40,40 @@ source(here("code", "utils.R")) # get CV-AUC for all algs
 ############ SETUP INPUT #######################
 # Read in data file
 inputFile <- read.csv(here::here("..", "data_clean", paste0(attr(config, "config"), "_data_processed.csv"))) 
+
+
+# Check if only change in input dataset is marker data. 
+# If so, simply pull the earlier risk scores and add to the new processed dataset!
+old_processed <- read.csv("../../previous_data_clean/janssen_pooled_real_data_processed_OLD.csv") %>%
+  select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), EthnicityHispanic,EthnicityNotreported, EthnicityUnknown,
+         Black, Asian, NatAmer, PacIsl, Multiracial, Notreported, Unknown,
+         URMforsubcohortsampling, HighRiskInd, HIVinfection, 
+         Sex, Age, BMI, Country, Region, CalendarDateEnrollment) 
+
+new_processed <- inputFile %>% 
+  select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), EthnicityHispanic,EthnicityNotreported, EthnicityUnknown,
+         Black, Asian, NatAmer, PacIsl, Multiracial, Notreported, Unknown,
+         URMforsubcohortsampling, HighRiskInd, HIVinfection, 
+         Sex, Age, BMI, Country, Region, CalendarDateEnrollment) 
+
+if(all.equal(old_processed, new_processed)){
+  dat_with_riskscore <- inputFile %>% left_join(read.csv("../../previous_data_clean/janssen_pooled_real_data_processed_with_riskscore_OLD.csv") %>%
+                                                  select(Ptid, risk_score, standardized_risk_score), 
+                                                by = "Ptid") %>%
+    filter(Riskscorecohortflag == 1) %>% 
+    drop_na(all_of(endpoint))
+  data_name_amended <- paste0(str_remove(paste0(attr(config, "config"), "_data_processed.csv"), ".csv"), "_with_riskscore")
+  
+  # Ensure all baseline negative and PP subjects have a risk score!
+  if(assertthat::assert_that(
+    all(!is.na(dat_with_riskscore %>% .$risk_score)), 
+    msg = "Some baseline negative and PP subjects have NA values in risk score!"
+  )){
+    write_csv(dat_with_riskscore,
+              here("..", "data_clean", paste0(data_name_amended, ".csv")))
+  }
+  stop()
+}
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
@@ -113,28 +147,11 @@ if(study_name_code == "ENSEMBLE"){
   # }
 }
 
-################################################
 
-# # Consider only placebo data for risk score analysis
-# if("Riskscorecohortflag" %in% names(inputFile) & study_name_code != "COVE"){
-#   assertthat::assert_that(
-#     all(!is.na(inputFile$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag in inputFile!"
-#   )
-# }else{
-#   if(study_name_code == "COVE"){
-#     inputFile <- inputFile %>%
-#       select(-Riskscorecohortflag) %>% # For Moderna, drop Riskscorecohortflag created in data_processing step and create a new simpler one!
-#       mutate(Riskscorecohortflag = ifelse(Bserostatus == 0 & Perprotocol == 1, 1, 0))
-#   }
-#   if(study_name_code == "ENSEMBLE"){
-#     inputFile <- inputFile %>%
-#       mutate(Riskscorecohortflag = ifelse(Bserostatus == 0 & Perprotocol == 1, 1, 0)) 
-#   }
-#   
-  assertthat::assert_that(
-    all(!is.na(inputFile$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag when created in inputFile!"
-    )
-# }
+# Check there are no NA values in Riskscorecohortflag!
+assertthat::assert_that(
+  all(!is.na(inputFile$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag when created in inputFile!"
+  )
 
 # Create table of cases in both arms (prior to applying Riskscorecohortflag filter)
 tab <- inputFile %>%
