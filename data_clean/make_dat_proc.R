@@ -59,6 +59,19 @@ colnames(dat_proc)[1] <- "Ptid"
 
 dat_proc=subset(dat_proc, !is.na(Bserostatus))
 
+
+
+####
+if(study_name=="ENSEMBLE") {
+    dat_proc$EventTimePrimaryD29=dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD29
+    dat_proc$EventIndPrimaryD29 =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
+    dat_proc$EventTimePrimaryD1 =dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD1
+    dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
+}
+
+
+
+
           dat_proc=subset(dat_proc, !is.na(EventTimePrimaryD29))
 if(has57) dat_proc=subset(dat_proc, !is.na(EventTimePrimaryD57))
 
