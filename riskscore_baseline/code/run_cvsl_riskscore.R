@@ -1,4 +1,4 @@
-# Sys.setenv(TRIAL = "janssen_pooled_realADCP")  
+# Sys.setenv(TRIAL = "janssen_pooled_real")  
 #-----------------------------------------------
 # obligatory to append to the top of each script
 renv::activate(project = here::here(".."))
@@ -36,44 +36,11 @@ run_prod <- !grepl("Mock", study_name)
 # get utility files
 source(here("code", "sl_screens.R")) # set up the screen/algorithm combinations
 source(here("code", "utils.R")) # get CV-AUC for all algs
+source(here("code", "study_specific_functions.R"))
 
 ############ SETUP INPUT #######################
 # Read in data file
 inputFile <- read.csv(here::here("..", "data_clean", paste0(attr(config, "config"), "_data_processed.csv"))) 
-
-
-# Check if only change in input dataset is marker data. 
-# If so, simply pull the earlier risk scores and add to the new processed dataset!
-old_processed <- read.csv("../../previous_data_clean/janssen_pooled_real_data_processed_OLD.csv") %>%
-  select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), EthnicityHispanic,EthnicityNotreported, EthnicityUnknown,
-         Black, Asian, NatAmer, PacIsl, Multiracial, Notreported, Unknown,
-         URMforsubcohortsampling, HighRiskInd, HIVinfection, 
-         Sex, Age, BMI, Country, Region, CalendarDateEnrollment) 
-
-new_processed <- inputFile %>% 
-  select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), EthnicityHispanic,EthnicityNotreported, EthnicityUnknown,
-         Black, Asian, NatAmer, PacIsl, Multiracial, Notreported, Unknown,
-         URMforsubcohortsampling, HighRiskInd, HIVinfection, 
-         Sex, Age, BMI, Country, Region, CalendarDateEnrollment) 
-
-if(all.equal(old_processed, new_processed)){
-  dat_with_riskscore <- inputFile %>% left_join(read.csv("../../previous_data_clean/janssen_pooled_real_data_processed_with_riskscore_OLD.csv") %>%
-                                                  select(Ptid, risk_score, standardized_risk_score), 
-                                                by = "Ptid") %>%
-    filter(Riskscorecohortflag == 1) %>% 
-    drop_na(all_of(endpoint))
-  data_name_amended <- paste0(str_remove(paste0(attr(config, "config"), "_data_processed.csv"), ".csv"), "_with_riskscore")
-  
-  # Ensure all baseline negative and PP subjects have a risk score!
-  if(assertthat::assert_that(
-    all(!is.na(dat_with_riskscore %>% .$risk_score)), 
-    msg = "Some baseline negative and PP subjects have NA values in risk score!"
-  )){
-    write_csv(dat_with_riskscore,
-              here("..", "data_clean", paste0(data_name_amended, ".csv")))
-  }
-  stop()
-}
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
@@ -107,7 +74,7 @@ if(study_name_code == "ENSEMBLE"){
   
   endpoint <- "EventIndPrimaryIncludeNotMolecConfirmedD29"
   studyName_for_report <- "ENSEMBLE"
-
+  
   # Create binary indicator variables for Country and Region
   inputFile <- inputFile %>%
     drop_na(CalendarDateEnrollment, EventIndPrimaryIncludeNotMolecConfirmedD29) %>%
@@ -153,124 +120,135 @@ assertthat::assert_that(
   all(!is.na(inputFile$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag when created in inputFile!"
   )
 
-# Create table of cases in both arms (prior to applying Riskscorecohortflag filter)
-tab <- inputFile %>%
-  drop_na(Ptid, Trt, all_of(endpoint)) %>%
-  mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
-
-table(tab$Trt, tab %>% pull(endpoint)) %>%
-  write.csv(file = here("output", "cases_prior_to_applying_Riskscorecohortflag.csv"))
-rm(tab)
-
-
-dat.ph1 <- inputFile %>% filter(Riskscorecohortflag == 1 & Trt == 0)
-
-dat.ph1 <- dat.ph1 %>%
-  # Keep only variables to be included in risk score analyses
-  select(Ptid, Trt, all_of(endpoint), all_of(risk_vars)) %>%
-  # Drop any observation with NA values in Ptid, Trt, or endpoint!
-  drop_na(Ptid, Trt, all_of(endpoint))
-
-# Create table of cases in both arms (prior to Risk score analyses)
-tab <- inputFile %>%
-  filter(Riskscorecohortflag == 1) %>%
-  drop_na(Ptid, Trt, all_of(endpoint)) %>%
-  mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
-
-table(tab$Trt, tab %>% pull(endpoint)) %>%
-  write.csv(file = here("output", "cases_prior_riskScoreAnalysis.csv"))
-rm(tab)
-
-# Derive maxVar: the maximum number of variables that will be allowed by SL screens in the models.
-np <- sum(dat.ph1 %>% select(matches(endpoint)))
-maxVar <- max(20, floor(np / 20))
-all_risk_vars <- risk_vars
-
-# Remove a variable if the number of cases in the variable = 1 subgroup is <= 3 or the number of cases in the variable = 0 subgroup is <= 3
-dat.ph1 <- drop_riskVars_with_fewer_0s_or_1s(dat = dat.ph1, 
-                                             risk_vars = risk_vars,
-                                             np = np)
-
-# Update risk_vars
-risk_vars <- dat.ph1 %>%
-  select(-Ptid, -Trt, -all_of(endpoint)) %>%
-  colnames()
-
-# Remove any risk_vars with more than 5% missing values. Impute the missing
-# values for other risk variables using mice package!
-dat.ph1 <- drop_riskVars_with_high_total_missing_values(dat.ph1, risk_vars)
-
-# Update risk_vars
-risk_vars <- dat.ph1 %>%
-  select(-Ptid, -Trt, -all_of(endpoint)) %>%
-  colnames()
-
-X_covars2adjust <- dat.ph1 %>%
-  select(all_of(risk_vars))
-
-# Save ptids to merge with predictions later
-risk_placebo_ptids <- dat.ph1 %>% select(Ptid, all_of(endpoint))
-
-# Impute missing values in any variable included in risk_vars using the mice package!
-print("Make sure data is clean before conducting imputations!")
-X_covars2adjust <- impute_missing_values(X_covars2adjust, risk_vars)
-
-# # Check for missing values before and after imputation
-# sapply(X_covars2adjust, function(x) sum(is.na(x)))
-
-# Scale X_covars2adjust to have mean 0, sd 1 for all vars
-for (a in colnames(X_covars2adjust)) {
-  X_covars2adjust[[a]] <- scale(X_covars2adjust[[a]],
-    center = mean(X_covars2adjust[[a]], na.rm = T),
-    scale = sd(X_covars2adjust[[a]], na.rm = T)
+# Check if SL needs to be run
+runSL <- check_if_SL_needs_be_run(read.csv(here::here("..", "data_clean", paste0(attr(config, "config"), "_data_processed.csv"))),
+                                  endpoint)
+if(!runSL){
+  message("No change in input data. Superlearner will not be run. Risk scores from earlier run appended to data_processed.csv")
+  quit()
+}
+if(runSL){
+  # Create table of cases in both arms (prior to applying Riskscorecohortflag filter)
+  tab <- inputFile %>%
+    drop_na(Ptid, Trt, all_of(endpoint)) %>%
+    mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
+  
+  table(tab$Trt, tab %>% pull(endpoint)) %>%
+    write.csv(file = here("output", "cases_prior_to_applying_Riskscorecohortflag.csv"))
+  rm(tab)
+  
+  
+  dat.ph1 <- inputFile %>% filter(Riskscorecohortflag == 1 & Trt == 0)
+  
+  dat.ph1 <- dat.ph1 %>%
+    # Keep only variables to be included in risk score analyses
+    select(Ptid, Trt, all_of(endpoint), all_of(risk_vars)) %>%
+    # Drop any observation with NA values in Ptid, Trt, or endpoint!
+    drop_na(Ptid, Trt, all_of(endpoint))
+  
+  # Create table of cases in both arms (prior to Risk score analyses)
+  tab <- inputFile %>%
+    filter(Riskscorecohortflag == 1) %>%
+    drop_na(Ptid, Trt, all_of(endpoint)) %>%
+    mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
+  
+  table(tab$Trt, tab %>% pull(endpoint)) %>%
+    write.csv(file = here("output", "cases_prior_riskScoreAnalysis.csv"))
+  rm(tab)
+  
+  # Derive maxVar: the maximum number of variables that will be allowed by SL screens in the models.
+  np <- sum(dat.ph1 %>% select(matches(endpoint)))
+  maxVar <- max(20, floor(np / 20))
+  all_risk_vars <- risk_vars
+  
+  # Remove a variable if the number of cases in the variable = 1 subgroup is <= 3 or the number of cases in the variable = 0 subgroup is <= 3
+  dat.ph1 <- drop_riskVars_with_fewer_0s_or_1s(dat = dat.ph1, 
+                                               risk_vars = risk_vars,
+                                               np = np)
+  
+  # Update risk_vars
+  risk_vars <- dat.ph1 %>%
+    select(-Ptid, -Trt, -all_of(endpoint)) %>%
+    colnames()
+  
+  # Remove any risk_vars with more than 5% missing values. Impute the missing
+  # values for other risk variables using mice package!
+  dat.ph1 <- drop_riskVars_with_high_total_missing_values(dat.ph1, risk_vars)
+  
+  # Update risk_vars
+  risk_vars <- dat.ph1 %>%
+    select(-Ptid, -Trt, -all_of(endpoint)) %>%
+    colnames()
+  
+  X_covars2adjust <- dat.ph1 %>%
+    select(all_of(risk_vars))
+  
+  # Save ptids to merge with predictions later
+  risk_placebo_ptids <- dat.ph1 %>% select(Ptid, all_of(endpoint))
+  
+  # Impute missing values in any variable included in risk_vars using the mice package!
+  print("Make sure data is clean before conducting imputations!")
+  X_covars2adjust <- impute_missing_values(X_covars2adjust, risk_vars)
+  
+  # # Check for missing values before and after imputation
+  # sapply(X_covars2adjust, function(x) sum(is.na(x)))
+  
+  # Scale X_covars2adjust to have mean 0, sd 1 for all vars
+  for (a in colnames(X_covars2adjust)) {
+    X_covars2adjust[[a]] <- scale(X_covars2adjust[[a]],
+                                  center = mean(X_covars2adjust[[a]], na.rm = T),
+                                  scale = sd(X_covars2adjust[[a]], na.rm = T)
+    )
+  }
+  
+  X_riskVars <- X_covars2adjust
+  Y <- dat.ph1 %>% pull(endpoint)
+  
+  # set up outer folds for cv variable importance; do stratified sampling
+  V_outer <- 5
+  
+  # set up inner folds based off number of cases
+  if (np <= 30) {
+    V_inner <- length(Y) - 1
+  } else {
+    V_inner <- 5
+  }
+  
+  ## solve cores issue
+  #blas_get_num_procs()
+  blas_set_num_threads(1)
+  #print(blas_get_num_procs())
+  stopifnot(blas_get_num_procs() == 1)
+  
+  # CV.SL inputs
+  family = "binomial"
+  method = "method.CC_nloglik"
+  scale = "identity"
+  
+  # run super learner ensemble
+  fits <- run_cv_sl_once(
+    seed = 20210216,
+    Y = Y,
+    X_mat = X_riskVars,
+    family = "binomial",
+    method = "method.CC_nloglik",
+    scale = "identity",
+    sl_lib = SL_library,
+    cvControl = list(V = V_outer, stratifyCV = TRUE),
+    innerCvControl = list(list(V = V_inner)),
+    vimp = FALSE
   )
+  
+  cvaucs <- list()
+  cvaucs[[1]] <- fits$cvaucs
+  cvfits <- list()
+  cvfits[[1]] <- fits$cvfits
+  
+  saveRDS(cvaucs, here("output", "cvsl_riskscore_cvaucs.rds"))
+  save(cvfits, file = here("output", "cvsl_riskscore_cvfits.rda"))
+  save(risk_placebo_ptids, file = here("output", "risk_placebo_ptids.rda"))
+  save(run_prod, Y, X_riskVars, weights, inputFile, risk_vars, all_risk_vars, endpoint, maxVar,
+       V_outer, V_inner, family, method, scale, studyName_for_report, file = here("output", "objects_for_running_SL.rda"))
+  
 }
 
-X_riskVars <- X_covars2adjust
-Y <- dat.ph1 %>% pull(endpoint)
-
-# set up outer folds for cv variable importance; do stratified sampling
-V_outer <- 5
-
-# set up inner folds based off number of cases
-if (np <= 30) {
-  V_inner <- length(Y) - 1
-} else {
-  V_inner <- 5
-}
-
-## solve cores issue
-#blas_get_num_procs()
-blas_set_num_threads(1)
-#print(blas_get_num_procs())
-stopifnot(blas_get_num_procs() == 1)
-
-# CV.SL inputs
-family = "binomial"
-method = "method.CC_nloglik"
-scale = "identity"
-
-# run super learner ensemble
-fits <- run_cv_sl_once(
-  seed = 20210216,
-  Y = Y,
-  X_mat = X_riskVars,
-  family = "binomial",
-  method = "method.CC_nloglik",
-  scale = "identity",
-  sl_lib = SL_library,
-  cvControl = list(V = V_outer, stratifyCV = TRUE),
-  innerCvControl = list(list(V = V_inner)),
-  vimp = FALSE
-)
-
-cvaucs <- list()
-cvaucs[[1]] <- fits$cvaucs
-cvfits <- list()
-cvfits[[1]] <- fits$cvfits
-
-saveRDS(cvaucs, here("output", "cvsl_riskscore_cvaucs.rds"))
-save(cvfits, file = here("output", "cvsl_riskscore_cvfits.rda"))
-save(risk_placebo_ptids, file = here("output", "risk_placebo_ptids.rda"))
-save(run_prod, Y, X_riskVars, weights, inputFile, risk_vars, all_risk_vars, endpoint, maxVar,
-     V_outer, V_inner, family, method, scale, studyName_for_report, file = here("output", "objects_for_running_SL.rda"))
