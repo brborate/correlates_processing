@@ -72,3 +72,6 @@ get_defs_comments_riskVars <- function(data){
   return(data)
 }
 
+
+
+
