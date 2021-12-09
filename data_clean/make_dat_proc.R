@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "janssen_pooled_realADCP")
+#Sys.setenv(TRIAL = "janssen_pooled_real")
 renv::activate(here::here())
     # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
     if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -62,6 +62,7 @@ dat_proc=subset(dat_proc, !is.na(Bserostatus))
 
 
 ####
+# EventTimePrimaryIncludeNotMolecConfirmedD29 are the endpoint of interest and should be used to compute weights
 if(study_name=="ENSEMBLE") {
     dat_proc$EventTimePrimaryD29=dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD29
     dat_proc$EventIndPrimaryD29 =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
