@@ -1,5 +1,6 @@
 ## all           : clean saved results and get results to populate report
-check_if_SL_needs_be_run: run_cvsl_riskscore 
+check_if_SL_needs_be_run: 
+	Rscript code/make_checks.R check
 
 ## all           : clean saved results and get results to populate report
 all: clean run_cvsl_riskscore createRDAfiles_fromSLobjects tables_figures \
@@ -13,7 +14,7 @@ clean:
 
 ## run_cvsl_riskscore   : run CV-SL on placebo arm
 run_cvsl_riskscore:
-	Rscript code/run_cvsl_riskscore.R
+	Rscript code/make_checks.R runCVSL
 
 ## createRDAfiles_fromSLobjects   : create RDA files from SL objects
 createRDAfiles_fromSLobjects:
