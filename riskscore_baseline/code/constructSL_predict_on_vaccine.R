@@ -50,7 +50,7 @@ sl_riskscore_slfits <- SuperLearner(
 save(sl_riskscore_slfits, file = here("output", "sl_riskscore_slfits.rda"))
 
 # Predict on vaccine arm
-dat.ph1.vacc <- inputFile %>%
+dat.ph1.vacc <- inputMod %>%
   filter(Riskscorecohortflag == 1 & Trt == 1) %>%
   # Keep only variables to be included in risk score analyses
   select(Ptid, Trt, all_of(endpoint), all_of(risk_vars)) %>%
