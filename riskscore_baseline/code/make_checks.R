@@ -57,6 +57,12 @@ if(study_name_code == "COVE"){
 }
 
 if(study_name_code == "ENSEMBLE"){
+  input_risk_vars <- c("EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
+                       "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
+                       "URMforsubcohortsampling", "HighRiskInd", "HIVinfection", 
+                       "Sex", "Age", "BMI", 
+                       "Country", "Region", "CalendarDateEnrollment")
+  
   risk_vars <- c(
     "EthnicityHispanic","EthnicityNotreported", "EthnicityUnknown",
     "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",

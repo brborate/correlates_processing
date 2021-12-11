@@ -13,9 +13,8 @@ source(here::here("..", "_common.R"))
 library(here)
 library(tidyverse)
 data_name_amended <- paste0(str_remove(paste0(attr(config, "config"), "_data_processed.csv"), ".csv"), "_with_riskscore")
-# Move current copy of risk score dataset to archive
 
-# Copy current copy of risk score dataset to archive 
+# Copy current copy of risk score dataset from adata to archive 
 # Remove current copy of risk score dataset from adata
 # Copy new copy of risk score dataset to adata
 if(study_name_code == "ENSEMBLE"){

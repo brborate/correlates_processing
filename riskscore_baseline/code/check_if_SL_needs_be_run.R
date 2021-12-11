@@ -6,20 +6,14 @@ data_name_amended <- paste0(str_remove(paste0(attr(config, "config"), "_data_pro
 if(study_name == "ENSEMBLE" & attr(config, "config") == "janssen_pooled_real"){
     #old_processed <- read.csv(here::here("~", "forked_correlates_reporting", "previous_data_clean", paste0(attr(config, "config"), "_data_processed.csv"))) %>%
     old_processed <- read.csv(here::here("..", "..", "p3003", "analysis", "correlates", "Part_A_Blinded_Phase_Data", "adata", paste0(data_name_amended, ".csv"))) %>%
-      select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), EthnicityHispanic,EthnicityNotreported, EthnicityUnknown,
-             Black, Asian, NatAmer, PacIsl, Multiracial, Notreported, Unknown,
-             URMforsubcohortsampling, HighRiskInd, HIVinfection, 
-             Sex, Age, BMI, Country, Region, CalendarDateEnrollment) 
+      select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(input_risk_vars), risk_score, standardized_risk_score) 
     
     new_processed <- inputFile %>% 
-      select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), EthnicityHispanic,EthnicityNotreported, EthnicityUnknown,
-             Black, Asian, NatAmer, PacIsl, Multiracial, Notreported, Unknown,
-             URMforsubcohortsampling, HighRiskInd, HIVinfection, 
-             Sex, Age, BMI, Country, Region, CalendarDateEnrollment) 
+      select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(input_risk_vars)) 
     
-    if(all.equal(old_processed, new_processed) == TRUE){
+    if(all.equal(old_processed %>% select(-c(risk_score, standardized_risk_score)), new_processed) == TRUE){
       dat_with_riskscore <- inputFile %>% 
-        left_join(read.csv(here::here("..", "..", "p3003", "analysis", "correlates", "Part_A_Blinded_Phase_Data", "adata", paste0(data_name_amended, ".csv"))) %>%
+        left_join(old_processed %>%
                     select(Ptid, risk_score, standardized_risk_score), 
                   by = "Ptid") %>%
         filter(Riskscorecohortflag == 1) %>% 
@@ -49,20 +43,14 @@ if(study_name == "ENSEMBLE" & attr(config, "config") == "janssen_pooled_real"){
 # Append risk scores from janssen_pooled_real to janssen_pooled_realADCP
 if(study_name == "ENSEMBLE" & attr(config, "config") == "janssen_pooled_realADCP"){
   real_processed <- read.csv(here::here("..", "data_clean", "janssen_pooled_real_data_processed_with_riskscore.csv")) %>%
-    select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), EthnicityHispanic,EthnicityNotreported, EthnicityUnknown,
-           Black, Asian, NatAmer, PacIsl, Multiracial, Notreported, Unknown,
-           URMforsubcohortsampling, HighRiskInd, HIVinfection, 
-           Sex, Age, BMI, Country, Region, CalendarDateEnrollment) 
+    select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(input_risk_vars), risk_score, standardized_risk_score) 
   
   realADCP_processed <- inputFile %>% 
     filter(Riskscorecohortflag == 1) %>%
-    select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), EthnicityHispanic,EthnicityNotreported, EthnicityUnknown,
-           Black, Asian, NatAmer, PacIsl, Multiracial, Notreported, Unknown,
-           URMforsubcohortsampling, HighRiskInd, HIVinfection, 
-           Sex, Age, BMI, Country, Region, CalendarDateEnrollment) 
+    select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(input_risk_vars)) 
   
-  if(all.equal(real_processed, realADCP_processed) == TRUE){
-    dat_with_riskscore <- inputFile %>% left_join(read.csv(here::here("..", "data_clean", "janssen_pooled_real_data_processed_with_riskscore.csv")) %>%
+  if(all.equal(real_processed %>% select(-c(risk_score, standardized_risk_score)), realADCP_processed) == TRUE){
+    dat_with_riskscore <- inputFile %>% left_join(real_processed %>%
                                                     select(Ptid, risk_score, standardized_risk_score), 
                                                   by = "Ptid") %>%
       filter(Riskscorecohortflag == 1) %>% 
@@ -76,10 +64,10 @@ if(study_name == "ENSEMBLE" & attr(config, "config") == "janssen_pooled_realADCP
     )){
       write_csv(dat_with_riskscore,
                 here("..", "data_clean", paste0(data_name_amended, ".csv")))
-      write_csv(dat_with_riskscore,
-                here("~", "forked_correlates_reporting", "previous_data_clean", paste0(data_name_amended, ".csv")))
-      write_csv(dat_with_riskscore,
-                here("..", "..", "p3003", "analysis", "correlates", "Part_A_Blinded_Phase_Data", "adata", "archive", paste0(data_name_amended, Sys.time(), ".csv")))
+      # write_csv(dat_with_riskscore,
+      #           here("~", "forked_correlates_reporting", "previous_data_clean", paste0(data_name_amended, ".csv")))
+      # write_csv(dat_with_riskscore,
+      #           here("..", "..", "p3003", "analysis", "correlates", "Part_A_Blinded_Phase_Data", "adata", "archive", paste0(data_name_amended, Sys.time(), ".csv")))
       
       message("No change in input data. Superlearner will not be run. Risk scores from earlier run appended to data_processed.csv!")
     }
