@@ -214,11 +214,12 @@ if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
 
 
 
-# censor at t.tmp 
-t.tmp=138
-dat_proc$EventIndPrimary =ifelse(dat_proc$EventTimePrimary<=t.tmp, dat_proc$EventIndPrimary, 0)
-dat_proc$EventTimePrimary=ifelse(dat_proc$EventTimePrimary<=t.tmp, dat_proc$EventTimePrimary, t.tmp)
-
+# censor at t.tmp
+if(study_name=="ENSEMBLE") {
+  t.tmp=138
+  dat_proc$EventIndPrimaryD29 =ifelse(dat_proc$EventTimePrimaryD29<=t.tmp, dat_proc$EventIndPrimaryD29, 0)
+  dat_proc$EventTimePrimaryD29=ifelse(dat_proc$EventTimePrimaryD29<=t.tmp, dat_proc$EventTimePrimaryD29, t.tmp)
+}
 
 
 

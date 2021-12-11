@@ -35,6 +35,10 @@ get_SLweights_Modelpredictors:
 ## append_risk_score         : appends the computed risk scores to cleaned data
 append_risk_score:
 	Rscript code/append_risk_score_to_data.R
+	
+## deploy_risk_score_dataset: deploys the risk score dataset to project directory
+deploy_risk_score_dataset:
+	Rscript code/deploy_risk_score_dataset.R
 
 ## report        : create a standalone report
 report:

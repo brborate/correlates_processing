@@ -31,6 +31,8 @@ if(assertthat::assert_that(
 )){
   write_csv(dat_with_riskscore,
             here("..", "data_clean", paste0(data_name_amended, ".csv")))
+  # write_csv(dat_with_riskscore,
+  #           here("~", "forked_correlates_reporting", "previous_data_clean", paste0(data_name_amended, ".csv")))
 }
 
 
