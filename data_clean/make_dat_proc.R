@@ -212,17 +212,6 @@ if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
 #with(dat_proc, table(URMforsubcohortsampling, URM.2, useNA="ifany"))
 
 
-
-
-# censor at t.tmp
-if(study_name=="ENSEMBLE") {
-  t.tmp=138
-  dat_proc$EventIndPrimaryD29 =ifelse(dat_proc$EventTimePrimaryD29<=t.tmp, dat_proc$EventIndPrimaryD29, 0)
-  dat_proc$EventTimePrimaryD29=ifelse(dat_proc$EventTimePrimaryD29<=t.tmp, dat_proc$EventTimePrimaryD29, t.tmp)
-}
-
-
-
 ###############################################################################
 # stratum variables
 # The code for Bstratum is trial specifc
