@@ -8,7 +8,7 @@ immuno_report: immuno_analysis
 	bash ./_build.sh immuno
 
 ## risk_analysis          : builds Baseline Risk Score analysis
-risk_analysis: data_processed
+risk_analysis: 
 	$(MAKE) -k -C riskscore_baseline all
 
 ## risk_report            : builds the CoVPN baseline risk score report
@@ -16,7 +16,7 @@ risk_report: risk_analysis
 	bash ./_build.sh riskscore
 
 ## data_processed         : create processed data from raw data
-data_processed: check_raw_data make_clean_data check_clean_data
+data_processed: check_raw_data risk_report make_clean_data check_clean_data 
 
 check_raw_data:
 	Rscript data_clean/make_raw_dat_check.R
