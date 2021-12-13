@@ -384,3 +384,45 @@ report.assay.values=function(x, assay){
     #out[!duplicated(out)] # unique strips away the names. But don't take out duplicates because 15% may be needed and because we may want the same number of values for each assay
 }
 #report.assay.values (dat.vac.seroneg[["Day57pseudoneutid80"]], "pseudoneutid80")
+
+
+preprocess.for.risk.score=function(dat_raw, study_name) {
+    dat_proc=dat_raw
+    has57 = study_name %in% c("COVE","MockCOVE")
+    
+    dat_proc=subset(dat_proc, !is.na(Bserostatus))
+    
+    # EventTimePrimaryIncludeNotMolecConfirmedD29 are the endpoint of interest and should be used to compute weights
+    if(study_name=="ENSEMBLE") {
+        dat_proc$EventTimePrimaryD29=dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD29
+        dat_proc$EventIndPrimaryD29 =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
+        dat_proc$EventTimePrimaryD1 =dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD1
+        dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
+    }
+        
+    dat_proc=subset(dat_proc, !is.na(EventTimePrimaryD29))
+    if(has57) dat_proc=subset(dat_proc, !is.na(EventTimePrimaryD57))
+    
+    dat_proc$EarlyendpointD29 <- with(dat_proc, ifelse(EarlyinfectionD29==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < NumberdaysD1toD29 + 7),1,0))
+    # a hack to define EarlyinfectionD29start1, which is not in the mock or real moderna datasets
+    # it is okay to have this because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
+    if (study_name=="MockCOVE" | study_name=="COVE") dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
+    dat_proc$EarlyendpointD29start1<- with(dat_proc, ifelse(EarlyinfectionD29start1==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < NumberdaysD1toD29 + 1),1,0))
+    if(has57) dat_proc$EarlyendpointD57 <- with(dat_proc, ifelse(EarlyinfectionD57==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < NumberdaysD1toD57 + 7),1,0))    
+    
+    # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm
+    # for COVID-19 this require: 
+    # 1. baseline SARS-CoV-2 negative, 
+    # 2. per-protocol, 
+    # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
+    # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
+    # no NAs allowed. 
+    dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & EarlyendpointD29start1==0 & EventTimePrimaryD29>=1, 1, 0))
+    # COVE is a special case, redefined for backward compatibility
+    if (study_name=="COVE" | study_name=="MockCOVE") dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
+    assertthat::assert_that(
+        all(!is.na(dat_proc$Riskscorecohortflag)),
+        msg = "missing Riskscorecohortflag")
+    
+    dat_proc    
+}
