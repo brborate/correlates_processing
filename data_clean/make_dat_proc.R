@@ -38,13 +38,12 @@ dat_raw <- read.csv(path_to_data)
 
 ########################################################################################################
 
-library(here)
 library(tidyverse)
 library(Hmisc) # wtd.quantile, cut2
 library(mice)
 library(dplyr)
 
-dat_proc=preprocess.for.risk.score(dat_raw)
+dat_proc=preprocess.for.risk.score(dat_raw, study_name)
 
 # read risk score
 #
