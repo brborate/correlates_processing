@@ -1,18 +1,23 @@
 ## all           : clean saved results and get results to populate report
-all: get_riskscores
+check_if_SL_needs_be_run: 
+	Rscript code/make_checks.R check
+
+## all           : clean saved results and get results to populate report
+all: clean get_riskscores run_cvsl_riskscore createRDAfiles_fromSLobjects tables_figures \
+	constructSL_predict_on_vaccine get_SLweights_Modelpredictors \
+	append_risk_score
 
 ## clean         : delete all SL results
 clean:
 	rm -f output/*
 	rm -f figs/*
 
-## get_riskscores : append previous risk scores if input data has not changed OR generate new risk scores!
 get_riskscores:
 	Rscript code/get_riskscores.R
 
 ## run_cvsl_riskscore   : run CV-SL on placebo arm
 run_cvsl_riskscore:
-	Rscript code/make_checks.R 
+	Rscript code/make_checks.R runCVSL
 
 ## createRDAfiles_fromSLobjects   : create RDA files from SL objects
 createRDAfiles_fromSLobjects:

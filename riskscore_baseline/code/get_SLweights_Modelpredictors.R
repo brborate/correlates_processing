@@ -1,10 +1,7 @@
-#-----------------------------------------------
-# obligatory to append to the top of each script
-renv::activate(project = here::here(".."))
-    
+# Sys.setenv(TRIAL = "janssen_pooled_real")
+renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
-    
 source(here::here("..", "_common.R"))
 #-----------------------------------------------
 

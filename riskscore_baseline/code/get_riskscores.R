@@ -1,9 +1,7 @@
 # Sys.setenv(TRIAL = "janssen_pooled_real")
-print(here::here())
 renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
-print(here::here())
 source(here::here("..", "_common.R"))
 #-----------------------------------------------
 
@@ -29,7 +27,6 @@ library(Hmisc) # wtd.quantile, cut2
 library(dplyr)
 library(recipes)
 
-
 if(startsWith(tolower(study_name), "mock")) {
   path_to_data <- here("data_raw", data_raw_dir, data_in_file)
 } else {
@@ -44,8 +41,8 @@ if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ====
 run_prod <- !grepl("Mock", study_name)
 
 # get utility files
-source(here("riskscore_baseline", "code", "sl_screens.R")) # set up the screen/algorithm combinations
-source(here("riskscore_baseline", "code", "utils.R")) # get CV-AUC for all algs
+source(here("code", "sl_screens.R")) # set up the screen/algorithm combinations
+source(here("code", "utils.R")) # get CV-AUC for all algs
 
 ############ SETUP INPUT #######################
 # Read in data file
@@ -53,7 +50,7 @@ inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) %>%
   rename(Ptid = Subjectid)
 
 # Save inputFile 
-save(inputFile, file = here("riskscore_baseline", "output", "inputFile.RData"))
+save(inputFile, file = "output/inputFile.RData")
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
@@ -136,12 +133,13 @@ assertthat::assert_that(
 # args <- commandArgs(trailingOnly = TRUE)
 
 # if(as.character(args[1]) == "check"){
-  source(here("riskscore_baseline", "code", "check_if_SL_needs_be_run.R"))
+source(here("code", "check_if_SL_needs_be_run.R"))
+
 # }
 
 # 
 # if(as.character(args[1]) == "runCVSL"){
-#   source(here("riskscore_baseline", "code", "run_cvsl_riskscore.R"))
+#   source(here("code", "run_cvsl_riskscore.R"))
 # }
 
 
