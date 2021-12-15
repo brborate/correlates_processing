@@ -43,11 +43,7 @@ library(Hmisc) # wtd.quantile, cut2
 library(mice)
 library(dplyr)
 
-<<<<<<< HEAD
 # dat_proc=preprocess.for.risk.score(dat_raw)
-=======
-dat_proc=preprocess.for.risk.score(dat_raw, study_name)
->>>>>>> e447c31e4da565402b439a51de7df9b889c1ee32
 
 # read risk score
 load(file = here("riskscore_baseline", "output", "inputFile_with_riskscore.RData"))
