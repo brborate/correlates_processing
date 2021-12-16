@@ -120,6 +120,14 @@ janssen_pooled_realADCP:
   covariates_norisksco: ~.+ Age        + as.factor(Region)
 
 
+janssen_pooled_realPsV: 
+  <<: *janssen_trial_realPsV
+  subset_variable: None
+  subset_value: All
+  covariates_riskscore: ~.+ risk_score + as.factor(Region)
+  covariates_norisksco: ~.+ Age        + as.factor(Region)
+
+
 janssen_trial_mock: &janssen_trial_mock
   <<: *janssen_trial
   data_in_file: COVID_ENSEMBLE_practicedata.csv # raw data
