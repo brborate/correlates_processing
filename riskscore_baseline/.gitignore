@@ -8,6 +8,7 @@ output/*.rds
 output/*.rda
 output/*.png
 output/*.jpg
+output/*.Rdata
 data_clean/*.csv
 output/*
 figs/*
@@ -19,5 +20,6 @@ figs/*
 ../data_clean/moderna_real*
 ../data_clean/moderna_real_data_processed.csv
 ../data_clean/moderna_real_data_processed_with_riskscore.csv
+*.Rdata
 
 

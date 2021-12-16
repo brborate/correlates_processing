@@ -1,10 +1,9 @@
 # Sys.setenv(TRIAL = "janssen_pooled_real")
-#-----------------------------------------------
-# obligatory to append to the top of each script
-renv::activate(project = here::here(".."))
+renv::activate(here::here(".."))
+# There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
+if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
 source(here::here("..", "_common.R"))
 #-----------------------------------------------
-
 ## load libraries and source files #############################################
 library(cvAUC)
 library(conflicted)
@@ -25,7 +24,6 @@ ggplot2::theme_set(theme_cowplot())
 
 load(file = here("output", "objects_for_running_SL.rda"))
 rm(Y, X_riskVars, weights, maxVar)
-
 load(file = here("output", "cvsl_risk_placebo_cvaucs.rda"))
 
 ######## Table of demographic variables used to derive the risk score ##########

@@ -1,11 +1,9 @@
-# Sys.setenv(TRIAL = "janssen_pooled_real")  
-#-----------------------------------------------
-# obligatory to append to the top of each script
-renv::activate(project = here::here(".."))
-
+# Sys.setenv(TRIAL = "janssen_pooled_real")
+print(here::here())
+renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
-
+print(here::here())
 source(here::here("..", "_common.R"))
 #-----------------------------------------------
 
@@ -27,6 +25,18 @@ conflict_prefer("summarise", "dplyr")
 conflict_prefer("omp_set_num_threads", "RhpcBLASctl")
 library(mice)
 library(tidymodels)
+library(Hmisc) # wtd.quantile, cut2
+library(dplyr)
+library(recipes)
+
+
+if(startsWith(tolower(study_name), "mock")) {
+  path_to_data <- here("data_raw", data_raw_dir, data_in_file)
+} else {
+  path_to_data <- data_in_file
+}
+print(path_to_data)
+if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ===========================================")
 
 # Define code version to run
 # the demo version is simpler and runs faster!
@@ -34,16 +44,20 @@ library(tidymodels)
 run_prod <- !grepl("Mock", study_name)
 
 # get utility files
-source(here("code", "sl_screens.R")) # set up the screen/algorithm combinations
-source(here("code", "utils.R")) # get CV-AUC for all algs
+source(here("riskscore_baseline", "code", "sl_screens.R")) # set up the screen/algorithm combinations
+source(here("riskscore_baseline", "code", "utils.R")) # get CV-AUC for all algs
 
 ############ SETUP INPUT #######################
 # Read in data file
-inputFile <- read.csv(here::here("..", "data_clean", paste0(attr(config, "config"), "_data_processed.csv"))) 
+inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) %>%
+  rename(Ptid = Subjectid)
+
+# Save inputFile 
+save(inputFile, file = here("riskscore_baseline", "output", "inputFile.RData"))
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
-if(study_name_code == "COVE"){
+if(study_name == "COVE"){
   risk_vars <- c(
     "MinorityInd", "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown", 
     "Black", "Asian", "NatAmer", "PacIsl",  
@@ -56,7 +70,7 @@ if(study_name_code == "COVE"){
   studyName_for_report <- "COVE"
 }
 
-if(study_name_code == "ENSEMBLE"){
+if(study_name == "ENSEMBLE"){
   risk_vars <- c(
     "EthnicityHispanic","EthnicityNotreported", "EthnicityUnknown",
     "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
@@ -119,16 +133,16 @@ assertthat::assert_that(
   all(!is.na(inputMod$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag!"
 )
 
-args <- commandArgs(trailingOnly = TRUE)
+# args <- commandArgs(trailingOnly = TRUE)
 
-if(as.character(args[1]) == "check"){
-  source(here("code", "check_if_SL_needs_be_run.R"))
-}
+# if(as.character(args[1]) == "check"){
+  source(here("riskscore_baseline", "code", "check_if_SL_needs_be_run.R"))
+# }
 
-
-if(as.character(args[1]) == "runCVSL"){
-  source(here("code", "run_cvsl_riskscore.R"))
-}
+# 
+# if(as.character(args[1]) == "runCVSL"){
+#   source(here("riskscore_baseline", "code", "run_cvsl_riskscore.R"))
+# }
 
 
 
