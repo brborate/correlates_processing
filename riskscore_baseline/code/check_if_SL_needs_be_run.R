@@ -41,6 +41,28 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
 
 
 
+if(study_name %in% c("COVE", "MockCOVE")){
+  if(file.exists(paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))){
+    load(paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
+    old_processed <- inputFile_with_riskscore %>% 
+      select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(risk_vars)) 
+    
+    new_processed <- inputFile %>% 
+      select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(risk_vars)) 
+    
+    if(all.equal(old_processed, new_processed) == TRUE){
+      message("No change in input data. Superlearner will not be run. Risk scores from earlier run appended to raw data!")
+    }else{
+      message("There is change in input data. Superlearner needs to be run and new risk scores generated!")
+      generate_new_riskscores()
+    }
+  }
+  if(!file.exists(paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))){
+    message(paste0("riskscore_baseline/", paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData"), " does not exist. Superlearner needs to be run and new risk scores generated!"))
+    generate_new_riskscores()
+  }
+}
+
 
 # 
 # # Append risk scores from janssen_pooled_real to janssen_pooled_realADCP

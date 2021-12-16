@@ -46,8 +46,15 @@ source(here("code", "utils.R")) # get CV-AUC for all algs
 
 ############ SETUP INPUT #######################
 # Read in data file
-inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) %>%
-  rename(Ptid = Subjectid)
+if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
+  inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) %>%
+    rename(Ptid = Subjectid)
+}
+
+if(study_name %in% c("COVE", "MockCOVE")){
+  inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) %>%
+    rename(Ptid = X)
+}
 
 # Save inputFile 
 save(inputFile, file = paste0("output/", attr(config, "config"), "_inputFile.RData"))
@@ -55,7 +62,7 @@ save(inputFile, file = paste0("output/", attr(config, "config"), "_inputFile.RDa
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
-if(study_name == "COVE"){
+if(study_name %in% c("COVE", "MockCOVE")){
   risk_vars <- c(
     "MinorityInd", "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown", 
     "Black", "Asian", "NatAmer", "PacIsl",  
