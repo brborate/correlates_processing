@@ -4,6 +4,10 @@ renv::activate(here::here(".."))
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
 source(here::here("..", "_common.R"))
 #-----------------------------------------------
+# renv::activate(here::here())
+# # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
+# if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
+# source(here::here("_common.R"))
 
 # load required libraries and functions
 library(tidyverse)
@@ -62,9 +66,24 @@ save(inputFile, file = paste0("output/", attr(config, "config"), "_inputFile.RDa
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
-if(study_name %in% c("COVE", "MockCOVE")){
+if(study_name %in% c("COVE")){
   risk_vars <- c(
     "MinorityInd", "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown", 
+    "Black", "Asian", "NatAmer", "PacIsl",  
+    "Multiracial", "Other", 
+    "Notreported", "Unknown",
+    "HighRiskInd", "Sex", "Age", "BMI"
+  )
+  
+  endpoint <- "EventIndPrimaryD57"
+  studyName_for_report <- "COVE"
+  inputMod <- inputFile
+}
+
+
+if(study_name %in% c("MockCOVE")){ # as MinorityInd variable is absent in mock!
+  risk_vars <- c(
+    "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown", 
     "Black", "Asian", "NatAmer", "PacIsl",  
     "Multiracial", "Other", 
     "Notreported", "Unknown",
