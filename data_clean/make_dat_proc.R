@@ -1,21 +1,21 @@
 #Sys.setenv(TRIAL = "janssen_pooled_real")
 renv::activate(here::here())
-    # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
-    if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
+# There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
+if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
 source(here::here("_common.R"))
 #-----------------------------------------------
 
 
 library(here)
 
-if (startsWith(tolower(study_name), "mock")) {
-    path_to_data <- here("data_raw", data_raw_dir, data_in_file)
-} else {
-    path_to_data <- data_in_file
-}
-print(path_to_data)
-if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ===========================================")
-dat_raw <- read.csv(path_to_data)
+# if (startsWith(tolower(study_name), "mock")) {
+#     path_to_data <- here("data_raw", data_raw_dir, data_in_file)
+# } else {
+#     path_to_data <- data_in_file
+# }
+# print(path_to_data)
+# if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ===========================================")
+# dat_raw <- read.csv(path_to_data)
 
 
 # some exploratory statistics
@@ -43,10 +43,11 @@ library(Hmisc) # wtd.quantile, cut2
 library(mice)
 library(dplyr)
 
-dat_proc=preprocess.for.risk.score(dat_raw, study_name)
+# dat_proc=preprocess.for.risk.score(dat_raw)
 
 # read risk score
-#
+load(file = paste0("riskscore_baseline/output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
+dat_proc <- inputFile_with_riskscore
 
 has57 = study_name %in% c("COVE","MockCOVE")
 has29 = study_name %in% c("COVE","ENSEMBLE", "MockCOVE","MockENSEMBLE")
@@ -583,7 +584,7 @@ if(subset_value != "All"){
 ###############################################################################
 
  
-write_csv(dat_proc, file = here("data_clean", paste0(attr(config, "config"), "_data_processed.csv")))
+write_csv(dat_proc %>% filter(!is.na(risk_score)), file = here("data_clean", paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")))
 
 
 #print(dat_proc[2,"BbindSpike"], 10)

@@ -1,0 +1,164 @@
+---
+knit: "bookdown::render_book"
+title: "COVID-19 Baseline Risk Score Analysis Report"
+subtitle: '`r source(here::here("_common.R")); paste(study_name, "Study")`'
+author: "USG COVID-19 Response Biostatistics Team"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+documentclass: book
+site: bookdown::bookdown_site
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+suppress-bibliography: true
+link-citations: yes
+colorlinks: yes
+graphics: yes
+lot: yes
+lof: yes
+always_allow_html: yes
+header-includes:
+   - \usepackage{eso-pic,graphicx,transparent,titling} # keep titling last!
+---
+
+
+```{r, include = knitr::is_latex_output() & startsWith(study_name, "Mock")}
+knitr::asis_output("\\AddToShipoutPictureFG{
+  \\AtPageCenter{
+    \\makebox[0pt]{\\rotatebox[origin=c]{45}{
+      \\scalebox{10}{\\texttransparent{0.3}{MOCK}}}}}}")
+```
+
+
+`r if ( !( grepl("moderna", attr(config::get(config = Sys.getenv("TRIAL")), "config") ) ) )'<!--'`
+
+# Disclaimers
+
+* The data presented in the analysis originated from the Moderna Sponsored mRNA-1273-P301 clinical study and are provided to NIAID in accordance with Clinical Trial Agreement between the parties. The study was funded in part by BARDA under Government Contract No. 75A50120C00034
+ 
+* The preliminary immunogenicity data presented here do not reflect the Sponsors statistical analysis plan and therefore should not be interpreted as a protocol defined read-out of the clinical study.
+ 
+* These data are not to be disclosed without written permission of Moderna.
+
+`r if ( !( grepl("moderna", attr(config::get(config = Sys.getenv("TRIAL")), "config") ) ) ) '-->'`
+
+`r if (knitr::is_latex_output()) '<!--'`
+
+# CoVPN Correlates Analysis Report {-}
+
+## Statistical Analysis Plan {-}
+
+The SAP is available at https://doi.org/10.6084/m9.figshare.13198595
+
+## Reproducibility Notice {-}
+
+This project integrates the virtual environments framework provided by [the
+`renv` package](https://rstudio.github.io/renv/) for computational
+reproducibility. By taking this approach, all results are generated using a
+consistent versioning of both R and several R packages. This version of the
+report was built with `r R.version.string`, [pandoc](https://pandoc.org/)
+version `r rmarkdown::pandoc_version()`, and the following R packages:
+
+```{r pkg-list, echo=FALSE, results="asis"}
+# borrowed from https://github.com/tidymodels/TMwR/blob/master/index.Rmd
+deps <- desc::desc_get_deps()
+pkgs <- sort(deps$package[deps$type == "Imports"])
+pkgs <- sessioninfo::package_info(pkgs, dependencies = FALSE)
+df <- tibble::tibble(
+  package = pkgs$package,
+  version = pkgs$ondiskversion,
+  source = gsub("@", "\\\\@", pkgs$source)
+)
+knitr::kable(df, format = "markdown")
+```
+
+To get started with using this project and its `renv` package library, we
+first recommend briefly reviewing the [`renv` collaboration
+guide](https://rstudio.github.io/renv/articles/collaborating.html).
+
+`r if (knitr::is_latex_output()) '-->'`
+
+<!--chapter:end:index_riskscore.Rmd-->
+
+---
+header-includes:
+   - \usepackage{float}
+output:
+  pdf_document: default
+  html_document: default
+  citation_package: natbib
+  number_sections: true
+  extra_dependencies: ["caption", "subcaption", "graphicx"]
+  toc: true
+---
+
+```{r, include = FALSE}
+library(here)
+here::i_am("riskscore_baseline/report.Rmd")
+```
+
+```{r, child=here("riskscore_baseline", 'report_sub.Rmd')}
+```
+
+<!--chapter:end:riskscore_baseline/report.Rmd-->
+
+```{r, echo=FALSE, message=FALSE}
+message("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ running references ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+```
+
+
+
+`r if (knitr::is_html_output()) '
+# References {-}
+'`
+
+<!--chapter:end:references.Rmd-->
+
+# Appendix
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+quiet <- capture.output({
+  renv::activate(project = here::here())
+  #source(here::here("_common.R"))
+})
+library(here)
+library(digest)
+
+# hash algorithm picked based on https://csrc.nist.gov/projects/hash-functions
+hash_algorithm <- "sha256"
+
+
+#processed_file_digest is created in _common.R, but because the working directory issue, it is not created properly when _common.R is sourced here.
+if (startsWith(tolower(study_name), "mock")) {
+    data_name_updated <- data_name
+    path_to_data = here::here("data_clean", data_name_updated)
+} else {
+    data_name_updated <- data_cleaned
+    path_to_data = here::here("..", data_name_updated)
+}
+if (file.exists(path_to_data)) {
+    dat.mock <- read.csv(path_to_data)
+    print(paste0("reading data from ",data_name_updated))
+
+    # get hash of commit at HEAD
+    commit_hash <- system("git rev-parse HEAD", intern = TRUE)    
+    # get hash of input processed data file based on chosen hashing algorithm
+    processed_file_digest <- digest(file = path_to_data, algo = hash_algorithm)
+    
+} else {
+    warning("dataset with risk score not available")
+  processed_file_digest = ""
+}
+
+
+```
+
+* This report was built from the
+  [`CoVPN/correlates_reporting`](https://github.com/CoVPN/correlates_reporting)
+  repository with commit hash `r system("git rev-parse HEAD", intern = TRUE)`. A diff of the changes introduced
+  by that commit may be viewed at
+  https://github.com/CoVPN/correlates_reporting/commit/`r system("git rev-parse HEAD", intern = TRUE)`
+
+
+* The `r hash_algorithm` hash sum of the processed file, `r paste0("\"",data_name_updated,"\"")`: `r processed_file_digest`
+
+<!--chapter:end:appendix.Rmd-->
+
