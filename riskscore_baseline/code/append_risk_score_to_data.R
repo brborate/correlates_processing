@@ -12,7 +12,7 @@ library(conflicted)
 conflicted::conflict_prefer("filter", "dplyr")
 conflict_prefer("summarise", "dplyr")
 load("output/objects_for_running_SL.rda")
-load("output/inputFile.RData")
+load(paste0("output/", attr(config, "config"), "_inputFile.RData"))
 placebos_risk <- read.csv(here("output", "placebo_ptids_with_riskscores.csv"))
 vaccinees_risk <- read.csv(here("output", "vaccine_ptids_with_riskscores.csv"))
 
@@ -35,7 +35,7 @@ inputFile_with_riskscore <- left_join(inputFile, risk_scores, by = "Ptid")
 # }
 
 # Save inputFile 
-save(inputFile_with_riskscore, file = here("output", "inputFile_with_riskscore.RData"))
+save(inputFile_with_riskscore, file = paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
 # inputFile_with_riskscore %>% 
 #   write.csv(here::here("..", "..", "..", "..", "covpn", "p3003", 
 #                        "analysis", "correlates", "Part_A_Blinded_Phase_Data", "adata", paste0(attr(config, "config"), "_data_processed_with_riskscoreNEW.csv"))) 

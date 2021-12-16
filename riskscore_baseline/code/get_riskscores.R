@@ -28,7 +28,7 @@ library(dplyr)
 library(recipes)
 
 if(startsWith(tolower(study_name), "mock")) {
-  path_to_data <- here("data_raw", data_raw_dir, data_in_file)
+  path_to_data <- here("..", "data_raw", data_raw_dir, data_in_file)
 } else {
   path_to_data <- data_in_file
 }
@@ -50,7 +50,8 @@ inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) %>%
   rename(Ptid = Subjectid)
 
 # Save inputFile 
-save(inputFile, file = "output/inputFile.RData")
+save(inputFile, file = paste0("output/", attr(config, "config"), "_inputFile.RData"))
+
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
@@ -65,9 +66,10 @@ if(study_name == "COVE"){
   
   endpoint <- "EventIndPrimaryD57"
   studyName_for_report <- "COVE"
+  inputMod <- inputFile
 }
 
-if(study_name == "ENSEMBLE"){
+if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   risk_vars <- c(
     "EthnicityHispanic","EthnicityNotreported", "EthnicityUnknown",
     "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
@@ -130,19 +132,5 @@ assertthat::assert_that(
   all(!is.na(inputMod$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag!"
 )
 
-# args <- commandArgs(trailingOnly = TRUE)
-
-# if(as.character(args[1]) == "check"){
 source(here("code", "check_if_SL_needs_be_run.R"))
-
-# }
-
-# 
-# if(as.character(args[1]) == "runCVSL"){
-#   source(here("code", "run_cvsl_riskscore.R"))
-# }
-
-
-
-
 

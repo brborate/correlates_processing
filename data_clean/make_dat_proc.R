@@ -6,7 +6,7 @@ source(here::here("_common.R"))
 #-----------------------------------------------
 
 
-# library(here)
+library(here)
 
 # if (startsWith(tolower(study_name), "mock")) {
 #     path_to_data <- here("data_raw", data_raw_dir, data_in_file)
@@ -46,7 +46,7 @@ library(dplyr)
 # dat_proc=preprocess.for.risk.score(dat_raw)
 
 # read risk score
-load(file = here("riskscore_baseline", "output", "inputFile_with_riskscore.RData"))
+load(file = paste0("riskscore_baseline/output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
 dat_proc <- inputFile_with_riskscore
 
 has57 = study_name %in% c("COVE","MockCOVE")
