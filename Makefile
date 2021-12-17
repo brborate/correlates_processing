@@ -13,7 +13,7 @@ risk_analysis:
 	
 ## risk_create : run each risk score file individually
 risk_create: 
-	$(MAKE) -k -C riskscore_baseline append_risk_score
+	$(MAKE) -k -C riskscore_baseline constructSL_predict_on_vaccine
 
 ## risk_report            : builds the CoVPN baseline risk score report
 risk_report: risk_analysis

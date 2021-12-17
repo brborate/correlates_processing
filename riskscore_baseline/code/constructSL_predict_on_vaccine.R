@@ -25,8 +25,8 @@ library(xgboost)
 conflict_prefer("filter", "dplyr")
 conflict_prefer("select", "dplyr")
 conflict_prefer("omp_set_num_threads", "RhpcBLASctl")
-load(here("output", "objects_for_running_SL.rda"))
-load(here("output", "plac_top2learners_SL_discreteSL.rda"))
+load("output/objects_for_running_SL.rda")
+load("output/plac_top2learners_SL_discreteSL.rda")
 source(here("code", "sl_screens.R")) # set up the screen/algorithm combinations
 source(here("code", "utils.R")) # get CV-AUC for all algs
 
