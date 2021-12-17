@@ -62,7 +62,7 @@ if(study_name %in% c("COVE", "MockCOVE")){
 
 # Save inputFile 
 save(inputFile, file = paste0("output/", attr(config, "config"), "_inputFile.RData"))
-
+# load(paste0("output/", attr(config, "config"), "_inputFile.RData"))
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable

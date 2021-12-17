@@ -13,11 +13,11 @@ library(xgboost)
 library(ranger)
 conflict_prefer("filter", "dplyr")
 
-load(file = here("output", "objects_for_running_SL.rda"))
+load("output/objects_for_running_SL.rda")
 rm(Y, X_riskVars, weights, maxVar)
 
 # Get Superlearner weights
-load(file = here("output", "sl_riskscore_slfits.rda"))
+load("output/sl_riskscore_slfits.rda")
 sl_weights <- sl_riskscore_slfits$coef %>%
   as.data.frame() %>%
   tibble::rownames_to_column(var = "Learner") %>%
