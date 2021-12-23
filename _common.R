@@ -28,6 +28,7 @@ names(assays)=assays # add names so that lapply results will have names
 # in the immuno report (but is not analyzed in the cor or cop reports).
 include_bindN <- TRUE
 
+# conversion is only done for COVE for backward compatibility
 # conversion factors
 convf=c(bindSpike=0.0090, bindRBD=0.0272, bindN=0.0024, pseudoneutid50=0.242, pseudoneutid80=1.502)
 
