@@ -551,15 +551,6 @@ if(has29&has57) dat_proc["Delta57over29" %.% assays.includeN] <- tmp["Day57" %.%
 
 
 
-###############################################################################
-# subset on subset_variable
-# this needs to be re-considered
-###############################################################################
-
-if(subset_value != "All"){
-  include_in_subset <- dat_proc[[subset_variable]] == subset_value
-  dat_proc <- dat_proc[include_in_subset, , drop = FALSE]
-}
 
 
 
