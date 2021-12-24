@@ -49,22 +49,23 @@ library(dplyr)
 load(file = paste0("riskscore_baseline/output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
 dat_proc <- inputFile_with_riskscore
 
+# subset on subset_variable
+if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
+    if(subset_value != "All") {
+        include_in_subset <- dat_proc[[subset_variable]] == subset_value
+        dat_proc <- dat_proc[include_in_subset, , drop = FALSE]
+    }
+}
+
+
 has57 = study_name %in% c("COVE","MockCOVE")
 has29 = study_name %in% c("COVE","ENSEMBLE", "MockCOVE","MockENSEMBLE")
 
-# this should be removed after we received neut data in the real data
-if(study_name=="MockENSEMBLE") dat_proc=dat_proc[, !contain(names(dat_proc), "pseudoneutid")]
-
 colnames(dat_proc)[1] <- "Ptid" 
-
-dat_proc <- dat_proc %>%
-  mutate(
-    age.geq.65 = as.integer(Age >= 65)
-  )
-
+dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
 dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, stop("unknown study_name")))
-
   
+
 # ethnicity labeling
 dat_proc$ethnicity <- ifelse(dat_proc$EthnicityHispanic == 1, labels.ethnicity[1], labels.ethnicity[2])
 dat_proc$ethnicity[dat_proc$EthnicityNotreported == 1 | dat_proc$EthnicityUnknown == 1] <- labels.ethnicity[3]
