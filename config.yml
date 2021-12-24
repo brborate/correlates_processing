@@ -26,22 +26,16 @@ moderna_trial: &moderna_trial
   time_labels: [Day 1, Day 29, Day 57, D29 fold-rise over D1, D57 fold-rise over D1, D57 fold-rise over D29]
   data_raw_dir: moderna
   study_name_code: COVE
-  covariates_riskscore: ~.+ MinorityInd + HighRiskInd + risk_score
-  covariates_norisksco: ~.+ MinorityInd + HighRiskInd + Age
 
 moderna_real: &moderna_real
   <<: *moderna_trial
   data_in_file: /trials/covpn/p3001/analysis/correlates/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv
   study_name: COVE
-  num_boot_replicates: 1000
-  num_perm_replicates: 10000
 
 moderna_mock: &moderna_mock
   <<: *moderna_trial
   data_in_file: COVID_VEtrial_practicedata_primarystage1.csv
   study_name: MockCOVE
-  num_boot_replicates: 10
-  num_perm_replicates: 10
 
 
 janssen_trial: &janssen_trial
@@ -60,8 +54,6 @@ janssen_trial_real: &janssen_trial_real
   assay_labels: [Binding Antibody to Spike, Binding Antibody to RBD]
   assay_labels_short: [Anti Spike IgG (BAU/ml), Anti RBD IgG (BAU/ml)]
   study_name: ENSEMBLE
-  num_boot_replicates: 1000
-  num_perm_replicates: 10000
 
 janssen_trial_realADCP: &janssen_trial_realADCP
   <<: *janssen_trial
@@ -70,8 +62,6 @@ janssen_trial_realADCP: &janssen_trial_realADCP
   assay_labels: [Phagocytic Score]
   assay_labels_short: [Phagocytic Score]
   study_name: ENSEMBLE
-  num_boot_replicates: 1000
-  num_perm_replicates: 10000
 
 janssen_trial_realPsV: &janssen_trial_realPsV
   <<: *janssen_trial
@@ -80,52 +70,67 @@ janssen_trial_realPsV: &janssen_trial_realPsV
   assay_labels: [PsV Neutralization 50% Titer]
   assay_labels_short: [Pseudovirus-nAb ID50 (IU50/ml)]
   study_name: ENSEMBLE
-  num_boot_replicates: 1000
-  num_perm_replicates: 10000
 
 janssen_pooled_real: 
   <<: *janssen_trial_real
   subset_variable: None
   subset_value: All
-  covariates_riskscore: ~.+ risk_score + as.factor(Region)
-  covariates_norisksco: ~.+ Age        + as.factor(Region)
-
-janssen_na_real: 
-  <<: *janssen_trial_real
-  subset_variable: Region
-  subset_value: 0
-  covariates_riskscore: ~.+ risk_score
-  covariates_norisksco: ~.+ Age
-
-janssen_la_real: 
-  <<: *janssen_trial_real
-  subset_variable: Region
-  subset_value: 1
-  covariates_riskscore: ~.+ risk_score
-  covariates_norisksco: ~.+ Age
-
-janssen_sa_real: 
-  <<: *janssen_trial_real
-  subset_variable: Region
-  subset_value: 2
-  covariates_riskscore: ~.+ risk_score
-  covariates_norisksco: ~.+ Age
-
 
 janssen_pooled_realADCP: 
   <<: *janssen_trial_realADCP
   subset_variable: None
   subset_value: All
-  covariates_riskscore: ~.+ risk_score + as.factor(Region)
-  covariates_norisksco: ~.+ Age        + as.factor(Region)
-
 
 janssen_pooled_realPsV: 
   <<: *janssen_trial_realPsV
   subset_variable: None
   subset_value: All
-  covariates_riskscore: ~.+ risk_score + as.factor(Region)
-  covariates_norisksco: ~.+ Age        + as.factor(Region)
+
+janssen_na_real: 
+  <<: *janssen_trial_real
+  subset_variable: Region
+  subset_value: 0
+
+janssen_na_realADCP: 
+  <<: *janssen_trial_realADCP
+  subset_variable: Region
+  subset_value: 0
+
+janssen_na_realPsV: 
+  <<: *janssen_trial_realPsV
+  subset_variable: Region
+  subset_value: 0
+
+janssen_la_real: 
+  <<: *janssen_trial_real
+  subset_variable: Region
+  subset_value: 1
+
+janssen_la_realADCP: 
+  <<: *janssen_trial_realADCP
+  subset_variable: Region
+  subset_value: 1
+
+janssen_la_realPsV: 
+  <<: *janssen_trial_realPsV
+  subset_variable: Region
+  subset_value: 1
+
+janssen_sa_real: 
+  <<: *janssen_trial_real
+  subset_variable: Region
+  subset_value: 2
+
+janssen_sa_realADCO: 
+  <<: *janssen_trial_realADCP
+  subset_variable: Region
+  subset_value: 2
+
+janssen_sa_realPsV: 
+  <<: *janssen_trial_realPsV
+  subset_variable: Region
+  subset_value: 2
+
 
 
 janssen_trial_mock: &janssen_trial_mock
@@ -135,36 +140,26 @@ janssen_trial_mock: &janssen_trial_mock
   assay_labels: [Binding Antibody to Spike, Binding Antibody to RBD]
   assay_labels_short: [Anti Spike IgG (BAU/ml), Anti RBD IgG (BAU/ml)]
   study_name: MockENSEMBLE
-  num_boot_replicates: 10
-  num_perm_replicates: 10
 
 janssen_pooled_mock:
   <<: *janssen_trial_mock
   subset_variable: None
   subset_value: All
-  covariates_riskscore: ~.+ risk_score + as.factor(Region)
-  covariates_norisksco: ~.+ Age        + as.factor(Region)
 
 janssen_na_mock:
   <<: *janssen_trial_mock
   subset_variable: Region
   subset_value: 0
-  covariates_riskscore: ~.+ risk_score
-  covariates_norisksco: ~.+ Age
 
 janssen_la_mock:
   <<: *janssen_trial_mock
   subset_variable: Region
   subset_value: 1
-  covariates_riskscore: ~.+ risk_score
-  covariates_norisksco: ~.+ Age
 
 janssen_sa_mock:
   <<: *janssen_trial_mock
   subset_variable: Region
   subset_value: 2
-  covariates_riskscore: ~.+ risk_score
-  covariates_norisksco: ~.+ Age
 
 
 ###################################################################################################
