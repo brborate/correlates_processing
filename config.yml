@@ -121,7 +121,7 @@ janssen_sa_real:
   subset_variable: Region
   subset_value: 2
 
-janssen_sa_realADCO: 
+janssen_sa_realADCP: 
   <<: *janssen_trial_realADCP
   subset_variable: Region
   subset_value: 2

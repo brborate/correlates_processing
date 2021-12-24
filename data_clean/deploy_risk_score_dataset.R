@@ -16,16 +16,18 @@ data_name_amended <- paste0(str_remove(paste0(attr(config, "config"), "_data_pro
 # Remove current deployed copy of risk score dataset from adata
 # Copy new copy of risk score dataset from data_clean to adata
 if(study_name_code == "ENSEMBLE"){
-  file.copy(from = paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"),
-            to =  paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/archive/", data_name_amended, "_",
-                         str_replace(str_replace_all(file.info(paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"))$mtime,
-                                                     ":",
-                                                     "."), " ", " time "), 
-                         ".csv"),
-            copy.date = TRUE)
-  
-  file.remove(from = paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"))
-  
+  if(file.exists(paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"))){
+    file.copy(from = paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"),
+              to =  paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/archive/", data_name_amended, "_",
+                           str_replace(str_replace_all(file.info(paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"))$mtime,
+                                                       ":",
+                                                       "."), " ", " time "), 
+                           ".csv"),
+              copy.date = TRUE)
+    
+    file.remove(from = paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"))
+  }
+    
   file.copy(from = paste0("data_clean/", data_name_amended, ".csv"),
             to = paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"),
             copy.date = TRUE)
