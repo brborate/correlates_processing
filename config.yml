@@ -24,7 +24,7 @@ moderna_trial: &moderna_trial
 
 moderna_real: &moderna_real
   <<: *moderna_trial
-  data_in_file: /trials/covpn/p3001/analysis/correlates/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv
+  data_in_file: /trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv
   study_name: COVE
 
 moderna_mock: &moderna_mock
