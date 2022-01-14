@@ -70,11 +70,12 @@ tmp=list(
         ULOQ = 15368)
     ,
     liveneutmn50=c( 
-        LLOD = 62.16,
+        pos.cutoff=82.1*0.276,# as same lod
+        LLOD = 82.11*0.276,
         ULOD = NA,
-        LLOQ = 117.35,
-        ULOQ = 18976.19)
-        ,
+        LLOQ =  159.79*0.276,
+        ULOQ = 11173.21*0.276)
+    ,
     ADCP=c( 
         pos.cutoff=11.57,# as same lod
         LLOD = 11.57,
@@ -98,6 +99,12 @@ if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
     
     uloqs["bindSpike"]=238.1165 
     uloqs["bindRBD"]=172.5755    
+    
+    llods["bindSpike"]=NA # set to NA to make the plots free of too much white space since raw data are censored at pos.cutoff
+    llods["bindRBD"]=NA 
+    llods["pseudoneutid50"]=6
+
+    lloxs=llods
 }
 
 # assays not in this list are imputed
