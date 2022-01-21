@@ -14,9 +14,9 @@ moderna_trial: &moderna_trial
   timepoints: [29, 57]
   subset_variable: None
   subset_value: All
-  assays: [bindSpike, bindRBD, pseudoneutid50, pseudoneutid80]
-  assay_labels: [Binding Antibody to Spike, Binding Antibody to RBD, PsV Neutralization 50% Titer, PsV Neutralization 80% Titer]
-  assay_labels_short: [Anti Spike IgG (BAU/ml), Anti RBD IgG (BAU/ml), Pseudovirus-nAb cID50, Pseudovirus-nAb cID80]
+  assays: [bindSpike, bindRBD, pseudoneutid50, pseudoneutid80, liveneutmn50]
+  assay_labels: [Binding Antibody to Spike, Binding Antibody to RBD, PsV Neutralization 50% Titer, PsV Neutralization 80% Titer, Live Virus Micro Neut 50% Titer]
+  assay_labels_short: [Anti Spike IgG (BAU/ml), Anti RBD IgG (BAU/ml), Pseudovirus-nAb ID50 (IU50/ml), Pseudovirus-nAb ID80 (IU80/ml), Live Virus-mnAb ID50 (IU50/ml)]
   times: [B, Day29, Day57, Delta29overB, Delta57overB, Delta57over29]
   time_labels: [Day 1, Day 29, Day 57, D29 fold-rise over D1, D57 fold-rise over D1, D57 fold-rise over D29]
   data_raw_dir: moderna
