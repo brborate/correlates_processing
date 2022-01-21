@@ -33,65 +33,62 @@ include_bindN <- TRUE
 convf=c(bindSpike=0.0090, bindRBD=0.0272, bindN=0.0024, pseudoneutid50=0.242, pseudoneutid80=1.502)
 
 # For bAb, IU and BAU are the same thing
-# limits for each assay (IU for bAb and pseudoneut, no need to convert again)
-# the following are copied from SAP to avoid any mistake (get rid of commas)
-tmp=list(
-    bindSpike=c(
-        pos.cutoff=10.8424,
-        LLOD = 0.3076,
-        ULOD = 172226.2,
-        LLOQ = 1.7968,
-        ULOQ = 10155.95)
-    ,
-    bindRBD=c(
-        pos.cutoff=14.0858,
-        LLOD = 1.593648,
-        ULOD = 223074,
-        LLOQ = 3.4263,
-        ULOQ = 16269.23)
-    ,
-    bindN=c( 
-        pos.cutoff=23.4711,
-        LLOD = 0.093744,
-        ULOD = 52488,
-        LLOQ = 4.4897,
-        ULOQ = 574.6783)
-    ,
-    pseudoneutid50=c( 
-        LLOD = 2.42,
-        ULOD = NA,
-        LLOQ = 4.477,
-        ULOQ = 10919)
-    ,
-    pseudoneutid80=c( 
-        LLOD = 15.02,
-        ULOD = NA,
-        LLOQ = 21.4786,
-        ULOQ = 15368)
-    ,
-    liveneutmn50=c( 
-        pos.cutoff=82.1*0.276,# as same lod
-        LLOD = 82.11*0.276,
-        ULOD = NA,
-        LLOQ =  159.79*0.276,
-        ULOQ = 11173.21*0.276)
-    ,
-    ADCP=c( 
-        pos.cutoff=11.57,# as same lod
-        LLOD = 11.57,
-        ULOD = NA,
-        LLOQ = 8.87,
-        ULOQ = 211.56)
-)
-
-pos.cutoffs=sapply(tmp, function(x) unname(x["pos.cutoff"]))
-llods=sapply(tmp, function(x) unname(x["LLOD"]))
-lloqs=sapply(tmp, function(x) unname(x["LLOQ"]))
-uloqs=sapply(tmp, function(x) unname(x["ULOQ"]))
-    lloxs=llods 
+# all values on BAU or IU
+if(TRUE) {
+    tmp=list(
+        bindSpike=c(
+            pos.cutoff=10.8424,
+            LLOD = 0.3076,
+            ULOD = 172226.2,
+            LLOQ = 1.7968,
+            ULOQ = 10155.95)
+        ,
+        bindRBD=c(
+            pos.cutoff=14.0858,
+            LLOD = 1.593648,
+            ULOD = 223074,
+            LLOQ = 3.4263,
+            ULOQ = 16269.23)
+        ,
+        bindN=c( 
+            pos.cutoff=23.4711,
+            LLOD = 0.093744,
+            ULOD = 52488,
+            LLOQ = 4.4897,
+            ULOQ = 574.6783)
+        ,
+        pseudoneutid50=c( 
+            LLOD = 2.42,
+            ULOD = NA,
+            LLOQ = 4.477,
+            ULOQ = 10919)
+        ,
+        pseudoneutid80=c( 
+            LLOD = 15.02,
+            ULOD = NA,
+            LLOQ = 21.4786,
+            ULOQ = 15368)
+        ,
+        liveneutmn50=c( 
+            pos.cutoff=82.1*0.276,# as same lod
+            LLOD = 82.11*0.276,
+            ULOD = NA,
+            LLOQ =  159.79*0.276,
+            ULOQ = 11173.21*0.276)
+        ,
+        ADCP=c( 
+            pos.cutoff=11.57,# as same lod
+            LLOD = 11.57,
+            ULOD = NA,
+            LLOQ = 8.87,
+            ULOQ = 211.56)
+    )
     
-    # Per Sarah O'Connell, for ensemble, the positivity cut offs and LLODs will be identical, 
-    # as will the quantitative limits for N protein which are based on convalescent samples.
+    pos.cutoffs=sapply(tmp, function(x) unname(x["pos.cutoff"]))
+    llods=sapply(tmp, function(x) unname(x["LLOD"]))
+    lloqs=sapply(tmp, function(x) unname(x["LLOQ"]))
+    uloqs=sapply(tmp, function(x) unname(x["ULOQ"]))    
+    lloxs=llods 
     
     if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
         
@@ -99,7 +96,7 @@ uloqs=sapply(tmp, function(x) unname(x["ULOQ"]))
         # lod set to NA to make the plots free of too much white space
         llods["bindSpike"]=NA 
         uloqs["bindSpike"]=238.1165 
-
+    
         llods["bindRBD"]=NA 
         uloqs["bindRBD"]=172.5755    
                 
@@ -111,13 +108,16 @@ uloqs=sapply(tmp, function(x) unname(x["ULOQ"]))
     } else if(study_name=="PREVENT-19") {
         
         # data less than lloq is set to lloq/2 in the raw data
-        lloqs["bindSpike"]=150.4
+        llods["bindSpike"]=NA 
+        lloqs["bindSpike"]=150.4*convf["bindSpike"]
         pos.cutoffs["bindSpike"]=lloqs["bindSpike"]
-        uloqs["bindSpike"]=770464.6 
+        uloqs["bindSpike"]=770464.6 *convf["bindSpike"]
         
         lloxs=lloqs 
     
     }
+    
+}
 
 
 # assays not in this list are imputed
