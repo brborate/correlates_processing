@@ -109,9 +109,9 @@ if(TRUE) {
         
         # data less than lloq is set to lloq/2 in the raw data
         llods["bindSpike"]=NA 
-        lloqs["bindSpike"]=150.4*convf["bindSpike"]
+        lloqs["bindSpike"]=150.4*0.0090
         pos.cutoffs["bindSpike"]=lloqs["bindSpike"]
-        uloqs["bindSpike"]=770464.6 *convf["bindSpike"]
+        uloqs["bindSpike"]=770464.6*0.0090
         
         lloxs=lloqs 
     

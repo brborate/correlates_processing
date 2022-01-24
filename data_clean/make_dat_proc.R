@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "janssen_pooled_real")
+#Sys.setenv(TRIAL = "janssen_pooled_mock")
 renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -45,7 +45,8 @@ library(dplyr)
 
 # dat_proc=preprocess.for.risk.score(dat_raw)
 
-# read risk score
+# read raw data with risk score added
+# inputFile_with_riskscore has the same number of rows as dat_raw, but adds columns related to earlyendpoint, earlyinfection (preprocess.for.risk.score) and risk scores
 load(file = paste0("riskscore_baseline/output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
 dat_proc <- inputFile_with_riskscore
 
@@ -58,8 +59,8 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 }
 
 
-has57 = study_name %in% c("COVE","MockCOVE")
-has29 = study_name %in% c("COVE","ENSEMBLE", "MockCOVE","MockENSEMBLE")
+
+
 
 colnames(dat_proc)[1] <- "Ptid" 
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
@@ -245,84 +246,36 @@ with(dat_proc, table(tps.stratum))
 
 
 # TwophasesampInd: be in the case or subcohort and have the necessary markers
-if (has57)
-dat_proc <- dat_proc %>%
-  mutate(
-    TwophasesampIndD57 =
-      (SubcohortInd | !(is.na(EventIndPrimaryD29) | EventIndPrimaryD29 == 0)) &
-      complete.cases(cbind(
-        if("bindSpike" %in% must_have_assays) BbindSpike,
-        if("bindRBD" %in% must_have_assays) BbindRBD,
-        if("pseudoneutid50" %in% must_have_assays) Bpseudoneutid50,
-        if("pseudoneutid80" %in% must_have_assays) Bpseudoneutid80,
-        if("ADCP" %in% must_have_assays) BADCP,
+dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
+    with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+    complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
 
-        if("bindSpike" %in% must_have_assays) Day57bindSpike,
-        if("bindRBD" %in% must_have_assays) Day57bindRBD,
-        if("pseudoneutid50" %in% must_have_assays) Day57pseudoneutid50,
-        if("pseudoneutid80" %in% must_have_assays) Day57pseudoneutid80,
-        if("ADCP" %in% must_have_assays) Day57ADCP,
-
-        if("bindSpike" %in% must_have_assays & has29) Day29bindSpike,
-        if("bindRBD" %in% must_have_assays & has29) Day29bindRBD,
-        if("pseudoneutid50" %in% must_have_assays & has29) Day29pseudoneutid50,
-        if("pseudoneutid80" %in% must_have_assays & has29) Day29pseudoneutid80,
-        if("ADCP" %in% must_have_assays & has29) Day29ADCP
-      ))
-  )
-
-if(has29) dat_proc <- dat_proc %>%
-  mutate(
-    TwophasesampIndD29 =
-      (SubcohortInd | !(is.na(EventIndPrimaryD29) | EventIndPrimaryD29 == 0)) &
-      complete.cases(cbind(
-        if("bindSpike" %in% must_have_assays) BbindSpike, 
-        if("bindRBD" %in% must_have_assays) BbindRBD, 
-        if("pseudoneutid50" %in% must_have_assays) Bpseudoneutid50, 
-        if("pseudoneutid80" %in% must_have_assays) Bpseudoneutid80, 
-        if("ADCP" %in% must_have_assays) BADCP, 
-        
-        if("bindSpike" %in% must_have_assays) Day29bindSpike,
-        if("bindRBD" %in% must_have_assays) Day29bindRBD,
-        if("pseudoneutid50" %in% must_have_assays) Day29pseudoneutid50, 
-        if("pseudoneutid80" %in% must_have_assays) Day29pseudoneutid80,
-        if("ADCP" %in% must_have_assays) Day29ADCP
-      ))
-  )
-  
-
-# weights for D57 correlates analyses
-if (has57) {
-    wts_table <- dat_proc %>% dplyr::filter(EarlyendpointD57==0 & Perprotocol==1 & EventTimePrimaryD57>=7) %>%
-      with(table(Wstratum, TwophasesampIndD57))
-    wts_norm <- rowSums(wts_table) / wts_table[, 2]
-    dat_proc$wt.D57 <- wts_norm[dat_proc$Wstratum %.% ""]
-    # the step above assigns weights for some subjects outside ph1. the next step makes them NA
-    dat_proc$wt.D57 = ifelse(with(dat_proc, EarlyendpointD57==0 & Perprotocol==1 & EventTimePrimaryD57>=7), dat_proc$wt.D57, NA) 
-    dat_proc$ph1.D57=!is.na(dat_proc$wt.D57)
-    dat_proc$ph2.D57=with(dat_proc, ph1.D57 & TwophasesampIndD57)
-    
-    assertthat::assert_that(
-        all(!is.na(subset(dat_proc, EarlyendpointD57==0 & Perprotocol==1 & EventTimePrimaryD57>=7 & !is.na(Wstratum), select=wt.D57, drop=T))),
-        msg = "missing wt.D57 for D57 analyses ph1 subjects")
+if (two_marker_timepoints) {
+    dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
+        with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+        complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays, "Day"%.%timepoints[2]%.%must_have_assays)])      
 }
 
-# weights for D29 correlates analyses
-if(has29) {
-    wts_table2 <- dat_proc %>% dplyr::filter(EarlyendpointD29==0 & Perprotocol==1 & EventTimePrimaryD29>=7) %>%
-      with(table(Wstratum, TwophasesampIndD29))
-    wts_norm2 <- rowSums(wts_table2) / wts_table2[, 2]
-    dat_proc$wt.D29 <- wts_norm2[dat_proc$Wstratum %.% ""]
-    dat_proc$wt.D29 = ifelse(with(dat_proc,  EarlyendpointD29==0 & Perprotocol==1 & EventTimePrimaryD29>=7), dat_proc$wt.D29, NA)
-    dat_proc$ph1.D29=!is.na(dat_proc$wt.D29)
-    dat_proc$ph2.D29=with(dat_proc, ph1.D29 & TwophasesampIndD29)
+  
 
-    assertthat::assert_that(
-        all(!is.na(subset(dat_proc,          EarlyendpointD29==0 & Perprotocol==1 & EventTimePrimaryD29>=7 & !is.na(Wstratum), select=wt.D29, drop=T))),
-        msg = "missing wt.D29 for D29 analyses ph1 subjects")
-
+# weights 
+for (tp in timepoints) {
+    tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
+    wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
+    wts_norm <- rowSums(wts_table) / wts_table[, 2]
+    dat_proc[["wt.D"%.%tp]] <- wts_norm[dat_proc$Wstratum %.% ""]
+    # the step above assigns weights for some subjects outside ph1. the next step makes them NA
+    dat_proc[["wt.D"%.%tp]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.D"%.%tp]], NA) 
+    dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp]])
+    dat_proc[["ph2.D"%.%tp]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp]]
     
-  if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
+    assertthat::assert_that(
+        all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp]])),
+        msg = "missing wt.D for D analyses ph1 subjects")
+}
+
+
+if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     # sensitivity analyses. the population is changed to at risk 1 day post D29 visit
     wts_table2 <-  dat_proc %>% dplyr::filter(EarlyendpointD29start1==0 & Perprotocol==1 & EventTimePrimaryD29>=1) %>%
       with(table(Wstratum, TwophasesampIndD29))
@@ -335,11 +288,10 @@ if(has29) {
     assertthat::assert_that(
         all(!is.na(subset(dat_proc,           EarlyendpointD29start1==0 & Perprotocol==1 & EventTimePrimaryD29>=1 & !is.na(Wstratum), select=wt.D29start1, drop=T))),
         msg = "missing wt.D29start1 for D29start1 analyses ph1 subjects")
-  }
 }
 
 # weights for intercurrent cases
-if(has29 & has57) {
+if(two_marker_timepoints) {
     wts_table2 <- dat_proc %>%               dplyr::filter(EarlyendpointD29==0 & Perprotocol==1 & EventIndPrimaryD29==1 & EventTimePrimaryD29>=7 & EventTimePrimaryD29 <= 6 + NumberdaysD1toD57 - NumberdaysD1toD29) %>%
       with(table(Wstratum, TwophasesampIndD29))
     wts_norm2 <- rowSums(wts_table2) / wts_table2[, 2]
@@ -506,7 +458,7 @@ assays.includeN=c(assays, "bindN")
 
 if(study_name=="COVE"){
     for (a in assays.includeN) {
-      for (t in c("B", if(has29) "Day29", if(has57) "Day57") ) {
+      for (t in c("B", paste0("Day", config$timepoints)) ) {
           dat_proc[[t %.% a]] <- dat_proc[[t %.% a]] + log10(convf[a])
       }
     }
@@ -519,7 +471,7 @@ if(study_name=="COVE"){
 
 # llod censoring
 for (a in assays.includeN) {
-  for (t in c("B", if(has29) "Day29", if(has57) "Day57") ) {
+  for (t in c("B", paste0("Day", config$timepoints)) ) {
     dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(llods[a]), log10(llods[a] / 2), dat_proc[[t %.% a]])
   }
 }
@@ -540,7 +492,7 @@ for (a in assays.includeN) {
 tmp=list()
 # lloq censoring
 for (a in assays.includeN) {
-  for (t in c("B", if(has29) "Day29", if(has57) "Day57") ) {
+  for (t in c("B", paste0("Day", config$timepoints)) ) {
     tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(lloqs[a]), log10(lloqs[a] / 2), dat_proc[[t %.% a]])
   }
 }
@@ -549,9 +501,6 @@ tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data f
 if(has57)       dat_proc["Delta57overB"  %.% assays.includeN] <- tmp["Day57" %.% assays.includeN] - tmp["B"     %.% assays.includeN]
 if(has29)       dat_proc["Delta29overB"  %.% assays.includeN] <- tmp["Day29" %.% assays.includeN] - tmp["B"     %.% assays.includeN]
 if(has29&has57) dat_proc["Delta57over29" %.% assays.includeN] <- tmp["Day57" %.% assays.includeN] - tmp["Day29" %.% assays.includeN]
-
-
-
 
 
 
@@ -575,7 +524,14 @@ if(has29&has57) dat_proc["Delta57over29" %.% assays.includeN] <- tmp["Day57" %.%
 # bundle data sets and save as CSV
 ###############################################################################
 
- 
+library(digest)
+if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock")) {
+    assertthat::assert_that(
+        digest(dat_proc)==ifelse(attr(config, "config")=="janssen_pooled_mock", "fa4b46ae6c39fdda27dccc944938aaad", "43895d21d723439f96d183c8898be370"),
+        msg = "failed sanity check")    
+    print("Passed sanity check")    
+}
+
 write_csv(dat_proc %>% filter(!is.na(risk_score)), file = here("data_clean", paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")))
 
 

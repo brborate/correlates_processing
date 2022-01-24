@@ -54,7 +54,7 @@ assays_plusN = c(assays, "bindN")
 
 failed_llod_check <- NULL
 for (a in assays_plusN) {
-  for (t in c("B", if(has29) "Day29", if(has57) "Day57")) {
+  for (t in c("B", paste0("Day", config$timepoints))) {
     pass <- all(dat_clean[[paste0(t,a)]] >= log10(llods[a] / 2), na.rm = TRUE)
     if(!pass){
         failed_llod_check <- c(failed_llod_check, paste0(t,a))
@@ -71,9 +71,7 @@ if(length(failed_llod_check) > 1){
 ## binary variables only take values 0/1
 variables_with_no_missing <- 
     c(
-      if(has57) c("ph1.D57", "ph2.D57", "EarlyendpointD57", "TwophasesampIndD57", "EarlyinfectionD57", "EventIndPrimaryD57", "EventTimePrimaryD57", "NumberdaysD1toD57"),
-      if(has29) c("ph1.D29", "ph2.D29", "EarlyendpointD29", "TwophasesampIndD29", "EarlyinfectionD29", "EventIndPrimaryD29", "EventTimePrimaryD29"),
-      
+      c(outer(c("ph1.D", "ph2.D", "EarlyendpointD", "TwophasesampIndD", "EarlyinfectionD", "EventIndPrimaryD", "EventTimePrimaryD", "NumberdaysD1toD"), config$timepoints, paste0)),
       "age.geq.65", "MinorityInd",
       "ph1.immuno",
       "ph2.immuno"
@@ -98,4 +96,3 @@ if(length(failed_variables_missing) > 1){
 if(length(failed_variables_missing) > 1){
     stop(paste0("Unexpected values in: ", paste(failed_variables_01, collapse = ", "))) 
 }
-
