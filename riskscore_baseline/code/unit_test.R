@@ -1,7 +1,7 @@
 library(digest)
 if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock")) {
   assertthat::assert_that(
-    digest(inputFile_with_riskscore)==ifelse(attr(config, "config")=="janssen_pooled_mock", "fa4b46ae6c39fdda27dccc944938aaad", "43895d21d723439f96d183c8898be370"),
+    digest(inputFile_with_riskscore)==ifelse(attr(config, "config")=="janssen_pooled_mock", "5cb73bf9810a11ae0b3d6638753bb690", "76bae5ccbfce93842efcd8b93fa3f38f"),
     msg = "failed sanity check")
   print("Passed sanity check")
 }
