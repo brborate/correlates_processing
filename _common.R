@@ -135,11 +135,8 @@ if (endsWith(attr(config, "config"),"PsV")) must_have_assays <- c("pseudoneutid5
 ###############################################################################
 # figure labels and titles for markers
 ###############################################################################
-#has29 = "Day29" %in% times
-has57 = study_name %in% c("COVE","MockCOVE")
-has29 = study_name %in% c("COVE","ENSEMBLE", "MockCOVE","MockENSEMBLE")
 
-markers <- c(outer(times[which(times %in% c("B", "Day29", "Day57"))], 
+markers <- c(outer(times[which(times %in% c("B", paste0("Day", config$timepoints)))], 
                    assays, "%.%"))
 
 # race labeling
@@ -177,13 +174,9 @@ names(labels.assays.short) <- c("bindN",
 # the truncated labels.assays.short later
 labels.assays.short.tabular <- labels.assays.short
 
-labels.time <- c("Day 1", "Day 29", "Day 57", 
-                 "D29 fold-rise over D1", 
-                 "D57 fold-rise over D1", 
-                 "D57 fold-rise over D29")
+labels.time <- c("Day 1", paste0("Day ", config$timepoints), paste0("D", config$timepoints, " fold-rise over D1"), "D57 fold-rise over D29")
 
-names(labels.time) <- c("B", "Day29", "Day57", "Delta29overB", 
-                        "Delta57overB", "Delta57over29")
+names(labels.time) <- c("B", paste0("Day", config$timepoints), paste0("Delta", config$timepoints, "overB"), "Delta57over29")
 
 # axis labeling
 labels.axis <- outer(
@@ -209,11 +202,7 @@ names(labels.assays) <- c("bindSpike",
 # title labeling
 labels.title <- outer(
   labels.assays[assays],
-  ": " %.%
-    c(
-      "Day 1", "Day 29", "Day 57", "D29 fold-rise over D1",
-      "D57 fold-rise over D1", "D57 fold-rise over D29"
-    ),
+  ": " %.% c("Day 1", paste0("Day ", config$timepoints), paste0("D", config$timepoints, " fold-rise over D1"), "D57 fold-rise over D29"),
   paste0
 )
 labels.title <- as.data.frame(labels.title)
@@ -374,7 +363,7 @@ ggsave_custom <- function(filename = default_name(plot),
 
 
 
-# extract assay from marker name such as Day57pseudoneutid80, Bpseudoneutid80
+# extract assay from marker name such as Daytp1pseudoneutid80, Bpseudoneutid80
 marker.name.to.assay=function(marker.name) {
     if(endsWith(marker.name, "bindSpike")) {
         "bindSpike"
@@ -405,12 +394,11 @@ report.assay.values=function(x, assay){
     out
     #out[!duplicated(out)] # unique strips away the names. But don't take out duplicates because 15% may be needed and because we may want the same number of values for each assay
 }
-#report.assay.values (dat.vac.seroneg[["Day57pseudoneutid80"]], "pseudoneutid80")
+#report.assay.values (dat.vac.seroneg[["Daytp1pseudoneutid80"]], "pseudoneutid80")
 
 
 preprocess.for.risk.score=function(dat_raw, study_name) {
     dat_proc=dat_raw
-    has57 = study_name %in% c("COVE","MockCOVE")
     
     dat_proc=subset(dat_proc, !is.na(Bserostatus))
     
@@ -422,15 +410,17 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
         dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
     }
         
-    dat_proc=subset(dat_proc, !is.na(EventTimePrimaryD29))
-    if(has57) dat_proc=subset(dat_proc, !is.na(EventTimePrimaryD57))
+    for(tp in timepoints) dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
     
-    dat_proc$EarlyendpointD29 <- with(dat_proc, ifelse(EarlyinfectionD29==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < NumberdaysD1toD29 + 7),1,0))
     # a hack to define EarlyinfectionD29start1, which is not in the mock or real moderna datasets
     # it is okay to have this because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
     if (study_name=="MockCOVE" | study_name=="COVE") dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
-    dat_proc$EarlyendpointD29start1<- with(dat_proc, ifelse(EarlyinfectionD29start1==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < NumberdaysD1toD29 + 1),1,0))
-    if(has57) dat_proc$EarlyendpointD57 <- with(dat_proc, ifelse(EarlyinfectionD57==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < NumberdaysD1toD57 + 7),1,0))    
+    
+    for(tp in timepoints) {
+        dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
+    }
+    tp=timepoints[1]
+    dat_proc[["EarlyendpointD"%.%tp%.%"start1"]]<- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp%.%"start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 1),1,0))
     
     # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm
     # for COVID-19 this require: 
@@ -439,7 +429,7 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
     # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
     # no NAs allowed. 
-    dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & EarlyendpointD29start1==0 & EventTimePrimaryD29>=1, 1, 0))
+    dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
     # COVE is a special case, redefined for backward compatibility
     if (study_name=="COVE" | study_name=="MockCOVE") dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
     assertthat::assert_that(
