@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "janssen_pooled_real")
+#Sys.setenv(TRIAL = "janssen_pooled_realbAb")
 #-----------------------------------------------
 renv::activate(here::here())    
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:

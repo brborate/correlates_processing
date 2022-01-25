@@ -1,4 +1,4 @@
-# Sys.setenv(TRIAL = "janssen_pooled_real")  
+# Sys.setenv(TRIAL = "janssen_pooled_realbAb")  
 #-----------------------------------------------
 # obligatory to append to the top of each script
 renv::activate(project = here::here())

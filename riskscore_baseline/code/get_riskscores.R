@@ -1,4 +1,4 @@
-# Sys.setenv(TRIAL = "janssen_pooled_real")
+# Sys.setenv(TRIAL = "janssen_pooled_realbAb")
 renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -55,7 +55,7 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
     rename(Ptid = Subjectid)
 }
 
-if(study_name %in% c("COVE", "MockCOVE")){
+if(study_name %in% c("MockCOVE")){
   inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) %>%
     rename(Ptid = X)
 }
@@ -89,6 +89,7 @@ if(study_name %in% c("MockCOVE")){ # as MinorityInd variable is absent in mock!
     "HighRiskInd", "Sex", "Age", "BMI"
   )
   
+  original_risk_vars <- risk_vars
   endpoint <- "EventIndPrimaryD57"
   studyName_for_report <- "COVE"
   inputMod <- inputFile
@@ -103,6 +104,15 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
     "Country.X1", "Country.X2", "Country.X3", "Country.X4", "Country.X5", "Country.X6", "Country.X7", 
     "Region.X1", "Region.X2", 
     "CalDtEnrollIND.X1"
+  )
+  
+  # Store original original risk variables as well to check in check_if_SL_needs_be_run.R!
+  original_risk_vars <- c(
+    "EthnicityHispanic","EthnicityNotreported", "EthnicityUnknown",
+    "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
+    "URMforsubcohortsampling", "HighRiskInd", "HIVinfection", 
+    "Sex", "Age", "BMI",
+    "Country", "Region", "CalendarDateEnrollment"
   )
   
   if(run_prod){
@@ -132,8 +142,9 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   dummies <- rec %>%
     step_dummy(Country, Region, CalDtEnrollIND) %>%
     prep(training = inputMod)
-  inputMod <- inputMod %>% bind_cols(bake(dummies, new_data = NULL)) %>%
-    select(-c(Country, Region, CalDtEnrollIND))
+  inputMod <- inputMod %>% bind_cols(bake(dummies, new_data = NULL)) 
+  # %>%
+  #   select(-c(Country, Region, CalDtEnrollIND))
   names(inputMod)<-gsub("\\_",".",names(inputMod))
   
   # # Create interaction variables between Region and CalDtEnrollIND
