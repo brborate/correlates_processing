@@ -412,15 +412,14 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
         
     for(tp in timepoints) dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
     
-    # a hack to define EarlyinfectionD29start1, which is not in the mock or real moderna datasets
-    # it is okay to have this because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
-    if (study_name=="MockCOVE" | study_name=="COVE") dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
     
     for(tp in timepoints) {
         dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
+        # a hack to define EarlyinfectionD29start1, which is not in the mock or real moderna datasets
+        # it is okay to have this because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
+        if(tp==timepoints[1]) if (study_name=="MockCOVE" | study_name=="COVE") dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
+        if(tp==timepoints[1]) dat_proc[["EarlyendpointD"%.%tp%.%"start1"]]<- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp%.%"start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 1),1,0))
     }
-    tp=timepoints[1]
-    dat_proc[["EarlyendpointD"%.%tp%.%"start1"]]<- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp%.%"start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 1),1,0))
     
     # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm
     # for COVID-19 this require: 
