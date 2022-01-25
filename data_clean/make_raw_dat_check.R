@@ -75,32 +75,32 @@ if(length(failed_variables_missing) > 0){
 
 
 # check failure times for sanity
-## EventIndPrimaryD57==1 implies EventIndPrimaryD29==1
-if(has57 & has29) {
-    pass <- with(dat_proc, all(EventIndPrimaryD29[EventIndPrimaryD57 == 1] == 1))
+## EventIndPrimaryDtp2==1 implies EventIndPrimaryDtp1==1
+if(two_marker_timepoints) {
+    pass <- with(dat_proc, all(get("EventIndPrimaryD"%.%timepoints[1])[get("EventIndPrimaryD"%.%timepoints[2]) == 1] == 1))
     if(!pass){
-        stop(paste0("Some individuals with qualifying events for Day 29 analysis are labeled ",
-                    "as having no event for the Day 57 analysis."))
+        stop(paste0("Some individuals with qualifying events for Day tp1 analysis are labeled ",
+                    "as having no event for the Day tp2 analysis."))
     }
     
-    ## cases that qualify for both events have shorter follow up for Day 57 analysis
+    ## cases that qualify for both events have shorter follow up for Day tp2 analysis
     pass <- with(dat_proc, {
-        idx <- EventIndPrimaryD57 == 1 & EventIndPrimaryD29 == 1
-        all(EventTimePrimaryD57[idx] < EventTimePrimaryD29[idx])
+        idx <- get("EventIndPrimaryD"%.%timepoints[2]) == 1 & get("EventIndPrimaryD"%.%timepoints[1]) == 1
+        all(get("EventTimePrimaryD"%.%timepoints[2])[idx] < get("EventTimePrimaryD"%.%timepoints[1])[idx])
     })
     if(!pass){
-        stop(paste0("Amongst individuals who have events that qualify for both Day 29 and Day 57 ",
-                    "some follow up times are *longer* for Day 57 than for Day 29."))
+        stop(paste0("Amongst individuals who have events that qualify for both Day tp1 and Day tp2 ",
+                    "some follow up times are *longer* for Day tp2 than for Day tp1"))
     }
 
     ## consistency between event time variables for the cases
     if (study_name != "MockCOVE") {
         pass <- with(dat_proc, {
-            tmp = NumberdaysD1toD57 - NumberdaysD1toD29 == EventTimePrimaryD29 - EventTimePrimaryD57
+            tmp = get("NumberdaysD1toD"%.%timepoints[1]) - get("NumberdaysD1toD"%.%timepoints[2]) == get("EventIndPrimaryD"%.%timepoints[1]) - get("EventIndPrimaryD"%.%timepoints[2])
             all(tmp | is.na(tmp))
         })
         if(!pass){
-            stop(paste0("NumberdaysD1toD57 - NumberdaysD1toD29 == EventTimePrimaryD29 - EventTimePrimaryD57 fails for some rows"))
+            stop(paste0("NumberdaysD1toDtp2 - NumberdaysD1toDtp1 == EventTimePrimaryDtp1 - EventTimePrimaryDtp2 fails for some rows"))
         }
     }
 

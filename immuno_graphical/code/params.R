@@ -19,14 +19,7 @@ all_assays <- c("bindSpike", "bindRBD", "bindN",
                 "pseudoneutid50", "pseudoneutid80", "liveneutmn50")
 bAb_assays <- c("bindSpike", "bindRBD", "bindN")
 nAb_assays <- c("pseudoneutid50", "pseudoneutid80")
-# 
-if (!has29) {
-  times <- c("B", "Day57", "Delta57overB")
-} else if (!has57) {
-  times <- c("B", "Day29", "Delta29overB")
-} else {
-  times <- c("B", "Day29", "Delta29overB", "Day57", "Delta57overB")
-}
+times <- c("B", paste0("Day", config$timepoints), paste0("Delta", config$timepoints, "overB"))
 
 # Depends on the Incoming data
 if(include_bindN){
