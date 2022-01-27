@@ -13,7 +13,8 @@ output/cases*
 output/cvsl*
 output/drop*
 output/impute*
-output/janssen_pooled_real*
+output/janssen_*
+output/moderna_*
 output/learner*
 output/objects*
 output/plac*
