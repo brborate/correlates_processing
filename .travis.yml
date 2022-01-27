@@ -24,10 +24,31 @@ jobs:
     - REPORT_TYPE=IMMUNO
     - TRIAL=janssen_pooled_mock
     script:
+    - echo "Processing data"
+    - make data_processed
+  - name: Moderna Immuno Report
+    env:
+    - REPORT_TYPE=IMMUNO
+    - TRIAL=moderna_mock
+    script:
+    - echo "Building immunogenicity report"
+    - make data_processed
+    - make immuno_report
+  - name: Janssen Pooled Immuno Report
+    env:
+    - REPORT_TYPE=IMMUNO
+    - TRIAL=janssen_pooled_mock
+    script:
+    - echo "Building immunogenicity report"
+    - make data_processed
+    - make immuno_report
+  - name: Janssen Pooled Risk Score Report
+    env:
+    - REPORT_TYPE=RISK
+    - TRIAL=janssen_pooled_mock
+    script:
     - echo "Building risk score report"
     - make risk_report
-    - echo "Make dat proc"
-    - make data_processed
 apt_packages:
 - libxml2-dev
 - libssl-dev
