@@ -20,15 +20,16 @@ cache:
 
 jobs:
   include:
-  - name: Janssen Data Processing
+  - name: Janssen Mock Data Processing
     env:
     - REPORT_TYPE=IMMUNO
     - TRIAL=janssen_pooled_mock
     - NOCHECK=1
     script:
     - echo "Processing data"
+    - make risk_report
     - make data_processed
-  - name: Moderna Data Processing
+  - name: Moderna Mock Data Processing
     env:
     - REPORT_TYPE=IMMUNO
     - TRIAL=moderna_mock
