@@ -10,6 +10,9 @@ for(opt in names(config)){
   eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
 }
  
+data_name = paste0(attr(config, "config"), "_for_immunogenicity.csv")
+
+
 # disabling lower level parallelization in favor of higher level of parallelization
 
 # set parallelization in openBLAS and openMP
@@ -58,12 +61,14 @@ if(TRUE) {
             ULOQ = 574.6783)
         ,
         pseudoneutid50=c( 
+            pos.cutoff=2.42,# as same lod
             LLOD = 2.42,
             ULOD = NA,
             LLOQ = 4.477,
             ULOQ = 10919)
         ,
         pseudoneutid80=c( 
+            pos.cutoff=15.02,# as same lod
             LLOD = 15.02,
             ULOD = NA,
             LLOQ = 21.4786,
@@ -88,15 +93,15 @@ if(TRUE) {
     llods=sapply(tmp, function(x) unname(x["LLOD"]))
     lloqs=sapply(tmp, function(x) unname(x["LLOQ"]))
     uloqs=sapply(tmp, function(x) unname(x["ULOQ"]))    
-    lloxs=llods 
+    lloxs=llods # llox is for plotting and can be either llod or lloq depending on trials
     
     if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
         
-        # data less than pos cutoff is set to pos.cutoff/2 in the raw data
-        # lod set to NA to make the plots free of too much white space
-        llods["bindSpike"]=NA 
+        # data less than pos cutoff is set to pos.cutoff/2 in the raw data        
+        llods["bindSpike"]=NA # lod set to NA to make the plots free of too much white space
         uloqs["bindSpike"]=238.1165 
     
+        # data less than pos cutoff is set to pos.cutoff/2 in the raw data        
         llods["bindRBD"]=NA 
         uloqs["bindRBD"]=172.5755    
                 
@@ -380,8 +385,6 @@ marker.name.to.assay=function(marker.name) {
     } else stop("marker.name.to.assay: wrong marker.name")
 }
 
-
-data_name = paste0(attr(config, "config"), "_data_processed.csv")
 
 # x is the marker values
 # assay is one of assays, e.g. pseudoneutid80
