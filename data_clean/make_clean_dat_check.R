@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "janssen_pooled_realbAb")
+#Sys.setenv(TRIAL = "janssen_pooled_realADCP")
 #-----------------------------------------------
 renv::activate(here::here())    
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
@@ -55,7 +55,7 @@ assays_plusN = c(assays, "bindN")
 failed_llod_check <- NULL
 for (a in assays_plusN) {
   for (t in c("B", paste0("Day", config$timepoints))) {
-    pass <- all(dat_clean[[paste0(t,a)]] >= log10(llods[a] / 2), na.rm = TRUE)
+    pass <- all(dat_clean[[paste0(t,a)]] >= .999*log10(llods[a] / 2), na.rm = TRUE) #.999 is a necessary fudge factor
     if(!pass){
         failed_llod_check <- c(failed_llod_check, paste0(t,a))
     }
