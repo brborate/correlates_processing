@@ -404,13 +404,15 @@ if(study_name=="COVE"){
 
 ###############################################################################
 # censoring values below LLOD
+# after COVE, the data already comes censored
 ###############################################################################
 
-# llod censoring
-for (a in assays.includeN) {
-  for (t in c("B", paste0("Day", config$timepoints)) ) {
-    dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(llods[a]), log10(llods[a] / 2), dat_proc[[t %.% a]])
-  }
+if(study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")){
+    for (a in assays.includeN) {
+      for (t in c("B", paste0("Day", config$timepoints)) ) {
+        dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(llods[a]), log10(llods[a] / 2), dat_proc[[t %.% a]])
+      }
+    }
 }
 
 
