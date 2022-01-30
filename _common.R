@@ -98,11 +98,9 @@ if(TRUE) {
     if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
         
         # data less than pos cutoff is set to pos.cutoff/2 in the raw data        
-        llods["bindSpike"]=NA # lod set to NA to make the plots free of too much white space
         uloqs["bindSpike"]=238.1165 
     
         # data less than pos cutoff is set to pos.cutoff/2 in the raw data        
-        llods["bindRBD"]=NA 
         uloqs["bindRBD"]=172.5755    
                 
         llods["pseudoneutid50"]=6 # based on data, SAP says 5.712
@@ -113,7 +111,6 @@ if(TRUE) {
     } else if(study_name=="PREVENT-19") {
         
         # data less than lloq is set to lloq/2 in the raw data
-        llods["bindSpike"]=NA 
         lloqs["bindSpike"]=150.4*0.0090
         pos.cutoffs["bindSpike"]=lloqs["bindSpike"]
         uloqs["bindSpike"]=770464.6*0.0090
