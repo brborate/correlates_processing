@@ -11,21 +11,28 @@ generate_new_riskscores <- function(){
 }
 
 
-if(file.exists(paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))){
+if(file.exists(paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData")) |
+   (study_name == "ENSEMBLE" & file.exists(paste0("output/janssen_trial_realbAb_inputFile_with_riskscore.RData")))){
+  
+  if(study_name == "ENSEMBLE"){
+    load("output/janssen_trial_realbAb_inputFile_with_riskscore.RData")
+  }else{
     load(paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
-    old_processed <- inputFile_with_riskscore %>%
-      select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars), risk_score, standardized_risk_score)
+  } 
+    
+  old_processed <- inputFile_with_riskscore %>%
+    select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars), risk_score, standardized_risk_score)
 
-    new_processed <- inputFile %>%
-      select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars))
+  new_processed <- inputFile %>%
+    select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars))
 
-    if(all.equal(old_processed %>% select(-c(risk_score, standardized_risk_score)), new_processed) == TRUE){
-      message("No change in input data. Superlearner will not be run. Risk scores from earlier run will be appended to raw data!")
-      inputFile_with_riskscore <- left_join(inputFile,
-                                            old_processed %>%
-                                              select(Ptid, risk_score, standardized_risk_score), by = "Ptid")
+  if(all.equal(old_processed %>% select(-c(risk_score, standardized_risk_score)), new_processed) == TRUE){
+    message("No change in input data. Superlearner will not be run. Risk scores from earlier run will be appended to raw data!")
+    inputFile_with_riskscore <- left_join(inputFile,
+                                          old_processed %>%
+                                            select(Ptid, risk_score, standardized_risk_score), by = "Ptid")
 
-      save(inputFile_with_riskscore, file = paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
+    save(inputFile_with_riskscore, file = paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
     }else{
       message("There is change in input data. Superlearner needs to be run and new risk scores generated!")
       generate_new_riskscores()
