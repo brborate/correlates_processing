@@ -55,7 +55,7 @@ assays_plusN = c(assays, "bindN")
 failed_llod_check <- NULL
 for (a in assays_plusN) {
   for (t in c("B", paste0("Day", config$timepoints))) {
-    pass <- all(dat_clean[[paste0(t,a)]] >= .999*log10(llods[a] / 2), na.rm = TRUE) #.999 is a necessary fudge factor
+    pass <- all(dat_clean[[paste0(t,a)]] >= ifelse(llods[a]/2>=1, .999, 1.001) * log10(llods[a] / 2), na.rm = TRUE) #.999 is a necessary fudge factor
     if(!pass){
         failed_llod_check <- c(failed_llod_check, paste0(t,a))
     }
@@ -64,7 +64,7 @@ for (a in assays_plusN) {
 
 if(length(failed_llod_check) > 1){
     stop(paste0("Values of assays less than LLOD / 2 for: ", 
-                paste(failed_llod_check, sep = ", ")))
+                paste(failed_llod_check, sep = ", "), "\n"))
 }
 
 ## missing values in variables that should have no missing values
