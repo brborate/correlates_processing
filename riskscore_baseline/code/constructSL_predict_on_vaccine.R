@@ -25,8 +25,8 @@ library(xgboost)
 conflict_prefer("filter", "dplyr")
 conflict_prefer("select", "dplyr")
 conflict_prefer("omp_set_num_threads", "RhpcBLASctl")
-load("output/objects_for_running_SL.rda")
-load("output/plac_top2learners_SL_discreteSL.rda")
+load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
+load(paste0("output/", Sys.getenv("TRIAL"), "/plac_top2learners_SL_discreteSL.rda"))
 source(here("code", "sl_screens.R")) # set up the screen/algorithm combinations
 source(here("code", "utils.R")) # get CV-AUC for all algs
 
@@ -44,7 +44,7 @@ sl_riskscore_slfits <- SuperLearner(
   cvControl = list(V = V_outer, stratifyCV = TRUE), verbose = FALSE
   )
 
-save(sl_riskscore_slfits, file = here("output", "sl_riskscore_slfits.rda"))
+save(sl_riskscore_slfits, file = here("output", Sys.getenv("TRIAL"), "sl_riskscore_slfits.rda"))
 
 # Predict on vaccine arm
 dat.ph1.vacc <- inputMod %>%
@@ -86,17 +86,17 @@ vacc <- bind_cols(
                             center = mean(risk_score, na.rm = T),
                             scale = sd(risk_score, na.rm = T)))
 
-write.csv(vacc, here("output", "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
+write.csv(vacc, here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
 
 # plot ROC curve on vaccinees
 pred.obj <- ROCR::prediction(vacc$pred, vacc %>% pull(endpoint))
 perf.obj <- ROCR::performance(pred.obj, "tpr", "fpr")
 
 options(bitmapType = "cairo")
-png(file = here("figs", "ROCcurve_riskscore_vacc_onlySL.png"),
+png(file = here("output", Sys.getenv("TRIAL"), "ROCcurve_riskscore_vacc_onlySL.png"),
     width = 1000, height = 1000)
 
-data.frame(xval = perf.obj@x.values[[1]],
+print(data.frame(xval = perf.obj@x.values[[1]],
            yval = perf.obj@y.values[[1]],
            learner = paste0("Superlearner (", unique(vacc$AUCchar), ")")) %>% 
   ggplot(aes(x = xval, y = yval, col = learner)) +
@@ -114,13 +114,13 @@ data.frame(xval = perf.obj@x.values[[1]],
   ) +
   labs(x = "False Positive Rate", y = "True Positive Rate", col = "Model (AUC)") +
   geom_abline(intercept = 0, slope = 1) + 
-  scale_color_manual(values = "purple")
+  scale_color_manual(values = "purple"))
 
 dev.off()
 
 # plot pred prob plot on vaccinees
 options(bitmapType = "cairo")
-png(file = here("figs", "predProb_riskscore_vacc_onlySL.png"),
+png(file = here("output", Sys.getenv("TRIAL"), "predProb_riskscore_vacc_onlySL.png"),
     width = 1100, height = 700)
 if(study_name_code == "COVE"){
   cases = "Post Day 57 Cases"
@@ -128,7 +128,7 @@ if(study_name_code == "COVE"){
 if(study_name_code == "ENSEMBLE"){
   cases = "Post Day 29 Cases"
 }
-vacc %>%
+print(vacc %>%
   mutate(Ychar = ifelse(get(endpoint) == 0, "Non-Cases", cases)) %>%
   ggplot(aes(x = Ychar, y = pred, color = Ychar)) +
   geom_jitter(width = 0.06, size = 3, shape = 21, fill = "white") +
@@ -144,5 +144,5 @@ vacc %>%
     axis.text = element_text(size = 23),
     axis.ticks.length = unit(.35, "cm"),
     axis.title.y = element_text(size = 30)
-  )
+  ))
 dev.off()

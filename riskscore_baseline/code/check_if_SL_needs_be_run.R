@@ -11,13 +11,13 @@ generate_new_riskscores <- function(){
 }
 
 
-if(file.exists(paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData")) |
-   (study_name == "ENSEMBLE" & file.exists(paste0("output/janssen_trial_realbAb_inputFile_with_riskscore.RData")))){
+if(file.exists(paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData")) |
+   (study_name == "ENSEMBLE" & file.exists(paste0("output/janssen_pooled_realbAb/janssen_pooled_realbAb_inputFile_with_riskscore.RData")))){
   
   if(study_name == "ENSEMBLE"){
-    load("output/janssen_trial_realbAb_inputFile_with_riskscore.RData")
+    load("output/janssen_pooled_realbAb/janssen_pooled_realbAb_inputFile_with_riskscore.RData")
   }else{
-    load(paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
+    load(paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
   } 
     
   old_processed <- inputFile_with_riskscore %>%
@@ -32,13 +32,13 @@ if(file.exists(paste0("output/", attr(config, "config"), "_inputFile_with_risksc
                                           old_processed %>%
                                             select(Ptid, risk_score, standardized_risk_score), by = "Ptid")
 
-    save(inputFile_with_riskscore, file = paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
+    save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
     }else{
       message("There is change in input data. Superlearner needs to be run and new risk scores generated!")
       generate_new_riskscores()
     }
 }else{
-  message(paste0("riskscore_baseline/", paste0("output/", attr(config, "config"), "_inputFile_with_riskscore.RData"), " does not exist. Superlearner needs to be run and new risk scores generated!"))
+  message(paste0("riskscore_baseline/", paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData"), " does not exist. Superlearner needs to be run and new risk scores generated!"))
   generate_new_riskscores()
 }
 

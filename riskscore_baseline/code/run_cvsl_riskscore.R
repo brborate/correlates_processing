@@ -4,7 +4,7 @@
     mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
   
   table(tab$Trt, tab %>% pull(endpoint)) %>%
-    write.csv(file = here("output", "cases_prior_to_applying_Riskscorecohortflag.csv"))
+    write.csv(file = here("output", Sys.getenv("TRIAL"), "cases_prior_to_applying_Riskscorecohortflag.csv"))
   rm(tab)
   
   
@@ -23,7 +23,7 @@
     mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
   
   table(tab$Trt, tab %>% pull(endpoint)) %>%
-    write.csv(file = here("output", "cases_prior_riskScoreAnalysis.csv"))
+    write.csv(file = here("output", Sys.getenv("TRIAL"), "cases_prior_riskScoreAnalysis.csv"))
   rm(tab)
   
   # Derive maxVar: the maximum number of variables that will be allowed by SL screens in the models.
@@ -114,9 +114,9 @@
   cvfits <- list()
   cvfits[[1]] <- fits$cvfits
   
-  saveRDS(cvaucs, here("output", "cvsl_riskscore_cvaucs.rds"))
-  save(cvfits, file = here("output", "cvsl_riskscore_cvfits.rda"))
-  save(risk_placebo_ptids, file = here("output", "risk_placebo_ptids.rda"))
+  saveRDS(cvaucs, here("output", Sys.getenv("TRIAL"), "cvsl_riskscore_cvaucs.rds"))
+  save(cvfits, file = here("output", Sys.getenv("TRIAL"), "cvsl_riskscore_cvfits.rda"))
+  save(risk_placebo_ptids, file = here("output", Sys.getenv("TRIAL"), "risk_placebo_ptids.rda"))
   save(run_prod, Y, X_riskVars, weights, inputMod, risk_vars, all_risk_vars, endpoint, maxVar,
-       V_outer, V_inner, family, method, scale, studyName_for_report, file = here("output", "objects_for_running_SL.rda"))
+       V_outer, V_inner, family, method, scale, studyName_for_report, file = here("output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
 
