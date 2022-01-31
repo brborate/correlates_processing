@@ -21,22 +21,20 @@ if(file.exists(paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, "config"
   } 
     
   old_processed <- inputFile_with_riskscore %>%
-    filter(Trt == 0) %>%
     select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars), risk_score, standardized_risk_score)
 
   new_processed <- inputFile %>%
-    filter(Trt == 0) %>%
     select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars))
 
   if(all.equal(old_processed %>% select(-c(risk_score, standardized_risk_score)), new_processed) == TRUE){
-    message("Variables related to risk score generation in Placebo cohort of input data have not changed. Superlearner will not be run. Risk scores from earlier run will be appended to raw data!")
+    message("Variables related to risk score generation in input data have not changed. Superlearner will not be run. Risk scores from earlier run will be appended to raw data!")
     inputFile_with_riskscore <- left_join(inputFile,
                                           old_processed %>%
                                             select(Ptid, risk_score, standardized_risk_score), by = "Ptid")
 
     save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
     }else{
-      message("Variables related to risk score generation in Placebo cohort of input data have changed! Superlearner needs to be run and new risk scores generated!")
+      message("Variables related to risk score generation in input data have changed! Superlearner needs to be run and new risk scores generated!")
       generate_new_riskscores()
     }
 }else{
