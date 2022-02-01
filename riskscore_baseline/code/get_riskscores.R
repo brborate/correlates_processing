@@ -53,15 +53,20 @@ source(here("code", "utils.R")) # get CV-AUC for all algs
 if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) %>%
     rename(Ptid = Subjectid)
-}
-
-if(study_name %in% c("MockCOVE")){
+}else if(study_name == "MockCOVE"){
   inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) %>%
     rename(Ptid = X)
+}else if(study_name == "COVE"){
+  inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name)
+  print("Risk scores for Moderna real dataset were generated at Moderna's end using CoVPN Stats/SCHARP code. 
+        Are you sure you want to regenerate them?")
 }
 
 # Save inputFile 
-save(inputFile, file = paste0("output/", attr(config, "config"), "_inputFile.RData"))
+if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
+  dir.create(paste0("output/", Sys.getenv("TRIAL")))
+}
+save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile.RData"))
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable

@@ -18,13 +18,13 @@ library(kableExtra, quietly = T)
 library(conflicted, quietly = T)
 conflicted::conflict_prefer("filter", "dplyr")
 conflict_prefer("summarise", "dplyr")
-load(here("riskscore_baseline", "output", "objects_for_running_SL.rda"))
+load(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
 source(here("riskscore_baseline", "code", "study_specific_functions.R"))
 
 study_name_code <- studyName_for_report
 
 ### create footnotes ###
-dropped.riskVars.fewer.0s1s <- read.table(here("riskscore_baseline", "output", "drop_riskVars_with_fewer_0s_or_1s.csv")) %>%
+dropped.riskVars.fewer.0s1s <- read.table(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "drop_riskVars_with_fewer_0s_or_1s.csv")) %>%
   separate(V1, c("droppedVars"), sep = " ") %>%
   .$droppedVars %>%
   paste(collapse=", ") 
@@ -37,7 +37,7 @@ if(dropped.riskVars.fewer.0s1s == "No"){
   eval.footnote1.table = TRUE
 }
 
-dropped.riskVars.high.NAs <- read.table(here("riskscore_baseline", "output", "drop_riskVars_with_high_total_missing_values.csv")) %>%
+dropped.riskVars.high.NAs <- read.table(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "drop_riskVars_with_high_total_missing_values.csv")) %>%
   separate(V1, c("droppedVars"), sep = " ") %>%
   .$droppedVars %>%
   paste(collapse=", ") 
@@ -50,7 +50,7 @@ if(dropped.riskVars.high.NAs == "No"){
   eval.footnote2.table = TRUE
 }
   
-vars.with.imputed.values <- read.table(here("riskscore_baseline", "output", "impute_missing_values.csv")) %>%
+vars.with.imputed.values <- read.table(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "impute_missing_values.csv")) %>%
   separate(V1, c("delete", "imputedVars"), sep = ": ") %>%
   .$imputedVars %>%
   paste(collapse=", ") 
@@ -72,7 +72,7 @@ if(endpoint %in% c("EventIndPrimaryD29", "EventIndPrimaryIncludeNotMolecConfirme
 
 caption <- "Variables considered for risk score analysis."
 
-tab <- read.csv(here("riskscore_baseline", "output", "risk_vars.csv"), row.names = 1,
+tab <- read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_vars.csv"), row.names = 1,
          header = TRUE) %>%
   kable(
     #format = output_type,
@@ -253,7 +253,7 @@ rm(tab)
 ```{r learner-screens, warning=FALSE, echo=FALSE}
 caption <- "All learner-screen combinations (14 in total) used as input to the Superlearner."
 
-read.csv(here::here("riskscore_baseline", "output", "learner-screens.csv"),
+read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "learner-screens.csv"),
          row.names = 1, header = TRUE) %>%
   rename(`Screen*` = `Screen.`) %>%
   kable(
@@ -281,28 +281,28 @@ read.csv(here::here("riskscore_baseline", "output", "learner-screens.csv"),
 
 
 ```{r, echo=FALSE, out.width="99%", out.height="120%", fig.cap= paste0("Cross-validated AUC (95\\% CI) of algorithms for predicting COVID-19 disease status starting 7 days after ", day, ". CV-AUCs were computed using only data from the placebo arm.")}
-knitr::include_graphics(here::here("riskscore_baseline", "figs", "risk_placebo_cvaucs.png"))
+knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_placebo_cvaucs.png"))
 ```
 
 \end{landscape}
 
 
 ```{r, echo=FALSE, out.height="94%", fig.cap=paste0("CV-estimated predicted probabilities of COVID-19 disease 7 days after ", day, " by case/control status for top 2 learners, SuperLearner and Discrete SL. CV-estimated predicted probabilities were computed using only data from the placebo arm.")}
-knitr::include_graphics(here::here("riskscore_baseline", "figs", "predProb_riskscore_plac.png"))
+knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "predProb_riskscore_plac.png"))
 ```
 
 \clearpage
 
 
 ```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap="ROC curves based off CV-estimated predicted probabilities for the top 2 learners, Superlearner and Discrete SL. CV-estimated predicted probabilities were computed using only data from the placebo arm."}
-knitr::include_graphics(here::here("riskscore_baseline", "figs", "ROCcurve_riskscore_plac.png"))
+knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "ROCcurve_riskscore_plac.png"))
 ```
 
 \clearpage
 
 ```{r risk-sl-weights, warning=FALSE, echo=FALSE}
 caption <- "Weights assigned by Superlearner."
-read.csv(here("riskscore_baseline", "output", "SL_weights.csv"), row.names = 1,
+read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "SL_weights.csv"), row.names = 1,
          header = TRUE) %>%
   kable(
     booktabs = TRUE,
@@ -320,7 +320,7 @@ read.csv(here("riskscore_baseline", "output", "SL_weights.csv"), row.names = 1,
 ```{r SLtopmodels, warning=FALSE, echo=FALSE}
 caption <- "Learners assigned weight > 0.0 by Superlearner sorted by weight. Predictors within each learner are sorted by variable importance which is the absolute value in Coefficient (in case of learners like SL.glm, SL.gam, SL.glm.interaction), or Gain (in case of SL.xgboost) or Importance (in case of SL.ranger.imp)."
 
-read.csv(here("riskscore_baseline", "output", "SL_all_models_with_predictors.csv"),
+read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "SL_all_models_with_predictors.csv"),
          row.names = 1, header = TRUE) %>%
   mutate(Gain = if("Gain" %in% colnames(.)) as.numeric(Gain) else NULL,
         Importance = if("Importance" %in% colnames(.)) as.numeric(Importance) else NULL,
@@ -348,14 +348,14 @@ read.csv(here("riskscore_baseline", "output", "SL_all_models_with_predictors.csv
 
 
 ```{r, echo=FALSE, out.width="100%", out.height="90%", fig.cap=paste0("Superlearner predicted probabilities of COVID-19 disease in vaccinees 7 days after ", day, " by case/control status.")}
-knitr::include_graphics(here::here("riskscore_baseline", "figs", "predProb_riskscore_vacc_onlySL.png"))
+knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "predProb_riskscore_vacc_onlySL.png"))
 ```
 
 \clearpage
 
 
 ```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap="ROC curve based off Superlearner predicted probabilities in vaccinees."}
-knitr::include_graphics(here::here("riskscore_baseline", "figs", "ROCcurve_riskscore_vacc_onlySL.png"))
+knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "ROCcurve_riskscore_vacc_onlySL.png"))
 ```
 
 \clearpage
@@ -380,7 +380,7 @@ The risk score analysis code appends two columns (risk_score and standardized_ri
 caption <- "Cases per treatment arm in data\\_processed.csv before applying RiskscorecohortFLAG."
 new_colnames = c("Non-Cases", paste0("Post-", day, "-Cases"))
 
-read.csv(here("riskscore_baseline", "output", "cases_prior_to_applying_Riskscorecohortflag.csv"), row.names = 1,
+read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_to_applying_Riskscorecohortflag.csv"), row.names = 1,
          header = TRUE) %>%
   tibble::rownames_to_column(var = "Study-Arm") %>%
   rename_with(~new_colnames, c("X0", "X1")) %>%
@@ -401,7 +401,7 @@ read.csv(here("riskscore_baseline", "output", "cases_prior_to_applying_Riskscore
 caption <- "Cases per treatment arm after applying RiskscorecohortFLAG (prior to risk score analysis). 18 subjects with missing value for endpoint were dropped from analysis."
 new_colnames = c("Non-Cases", paste0("Post-", day, "-Cases"))
 
-read.csv(here("riskscore_baseline", "output", "cases_prior_riskScoreAnalysis.csv"), row.names = 1,
+read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_riskScoreAnalysis.csv"), row.names = 1,
          header = TRUE) %>%
   tibble::rownames_to_column(var = "Study-Arm") %>%
   rename_with(~new_colnames, c("X0", "X1")) %>%
@@ -420,7 +420,7 @@ read.csv(here("riskscore_baseline", "output", "cases_prior_riskScoreAnalysis.csv
 ```{r cases-post-riskScore, warning=FALSE, echo=FALSE, message=FALSE}
 caption <- "Cases per treatment arm post risk score analysis."
 
-read.csv(here("riskscore_baseline", "output", "cases_post_riskScoreAnalysis.csv"), row.names = 1,
+read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_post_riskScoreAnalysis.csv"), row.names = 1,
          header = TRUE) %>%
   tibble::rownames_to_column(var = "Study-Arm") %>%
   rename_with(~new_colnames, c("X0", "X1")) %>%
