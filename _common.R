@@ -111,7 +111,7 @@ if(TRUE) {
         lloqs["bindSpike"]=150.4*0.0090
         pos.cutoffs["bindSpike"]=lloqs["bindSpike"]
         uloqs["bindSpike"]=770464.6*0.0090
-    
+     
     }
     
 }
