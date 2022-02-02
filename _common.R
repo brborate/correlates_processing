@@ -3,14 +3,14 @@ library(methods)
 library(dplyr)
 library(digest)
 set.seed(98109)
-
+ 
 
 config <- config::get(config = Sys.getenv("TRIAL"))
 for(opt in names(config)){
   eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
 }
  
-data_name = paste0(attr(config, "config"), "_for_immunogenicity.csv")
+data_name = paste0(attr(config, "config"), "_data_processed_for_immunogenicity.csv")
 
 
 # disabling lower level parallelization in favor of higher level of parallelization
@@ -111,7 +111,7 @@ if(TRUE) {
         lloqs["bindSpike"]=150.4*0.0090
         pos.cutoffs["bindSpike"]=lloqs["bindSpike"]
         uloqs["bindSpike"]=770464.6*0.0090
-    
+     
     }
     
 }
