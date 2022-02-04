@@ -11,8 +11,7 @@ library(tidyverse)
 # To select which tables are included in the report.
 # Also to modify the headers, footers, etc. for each table
 
-cutoff.name <- case_when(study_name_code=="COVE" ~ "lloq", 
-                         study_name_code=="ENSEMBLE" ~ "lloq")
+cutoff.name <- config$llox_label
 
 randomsubcohort <- case_when(study_name_code=="COVE" ~ "This table summarizes the 
       random subcohort, which was randomly sampled from the per-protocol cohort. The 

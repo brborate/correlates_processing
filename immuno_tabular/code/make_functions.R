@@ -22,7 +22,8 @@ getResponder <- function(data,
                          grtns=c(2, 4),
                          responderFR = 4,
                          pos.cutoffs = pos.cutoffs) {
-  cutoff <- get(paste0(cutoff.name, "s"))
+  
+  cutoff <- get(paste0("l", cutoff.name, "s"))
   for (i in times){
     for (j in assays){
       post <- paste0(i, j)
@@ -30,18 +31,19 @@ getResponder <- function(data,
       delta <- paste0("Delta", gsub("Day", "", i), "overB", j)
       
       for (k in folds){
-        data[, paste0(post, k, cutoff.name)] <- as.numeric(10^data[, post] >= k*cutoff[j])
+        data[, paste0(post, k, "l", cutoff.name)] <- as.numeric(10^data[, post] >= k*cutoff[j])
       }
       
       for (k in grtns){
         data[, paste0(post, "FR", k)] <- as.numeric(10^data[, delta] >= k)
       }
+      
       if (!is.na(pos.cutoffs[j])) {
         data[, paste0(post, "Resp")] <- as.numeric(data[, post] > log10(pos.cutoffs[j]))
       } else {
       data[, paste0(post, "Resp")] <- as.numeric(
         (data[, bl] < log10(cutoff[j]) & data[, post] > log10(cutoff[j])) |
-        (data[, bl] >= log10(cutoff[j]) & data[, paste0(post, "FR", responderFR)] == 1))
+          (data[, bl] >= log10(cutoff[j]) & data[, paste0(post, "FR", responderFR)] == 1))
       }
     }
   }
