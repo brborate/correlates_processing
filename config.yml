@@ -33,6 +33,21 @@ moderna_mock: &moderna_mock
   study_name: MockCOVE
 
 
+prevent19: &prevent19
+  <<: *ows_trial
+  two_marker_timepoints: no
+  timepoints: [35]
+  times: [B, Day35, Delta35overB]
+  time_labels: [Day 1, Day 35, D35 fold-rise over D1]
+  data_raw_dir: novavax
+  study_name_code: PREVENT19
+  data_in_file: /trials/covpn/p3004/analysis/mapping_immune_correlates/adata/COVID_Novavax_realdata_20220128.csv 
+  assays: [bindSpike]
+  assay_labels: [Binding Antibody to Spike]
+  assay_labels_short: [Anti Spike IgG (BAU/ml)]
+  study_name: PREVENT19
+  
+
 janssen_trial: &janssen_trial
   <<: *ows_trial
   two_marker_timepoints: no
