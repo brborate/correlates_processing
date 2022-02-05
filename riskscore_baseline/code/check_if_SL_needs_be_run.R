@@ -1,7 +1,7 @@
 # Check if only change in input dataset is marker data. 
 # If so, simply pull the earlier risk scores and add to the new processed dataset!
 generate_new_riskscores <- function(){
-  source(here("code", "clean_output_and_figs_dirs.R"))
+  source(here("code", "clean_output_dir.R"))
   source(here("code", "run_cvsl_riskscore.R"))
   source(here("code", "createRDAfiles_fromSLobjects.R"))
   source(here("code", "tables_figures.R"))

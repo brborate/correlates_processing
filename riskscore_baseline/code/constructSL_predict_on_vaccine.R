@@ -129,7 +129,7 @@ if(study_name_code == "ENSEMBLE"){
   cases = "Post Day 29 Cases"
 }
 print(vacc %>%
-  mutate(Ychar = ifelse(get(endpoint) == 0, "Non-Cases", cases)) %>%
+  mutate(Ychar = ifelse(get(endpoint) == 0, "Non-Cases", paste0("Post Day ", day, " Cases"))) %>%
   ggplot(aes(x = Ychar, y = pred, color = Ychar)) +
   geom_jitter(width = 0.06, size = 3, shape = 21, fill = "white") +
   geom_violin(alpha = 0.05, color = "black", lwd=1.5) +

@@ -1,4 +1,5 @@
 # Sys.setenv(TRIAL = "janssen_pooled_realbAb")
+# Sys.setenv(TRIAL = "novavax_real")
 renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -60,6 +61,11 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name)
   print("Risk scores for Moderna real dataset were generated at Moderna's end using CoVPN Stats/SCHARP code. 
         Are you sure you want to regenerate them?")
+}else if(study_name == "NOVA"){
+  inputFile <- read.csv(path_to_data) %>%
+    rename(Ptid = Subjectid) %>%
+    mutate(Riskscorecohortflag = ifelse(Perprotocol == 1 & Bserostatus == 0, 1, 0)) %>%
+    filter(Country == 0) # Analysis based off only US subjects
 }
 
 # Save inputFile 
@@ -167,6 +173,25 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   # }
 }
 
+
+
+if(study_name %in% c("NOVA")){
+  risk_vars <- c(
+    "Age", "Sex", "Black", "Asian", "NatAmer", "PacIsl",  
+    "Multiracial", "Notreported", "Unknown",
+    "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
+    "Height", "Weight", "BMI", "HighRiskInd"
+    #"AGEGR1", "BMICAT", "LUNGFL", "KIDNEYFL",
+    #"DIABTSFL", "CARDCFL","OBESEFL",
+    #"STUDENT","WORKING","PROXIMIT","FREQWORK", "PROXLIVE", "PPMASKS","PEOPLE", 
+    #"LT18Y","Y18_64",  "GTE65Y","CURRSMOK","HISTSMOK","HRISKFL", "CBPBCM"
+  )
+  
+  endpoint <- "EventIndPrimaryD35"
+  studyName_for_report <- "NOVA"
+  inputMod <- inputFile %>% 
+    mutate(Riskscorecohortflag = 1) 
+}
 
 # Check there are no NA values in Riskscorecohortflag!
 assertthat::assert_that(

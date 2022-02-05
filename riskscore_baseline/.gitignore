@@ -3,6 +3,7 @@ report.aux
 report.log
 report.out
 output/*.*
+output/*
 output/*.Rdata
 *.Rdata
 output/moderna_mock/*
@@ -10,6 +11,7 @@ output/janssen_pooled_mock/*
 output/janssen_pooled_realbAb/*
 output/janssen_pooled_realADCP/*
 output/janssen_pooled_realPsV/*
+output/novavax_real/*
 
 
 
