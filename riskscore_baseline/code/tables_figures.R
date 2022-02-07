@@ -1,5 +1,5 @@
 # Sys.setenv(TRIAL = "janssen_pooled_realbAb")
-# Sys.setenv(TRIAL = "novavax_real")
+# Sys.setenv(TRIAL = "prevent19")
 renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -145,7 +145,7 @@ dev.off()
 options(bitmapType = "cairo")
 png(file = here("output", Sys.getenv("TRIAL"), "predProb_riskscore_plac.png"),
     width = 1100, height = 1400)
-p2 <- plot_predicted_probabilities(pred, day)
+p2 <- plot_predicted_probabilities(pred, risk_timepoint)
 print(p2)
 dev.off()
 

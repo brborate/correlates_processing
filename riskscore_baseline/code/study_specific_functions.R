@@ -69,7 +69,7 @@ get_defs_comments_riskVars <- function(data){
       ),
       Comments = "")
   }
-  if(study_name_code == "NOVA"){
+  if(study_name_code == "PREVENT19"){
     data <- data %>%
       mutate(Definition = case_when(
         `Variable Name` == "Age" ~ "Age at enrollment in years",

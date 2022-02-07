@@ -1,5 +1,5 @@
 # Sys.setenv(TRIAL = "janssen_pooled_realbAb")
-# Sys.setenv(TRIAL = "novavax_real")
+# Sys.setenv(TRIAL = "prevent19")
 renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -61,7 +61,7 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name)
   print("Risk scores for Moderna real dataset were generated at Moderna's end using CoVPN Stats/SCHARP code. 
         Are you sure you want to regenerate them?")
-}else if(study_name == "NOVA"){
+}else if(study_name == "PREVENT19"){
   inputFile <- read.csv(path_to_data) %>%
     rename(Ptid = Subjectid) %>%
     mutate(Riskscorecohortflag = ifelse(Perprotocol == 1 & Bserostatus == 0, 1, 0)) %>%
@@ -76,35 +76,33 @@ save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, 
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
-if(study_name %in% c("COVE")){
-  risk_vars <- c(
-    "MinorityInd", "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown", 
-    "Black", "Asian", "NatAmer", "PacIsl",  
-    "Multiracial", "Other", 
-    "Notreported", "Unknown",
-    "HighRiskInd", "Sex", "Age", "BMI"
-  )
-  
+if(study_name %in% c("COVE", "MockCOVE")){
   endpoint <- "EventIndPrimaryD57"
+  risk_timepoint <- 57
   studyName_for_report <- "COVE"
   inputMod <- inputFile
-}
+  if(study_name %in% c("COVE")){
+    risk_vars <- c(
+      "MinorityInd", "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown", 
+      "Black", "Asian", "NatAmer", "PacIsl",  
+      "Multiracial", "Other", 
+      "Notreported", "Unknown",
+      "HighRiskInd", "Sex", "Age", "BMI"
+    )
+  }
 
-
-if(study_name %in% c("MockCOVE")){ # as MinorityInd variable is absent in mock!
-  risk_vars <- c(
-    "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown", 
-    "Black", "Asian", "NatAmer", "PacIsl",  
-    "Multiracial", "Other", 
-    "Notreported", "Unknown",
-    "HighRiskInd", "Sex", "Age", "BMI"
-  )
-  
+  if(study_name %in% c("MockCOVE")){ # as MinorityInd variable is absent in mock!
+    risk_vars <- c(
+      "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown", 
+      "Black", "Asian", "NatAmer", "PacIsl",  
+      "Multiracial", "Other", 
+      "Notreported", "Unknown",
+      "HighRiskInd", "Sex", "Age", "BMI"
+    )
+  }
   original_risk_vars <- risk_vars
-  endpoint <- "EventIndPrimaryD57"
-  studyName_for_report <- "COVE"
-  inputMod <- inputFile
 }
+
 
 if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   risk_vars <- c(
@@ -131,6 +129,7 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   }
   
   endpoint <- "EventIndPrimaryIncludeNotMolecConfirmedD29"
+  risk_timepoint <- 29
   studyName_for_report <- "ENSEMBLE"
   
   # Create binary indicator variables for Country and Region
@@ -175,20 +174,17 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
 
 
 
-if(study_name %in% c("NOVA")){
+if(study_name %in% c("PREVENT19")){
   risk_vars <- c(
     "Age", "Sex", "Black", "Asian", "NatAmer", "PacIsl",  
     "Multiracial", "Notreported", "Unknown",
     "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
     "Height", "Weight", "BMI", "HighRiskInd"
-    #"AGEGR1", "BMICAT", "LUNGFL", "KIDNEYFL",
-    #"DIABTSFL", "CARDCFL","OBESEFL",
-    #"STUDENT","WORKING","PROXIMIT","FREQWORK", "PROXLIVE", "PPMASKS","PEOPLE", 
-    #"LT18Y","Y18_64",  "GTE65Y","CURRSMOK","HISTSMOK","HRISKFL", "CBPBCM"
   )
-  
+  original_risk_vars <- risk_vars
   endpoint <- "EventIndPrimaryD35"
-  studyName_for_report <- "NOVA"
+  risk_timepoint <- 35
+  studyName_for_report <- "PREVENT19"
   inputMod <- inputFile %>% 
     mutate(Riskscorecohortflag = 1) 
 }
