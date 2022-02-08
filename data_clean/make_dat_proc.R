@@ -8,14 +8,14 @@ source(here::here("_common.R"))
 
 library(here)
 
-# if (startsWith(tolower(study_name), "mock")) {
-#     path_to_data <- here("data_raw", data_raw_dir, data_in_file)
-# } else {
-#     path_to_data <- data_in_file
-# }
-# print(path_to_data)
-# if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ===========================================")
-# dat_raw <- read.csv(path_to_data)
+#if (startsWith(tolower(study_name), "mock")) {
+#    path_to_data <- here("data_raw", data_raw_dir, data_in_file)
+#} else {
+#    path_to_data <- data_in_file
+#}
+#print(path_to_data)
+#if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ===========================================")
+#dat_raw <- read.csv(path_to_data)
 
 
 # some exploratory statistics
@@ -60,11 +60,9 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 
 
 
-
-
 colnames(dat_proc)[1] <- "Ptid" 
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
-dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, stop("unknown study_name")))
+dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, stop("unknown study_name")))
   
 
 # ethnicity labeling
@@ -210,6 +208,10 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
         all(!with(dat_proc, xor(is.na(demo.stratum),  Region==0 & is.na(URMforsubcohortsampling) ))),
         msg = "demo.stratum is na if and only if URM is NA and north america")
     
+} else if (study_name=="PREVENT19" ) {
+    # there is only US in this data frame
+    dat_proc$demo.stratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd, URMforsubcohortsampling), base = 2)) + 1
+        
 } else stop("unknown study_name_code")  
   
 names(demo.stratum.labels) <- demo.stratum.labels
