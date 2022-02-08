@@ -413,28 +413,26 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
         # define start1 variables
         if(tp==timepoints[1]) {
             if (study_name=="MockCOVE" | study_name=="COVE") {
-                # a hack: no such variable in the mock or real moderna datasets
-                # it is okay because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
+                # a hack: no such variable in the mock or real moderna datasets. It is okay because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
                 dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
-            } else if (study_name %in% c("MockCOVE", "COVE")) {
+            } else if (study_name %in% c("MockENSEMBLE", "ENSEMBLE", "PREVENT19")) {
+                # for novavax prevent19 we need this variable to define risk cohort flag
                 dat_proc[["EarlyendpointD"%.%tp%.%"start1"]]<- 
                     with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp%.%"start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 1),1,0))
-            } else if (study_name %in% c("PREVENT19")) {
-                # do nothing. no need to define start1 variables since we d
-            }
+            } else stop("unknown study_name")
         }
         
     }
     
-        # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm
-        # for COVID-19 this require: 
-        # 1. baseline SARS-CoV-2 negative, 
-        # 2. per-protocol, 
-        # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
-        # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
-        # no NAs allowed. 
-        dat_proc$Riskscorecohortflag <- 
-            with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
+    # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm
+    # for COVID-19 this require: 
+    # 1. baseline SARS-CoV-2 negative, 
+    # 2. per-protocol, 
+    # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
+    # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
+    # no NAs allowed. 
+    dat_proc$Riskscorecohortflag <- 
+        with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
     # COVE is a special case, redefined for backward compatibility
     if (study_name=="COVE" | study_name=="MockCOVE") dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
     assertthat::assert_that(
