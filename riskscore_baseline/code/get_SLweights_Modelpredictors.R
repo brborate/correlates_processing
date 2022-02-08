@@ -13,11 +13,11 @@ library(xgboost)
 library(ranger)
 conflict_prefer("filter", "dplyr")
 
-load("output/objects_for_running_SL.rda")
+load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
 rm(Y, X_riskVars, weights, maxVar)
 
 # Get Superlearner weights
-load("output/sl_riskscore_slfits.rda")
+load(paste0("output/", Sys.getenv("TRIAL"), "/sl_riskscore_slfits.rda"))
 sl_weights <- sl_riskscore_slfits$coef %>%
   as.data.frame() %>%
   tibble::rownames_to_column(var = "Learner") %>%
@@ -31,7 +31,7 @@ sl_weights %>%
     Learner = sapply(strsplit(Learner, "_screen"), `[`, 1)
   ) %>%
   select(Learner, Screen, Weight) %>%
-  write.csv(here("output", "SL_weights.csv"))
+  write.csv(here("output", Sys.getenv("TRIAL"), "SL_weights.csv"))
 
 top_models <- sl_weights %>%
   .$Learner
@@ -112,7 +112,7 @@ if(run_prod){
     ) %>%
     select(Learner, Screen, Weight, Predictors, Coefficient, `Odds Ratio`,
            Importance, Feature, Gain, Cover, Frequency) %>%
-    write.csv(here("output", "SL_all_models_with_predictors.csv"))
+    write.csv(here("output", Sys.getenv("TRIAL"), "SL_all_models_with_predictors.csv"))
 }else{
   all_models %>%
     left_join(sl_weights, by = "Learner") %>%
@@ -126,7 +126,7 @@ if(run_prod){
       Learner = sapply(strsplit(Learner, "_screen"), `[`, 1)
     ) %>%
     select(Learner, Screen, Weight, Predictors, Coefficient, `Odds Ratio`) %>%
-    write.csv(here("output", "SL_all_models_with_predictors.csv"))
+    write.csv(here("output", Sys.getenv("TRIAL"), "SL_all_models_with_predictors.csv"))
 }
 
 

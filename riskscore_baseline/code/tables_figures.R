@@ -1,4 +1,5 @@
 # Sys.setenv(TRIAL = "janssen_pooled_realbAb")
+# Sys.setenv(TRIAL = "prevent19")
 renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -22,9 +23,9 @@ source(here("code", "utils.R"))
 method <- "method.CC_nloglik" # since SuperLearner relies on this to be in GlobalEnv
 ggplot2::theme_set(theme_cowplot())
 
-load(file = here("output", "objects_for_running_SL.rda"))
+load(file = here("output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
 rm(Y, X_riskVars, weights, maxVar)
-load(file = here("output", "cvsl_risk_placebo_cvaucs.rda"))
+load(file = here("output", Sys.getenv("TRIAL"), "cvsl_risk_placebo_cvaucs.rda"))
 
 ######## Table of demographic variables used to derive the risk score ##########
 dat <- inputMod %>%
@@ -41,7 +42,7 @@ dat %>%
   get_defs_comments_riskVars() %>%
   rename(`Total missing values` = V1) %>%
   select(`Variable Name`, Definition, `Total missing values`, Comments) %>%
-  write.csv(here("output", "risk_vars.csv"))
+  write.csv(here("output", Sys.getenv("TRIAL"), "risk_vars.csv"))
 
 ######## learner-screens #######################################################
 caption <- "All learner-screen combinations (28 in total) used as input to the superlearner."
@@ -82,7 +83,7 @@ if (run_prod) {
     rename("Screen*" = Screen)
 }
 
-tab %>% write.csv(here("output", "learner-screens.csv"))
+tab %>% write.csv(here("output", Sys.getenv("TRIAL"), "learner-screens.csv"))
 
 ######## SLperformance-plac ####################################################
 if(study_name_code=="COVE"){
@@ -95,17 +96,17 @@ sl.perf <- risk_placebo_cvaucs %>%
   mutate(AUCstr = ifelse(AUC %in% tail(sort(AUC), 1), paste0(AUCstr, "*"), AUCstr)) %>%
   select(Learner, Screen, AUCstr)
 
-sl.perf %>% write.csv(here("output", "SLperformance-plac.csv"))
+sl.perf %>% write.csv(here("output", Sys.getenv("TRIAL"), "SLperformance-plac.csv"))
 
 ################################################################################
 # Forest plots for risk_placebo model, yd57 endpoint
 options(bitmapType = "cairo")
 if (run_prod) {
-  png(file = here("figs", "risk_placebo_cvaucs.png"),
+  png(file = here("output", Sys.getenv("TRIAL"), "risk_placebo_cvaucs.png"),
       width = 2000, height = 1100)
   top_learner <- make_forest_plot_prod(risk_placebo_cvaucs)
 } else {
-  png(file = here("figs", "risk_placebo_cvaucs.png"),
+  png(file = here("output", Sys.getenv("TRIAL"), "risk_placebo_cvaucs.png"),
       width = 2000, height = 700)
   top_learner <- make_forest_plot_demo(risk_placebo_cvaucs)
 }
@@ -129,12 +130,12 @@ top2_plac <- bind_rows(
                                        paste0(Learner, "_", Screen_fromRun))))
 
 # Get cvsl fit and extract cv predictions
-load(file = here("output", "cvsl_riskscore_cvfits.rda"))
+load(file = here("output", Sys.getenv("TRIAL"), "cvsl_riskscore_cvfits.rda"))
 pred <- get_cv_predictions(cv_fit = cvfits[[1]], cvaucDAT = top2_plac)
 
 # plot ROC curve
 options(bitmapType = "cairo")
-png(file = here("figs", "ROCcurve_riskscore_plac.png"),
+png(file = here("output", Sys.getenv("TRIAL"), "ROCcurve_riskscore_plac.png"),
     width = 1000, height = 1000)
 p1 <- plot_roc_curves(pred, cvaucDAT = top2_plac)
 print(p1)
@@ -142,14 +143,14 @@ dev.off()
 
 # plot pred prob plot
 options(bitmapType = "cairo")
-png(file = here("figs", "predProb_riskscore_plac.png"),
+png(file = here("output", Sys.getenv("TRIAL"), "predProb_riskscore_plac.png"),
     width = 1100, height = 1400)
-p2 <- plot_predicted_probabilities(pred)
+p2 <- plot_predicted_probabilities(pred, risk_timepoint)
 print(p2)
 dev.off()
 
 # Use SuperLearner to generate risk scores!
-load(file = here("output", "risk_placebo_ptids.rda"))
+load(file = here("output", Sys.getenv("TRIAL"), "risk_placebo_ptids.rda"))
 plac <- bind_cols(
   risk_placebo_ptids,
   pred %>% filter(Learner == "SL") %>% select(pred, AUCchar)
@@ -159,9 +160,10 @@ plac <- bind_cols(
                                          center = mean(risk_score, na.rm = T),
                                          scale = sd(risk_score, na.rm = T)))
 
-write.csv(plac, here("output", "placebo_ptids_with_riskscores.csv"),
+write.csv(plac, here("output", Sys.getenv("TRIAL"), "placebo_ptids_with_riskscores.csv"),
           row.names = FALSE)
 
-save(top2_plac, file = here("output", "plac_top2learners_SL_discreteSL.rda"))
+save(top2_plac, file = here("output", Sys.getenv("TRIAL"), "plac_top2learners_SL_discreteSL.rda"))
 
 rm(cvfits, pred, p1, p2)
+
