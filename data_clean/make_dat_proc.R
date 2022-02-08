@@ -441,7 +441,7 @@ if(two_marker_timepoints) dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints
 ###############################################################################
 
 library(digest)
-if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.getenv ("NOCHECK")=="") {
+if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock")) {
     assertthat::assert_that(
         digest(dat_proc)==ifelse(attr(config, "config")=="janssen_pooled_mock", "00f7eb7135e9470e2bcf7af0ebc85a99", "43895d21d723439f96d183c8898be370"),
         msg = "failed sanity check")    
