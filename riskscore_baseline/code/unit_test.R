@@ -1,5 +1,5 @@
 library(digest)
-if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.getenv("NOCHECK")=="") {
+if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.getenv ("NOCHECK")=="") {
   assertthat::assert_that(
     digest(inputFile_with_riskscore)==ifelse(attr(config, "config")=="janssen_pooled_mock", "2e68d1710090ba47dbf22420afb4dac7", "76bae5ccbfce93842efcd8b93fa3f38f"),
     msg = "failed sanity check")
