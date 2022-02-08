@@ -267,14 +267,14 @@ run_cv_sl_once <- function(seed = 1, Y = NULL, X_mat = NULL,
 # @return a data frame upon removal of any binary risk variables with number of cases in the variable = 1 or 0 subgroup is <= 3 (ENSEMBLE analysis)
 drop_riskVars_with_fewer_0s_or_1s <- function(dat, risk_vars, np) {
 
-  if(study_name_code == "COVE"){
+  if(study_name == "COVE"){
     # delete the file drop_riskVars_with_fewer_0s_or_1s.csv
     unlink(here("output", Sys.getenv("TRIAL"), "drop_riskVars_with_fewer_0s_or_1s.csv"))
     # Remove binary risk variables with fewer than 10 ptids that have a 0 or 1 for that variable
     for (i in 1:length(risk_vars)) {
-        if ((dat %>% select(matches(risk_vars[i])) %>% unique() %>% dim())[1] == 2) {
+        if ((dat %>% select(starts_with(risk_vars[i])) %>% unique() %>% dim())[1] == 2) {
           if ((dim(dat %>% filter(get(risk_vars[i]) == 1))[1] < 10) | (dim(dat %>% filter(get(risk_vars[i]) == 0))[1] < 10)){
-            dat <- dat %>% select(-matches(risk_vars[i]))
+            dat <- dat %>% select(-starts_with(risk_vars[i]))
             print(paste0(risk_vars[i], " dropped from risk score analysis as it had fewer than 10 1's or 0's."))
             # Also print to file
             paste0(risk_vars[i], " dropped from risk score analysis as it had fewer than 10 1's or 0's.") %>%
@@ -284,19 +284,20 @@ drop_riskVars_with_fewer_0s_or_1s <- function(dat, risk_vars, np) {
       }
   }
   
-  if(study_name_code == "COVE" & !file.exists(here("output", Sys.getenv("TRIAL"), "drop_riskVars_with_fewer_0s_or_1s.csv"))){
+  if(study_name == "COVE" & !file.exists(here("output", Sys.getenv("TRIAL"), "drop_riskVars_with_fewer_0s_or_1s.csv"))){
     paste0("No binary input variable had fewer than 10 ptids with a 0 or 1 for that variable.") %>%
       write.table(file = here("output", Sys.getenv("TRIAL"), "drop_riskVars_with_fewer_0s_or_1s.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
   }
   
-  if(study_name_code == "ENSEMBLE"){
+  if(study_name != "COVE"){
       # delete the file drop_riskVars_with_fewer_0s_or_1s.csv
       unlink(here("output", Sys.getenv("TRIAL"), "drop_riskVars_with_fewer_0s_or_1s.csv"))
       # Remove a variable if the number of cases in the variable = 1 subgroup is <= 3 or the number of cases in the variable = 0 subgroup is <= 3
       for (i in 1:length(risk_vars)) {
-        if ((dat %>% select(matches(risk_vars[i])) %>% unique())[[1]] == c(0,1)) {
+        if ((dat %>% select(starts_with(risk_vars[i])) %>% unique())[[1]] == c(0,1) | 
+            (dat %>% select(starts_with(risk_vars[i])) %>% unique())[[1]] == c(1,0)) {
           if (dat %>% filter(get(risk_vars[i]) == 1) %>% pull(endpoint) %>% sum() <= 3 | dat %>% filter(get(risk_vars[i]) == 0) %>% pull(endpoint) %>% sum() <= 3){
-            dat <- dat %>% select(-matches(risk_vars[i]))
+            dat <- dat %>% select(-starts_with(risk_vars[i]))
             print(paste0(risk_vars[i], " dropped from risk score analysis as the number of cases in the variable = 1 or 0 subgroup is <= 3."))
             # Also print to file
             paste0(risk_vars[i], " dropped from risk score analysis as the number of cases in the variable = 1 or 0 subgroup is <= 3.") %>%
@@ -306,7 +307,7 @@ drop_riskVars_with_fewer_0s_or_1s <- function(dat, risk_vars, np) {
       }
   }
   
-  if(study_name_code == "ENSEMBLE" & !file.exists(here("output", Sys.getenv("TRIAL"), "drop_riskVars_with_fewer_0s_or_1s.csv"))){
+  if(study_name != "COVE" & !file.exists(here("output", Sys.getenv("TRIAL"), "drop_riskVars_with_fewer_0s_or_1s.csv"))){
     paste0("No binary input variable had number of cases in the variable = 1 or 0 subgroup <= 3") %>%
       write.table(file = here("output", Sys.getenv("TRIAL"), "drop_riskVars_with_fewer_0s_or_1s.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
   }
@@ -507,7 +508,7 @@ plot_roc_curves <- function(predict, cvaucDAT) {
 # Plot predicted probability plots for SL, discrete.SL and topRanking learner-screen combinations
 # @param pred dataframe returned by get_cv_predictions function
 # @return ggplot object containing the predicted probability plots
-plot_predicted_probabilities <- function(pred) {
+plot_predicted_probabilities <- function(pred, day) {
   if(study_name_code == "COVE"){
     cases = "Post Day 57 Cases"
   }
@@ -516,7 +517,7 @@ plot_predicted_probabilities <- function(pred) {
   }
   
   pred %>%
-    mutate(Ychar = ifelse(Y == 0, "Non-Cases", cases)) %>%
+    mutate(Ychar = ifelse(Y == 0, "Non-Cases", paste0("Post Day ", day, " Cases"))) %>%
     ggplot(aes(x = Ychar, y = pred, color = Ychar)) +
     geom_jitter(width = 0.06, size = 3, shape = 21, fill = "white") +
     geom_violin(alpha = 0.05, color = "black", lwd=1.5) +

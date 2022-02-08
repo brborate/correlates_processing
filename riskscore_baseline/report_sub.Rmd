@@ -63,12 +63,18 @@ if(vars.with.imputed.values == "None"){
   eval.footnote3.table = TRUE
 }
 
+if(studyName_for_report == "PREVENT19"){
+  footnote4 <- paste0("4. Baseline risk score development is restricted to only US subjects.")
+  eval.footnote4.table = TRUE
+}
 #########################
 
 if(endpoint=="EventIndPrimaryD57")
   day = "Day 57"
 if(endpoint %in% c("EventIndPrimaryD29", "EventIndPrimaryIncludeNotMolecConfirmedD29"))
   day = "Day 29"
+if(endpoint %in% c("EventIndPrimaryD35"))
+  day = "Day 35"
 
 caption <- "Variables considered for risk score analysis."
 
@@ -86,11 +92,20 @@ tab <- read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_
   kable_styling(latex_options = c("hold_position", "repeat_header"),
                 font_size = 8)
 
-if(studyName_for_report=="ENSEMBLE"){
+if(studyName_for_report %in% c("ENSEMBLE")){
   tab <- tab %>% 
     footnote(c(footnote1,
                footnote2,
                footnote3),
+             threeparttable = TRUE)
+}
+
+if(studyName_for_report %in% c("PREVENT19")){
+  tab <- tab %>% 
+    footnote(c(footnote1,
+               footnote2,
+               footnote3,
+               footnote4),
              threeparttable = TRUE)
 }
 
@@ -275,6 +290,34 @@ read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "learne
 
 ```
 
+
+
+
+```{r cvsl-args, warning=FALSE, echo=FALSE}
+caption <- "Arguments used in CV.Superlearner."
+
+read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cvsl_args.csv"),
+         row.names = 1, header = TRUE) %>%
+  kable(
+    booktabs = TRUE,
+    linesep = "",
+    caption = caption
+  ) %>%
+  kable_styling(latex_options = c("hold_position"),
+                font_size = 9) %>%
+  row_spec(0,bold=TRUE)
+  #column_spec(1:2, width = "5cm") %>%
+  
+  #collapse_rows(columns = 1, valign = "top", latex_hline = "major") %>%
+  # footnote(c("*Screen details:",
+  #            "all: includes all variables",
+  #            "glmnet: includes variables with non-zero coefficients in the standard implementation of SL.glmnet that optimizes the lasso tuning parameter via cross-validation",
+  #            "univar_logistic_pval: Wald test 2-sided p-value in a logistic regression model < 0.10",
+  #            "highcor_random: if pairs of quantitative variables with Spearman rank correlation > 0.90, select one of the variables at random"),
+  #          threeparttable = TRUE)
+
+```
+
 \begin{landscape}
 \clearpage
 
@@ -390,7 +433,7 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_
     caption = caption) %>%
   kable_styling(latex_options = c("hold_position"),
                 font_size = 9) %>%
-  footnote(c("Post-Day 29 Cases: COVID-19 primary endpoints that occur at least 7 days after the Day 29 visit."),
+  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least 7 days after the ", day, " visit.")),
              threeparttable = TRUE)
 
 ```
@@ -411,7 +454,7 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_
     caption = caption) %>%
   kable_styling(latex_options = c("hold_position"),
                 font_size = 9) %>%
-  footnote(c("Post-Day 29 Cases: COVID-19 primary endpoints that occur at least 7 days after the Day 29 visit."),
+  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least 7 days after the ", day, " visit.")),
              threeparttable = TRUE)
 
 ```
@@ -430,7 +473,7 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_post_r
     caption = caption) %>%
   kable_styling(latex_options = c("hold_position"),
                 font_size = 9) %>%
-  footnote(c("Post-Day 29 Cases: COVID-19 primary endpoints that occur at least 7 days after the Day 29 visit."),
+  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least 7 days after the ", day, " visit.")),
              threeparttable = TRUE)
 
 ```

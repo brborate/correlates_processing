@@ -39,9 +39,9 @@ stopifnot(blas_get_num_procs() == 1)
 ## construct superlearner on placebo arm-----------------------
 set.seed(20210216)
 sl_riskscore_slfits <- SuperLearner(
-  Y = Y, X = X_riskVars, family = "binomial",
-  SL.library = SL_library, method = "method.CC_nloglik",
-  cvControl = list(V = V_outer, stratifyCV = TRUE), verbose = FALSE
+  Y = Y, X = X_riskVars, family = familyVar,
+  SL.library = SL_library, method = methodVar,
+  cvControl = cvControlVar, verbose = FALSE
   )
 
 save(sl_riskscore_slfits, file = here("output", Sys.getenv("TRIAL"), "sl_riskscore_slfits.rda"))
@@ -122,14 +122,14 @@ dev.off()
 options(bitmapType = "cairo")
 png(file = here("output", Sys.getenv("TRIAL"), "predProb_riskscore_vacc_onlySL.png"),
     width = 1100, height = 700)
-if(study_name_code == "COVE"){
-  cases = "Post Day 57 Cases"
-}
-if(study_name_code == "ENSEMBLE"){
-  cases = "Post Day 29 Cases"
-}
+# if(study_name_code == "COVE"){
+#   cases = "Post Day 57 Cases"
+# }
+# if(study_name_code == "ENSEMBLE"){
+#   cases = "Post Day 29 Cases"
+# }
 print(vacc %>%
-  mutate(Ychar = ifelse(get(endpoint) == 0, "Non-Cases", cases)) %>%
+  mutate(Ychar = ifelse(get(endpoint) == 0, "Non-Cases", paste0("Post Day ", risk_timepoint, " Cases"))) %>%
   ggplot(aes(x = Ychar, y = pred, color = Ychar)) +
   geom_jitter(width = 0.06, size = 3, shape = 21, fill = "white") +
   geom_violin(alpha = 0.05, color = "black", lwd=1.5) +
@@ -146,3 +146,4 @@ print(vacc %>%
     axis.title.y = element_text(size = 30)
   ))
 dev.off()
+
