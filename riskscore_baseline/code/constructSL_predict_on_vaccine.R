@@ -39,9 +39,9 @@ stopifnot(blas_get_num_procs() == 1)
 ## construct superlearner on placebo arm-----------------------
 set.seed(20210216)
 sl_riskscore_slfits <- SuperLearner(
-  Y = Y, X = X_riskVars, family = "binomial",
-  SL.library = SL_library, method = "method.CC_nloglik",
-  cvControl = list(V = V_outer, stratifyCV = TRUE), verbose = FALSE
+  Y = Y, X = X_riskVars, family = familyVar,
+  SL.library = SL_library, method = methodVar,
+  cvControl = cvControlVar, verbose = FALSE
   )
 
 save(sl_riskscore_slfits, file = here("output", Sys.getenv("TRIAL"), "sl_riskscore_slfits.rda"))

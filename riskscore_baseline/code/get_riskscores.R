@@ -1,4 +1,4 @@
-# Sys.setenv(TRIAL = "janssen_pooled_realbAb")
+# Sys.setenv(TRIAL = "janssen_pooled_mock")
 # Sys.setenv(TRIAL = "prevent19")
 renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
