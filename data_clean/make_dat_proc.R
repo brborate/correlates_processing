@@ -18,8 +18,7 @@ library(here)
 #dat_raw <- read.csv(path_to_data)
 
 
-# some exploratory statistics
-
+#with(dat_raw, table(Country))
 #summary(dat_raw)
 #summary(dat_raw$Age)
 #hist(dat_raw$Day29bindSpike)
@@ -450,7 +449,7 @@ if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.ge
             "7b07a064a472787cb4a5be64bcd0b393", 
             "43895d21d723439f96d183c8898be370"),
         msg = "failed sanity check. new digest "%.%digest(dat_proc))    
-    print("Passed sanity check")    
+    print("=======================\n Passed sanity check\n =======================\n")    
 }
 
 write_csv(dat_proc %>% filter(!is.na(risk_score)), file = here("data_clean", paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")))
