@@ -1,4 +1,5 @@
 # Sys.setenv(TRIAL = "janssen_pooled_realbAb")
+# Sys.setenv(TRIAL = "prevent19")
 renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -26,7 +27,9 @@ save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/"
 
 # Create table of cases in both arms (post Risk score analyses)
 tab <- inputFile_with_riskscore %>%
+  mutate(Riskscorecohortflag = ifelse(Perprotocol == 1 & Bserostatus == 0, 1, 0)) %>%
   filter(Riskscorecohortflag == 1) %>%
+  filter(Country == 0) %>%
   drop_na(Ptid, Trt, all_of(endpoint)) %>%
   mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
 table(tab$Trt, tab %>% pull(endpoint)) %>%

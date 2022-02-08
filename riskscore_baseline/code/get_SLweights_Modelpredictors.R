@@ -34,11 +34,12 @@ sl_weights %>%
   write.csv(here("output", Sys.getenv("TRIAL"), "SL_weights.csv"))
 
 top_models <- sl_weights %>%
+  filter(Learner != "SL.mean_screen_all") %>%
   .$Learner
 
 # Get predictors selected in the models with highest weights
 for (i in seq_along(top_models)) {
-  #print(i)
+  print(i)
   if(top_models[i] %in% c("SL.glm_screen_univariate_logistic_pval", 
                           "SL.glm.interaction_screen_highcor_random",
                           "SL.glm_screen_all",
@@ -49,6 +50,7 @@ for (i in seq_along(top_models)) {
                           "SL.gam_screen_glmnet",
                           "SL.gam_screen_univariate_logistic_pval",
                           "SL.gam_screen_highcor_random")) {
+
     model <- sl_riskscore_slfits[["fitLibrary"]][[top_models[i]]]$object$coefficients %>%
       as.data.frame() %>%
       tibble::rownames_to_column(var = "Predictors") %>%

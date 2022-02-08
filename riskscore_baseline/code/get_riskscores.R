@@ -62,10 +62,9 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   print("Risk scores for Moderna real dataset were generated at Moderna's end using CoVPN Stats/SCHARP code. 
         Are you sure you want to regenerate them?")
 }else if(study_name == "PREVENT19"){
+  inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name)
   inputFile <- read.csv(path_to_data) %>%
-    rename(Ptid = Subjectid) %>%
-    mutate(Riskscorecohortflag = ifelse(Perprotocol == 1 & Bserostatus == 0, 1, 0)) %>%
-    filter(Country == 0) # Analysis based off only US subjects
+    rename(Ptid = Subjectid) 
 }
 
 # Save inputFile 
@@ -185,8 +184,10 @@ if(study_name %in% c("PREVENT19")){
   endpoint <- "EventIndPrimaryD35"
   risk_timepoint <- 35
   studyName_for_report <- "PREVENT19"
-  inputMod <- inputFile %>% 
-    mutate(Riskscorecohortflag = 1) 
+  inputMod <- inputFile %>%
+    mutate(Riskscorecohortflag = ifelse(Perprotocol == 1 & Bserostatus == 0, 1, 0)) %>%
+    filter(Riskscorecohortflag == 1) %>%
+    filter(Country == 0) # Analysis based off only US subjects 
 }
 
 # Check there are no NA values in Riskscorecohortflag!
