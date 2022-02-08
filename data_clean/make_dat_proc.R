@@ -443,7 +443,7 @@ if(two_marker_timepoints) dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints
 ###############################################################################
 
 library(digest)
-if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock")) {
+if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.getenv ("NOCHECK")=="") {
     assertthat::assert_that(
         digest(dat_proc)==
         ifelse(attr(config, "config")=="janssen_pooled_mock", 
