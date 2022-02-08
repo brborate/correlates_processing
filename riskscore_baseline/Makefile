@@ -4,7 +4,6 @@ all: get_riskscores
 ## clean         : delete all SL results
 clean:
 	rm -f output/*
-	rm -f figs/*
 
 ## get_riskscores : append previous risk scores if input data has not changed OR generate new risk scores!
 get_riskscores:
