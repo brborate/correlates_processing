@@ -445,7 +445,7 @@ if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock")) {
     assertthat::assert_that(
         digest(dat_proc)==
         ifelse(attr(config, "config")=="janssen_pooled_mock", 
-            "00f7eb7135e9470e2bcf7af0ebc85a99", 
+            "7b07a064a472787cb4a5be64bcd0b393", 
             "43895d21d723439f96d183c8898be370"),
         msg = "failed sanity check. new digest "%.%digest(dat_proc))    
     print("Passed sanity check")    
