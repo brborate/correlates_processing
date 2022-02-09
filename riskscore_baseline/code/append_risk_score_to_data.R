@@ -28,9 +28,10 @@ save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/"
 # Create table of cases in both arms (post Risk score analyses)
 tab <- inputFile_with_riskscore %>%
   filter(Riskscorecohortflag == 1) %>%
-  filter(Country == 0) %>%
   drop_na(Ptid, Trt, all_of(endpoint)) %>%
   mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
+if(study_name == "PREVENT19")
+  tab <- tab %>% filter(Country == 0)
 table(tab$Trt, tab %>% pull(endpoint)) %>%
   write.csv(file = here("output", Sys.getenv("TRIAL"), "cases_post_riskScoreAnalysis.csv"))
 rm(tab)
