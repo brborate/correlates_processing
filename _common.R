@@ -423,7 +423,7 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
                 # for novavax prevent19 we need this variable to define risk cohort flag
                 # at first we only have markers at D35, so we have to hardcode this
                 dat_proc[["EarlyendpointD21start1"]]<- 
-                    with(dat_proc, ifelse(get("EarlyinfectionD21start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD21") + 1),1,0))
+                    with(dat_proc, ifelse(EarlyinfectionD21start1==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < NumberdaysD1toD21 + 1),1,0))
             } else stop("unknown study_name")
         }
         
@@ -436,10 +436,18 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
     # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
     # no NAs allowed. 
-    dat_proc$Riskscorecohortflag <- 
-        with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
-    # COVE is a special case, redefined for backward compatibility
-    if (study_name=="COVE" | study_name=="MockCOVE") dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
+    if (study_name=="COVE" | study_name=="MockCOVE") {
+        # COVE is a special case, redefined for backward compatibility
+        dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
+    } else if (study_name == "PREVENT19")) {
+        # for this trial we only have markers at D35 at first, so we have to hardcode this
+        dat_proc$Riskscorecohortflag <- 
+            with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & EarlyendpointD21start1==0 & EventTimePrimaryD21>=1, 1, 0))
+    } else {
+        dat_proc$Riskscorecohortflag <- 
+            with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
+    }
+
     assertthat::assert_that(
         all(!is.na(dat_proc$Riskscorecohortflag)),
         msg = "missing Riskscorecohortflag")
