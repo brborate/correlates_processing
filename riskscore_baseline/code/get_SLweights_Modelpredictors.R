@@ -39,7 +39,7 @@ top_models <- sl_weights %>%
 
 # Get predictors selected in the models with highest weights
 for (i in seq_along(top_models)) {
-  print(i)
+  #print(i)
   if(top_models[i] %in% c("SL.glm_screen_univariate_logistic_pval", 
                           "SL.glm.interaction_screen_highcor_random",
                           "SL.glm_screen_all",
