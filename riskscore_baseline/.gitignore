@@ -12,6 +12,9 @@ output/janssen_pooled_realbAb/*
 output/janssen_pooled_realADCP/*
 output/janssen_pooled_realPsV/*
 output/novavax_real/*
+*.Rout
+nohup.out
+.nfs*
 
 
 

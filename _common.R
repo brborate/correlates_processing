@@ -419,7 +419,7 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
                 # for novavax prevent19 we need this variable to define risk cohort flag
                 dat_proc[["EarlyendpointD"%.%tp%.%"start1"]]<- 
                     with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp%.%"start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 1),1,0))
-            } else if (study_name == "PREVENT19")) {
+            } else if (study_name == "PREVENT19") {
                 # for novavax prevent19 we need this variable to define risk cohort flag
                 # at first we only have markers at D35, so we have to hardcode this
                 dat_proc[["EarlyendpointD21start1"]]<- 
@@ -439,7 +439,7 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     if (study_name=="COVE" | study_name=="MockCOVE") {
         # COVE is a special case, redefined for backward compatibility
         dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
-    } else if (study_name == "PREVENT19")) {
+    } else if (study_name == "PREVENT19") {
         # for this trial we only have markers at D35 at first, so we have to hardcode this
         dat_proc$Riskscorecohortflag <- 
             with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & EarlyendpointD21start1==0 & EventTimePrimaryD21>=1, 1, 0))
