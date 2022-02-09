@@ -248,7 +248,20 @@ if ((study_name=="COVE" | study_name=="MockCOVE")) {
       "South Africa, Age >= 60, Not at risk",
       "South Africa, Age >= 60, At risk"
     )
-}
+} else if ((study_name=="PREVENT19")) {
+    demo.stratum.labels <- c(
+      "US White non-Hisp, Age 18-64, Not at risk",
+      "US White non-Hisp, Age 18-64, At risk",
+      "US White non-Hisp, Age >= 65, Not at risk",
+      "US White non-Hisp, Age >= 65, At risk",
+      "US URM, Age 18-64, Not at risk",
+      "US URM, Age 18-64, At risk",
+      "US URM, Age >= 65, Not at risk",
+      "US URM, Age >= 65, At risk",
+      "Mexico, Age 18-64",
+      "Mexico, Age >= 65"
+    )
+} else stop("unknown study_name")
 
 labels.regions.ENSEMBLE =c("0"="Northern America", "1"="Latin America", "2"="Southern Africa")
 regions.ENSEMBLE=0:2

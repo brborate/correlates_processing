@@ -6,8 +6,7 @@ source(here::here("_common.R"))
 #-----------------------------------------------
 
 
-library(here)
-
+#library(here)
 #if (startsWith(tolower(study_name), "mock")) {
 #    path_to_data <- here("data_raw", data_raw_dir, data_in_file)
 #} else {
@@ -71,7 +70,7 @@ dat_proc$ethnicity <- factor(dat_proc$ethnicity, levels = labels.ethnicity)
 
 
 # race labeling
-if (study_name=="COVE" | study_name=="MockCOVE") {
+if (study_name %in% c("COVE", "MockCOVE")) {
     dat_proc <- dat_proc %>%
       mutate(
         race = labels.race[1],
@@ -104,7 +103,24 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
         ),
         race = factor(race, levels = labels.race)
       )
-}
+
+} else if (study_name %in% c("PREVENT19")) {
+    dat_proc <- dat_proc %>%
+      mutate(
+        race = labels.race[1],
+        race = case_when(
+          Black == 1 ~ labels.race[2],
+          Asian == 1 ~ labels.race[3],
+          NatAmer == 1 ~ labels.race[4],
+          PacIsl == 1 ~ labels.race[5],
+          Multiracial == 1 ~ labels.race[6],
+          Notreported == 1 | Unknown == 1 ~ labels.race[8],
+          TRUE ~ labels.race[1]
+        ),
+        race = factor(race, levels = labels.race)
+      )
+      
+} else stop("unknown study_name")
 
 dat_proc$WhiteNonHispanic <- NA
 # WhiteNonHispanic=1 IF race is White AND ethnicity is not Hispanic
@@ -180,9 +196,8 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     
 } else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     dat_proc$Bstratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
-
+    
 }
-
 names(Bstratum.labels) <- Bstratum.labels
 
 #with(dat_proc, table(Bstratum, Senior, HighRiskInd))
@@ -193,7 +208,7 @@ names(Bstratum.labels) <- Bstratum.labels
 # may have NA b/c URMforsubcohortsampling may be NA
 if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$demo.stratum = with(dat_proc, ifelse (URMforsubcohortsampling==1, ifelse(Senior, 1, ifelse(HighRiskInd == 1, 2, 3)), 3+ifelse(Senior, 1, ifelse(HighRiskInd == 1, 2, 3))))
-
+    
 } else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     # first step, stratify by age and high risk
     dat_proc$demo.stratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
@@ -208,8 +223,8 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
         msg = "demo.stratum is na if and only if URM is NA and north america")
     
 } else if (study_name=="PREVENT19" ) {
-    # there is only US in this data frame
-    dat_proc$demo.stratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd, URMforsubcohortsampling), base = 2)) + 1
+    dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior, HighRiskInd), base = 2)) + 1
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 9, 10)))
         
 } else stop("unknown study_name_code")  
   
@@ -230,10 +245,18 @@ dat_proc <- dat_proc %>%
 
 max.tps=max(dat_proc$tps.stratum,na.rm=T)
 dat_proc$Wstratum = dat_proc$tps.stratum
-dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0)]=max.tps+1
-dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1)]=max.tps+2
-dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0)]=max.tps+3
-dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE")) {
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0)]=max.tps+1
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1)]=max.tps+2
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0)]=max.tps+3
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+} else if (study_name == "PREVENT19") {
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==0)]=max.tps+1
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==1)]=max.tps+2
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+} else stop("unknown study_name")
+
 
 #subset(dat_proc, Trt==1 & Bserostatus==1 & EventIndPrimaryD29 == 1)[1:3,]
 
