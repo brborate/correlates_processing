@@ -6,7 +6,12 @@ source(here::here("_common.R"))
 #-----------------------------------------------
 
 
+library(tidyverse)
+library(Hmisc) # wtd.quantile, cut2
+library(mice)
+library(dplyr)
 library(here)
+
 
 #if (startsWith(tolower(study_name), "mock")) {
 #    path_to_data <- here("data_raw", data_raw_dir, data_in_file)
@@ -16,7 +21,6 @@ library(here)
 #print(path_to_data)
 #if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ===========================================")
 #dat_raw <- read.csv(path_to_data)
-
 
 #with(dat_raw, table(Country))
 #summary(dat_raw)
@@ -37,17 +41,19 @@ library(here)
 
 ########################################################################################################
 
-library(tidyverse)
-library(Hmisc) # wtd.quantile, cut2
-library(mice)
-library(dplyr)
-
 # dat_proc=preprocess.for.risk.score(dat_raw)
 
 # read raw data with risk score added
 # inputFile_with_riskscore has the same number of rows as dat_raw, but adds columns related to earlyendpoint, earlyinfection (preprocess.for.risk.score) and risk scores
 load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
 dat_proc <- inputFile_with_riskscore
+
+
+#############################
+# HACK alert
+# make up a SubcohortInd
+if(study_name=="PREVENT19") dat_proc$SubcohortInd=!is.na(dat_proc$Day35bindSpike)
+
 
 # subset on subset_variable
 if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
@@ -71,7 +77,7 @@ dat_proc$ethnicity <- factor(dat_proc$ethnicity, levels = labels.ethnicity)
 
 
 # race labeling
-if (study_name=="COVE" | study_name=="MockCOVE") {
+if (study_name %in% c("COVE", "MockCOVE")) {
     dat_proc <- dat_proc %>%
       mutate(
         race = labels.race[1],
@@ -104,7 +110,24 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
         ),
         race = factor(race, levels = labels.race)
       )
-}
+
+} else if (study_name %in% c("PREVENT19")) {
+    dat_proc <- dat_proc %>%
+      mutate(
+        race = labels.race[1],
+        race = case_when(
+          Black == 1 ~ labels.race[2],
+          Asian == 1 ~ labels.race[3],
+          NatAmer == 1 ~ labels.race[4],
+          PacIsl == 1 ~ labels.race[5],
+          Multiracial == 1 ~ labels.race[6],
+          Notreported == 1 | Unknown == 1 ~ labels.race[8],
+          TRUE ~ labels.race[1]
+        ),
+        race = factor(race, levels = labels.race)
+      )
+      
+} else stop("unknown study_name")
 
 dat_proc$WhiteNonHispanic <- NA
 # WhiteNonHispanic=1 IF race is White AND ethnicity is not Hispanic
@@ -180,9 +203,8 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     
 } else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     dat_proc$Bstratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
-
+    
 }
-
 names(Bstratum.labels) <- Bstratum.labels
 
 #with(dat_proc, table(Bstratum, Senior, HighRiskInd))
@@ -193,7 +215,7 @@ names(Bstratum.labels) <- Bstratum.labels
 # may have NA b/c URMforsubcohortsampling may be NA
 if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$demo.stratum = with(dat_proc, ifelse (URMforsubcohortsampling==1, ifelse(Senior, 1, ifelse(HighRiskInd == 1, 2, 3)), 3+ifelse(Senior, 1, ifelse(HighRiskInd == 1, 2, 3))))
-
+    
 } else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     # first step, stratify by age and high risk
     dat_proc$demo.stratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
@@ -208,8 +230,8 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
         msg = "demo.stratum is na if and only if URM is NA and north america")
     
 } else if (study_name=="PREVENT19" ) {
-    # there is only US in this data frame
-    dat_proc$demo.stratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd, URMforsubcohortsampling), base = 2)) + 1
+    dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior, HighRiskInd), base = 2)) + 1
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 9, 10)))
         
 } else stop("unknown study_name_code")  
   
@@ -230,10 +252,18 @@ dat_proc <- dat_proc %>%
 
 max.tps=max(dat_proc$tps.stratum,na.rm=T)
 dat_proc$Wstratum = dat_proc$tps.stratum
-dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0)]=max.tps+1
-dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1)]=max.tps+2
-dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0)]=max.tps+3
-dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE")) {
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0)]=max.tps+1
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1)]=max.tps+2
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0)]=max.tps+3
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+} else if (study_name == "PREVENT19") {
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==0)]=max.tps+1
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==1)]=max.tps+2
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+} else stop("unknown study_name")
+
 
 #subset(dat_proc, Trt==1 & Bserostatus==1 & EventIndPrimaryD29 == 1)[1:3,]
 
@@ -284,11 +314,11 @@ if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     dat_proc$wt.D29start1 = ifelse(with(dat_proc,  EarlyendpointD29start1==0 & Perprotocol==1 & EventTimePrimaryD29>=1), dat_proc$wt.D29start1, NA)
     dat_proc$ph1.D29start1=!is.na(dat_proc$wt.D29start1)
     dat_proc$ph2.D29start1=with(dat_proc, ph1.D29start1 & TwophasesampIndD29)
-
+    
     assertthat::assert_that(
         all(!is.na(subset(dat_proc,           EarlyendpointD29start1==0 & Perprotocol==1 & EventTimePrimaryD29>=1 & !is.na(Wstratum), select=wt.D29start1, drop=T))),
         msg = "missing wt.D29start1 for D29start1 analyses ph1 subjects")
-}
+} 
 
 # weights for intercurrent cases
 if(two_marker_timepoints) {
@@ -303,7 +333,7 @@ if(two_marker_timepoints) {
                                             NA)
     dat_proc$ph1.intercurrent.cases=!is.na(dat_proc$wt.intercurrent.cases)
     dat_proc$ph2.intercurrent.cases=with(dat_proc, ph1.intercurrent.cases & get("TwophasesampIndD"%.%tp))    
-
+    
     assertthat::assert_that(
         all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum), select=wt.intercurrent.cases, drop=T))),
         msg = "missing wt.intercurrent.cases for intercurrent analyses ph1 subjects")
@@ -423,14 +453,15 @@ if(study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")){
 
 tmp=list()
 # lloq censoring
-for (a in assays.includeN) {
+for (a in if(study_name!="PREVENT19") assays.includeN else assays) {
   for (t in c("B", paste0("Day", config$timepoints)) ) {
     tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(lloqs[a]), log10(lloqs[a] / 2), dat_proc[[t %.% a]])
   }
 }
 tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
 
-for (tp in rev(timepoints)) dat_proc["Delta"%.%tp%.%"overB"  %.% assays.includeN] <- tmp["Day"%.%tp %.% assays.includeN] - tmp["B"     %.% assays.includeN]
+for (tp in rev(timepoints)) dat_proc["Delta"%.%tp%.%"overB"  %.% if(study_name!="PREVENT19") assays.includeN else assays] <- 
+    tmp["Day"%.%tp %.% if(study_name!="PREVENT19") assays.includeN else assays] - tmp["B"     %.% if(study_name!="PREVENT19") assays.includeN else assays]
 if(two_marker_timepoints) dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays.includeN] <- 
     tmp["Day"%.% timepoints[2]%.% assays.includeN] - tmp["Day"%.%timepoints[1] %.% assays.includeN]
 
@@ -444,7 +475,7 @@ if(two_marker_timepoints) dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints
 library(digest)
 if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.getenv ("NOCHECK")=="") {
     assertthat::assert_that(
-        digest(dat_proc)==
+        digest(dat_proc[order(names(dat_proc))])==
         ifelse(attr(config, "config")=="janssen_pooled_mock", 
             "7b07a064a472787cb4a5be64bcd0b393", 
             "43895d21d723439f96d183c8898be370"),

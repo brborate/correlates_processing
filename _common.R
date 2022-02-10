@@ -121,6 +121,7 @@ if(TRUE) {
 must_have_assays <- c("bindSpike", "bindRBD")
 if (endsWith(attr(config, "config"),"ADCP")) must_have_assays <- c("ADCP")    
 if (endsWith(attr(config, "config"),"PsV")) must_have_assays <- c("pseudoneutid50")    
+if (study_name=="PREVENT19") must_have_assays <- c("bindSpike")
 
 
 #assays_to_be_censored_at_uloq_cor <- c(
@@ -248,7 +249,20 @@ if ((study_name=="COVE" | study_name=="MockCOVE")) {
       "South Africa, Age >= 60, Not at risk",
       "South Africa, Age >= 60, At risk"
     )
-}
+} else if ((study_name=="PREVENT19")) {
+    demo.stratum.labels <- c(
+      "US White non-Hisp, Age 18-64, Not at risk",
+      "US White non-Hisp, Age 18-64, At risk",
+      "US White non-Hisp, Age >= 65, Not at risk",
+      "US White non-Hisp, Age >= 65, At risk",
+      "US URM, Age 18-64, Not at risk",
+      "US URM, Age 18-64, At risk",
+      "US URM, Age >= 65, Not at risk",
+      "US URM, Age >= 65, At risk",
+      "Mexico, Age 18-64",
+      "Mexico, Age >= 65"
+    )
+} else stop("unknown study_name")
 
 labels.regions.ENSEMBLE =c("0"="Northern America", "1"="Latin America", "2"="Southern Africa")
 regions.ENSEMBLE=0:2
@@ -416,7 +430,6 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
                 # a hack: no such variable in the mock or real moderna datasets. It is okay because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
                 dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
             } else if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
-                # for novavax prevent19 we need this variable to define risk cohort flag
                 dat_proc[["EarlyendpointD"%.%tp%.%"start1"]]<- 
                     with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp%.%"start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 1),1,0))
             } else if (study_name == "PREVENT19") {
@@ -429,8 +442,7 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
         
     }
     
-    # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm
-    # for COVID-19 this require: 
+    # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm. It requires:
     # 1. baseline SARS-CoV-2 negative, 
     # 2. per-protocol, 
     # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
