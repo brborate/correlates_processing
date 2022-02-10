@@ -121,6 +121,7 @@ if(TRUE) {
 must_have_assays <- c("bindSpike", "bindRBD")
 if (endsWith(attr(config, "config"),"ADCP")) must_have_assays <- c("ADCP")    
 if (endsWith(attr(config, "config"),"PsV")) must_have_assays <- c("pseudoneutid50")    
+if (study_name=="PREVENT19") must_have_assays <- c("bindSpike")
 
 
 #assays_to_be_censored_at_uloq_cor <- c(
@@ -429,7 +430,6 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
                 # a hack: no such variable in the mock or real moderna datasets. It is okay because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
                 dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
             } else if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
-                # for novavax prevent19 we need this variable to define risk cohort flag
                 dat_proc[["EarlyendpointD"%.%tp%.%"start1"]]<- 
                     with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp%.%"start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 1),1,0))
             } else if (study_name == "PREVENT19") {

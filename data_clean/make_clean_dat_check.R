@@ -30,18 +30,18 @@ dat_clean <- read.csv(here("data_clean", paste0(attr(config, "config"), "_data_p
 
 #subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryIncludeNotMolecConfirmedD29==1 & EventIndPrimaryD29==0 & EventTimePrimaryIncludeNotMolecConfirmedD29>=7)
 
-tmp=subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD29==1 & EventTimePrimaryD29<7)
-table(!is.na(tmp$Day29bindSpike))
-
-tmp=subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD29==1)
-with(tmp, table(EventTimePrimaryD29<7, !is.na(Day29bindSpike)))
-
-
-with(subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & ph2.D29), table(Wstratum))
-with(subset(dat_clean, Bserostatus==0 & Trt==0 & Perprotocol==1 & ph2.D29), table(Wstratum))
-with(subset(dat_clean, Bserostatus==1 & Trt==1 & Perprotocol==1 & ph2.D29), table(Wstratum))
-with(subset(dat_clean, Bserostatus==1 & Trt==0 & Perprotocol==1 & ph2.D29), table(Wstratum))
-with(subset(dat_clean, Bserostatus==1 & Trt==0 & Perprotocol==1 & ph1.D29), table(Wstratum))
+#tmp=subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD29==1 & EventTimePrimaryD29<7)
+#table(!is.na(tmp$Day29bindSpike))
+#
+#tmp=subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD29==1)
+#with(tmp, table(EventTimePrimaryD29<7, !is.na(Day29bindSpike)))
+#
+#
+#with(subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & ph2.D29), table(Wstratum))
+#with(subset(dat_clean, Bserostatus==0 & Trt==0 & Perprotocol==1 & ph2.D29), table(Wstratum))
+#with(subset(dat_clean, Bserostatus==1 & Trt==1 & Perprotocol==1 & ph2.D29), table(Wstratum))
+#with(subset(dat_clean, Bserostatus==1 & Trt==0 & Perprotocol==1 & ph2.D29), table(Wstratum))
+#with(subset(dat_clean, Bserostatus==1 & Trt==0 & Perprotocol==1 & ph1.D29), table(Wstratum))
 
 
 
