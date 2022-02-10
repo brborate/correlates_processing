@@ -24,7 +24,7 @@ jobs:
     env:
     - REPORT_TYPE=IMMUNO
     - TRIAL=janssen_pooled_mock
-    - NOCHECK=1
+    - NOCHECK=0
     script:
     - make risk_report
     - make data_processed
@@ -33,7 +33,7 @@ jobs:
     env:
     - REPORT_TYPE=IMMUNO
     - TRIAL=moderna_mock
-    - NOCHECK=1
+    - NOCHECK=0
     script:
     - make risk_report
     - make data_processed
