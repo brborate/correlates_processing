@@ -48,6 +48,13 @@ library(dplyr)
 load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
 dat_proc <- inputFile_with_riskscore
 
+
+#############################
+# HACK alert
+# make up a SubcohortInd
+if(study_name=="PREVENT19") dat_proc$SubcohortInd==!is.na(dat_proc$Day35bindSpike)
+
+
 # subset on subset_variable
 if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
     if(subset_value != "All") {
