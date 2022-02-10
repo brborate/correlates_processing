@@ -478,7 +478,7 @@ if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.ge
         digest(dat_proc[order(names(dat_proc))])==
         ifelse(attr(config, "config")=="janssen_pooled_mock", 
             "7b07a064a472787cb4a5be64bcd0b393", 
-            "43895d21d723439f96d183c8898be370"),
+            "98af2802caa21f2a1f57f565bd9d0dc9"),
         msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc))    
     print("=======================\n Passed make_dat_proc digest check\n =======================\n")    
 }
