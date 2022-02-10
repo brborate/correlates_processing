@@ -76,7 +76,7 @@ if(endpoint %in% c("EventIndPrimaryD29", "EventIndPrimaryIncludeNotMolecConfirme
 if(endpoint %in% c("EventIndPrimaryD35"))
   day = "Day 35"
 
-caption <- "Variables considered for risk score analysis."
+caption <- "Individual baseline variables in baseline SARS-CoV-2 negative per-protocol placebo recipients that were input into the Superlearner model for developing risk score and predicting occurrence of COVID-19 in ."
 
 tab <- read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_vars.csv"), row.names = 1,
          header = TRUE) %>%
@@ -294,10 +294,15 @@ read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "learne
 
 
 ```{r cvsl-args, warning=FALSE, echo=FALSE}
-caption <- "Arguments used in CV.Superlearner."
+caption <- "Arguments supplied to CV.Superlearner."
 
-read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cvsl_args.csv"),
-         row.names = 1, header = TRUE) %>%
+cvsl_args <- read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cvsl_args.csv"),
+         row.names = 1, header = TRUE) 
+
+cases_placebo <- cvsl_args %>% filter(Argument == "Cases/Total Subjects in placebo group (%)") 
+
+cvsl_args %>%
+  filter(Argument != "Cases/Total Subjects in placebo group (%)") %>%
   kable(
     booktabs = TRUE,
     linesep = "",
@@ -305,16 +310,11 @@ read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cvsl_a
   ) %>%
   kable_styling(latex_options = c("hold_position"),
                 font_size = 9) %>%
-  row_spec(0,bold=TRUE)
+  row_spec(0,bold=TRUE) %>%
   #column_spec(1:2, width = "5cm") %>%
-  
-  #collapse_rows(columns = 1, valign = "top", latex_hline = "major") %>%
-  # footnote(c("*Screen details:",
-  #            "all: includes all variables",
-  #            "glmnet: includes variables with non-zero coefficients in the standard implementation of SL.glmnet that optimizes the lasso tuning parameter via cross-validation",
-  #            "univar_logistic_pval: Wald test 2-sided p-value in a logistic regression model < 0.10",
-  #            "highcor_random: if pairs of quantitative variables with Spearman rank correlation > 0.90, select one of the variables at random"),
-  #          threeparttable = TRUE)
+  # collapse_rows(columns = 1, valign = "top", latex_hline = "major") %>%
+  footnote(paste0(cases_placebo$Argument, " = ", cases_placebo$Value),
+           threeparttable = TRUE)
 
 ```
 
