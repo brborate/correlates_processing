@@ -6,7 +6,13 @@ source(here::here("_common.R"))
 #-----------------------------------------------
 
 
-#library(here)
+library(tidyverse)
+library(Hmisc) # wtd.quantile, cut2
+library(mice)
+library(dplyr)
+library(here)
+
+
 #if (startsWith(tolower(study_name), "mock")) {
 #    path_to_data <- here("data_raw", data_raw_dir, data_in_file)
 #} else {
@@ -15,7 +21,6 @@ source(here::here("_common.R"))
 #print(path_to_data)
 #if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ===========================================")
 #dat_raw <- read.csv(path_to_data)
-
 
 #with(dat_raw, table(Country))
 #summary(dat_raw)
@@ -36,11 +41,6 @@ source(here::here("_common.R"))
 
 ########################################################################################################
 
-library(tidyverse)
-library(Hmisc) # wtd.quantile, cut2
-library(mice)
-library(dplyr)
-
 # dat_proc=preprocess.for.risk.score(dat_raw)
 
 # read raw data with risk score added
@@ -52,7 +52,7 @@ dat_proc <- inputFile_with_riskscore
 #############################
 # HACK alert
 # make up a SubcohortInd
-if(study_name=="PREVENT19") dat_proc$SubcohortInd==!is.na(dat_proc$Day35bindSpike)
+if(study_name=="PREVENT19") dat_proc$SubcohortInd=!is.na(dat_proc$Day35bindSpike)
 
 
 # subset on subset_variable
@@ -314,11 +314,11 @@ if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     dat_proc$wt.D29start1 = ifelse(with(dat_proc,  EarlyendpointD29start1==0 & Perprotocol==1 & EventTimePrimaryD29>=1), dat_proc$wt.D29start1, NA)
     dat_proc$ph1.D29start1=!is.na(dat_proc$wt.D29start1)
     dat_proc$ph2.D29start1=with(dat_proc, ph1.D29start1 & TwophasesampIndD29)
-
+    
     assertthat::assert_that(
         all(!is.na(subset(dat_proc,           EarlyendpointD29start1==0 & Perprotocol==1 & EventTimePrimaryD29>=1 & !is.na(Wstratum), select=wt.D29start1, drop=T))),
         msg = "missing wt.D29start1 for D29start1 analyses ph1 subjects")
-}
+} 
 
 # weights for intercurrent cases
 if(two_marker_timepoints) {
@@ -333,7 +333,7 @@ if(two_marker_timepoints) {
                                             NA)
     dat_proc$ph1.intercurrent.cases=!is.na(dat_proc$wt.intercurrent.cases)
     dat_proc$ph2.intercurrent.cases=with(dat_proc, ph1.intercurrent.cases & get("TwophasesampIndD"%.%tp))    
-
+    
     assertthat::assert_that(
         all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum), select=wt.intercurrent.cases, drop=T))),
         msg = "missing wt.intercurrent.cases for intercurrent analyses ph1 subjects")
@@ -453,14 +453,15 @@ if(study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")){
 
 tmp=list()
 # lloq censoring
-for (a in assays.includeN) {
+for (a in if(study_name!="PREVENT19") assays.includeN else assays) {
   for (t in c("B", paste0("Day", config$timepoints)) ) {
     tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(lloqs[a]), log10(lloqs[a] / 2), dat_proc[[t %.% a]])
   }
 }
 tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
 
-for (tp in rev(timepoints)) dat_proc["Delta"%.%tp%.%"overB"  %.% assays.includeN] <- tmp["Day"%.%tp %.% assays.includeN] - tmp["B"     %.% assays.includeN]
+for (tp in rev(timepoints)) dat_proc["Delta"%.%tp%.%"overB"  %.% if(study_name!="PREVENT19") assays.includeN else assays] <- 
+    tmp["Day"%.%tp %.% if(study_name!="PREVENT19") assays.includeN else assays] - tmp["B"     %.% if(study_name!="PREVENT19") assays.includeN else assays]
 if(two_marker_timepoints) dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays.includeN] <- 
     tmp["Day"%.% timepoints[2]%.% assays.includeN] - tmp["Day"%.%timepoints[1] %.% assays.includeN]
 
@@ -474,7 +475,7 @@ if(two_marker_timepoints) dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints
 library(digest)
 if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.getenv ("NOCHECK")=="") {
     assertthat::assert_that(
-        digest(dat_proc)==
+        digest(dat_proc[order(names(dat_proc))])==
         ifelse(attr(config, "config")=="janssen_pooled_mock", 
             "7b07a064a472787cb4a5be64bcd0b393", 
             "43895d21d723439f96d183c8898be370"),
