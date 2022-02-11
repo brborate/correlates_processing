@@ -31,9 +31,6 @@ names(assays)=assays # add names so that lapply results will have names
 # in the immuno report (but is not analyzed in the cor or cop reports).
 include_bindN <- TRUE
 
-# conversion is only done for COVE for backward compatibility
-# conversion factors
-convf=c(bindSpike=0.0090, bindRBD=0.0272, bindN=0.0024, pseudoneutid50=0.242, pseudoneutid80=1.502)
 
 # For bAb, IU and BAU are the same thing
 # all values on BAU or IU
@@ -96,15 +93,17 @@ if(TRUE) {
     
     if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
         
-        # data less than pos cutoff is set to pos.cutoff/2 in the raw data        
+        # data less than pos cutoff is set to pos.cutoff/2
         uloqs["bindSpike"]=238.1165 
     
-        # data less than pos cutoff is set to pos.cutoff/2 in the raw data        
+        # data less than pos cutoff is set to pos.cutoff/2
         uloqs["bindRBD"]=172.5755    
                 
-        llods["pseudoneutid50"]=5.99761 # based on data, SAP says 5.712
-        pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
-        uloqs["pseudoneutid50"]=1354.315
+        # data less than lloq is set to lloq/2
+        llods["pseudoneutid50"]=NA  
+        lloqs["pseudoneutid50"]=2.7426  
+        pos.cutoffs["pseudoneutid50"]=lloqs["pseudoneutid50"]
+        uloqs["pseudoneutid50"]=619.3052 
         
     } else if(study_name=="PREVENT-19") {
         
@@ -112,7 +111,15 @@ if(TRUE) {
         lloqs["bindSpike"]=150.4*0.0090
         pos.cutoffs["bindSpike"]=lloqs["bindSpike"]
         uloqs["bindSpike"]=770464.6*0.0090
-     
+    
+    }
+    
+    # llox is for plotting and can be either llod or lloq depending on trials
+    lloxs=llods 
+    # set to NA to make the plots free of too much white space
+    if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT-19")) {    
+        lloxs["bindSpike"]=NA 
+        lloxs["bindRBD"]=NA                 
     }
     
 }
