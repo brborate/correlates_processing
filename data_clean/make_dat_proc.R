@@ -425,6 +425,8 @@ assays.includeN=c(assays, "bindN")
 ###############################################################################
 
 if(study_name=="COVE"){
+    # conversion is only done for COVE for backward compatibility
+    convf=c(bindSpike=0.0090, bindRBD=0.0272, bindN=0.0024, pseudoneutid50=0.242, pseudoneutid80=1.502)    
     for (a in assays.includeN) {
       for (t in c("B", paste0("Day", config$timepoints)) ) {
           dat_proc[[t %.% a]] <- dat_proc[[t %.% a]] + log10(convf[a])
@@ -477,10 +479,10 @@ if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.ge
     assertthat::assert_that(
         digest(dat_proc[order(names(dat_proc))])==
         ifelse(attr(config, "config")=="janssen_pooled_mock", 
-            "7b07a064a472787cb4a5be64bcd0b393", 
-            "43895d21d723439f96d183c8898be370"),
-        msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc))    
-    print("=======================\n Passed make_dat_proc digest check\n =======================\n")    
+            "94c397df40da0441944e403faf34b24a", 
+            "1efd5aad1419d2874f439a2f13a6db83"),
+        msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+    print("======================= Passed make_dat_proc digest check =======================")    
 }
 
 write_csv(dat_proc %>% filter(!is.na(risk_score)), file = here("data_clean", paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")))
