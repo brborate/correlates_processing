@@ -49,10 +49,6 @@ load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", attr(
 dat_proc <- inputFile_with_riskscore
 
 
-#############################
-# HACK alert
-# make up a SubcohortInd
-if(study_name=="PREVENT19") dat_proc$SubcohortInd=!is.na(dat_proc$Day35bindSpike)
 
 
 # subset on subset_variable
