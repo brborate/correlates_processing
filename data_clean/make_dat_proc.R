@@ -425,6 +425,8 @@ assays.includeN=c(assays, "bindN")
 ###############################################################################
 
 if(study_name=="COVE"){
+    # conversion is only done for COVE for backward compatibility
+    convf=c(bindSpike=0.0090, bindRBD=0.0272, bindN=0.0024, pseudoneutid50=0.242, pseudoneutid80=1.502)    
     for (a in assays.includeN) {
       for (t in c("B", paste0("Day", config$timepoints)) ) {
           dat_proc[[t %.% a]] <- dat_proc[[t %.% a]] + log10(convf[a])
