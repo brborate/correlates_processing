@@ -10,25 +10,37 @@ source(here::here("_common.R"))
 # load required libraries, cleaned data, and risk score estimates
 library(here)
 library(tidyverse)
-data_name_amended <- paste0(str_remove(paste0(attr(config, "config"), "_data_processed.csv"), ".csv"), "_with_riskscore")
+data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"), 
+                       paste0(attr(config, "config"), "_data_processed_for_immunogenicity"))
 
 # Copy current deployed copy of risk score dataset in adata to archive 
 # Remove current deployed copy of risk score dataset from adata
 # Copy new copy of risk score dataset from data_clean to adata
-if(file.exists(paste0(strsplit(data_in_file, "mapping")[[1]][1],
-                   "correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"))){
-  
-  file.copy(from = paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"),
-            to =  paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/archive/", data_name_amended, "_",
-                         str_replace(str_replace_all(file.info(paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"))$mtime,
-                                                     ":",
-                                                     "."), " ", " time "), 
-                         ".csv"),
-            copy.date = TRUE)
-  
-  file.remove(from = paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"))
+for(j in 1:length(data_name_amended)){
+  if(file.exists(paste0("data_clean/", data_name_amended[j], ".csv"))){
+    if(file.exists(paste0(strsplit(data_in_file, "mapping")[[1]][1],
+                          "correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"))){
+      
+      file.copy(from = paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"),
+                to =  paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/archive/", data_name_amended[j], "_",
+                             str_replace(str_replace_all(file.info(paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"))$mtime,
+                                                         ":",
+                                                         "."), " ", " time "), 
+                             ".csv"),
+                copy.date = TRUE)
+      
+      file.remove(from = paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"))
+    }
+    
+    file.copy(from = paste0("data_clean/", data_name_amended[j], ".csv"),
+              to = paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"),
+              copy.date = TRUE)
+  }else{
+    print(paste0("data_clean/", data_name_amended[j], ".csv not found!"))
+  }
 }
 
-file.copy(from = paste0("data_clean/", data_name_amended, ".csv"),
-          to = paste0("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended, ".csv"),
-          copy.date = TRUE)
+
+
+
+
