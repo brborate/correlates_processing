@@ -84,7 +84,7 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   
   # Create binary indicator variables for Country and Region
   inputMod <- inputFile %>%
-    drop_na(CalendarDateEnrollment, EventIndPrimaryIncludeNotMolecConfirmedD29) %>%
+    drop_na(CalendarDateEnrollment, all_of(endpoint)) %>%
     mutate(Sex.rand = sample(0:1, n(), replace = TRUE),
            Sex = ifelse(Sex %in% c(2, 3), Sex.rand, Sex), # assign Sex randomly as 0 or 1 if Sex is 2 or 3.
            Country = as.factor(Country),
