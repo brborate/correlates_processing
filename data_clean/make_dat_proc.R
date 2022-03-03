@@ -48,6 +48,7 @@ library(here)
 load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
 dat_proc <- inputFile_with_riskscore
 
+#with(dat_proc[dat_proc$Trt==1,], table(!is.na(Day29bindSpike), !is.na(Day29bindRBD), EventIndPrimaryIncludeNotMolecConfirmedD29)) # same missingness
 
 
 

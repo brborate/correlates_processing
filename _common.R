@@ -112,7 +112,7 @@ if(TRUE) {
         # data less than lloq is set to lloq/2 in the raw data
         llods["bindSpike"]=NA 
         lloqs["bindSpike"]=150.4*0.0090
-        pos.cutoffs["bindSpike"]=lloqs["bindSpike"]
+        pos.cutoffs["bindSpike"]=10.8424 # use same as COVE
         uloqs["bindSpike"]=770464.6*0.0090
     
     }
