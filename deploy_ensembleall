@@ -1,9 +1,22 @@
 #!/bin/bash
 
-for T in  janssen_pooled_realbAb janssen_pooled_realADCP janssen_pooled_realPsV  janssen_na_realbAb janssen_na_realADCP janssen_na_realPsV janssen_la_realbAb janssen_la_realADCP janssen_la_realPsV janssen_sa_realbAb janssen_sa_realADCP janssen_sa_realPsV 
-do
-    export TRIAL=$T 
-    echo $TRIAL
-    make deploy_processed_dataset 
+# # Request reason for adata update from deployer!
+# echo "Enter reason for updating adata (this text will be added to adata/README change log): "
+# read update_reason
+# 
+# dateVar=`date`
+# echo "$dateVar"
 
+for T in  janssen_pooled_real janssen_pooled_realADCP janssen_na_real janssen_na_realADCP janssen_la_real janssen_la_realADCP janssen_sa_real janssen_sa_realADCP
+do
+    export TRIAL=$T
+    echo $TRIAL
+    make deploy_processed_dataset
 done
+
+# # Add reason for adata update to README file!
+# write(update_reason, file = paste0(strsplit(data_in_file, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/readme.txt"), append=TRUE)
+# 
+# echo "this is a new line" >> file.txt
+# 
+# "$STR1$STR2"

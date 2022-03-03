@@ -1,8 +1,8 @@
 #!/bin/bash
-declare -a arr=("janssen_pooled_realbAb" "janssen_pooled_realADCP" "janssen_pooled_realPsV"
-                "janssen_na_realbAb" "janssen_na_realADCP" "janssen_na_realPsV"
-                "janssen_la_realbAb" "janssen_la_realADCP" "janssen_la_realPsV"
-                "janssen_sa_realbAb" "janssen_sa_realADCP" "janssen_sa_realPsV")
+declare -a arr=("janssen_pooled_real" "janssen_pooled_realADCP" 
+                "janssen_na_real" "janssen_na_realADCP" 
+                "janssen_la_real" "janssen_la_realADCP" 
+                "janssen_sa_real" "janssen_sa_realADCP")
 
 for i in "${arr[@]}"
 do

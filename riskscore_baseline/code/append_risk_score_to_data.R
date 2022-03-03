@@ -13,7 +13,7 @@ library(conflicted)
 conflicted::conflict_prefer("filter", "dplyr")
 conflict_prefer("summarise", "dplyr")
 load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
-load(paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile.RData"))
+load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
 placebos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), "placebo_ptids_with_riskscores.csv"))
 vaccinees_risk <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"))
 
@@ -23,7 +23,7 @@ risk_scores <- rbind(placebos_risk, vaccinees_risk) %>%
 inputFile_with_riskscore <- left_join(inputFile, risk_scores, by = "Ptid") 
 
 # Save inputFile 
-save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
+save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
 
 # Create table of cases in both arms (post Risk score analyses)
 tab <- inputFile_with_riskscore %>%

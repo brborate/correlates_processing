@@ -22,7 +22,7 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
 if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
   dir.create(paste0("output/", Sys.getenv("TRIAL")))
 }
-save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile.RData"))
+save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable

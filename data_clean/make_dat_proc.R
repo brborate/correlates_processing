@@ -45,7 +45,7 @@ library(here)
 
 # read raw data with risk score added
 # inputFile_with_riskscore has the same number of rows as dat_raw, but adds columns related to earlyendpoint, earlyinfection (preprocess.for.risk.score) and risk scores
-load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
+load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
 dat_proc <- inputFile_with_riskscore
 
 #with(dat_proc[dat_proc$Trt==1,], table(!is.na(Day29bindSpike), !is.na(Day29bindRBD), EventIndPrimaryIncludeNotMolecConfirmedD29)) # same missingness
