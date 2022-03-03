@@ -45,7 +45,7 @@ library(here)
 
 # read raw data with risk score added
 # inputFile_with_riskscore has the same number of rows as dat_raw, but adds columns related to earlyendpoint, earlyinfection (preprocess.for.risk.score) and risk scores
-load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
+load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
 dat_proc <- inputFile_with_riskscore
 
 #with(dat_proc[dat_proc$Trt==1,], table(!is.na(Day29bindSpike), !is.na(Day29bindRBD), EventIndPrimaryIncludeNotMolecConfirmedD29)) # same missingness
@@ -476,7 +476,7 @@ if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.ge
     assertthat::assert_that(
         digest(dat_proc[order(names(dat_proc))])==
         ifelse(attr(config, "config")=="janssen_pooled_mock", 
-            "94c397df40da0441944e403faf34b24a", 
+            "b5835a9df6c6e74f2804a2fbf7cd802e", 
             "1efd5aad1419d2874f439a2f13a6db83"),
         msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
     print("======================= Passed make_dat_proc digest check =======================")    
