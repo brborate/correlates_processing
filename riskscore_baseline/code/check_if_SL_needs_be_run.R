@@ -12,10 +12,10 @@ generate_new_riskscores <- function(){
 
 
 if(file.exists(paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData")) |
-   (study_name == "ENSEMBLE" & file.exists(paste0("output/janssen_pooled_realbAb/janssen_pooled_realbAb_inputFile_with_riskscore.RData")))){
+   (study_name == "ENSEMBLE" & file.exists(paste0("output/janssen_pooled_real/janssen_pooled_real_inputFile_with_riskscore.RData")))){
   
-  if(study_name == "ENSEMBLE"){
-    load("output/janssen_pooled_realbAb/janssen_pooled_realbAb_inputFile_with_riskscore.RData")
+  if(study_name == "ENSEMBLE" & file.exists(paste0("output/janssen_pooled_real/janssen_pooled_real_inputFile_with_riskscore.RData"))){
+    load("output/janssen_pooled_real/janssen_pooled_real_inputFile_with_riskscore.RData")
   }else{
     load(paste0("output/", Sys.getenv("TRIAL"), "/", attr(config, "config"), "_inputFile_with_riskscore.RData"))
   } 
