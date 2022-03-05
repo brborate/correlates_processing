@@ -2,13 +2,19 @@ report.pdf
 report.aux
 report.log
 report.out
-figs/*.png
-output/*.csv
-output/*.rds
-output/*.rda
-output/*.png
-output/*.jpg
-data_clean/*.csv
+output/*.*
 output/*
-figs/*
+output/*.Rdata
+*.Rdata
+output/moderna_mock/*
+output/janssen_pooled_mock/*
+output/janssen_pooled_realbAb/*
+output/janssen_pooled_realADCP/*
+output/janssen_pooled_realPsV/*
+output/novavax_real/*
+*.Rout
+nohup.out
+.nfs*
+
+
 

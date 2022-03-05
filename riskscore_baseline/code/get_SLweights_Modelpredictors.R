@@ -1,10 +1,7 @@
-#-----------------------------------------------
-# obligatory to append to the top of each script
-renv::activate(project = here::here(".."))
-    
+# Sys.setenv(TRIAL = "janssen_pooled_realbAb")
+renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
-    
 source(here::here("..", "_common.R"))
 #-----------------------------------------------
 
@@ -16,11 +13,11 @@ library(xgboost)
 library(ranger)
 conflict_prefer("filter", "dplyr")
 
-load(file = here("output", "objects_for_running_SL.rda"))
+load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
 rm(Y, X_riskVars, weights, maxVar)
 
 # Get Superlearner weights
-load(file = here("output", "sl_riskscore_slfits.rda"))
+load(paste0("output/", Sys.getenv("TRIAL"), "/sl_riskscore_slfits.rda"))
 sl_weights <- sl_riskscore_slfits$coef %>%
   as.data.frame() %>%
   tibble::rownames_to_column(var = "Learner") %>%
@@ -34,9 +31,10 @@ sl_weights %>%
     Learner = sapply(strsplit(Learner, "_screen"), `[`, 1)
   ) %>%
   select(Learner, Screen, Weight) %>%
-  write.csv(here("output", "SL_weights.csv"))
+  write.csv(here("output", Sys.getenv("TRIAL"), "SL_weights.csv"))
 
 top_models <- sl_weights %>%
+  filter(Learner != "SL.mean_screen_all") %>%
   .$Learner
 
 # Get predictors selected in the models with highest weights
@@ -52,6 +50,7 @@ for (i in seq_along(top_models)) {
                           "SL.gam_screen_glmnet",
                           "SL.gam_screen_univariate_logistic_pval",
                           "SL.gam_screen_highcor_random")) {
+
     model <- sl_riskscore_slfits[["fitLibrary"]][[top_models[i]]]$object$coefficients %>%
       as.data.frame() %>%
       tibble::rownames_to_column(var = "Predictors") %>%
@@ -115,7 +114,7 @@ if(run_prod){
     ) %>%
     select(Learner, Screen, Weight, Predictors, Coefficient, `Odds Ratio`,
            Importance, Feature, Gain, Cover, Frequency) %>%
-    write.csv(here("output", "SL_all_models_with_predictors.csv"))
+    write.csv(here("output", Sys.getenv("TRIAL"), "SL_all_models_with_predictors.csv"))
 }else{
   all_models %>%
     left_join(sl_weights, by = "Learner") %>%
@@ -129,7 +128,7 @@ if(run_prod){
       Learner = sapply(strsplit(Learner, "_screen"), `[`, 1)
     ) %>%
     select(Learner, Screen, Weight, Predictors, Coefficient, `Odds Ratio`) %>%
-    write.csv(here("output", "SL_all_models_with_predictors.csv"))
+    write.csv(here("output", Sys.getenv("TRIAL"), "SL_all_models_with_predictors.csv"))
 }
 
 

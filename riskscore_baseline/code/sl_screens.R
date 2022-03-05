@@ -1,12 +1,18 @@
 #-----------------------------------------------
 # obligatory to append to the top of each script
 renv::activate(project = here::here(".."))
-    
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
-    
 source(here::here("..", "_common.R"))
 #-----------------------------------------------
+
+# #-----------------------------------------------
+# # obligatory to append to the top of each script
+# renv::activate(project = here::here())
+# # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
+# if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
+# source(here::here("_common.R"))
+# #-----------------------------------------------
 
 ## create SL screens, algorithm + screen combinations
 
@@ -110,7 +116,7 @@ screen_highcor_random <- function(Y, X, family, obsWeights, id, nVar = maxVar,
   ) %>%
     filter(corr == "FALSE")
 
-  if (dim(long.cormat)[1] > 0) { # NEEDS TO BE UPDATED; CHECK SAP
+  if (dim(long.cormat)[1] > 0) { 
     # select random element out of any pair
     long.cormat$randCol <- apply(long.cormat, 1, function(x) sample(c(x[1], x[2]), 1, replace = T))
     # get the unique columns

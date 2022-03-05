@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "janssen_pooled_real")
+#Sys.setenv(TRIAL = "janssen_pooled_realADCP")
 #-----------------------------------------------
 renv::activate(here::here())    
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
@@ -8,7 +8,7 @@ source(here::here("_common.R"))
 library(here)
 
 # load data and rename first column (ID)
-dat_clean <- read.csv(here("data_clean", paste0(attr(config, "config"), "_data_processed.csv"))) 
+dat_clean <- read.csv(here("data_clean", paste0(attr(config, "config"), "_data_processed_with_riskscore.csv"))) 
 
 #with(subset(dat_clean, Bserostatus==0 & Perprotocol==1 & ph1.immuno), hist(Day29bindN))
 #    (subset(dat_clean, Bserostatus==0 & Perprotocol==1 & ph1.immuno & Day29bindN>2))
@@ -30,18 +30,18 @@ dat_clean <- read.csv(here("data_clean", paste0(attr(config, "config"), "_data_p
 
 #subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryIncludeNotMolecConfirmedD29==1 & EventIndPrimaryD29==0 & EventTimePrimaryIncludeNotMolecConfirmedD29>=7)
 
-tmp=subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD29==1 & EventTimePrimaryD29<7)
-table(!is.na(tmp$Day29bindSpike))
-
-tmp=subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD29==1)
-with(tmp, table(EventTimePrimaryD29<7, !is.na(Day29bindSpike)))
-
-
-with(subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & ph2.D29), table(Wstratum))
-with(subset(dat_clean, Bserostatus==0 & Trt==0 & Perprotocol==1 & ph2.D29), table(Wstratum))
-with(subset(dat_clean, Bserostatus==1 & Trt==1 & Perprotocol==1 & ph2.D29), table(Wstratum))
-with(subset(dat_clean, Bserostatus==1 & Trt==0 & Perprotocol==1 & ph2.D29), table(Wstratum))
-with(subset(dat_clean, Bserostatus==1 & Trt==0 & Perprotocol==1 & ph1.D29), table(Wstratum))
+#tmp=subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD29==1 & EventTimePrimaryD29<7)
+#table(!is.na(tmp$Day29bindSpike))
+#
+#tmp=subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD29==1)
+#with(tmp, table(EventTimePrimaryD29<7, !is.na(Day29bindSpike)))
+#
+#
+#with(subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & ph2.D29), table(Wstratum))
+#with(subset(dat_clean, Bserostatus==0 & Trt==0 & Perprotocol==1 & ph2.D29), table(Wstratum))
+#with(subset(dat_clean, Bserostatus==1 & Trt==1 & Perprotocol==1 & ph2.D29), table(Wstratum))
+#with(subset(dat_clean, Bserostatus==1 & Trt==0 & Perprotocol==1 & ph2.D29), table(Wstratum))
+#with(subset(dat_clean, Bserostatus==1 & Trt==0 & Perprotocol==1 & ph1.D29), table(Wstratum))
 
 
 
@@ -54,8 +54,8 @@ assays_plusN = c(assays, "bindN")
 
 failed_llod_check <- NULL
 for (a in assays_plusN) {
-  for (t in c("B", if(has29) "Day29", if(has57) "Day57")) {
-    pass <- all(dat_clean[[paste0(t,a)]] >= log10(llods[a] / 2), na.rm = TRUE)
+  for (t in c("B", paste0("Day", config$timepoints))) {
+    pass <- all(dat_clean[[paste0(t,a)]] >= ifelse(llods[a]/2>=1, .999, 1.001) * log10(llods[a] / 2), na.rm = TRUE) #.999 is a necessary fudge factor
     if(!pass){
         failed_llod_check <- c(failed_llod_check, paste0(t,a))
     }
@@ -64,16 +64,14 @@ for (a in assays_plusN) {
 
 if(length(failed_llod_check) > 1){
     stop(paste0("Values of assays less than LLOD / 2 for: ", 
-                paste(failed_llod_check, sep = ", ")))
+                paste(failed_llod_check, sep = ", "), "\n"))
 }
 
 ## missing values in variables that should have no missing values
 ## binary variables only take values 0/1
 variables_with_no_missing <- 
     c(
-      if(has57) c("ph1.D57", "ph2.D57", "EarlyendpointD57", "TwophasesampIndD57", "EarlyinfectionD57", "EventIndPrimaryD57", "EventTimePrimaryD57", "NumberdaysD1toD57"),
-      if(has29) c("ph1.D29", "ph2.D29", "EarlyendpointD29", "TwophasesampIndD29", "EarlyinfectionD29", "EventIndPrimaryD29", "EventTimePrimaryD29"),
-      
+      c(outer(c("ph1.D", "ph2.D", "EarlyendpointD", "TwophasesampIndD", "EarlyinfectionD", "EventIndPrimaryD", "EventTimePrimaryD", "NumberdaysD1toD"), config$timepoints, paste0)),
       "age.geq.65", "MinorityInd",
       "ph1.immuno",
       "ph2.immuno"

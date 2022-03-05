@@ -3,13 +3,16 @@ library(methods)
 library(dplyr)
 library(digest)
 set.seed(98109)
-
+ 
 
 config <- config::get(config = Sys.getenv("TRIAL"))
 for(opt in names(config)){
   eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
 }
  
+data_name = paste0(attr(config, "config"), "_data_processed_for_immunogenicity.csv")
+
+
 # disabling lower level parallelization in favor of higher level of parallelization
 
 # set parallelization in openBLAS and openMP
@@ -28,80 +31,103 @@ names(assays)=assays # add names so that lapply results will have names
 # in the immuno report (but is not analyzed in the cor or cop reports).
 include_bindN <- TRUE
 
-# conversion factors
-convf=c(bindSpike=0.0090, bindRBD=0.0272, bindN=0.0024, pseudoneutid50=0.242, pseudoneutid80=1.502)
 
 # For bAb, IU and BAU are the same thing
-# limits for each assay (IU for bAb and pseudoneut, no need to convert again)
-# the following are copied from SAP to avoid any mistake (get rid of commas)
-tmp=list(
-    bindSpike=c(
-        pos.cutoff=10.8424,
-        LLOD = 0.3076,
-        ULOD = 172226.2,
-        LLOQ = 1.7968,
-        ULOQ = 10155.95)
-    ,
-    bindRBD=c(
-        pos.cutoff=14.0858,
-        LLOD = 1.593648,
-        ULOD = 223074,
-        LLOQ = 3.4263,
-        ULOQ = 16269.23)
-    ,
-    bindN=c( 
-        pos.cutoff=23.4711,
-        LLOD = 0.093744,
-        ULOD = 52488,
-        LLOQ = 4.4897,
-        ULOQ = 574.6783)
-    ,
-    pseudoneutid50=c( 
-        LLOD = 2.42,
-        ULOD = NA,
-        LLOQ = 4.477,
-        ULOQ = 10919)
-    ,
-    pseudoneutid80=c( 
-        LLOD = 15.02,
-        ULOD = NA,
-        LLOQ = 21.4786,
-        ULOQ = 15368)
-    ,
-    liveneutmn50=c( 
-        LLOD = 62.16,
-        ULOD = NA,
-        LLOQ = 117.35,
-        ULOQ = 18976.19)
+# all values on BAU or IU
+if(TRUE) {
+    tmp=list(
+        bindSpike=c(
+            pos.cutoff=10.8424,
+            LLOD = 0.3076,
+            ULOD = 172226.2,
+            LLOQ = 1.7968,
+            ULOQ = 10155.95)
         ,
-    ADCP=c( 
-        pos.cutoff=11.57,# as same lod
-        LLOD = 11.57,
-        ULOD = NA,
-        LLOQ = 8.87,
-        ULOQ = 211.56)
-)
-
-pos.cutoffs=sapply(tmp, function(x) unname(x["pos.cutoff"]))
-llods=sapply(tmp, function(x) unname(x["LLOD"]))
-lloqs=sapply(tmp, function(x) unname(x["LLOQ"]))
-uloqs=sapply(tmp, function(x) unname(x["ULOQ"]))
-
-
-# Per Sarah O'Connell, for ensemble, the positivity cut offs and LLODs will be identical, 
-# as will the quantitative limits for N protein which are based on convalescent samples.
-# But the RBD and Spike quantitation ranges will be different for the Janssen partial validation than for Moderna. 
-if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
-    lloqs["bindSpike"]=1.8429 
-    lloqs["bindRBD"]=5.0243 
+        bindRBD=c(
+            pos.cutoff=14.0858,
+            LLOD = 1.593648,
+            ULOD = 223074,
+            LLOQ = 3.4263,
+            ULOQ = 16269.23)
+        ,
+        bindN=c( 
+            pos.cutoff=23.4711,
+            LLOD = 0.093744,
+            ULOD = 52488,
+            LLOQ = 4.4897,
+            ULOQ = 574.6783)
+        ,
+        pseudoneutid50=c( 
+            pos.cutoff=2.42,# as same lod
+            LLOD = 2.42,
+            ULOD = NA,
+            LLOQ = 4.477,
+            ULOQ = 10919)
+        ,
+        pseudoneutid80=c( 
+            pos.cutoff=15.02,# as same lod
+            LLOD = 15.02,
+            ULOD = NA,
+            LLOQ = 21.4786,
+            ULOQ = 15368)
+        ,
+        liveneutmn50=c( 
+            pos.cutoff=82.1*0.276,# as same lod
+            LLOD = 82.11*0.276,
+            ULOD = NA,
+            LLOQ =  159.79*0.276,
+            ULOQ = 11173.21*0.276)
+        ,
+        ADCP=c( 
+            pos.cutoff=11.57,# as same lod
+            LLOD = 11.57,
+            ULOD = NA,
+            LLOQ = 8.87,
+            ULOQ = 211.56)
+    )
     
-    uloqs["bindSpike"]=238.1165 
-    uloqs["bindRBD"]=172.5755    
+    pos.cutoffs=sapply(tmp, function(x) unname(x["pos.cutoff"]))
+    llods=sapply(tmp, function(x) unname(x["LLOD"]))
+    lloqs=sapply(tmp, function(x) unname(x["LLOQ"]))
+    uloqs=sapply(tmp, function(x) unname(x["ULOQ"]))    
+    
+    if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
+        
+        # data less than pos cutoff is set to pos.cutoff/2
+        llods["bindSpike"]=NA 
+        uloqs["bindSpike"]=238.1165 
+    
+        # data less than pos cutoff is set to pos.cutoff/2
+        llods["bindRBD"]=NA                 
+        uloqs["bindRBD"]=172.5755    
+                
+        # data less than lloq is set to lloq/2
+        llods["pseudoneutid50"]=NA  
+        lloqs["pseudoneutid50"]=2.7426  
+        pos.cutoffs["pseudoneutid50"]=lloqs["pseudoneutid50"]
+        uloqs["pseudoneutid50"]=619.3052 
+        
+    } else if(study_name=="PREVENT19") {
+        
+        # data less than lloq is set to lloq/2 in the raw data
+        llods["bindSpike"]=NA 
+        lloqs["bindSpike"]=150.4*0.0090
+        pos.cutoffs["bindSpike"]=10.8424 # use same as COVE
+        uloqs["bindSpike"]=770464.6*0.0090
+    
+    }
+    
+    # llox is for plotting and can be either llod or lloq depending on trials
+    lloxs=llods 
+    
 }
 
 
+# assays not in this list are imputed
 must_have_assays <- c("bindSpike", "bindRBD")
 if (endsWith(attr(config, "config"),"ADCP")) must_have_assays <- c("ADCP")    
+if (endsWith(attr(config, "config"),"PsV")) must_have_assays <- c("pseudoneutid50")    
+if (study_name=="PREVENT19") must_have_assays <- c("bindSpike")
 
 
 #assays_to_be_censored_at_uloq_cor <- c(
@@ -113,11 +139,8 @@ if (endsWith(attr(config, "config"),"ADCP")) must_have_assays <- c("ADCP")
 ###############################################################################
 # figure labels and titles for markers
 ###############################################################################
-#has29 = "Day29" %in% times
-has57 = study_name %in% c("COVE","MockCOVE")
-has29 = study_name %in% c("COVE","ENSEMBLE", "MockCOVE","MockENSEMBLE")
 
-markers <- c(outer(times[which(times %in% c("B", "Day29", "Day57"))], 
+markers <- c(outer(times[which(times %in% c("B", paste0("Day", config$timepoints)))], 
                    assays, "%.%"))
 
 # race labeling
@@ -155,13 +178,9 @@ names(labels.assays.short) <- c("bindN",
 # the truncated labels.assays.short later
 labels.assays.short.tabular <- labels.assays.short
 
-labels.time <- c("Day 1", "Day 29", "Day 57", 
-                 "D29 fold-rise over D1", 
-                 "D57 fold-rise over D1", 
-                 "D57 fold-rise over D29")
+labels.time <- c("Day 1", paste0("Day ", config$timepoints), paste0("D", config$timepoints, " fold-rise over D1"), "D57 fold-rise over D29")
 
-names(labels.time) <- c("B", "Day29", "Day57", "Delta29overB", 
-                        "Delta57overB", "Delta57over29")
+names(labels.time) <- c("B", paste0("Day", config$timepoints), paste0("Delta", config$timepoints, "overB"), "Delta57over29")
 
 # axis labeling
 labels.axis <- outer(
@@ -187,11 +206,7 @@ names(labels.assays) <- c("bindSpike",
 # title labeling
 labels.title <- outer(
   labels.assays[assays],
-  ": " %.%
-    c(
-      "Day 1", "Day 29", "Day 57", "D29 fold-rise over D1",
-      "D57 fold-rise over D1", "D57 fold-rise over D29"
-    ),
+  ": " %.% c("Day 1", paste0("Day ", config$timepoints), paste0("D", config$timepoints, " fold-rise over D1"), "D57 fold-rise over D29"),
   paste0
 )
 labels.title <- as.data.frame(labels.title)
@@ -240,7 +255,20 @@ if ((study_name=="COVE" | study_name=="MockCOVE")) {
       "South Africa, Age >= 60, Not at risk",
       "South Africa, Age >= 60, At risk"
     )
-}
+} else if ((study_name=="PREVENT19")) {
+    demo.stratum.labels <- c(
+      "US White non-Hisp, Age 18-64, Not at risk",
+      "US White non-Hisp, Age 18-64, At risk",
+      "US White non-Hisp, Age >= 65, Not at risk",
+      "US White non-Hisp, Age >= 65, At risk",
+      "US URM, Age 18-64, Not at risk",
+      "US URM, Age 18-64, At risk",
+      "US URM, Age >= 65, Not at risk",
+      "US URM, Age >= 65, At risk",
+      "Mexico, Age 18-64",
+      "Mexico, Age >= 65"
+    )
+} else stop("unknown study_name")
 
 labels.regions.ENSEMBLE =c("0"="Northern America", "1"="Latin America", "2"="Southern Africa")
 regions.ENSEMBLE=0:2
@@ -352,7 +380,7 @@ ggsave_custom <- function(filename = default_name(plot),
 
 
 
-# extract assay from marker name such as Day57pseudoneutid80, Bpseudoneutid80
+# extract assay from marker name such as Daytp1pseudoneutid80, Bpseudoneutid80
 marker.name.to.assay=function(marker.name) {
     if(endsWith(marker.name, "bindSpike")) {
         "bindSpike"
@@ -370,8 +398,6 @@ marker.name.to.assay=function(marker.name) {
 }
 
 
-data_name = paste0(attr(config, "config"), "_data_processed.csv")
-
 # x is the marker values
 # assay is one of assays, e.g. pseudoneutid80
 report.assay.values=function(x, assay){
@@ -383,4 +409,66 @@ report.assay.values=function(x, assay){
     out
     #out[!duplicated(out)] # unique strips away the names. But don't take out duplicates because 15% may be needed and because we may want the same number of values for each assay
 }
-#report.assay.values (dat.vac.seroneg[["Day57pseudoneutid80"]], "pseudoneutid80")
+#report.assay.values (dat.vac.seroneg[["Daytp1pseudoneutid80"]], "pseudoneutid80")
+
+
+preprocess.for.risk.score=function(dat_raw, study_name) {
+    dat_proc=dat_raw
+    
+    dat_proc=subset(dat_proc, !is.na(Bserostatus))
+    
+    # EventTimePrimaryIncludeNotMolecConfirmedD29 are the endpoint of interest and should be used to compute weights
+    if(study_name=="ENSEMBLE") {
+        dat_proc$EventTimePrimaryD29=dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD29
+        dat_proc$EventIndPrimaryD29 =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
+        dat_proc$EventTimePrimaryD1 =dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD1
+        dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
+    }
+        
+    for(tp in timepoints) dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
+    
+    
+    for(tp in timepoints) {
+        dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
+        # define start1 variables
+        if(tp==timepoints[1]) {
+            if (study_name=="MockCOVE" | study_name=="COVE") {
+                # a hack: no such variable in the mock or real moderna datasets. It is okay because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
+                dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
+            } else if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
+                dat_proc[["EarlyendpointD"%.%tp%.%"start1"]]<- 
+                    with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp%.%"start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 1),1,0))
+            } else if (study_name == "PREVENT19") {
+                # for novavax prevent19 we need this variable to define risk cohort flag
+                # at first we only have markers at D35, so we have to hardcode this
+                dat_proc[["EarlyendpointD21start1"]]<- 
+                    with(dat_proc, ifelse(EarlyinfectionD21start1==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < NumberdaysD1toD21 + 1),1,0))
+            } else stop("unknown study_name")
+        }
+        
+    }
+    
+    # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm. It requires:
+    # 1. baseline SARS-CoV-2 negative, 
+    # 2. per-protocol, 
+    # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
+    # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
+    # no NAs allowed. 
+    if (study_name=="COVE" | study_name=="MockCOVE") {
+        # COVE is a special case, redefined for backward compatibility
+        dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
+    } else if (study_name == "PREVENT19") {
+        # for this trial we only have markers at D35 at first, so we have to hardcode this
+        dat_proc$Riskscorecohortflag <- 
+            with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & EarlyendpointD21start1==0 & EventTimePrimaryD21>=1, 1, 0))
+    } else {
+        dat_proc$Riskscorecohortflag <- 
+            with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
+    }
+
+    assertthat::assert_that(
+        all(!is.na(dat_proc$Riskscorecohortflag)),
+        msg = "missing Riskscorecohortflag")
+    
+    dat_proc    
+}
