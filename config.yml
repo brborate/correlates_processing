@@ -47,7 +47,7 @@ prevent19: &prevent19
   assay_labels_short: [Anti Spike IgG (BAU/ml)]
   study_name: PREVENT19
   
-az_trial: &az_trial
+cov002: &cov002
   <<: *ows_trial
   two_marker_timepoints: yes
   timepoints: [29, 57]
@@ -59,7 +59,7 @@ az_trial: &az_trial
   times: [B, Day29, Day57, Delta29overB, Delta57overB, Delta57over29]
   time_labels: [Day 1, Day 29, Day 57, D29 fold-rise over D1, D57 fold-rise over D1, D57 fold-rise over D29]
   data_raw_dir: astrazeneca
-  study_name_code: AZ
+  study_name: COV002
   
   
 janssen_trial: &janssen_trial
