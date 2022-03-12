@@ -1,21 +1,20 @@
 # Sys.setenv(TRIAL = "moderna_mock")
 # Sys.setenv(TRIAL = "janssen_pooled_mock")
-# Sys.setenv(TRIAL = "prevent19")
+# Sys.setenv(TRIAL = "cov002")
 
 source("code/loadlibraries_readinputdata.R")
-if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
-  inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) %>%
+inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name)
+
+if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "COV002")){
+  inputFile <- inputFile %>%
     rename(Ptid = Subjectid)
 }else if(study_name == "MockCOVE"){
-  inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) %>%
+  inputFile <- inputFile %>%
     rename(Ptid = X)
 }else if(study_name == "COVE"){
   inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name)
   print("Risk scores for Moderna real dataset were generated at Moderna's end using CoVPN Stats/SCHARP code. 
         Are you sure you want to regenerate them?")
-}else if(study_name == "PREVENT19"){
-  inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) %>%
-    rename(Ptid = Subjectid) 
 }
 
 # Save inputFile 
@@ -137,6 +136,55 @@ if(study_name %in% c("PREVENT19")){
   studyName_for_report <- "PREVENT19"
   inputMod <- inputFile %>%
     filter(Country == 0) # Analysis based off only US subjects 
+}
+
+
+if(study_name == "COV002"){
+  risk_vars <- c(
+    "Age", "Sex", "Black", "Asian", "NatAmer", "PacIsl",  
+    "Multiracial", "Notreported", "Unknown",
+    "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
+    "BMI", "Country.X1", "Country.X2"
+  )
+  # Store original original risk variables as well to check in check_if_SL_needs_be_run.R!
+  original_risk_vars <- c(
+    "Age", "Sex", "Black", "Asian", "NatAmer", "PacIsl",  
+    "Multiracial", "Notreported", "Unknown",
+    "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
+    "BMI", "HighRiskInd", "Country"
+  )
+  
+  endpoint <- "EventIndPrimaryD57"
+  risk_timepoint <- 57
+  studyName_for_report <- "COV002"
+  
+  # Create binary indicator variables for Country and Region
+  inputMod <- inputFile %>%
+    drop_na(all_of(endpoint)) %>%
+    mutate(Country = as.factor(Country))
+  
+  rec <- recipe(~ Country, data = inputMod)
+  dummies <- rec %>%
+    step_dummy(Country) %>%
+    prep(training = inputMod)
+  inputMod <- inputMod %>% bind_cols(bake(dummies, new_data = NULL)) 
+  # %>%
+  #   select(-c(Country, Region, CalDtEnrollIND))
+  names(inputMod)<-gsub("\\_",".",names(inputMod))
+  
+  # # Create interaction variables between Region and CalDtEnrollIND
+  # rec <- recipe(EventIndPrimaryIncludeNotMolecConfirmedD29 ~., data = inputMod)
+  # int_mod_1 <- rec %>%
+  #   step_interact(terms = ~ starts_with("Region"):starts_with("CalDtEnrollIND"))
+  # int_mod_1 <- prep(int_mod_1, training = inputMod)
+  # inputMod <- bake(int_mod_1, inputMod)
+  # names(inputMod)<-gsub("\\_",".",names(inputMod))
+  # if(run_prod){
+  #   risk_vars <- append(risk_vars, c("Region.X1.x.CalDtEnrollIND.X1", "Region.X1.x.CalDtEnrollIND.X2",
+  #                                    "Region.X1.x.CalDtEnrollIND.X3",
+  #                                    "Region.X2.x.CalDtEnrollIND.X1", "Region.X2.x.CalDtEnrollIND.X2",
+  #                                    "Region.X2.x.CalDtEnrollIND.X3"))
+  # }
 }
 
 # Check there are no NA values in Riskscorecohortflag!
