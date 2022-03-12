@@ -50,6 +50,10 @@ dat_proc <- inputFile_with_riskscore
 
 #with(dat_proc[dat_proc$Trt==1,], table(!is.na(Day29bindSpike), !is.na(Day29bindRBD), EventIndPrimaryIncludeNotMolecConfirmedD29)) # same missingness
 
+# hardcode AnyinfectionD1 for the mock datasets
+if (study_name %in% c("MockENSEMBLE", "MockCOVE")) {
+    dat_proc$AnyinfectionD1=0
+}
 
 
 # subset on subset_variable
