@@ -47,6 +47,21 @@ prevent19: &prevent19
   assay_labels_short: [Anti Spike IgG (BAU/ml)]
   study_name: PREVENT19
   
+cov002: &cov002
+  <<: *ows_trial
+  two_marker_timepoints: yes
+  timepoints: [29, 57]
+  times: [B, Day29, Day57, Delta29overB, Delta57overB, Delta57over29]
+  time_labels: [Day 1, Day 29, Day 57, D29 fold-rise over D1, D57 fold-rise over D1, D57 fold-rise over D29]
+  data_raw_dir: astrazeneca
+  study_name_code: COV002
+  data_in_file: /trials/covpn/p3002/analysis/mapping_immune_correlates/adata/COVID_AstraZeneca_realdata_20220310.csv 
+  subset_variable: None
+  subset_value: All
+  assays: [bindSpike, bindRBD, pseudoneutid50]
+  assay_labels: [Binding Antibody to Spike, Binding Antibody to RBD, PsV Neutralization 50% Titer]
+  assay_labels_short: [Anti Spike IgG (BAU/ml), Anti RBD IgG (BAU/ml), Pseudovirus-nAb ID50 (IU50/ml)]
+  study_name: COV002
 
 janssen_trial: &janssen_trial
   <<: *ows_trial
