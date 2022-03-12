@@ -468,7 +468,7 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
     # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
     # no NAs allowed. 
-    if (study_name %in% c("MockCOVE", "COVE", "COV002")) {
+    if (study_name %in% c("MockCOVE", "COVE")) {
         # COVE is a special case, redefined for backward compatibility
         dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
     } else if (study_name == "PREVENT19") {
