@@ -42,9 +42,9 @@ prevent19: &prevent19
   data_raw_dir: novavax
   study_name_code: PREVENT19
   data_in_file: /trials/covpn/p3004/analysis/mapping_immune_correlates/adata/COVID_Novavax_realdata_20220208.csv 
-  assays: [bindSpike]
-  assay_labels: [Binding Antibody to Spike]
-  assay_labels_short: [Anti Spike IgG (BAU/ml)]
+  assays: [bindSpike, pseudoneutid50]
+  assay_labels: [Binding Antibody to Spike, PsV Neutralization 50% Titer]
+  assay_labels_short: [Anti Spike IgG (BAU/ml), Pseudovirus-nAb ID50 (IU50/ml)]
   study_name: PREVENT19
   
 cov002: &cov002
@@ -218,5 +218,3 @@ janssen_sa_mock:
   <<: *janssen_trial_mock
   subset_variable: Region
   subset_value: 2
-
-
