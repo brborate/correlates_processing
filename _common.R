@@ -115,6 +115,12 @@ if(TRUE) {
         pos.cutoffs["bindSpike"]=10.8424 # use same as COVE
         uloqs["bindSpike"]=770464.6*0.0090
     
+        # data less than lod is set to lod/2
+        llods["pseudoneutid50"]=2.612  
+        lloqs["pseudoneutid50"]=2.7426  
+        pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
+        uloqs["pseudoneutid50"]=619.3052 
+        
     }
     
     # llox is for plotting and can be either llod or lloq depending on trials
