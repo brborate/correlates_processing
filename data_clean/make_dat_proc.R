@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "janssen_pooled_realbAb")
+#Sys.setenv(TRIAL = "janssen_pooled_mock")
 renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -441,13 +441,22 @@ if(study_name=="COVE"){
 # after COVE, the data already comes censored
 ###############################################################################
 
-if(study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")){
+if(study_name %in% c("COVE", "MockCOVE")){
     for (a in assays.includeN) {
       for (t in c("B", paste0("Day", config$timepoints)) ) {
         dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(llods[a]), log10(llods[a] / 2), dat_proc[[t %.% a]])
       }
     }
 }
+
+if(study_name %in% c("MockENSEMBLE")){
+    for (a in assays.includeN) {
+      for (t in c("B", paste0("Day", config$timepoints)) ) {
+        dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(lloqs[a]), log10(lloqs[a] / 2), dat_proc[[t %.% a]])
+      }
+    }
+}
+
 
 
 ###############################################################################
@@ -480,7 +489,7 @@ if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.ge
     assertthat::assert_that(
         digest(dat_proc[order(names(dat_proc))])==
         ifelse(attr(config, "config")=="janssen_pooled_mock", 
-            "f590bbf897df4c28cff1c4efad842f4a", 
+            "028549acb994980fbb6832198308ec4a", 
             "1902296f23fca88c4757ed7a84fbe7d7"),
         msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
     print("======================= Passed make_dat_proc digest check =======================")    
