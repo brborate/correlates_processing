@@ -69,14 +69,24 @@ if(studyName_for_report == "PREVENT19"){
 }
 #########################
 
-if(endpoint=="EventIndPrimaryD57")
+if(studyName_for_report %in% c("COVE", "MockCOVE")){
   day = "Day 57"
-if(endpoint %in% c("EventIndPrimaryD29", "EventIndPrimaryIncludeNotMolecConfirmedD29"))
+  start = "7 days"
+}
+if(studyName_for_report %in% c("ENSEMBLE", "MockENSEMBLE")){
   day = "Day 29"
-if(endpoint %in% c("EventIndPrimaryD35"))
+  start = "1 day"
+}
+if(studyName_for_report == "PREVENT19"){
   day = "Day 35"
+  start = "1 day"
+}
+if(studyName_for_report == "COV002"){
+  day = "Day 57"
+  start = "7 days"
+}
 
-caption <- "Individual baseline variables in baseline SARS-CoV-2 negative per-protocol placebo recipients that were input into the Superlearner model for developing risk score and predicting occurrence of COVID-19 in ."
+caption <- "Individual baseline variables in baseline SARS-CoV-2 negative per-protocol placebo recipients that were used in the Superlearner model for developing risk score and predicting occurrence of COVID-19."
 
 tab <- read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_vars.csv"), row.names = 1,
          header = TRUE) %>%
@@ -323,14 +333,14 @@ cvsl_args %>%
 
 
 
-```{r, echo=FALSE, out.width="99%", out.height="120%", fig.cap= paste0("Cross-validated AUC (95\\% CI) of algorithms for predicting COVID-19 disease status starting 7 days after ", day, ". CV-AUCs were computed using only data from the placebo arm.")}
+```{r, echo=FALSE, out.width="99%", out.height="120%", fig.cap= paste0("Cross-validated AUC (95\\% CI) of algorithms for predicting COVID-19 disease status starting ", start, " after ", day, ". CV-AUCs were computed using only data from the placebo arm.")}
 knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_placebo_cvaucs.png"))
 ```
 
 \end{landscape}
 
 
-```{r, echo=FALSE, out.height="94%", fig.cap=paste0("CV-estimated predicted probabilities of COVID-19 disease 7 days after ", day, " by case/control status for top 2 learners, SuperLearner and Discrete SL. CV-estimated predicted probabilities were computed using only data from the placebo arm.")}
+```{r, echo=FALSE, out.height="94%", fig.cap=paste0("CV-estimated predicted probabilities of COVID-19 disease ", start, " after ", day, " by case/control status for top 2 learners, SuperLearner and Discrete SL. CV-estimated predicted probabilities were computed using only data from the placebo arm.")}
 knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "predProb_riskscore_plac.png"))
 ```
 
@@ -390,7 +400,7 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "SL_all_model
 \end{landscape}
 
 
-```{r, echo=FALSE, out.width="100%", out.height="90%", fig.cap=paste0("Superlearner predicted probabilities of COVID-19 disease in vaccinees 7 days after ", day, " by case/control status.")}
+```{r, echo=FALSE, out.width="100%", out.height="90%", fig.cap=paste0("Superlearner predicted probabilities of COVID-19 disease in vaccinees ", start, " after ", day, " by case/control status.")}
 knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "predProb_riskscore_vacc_onlySL.png"))
 ```
 
@@ -433,7 +443,7 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_
     caption = caption) %>%
   kable_styling(latex_options = c("hold_position"),
                 font_size = 9) %>%
-  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least 7 days after the ", day, " visit.")),
+  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least ", start, " after the ", day, " visit.")),
              threeparttable = TRUE)
 
 ```
@@ -454,7 +464,7 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_
     caption = caption) %>%
   kable_styling(latex_options = c("hold_position"),
                 font_size = 9) %>%
-  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least 7 days after the ", day, " visit.")),
+  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least ", start, " after the ", day, " visit.")),
              threeparttable = TRUE)
 
 ```
@@ -473,7 +483,7 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_post_r
     caption = caption) %>%
   kable_styling(latex_options = c("hold_position"),
                 font_size = 9) %>%
-  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least 7 days after the ", day, " visit.")),
+  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least ", start, " after the ", day, " visit.")),
              threeparttable = TRUE)
 
 ```
