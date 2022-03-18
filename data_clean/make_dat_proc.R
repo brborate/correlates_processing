@@ -56,16 +56,6 @@ if (study_name %in% c("MockENSEMBLE", "MockCOVE")) {
 }
 
 
-# subset on subset_variable
-if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
-    if(subset_value != "All") {
-        include_in_subset <- dat_proc[[subset_variable]] == subset_value
-        dat_proc <- dat_proc[include_in_subset, , drop = FALSE]
-    }
-}
-
-
-
 colnames(dat_proc)[1] <- "Ptid" 
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
 dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, stop("unknown study_name")))
@@ -476,6 +466,22 @@ for (tp in rev(timepoints)) dat_proc["Delta"%.%tp%.%"overB"  %.% if(study_name!=
     tmp["Day"%.%tp %.% if(study_name!="PREVENT19") assays.includeN else assays] - tmp["B"     %.% if(study_name!="PREVENT19") assays.includeN else assays]
 if(two_marker_timepoints) dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays.includeN] <- 
     tmp["Day"%.% timepoints[2]%.% assays.includeN] - tmp["Day"%.%timepoints[1] %.% assays.includeN]
+
+
+
+
+
+###############################################################################
+# subset on subset_variable
+###############################################################################
+
+if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
+    if(subset_value != "All") {
+        include_in_subset <- dat_proc[[subset_variable]] == subset_value
+        dat_proc <- dat_proc[include_in_subset, , drop = FALSE]
+    }
+}
+
 
 
 
