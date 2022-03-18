@@ -21,7 +21,8 @@ MaxbAbDay29 <- ifelse(exists("MaxbAbDay29"), MaxbAbDay29, NA)
 MaxbAbDay57 <- ifelse(exists("MaxbAbDay57"), MaxbAbDay57, NA)
 MaxID50ID80Day29 <- ifelse(exists("MaxID50ID80Day29"), MaxID50ID80Day29, NA)
 MaxID50ID80Day57 <- ifelse(exists("MaxID50ID80Day57"), MaxID50ID80Day57, NA)
-
+Maxlive50Day29 <- ifelse(exists("Maxlive50Day29"), Maxlive50Day29, NA)
+Maxlive50Day57 <- ifelse(exists("Maxlive50Day57"), Maxlive50Day57, NA)
 
 
 MaxbAbB <- try(dat.long.twophase.sample %>%
@@ -42,26 +43,41 @@ if (class(MaxID50ID80B) == "try-error") { ## nAb assays are unavailable
   MaxID50ID80B <- NA
 }
 
+Maxlive50B <- try(dat.long.twophase.sample %>%
+  filter(assay %in% c("liveneutmn50")) %>%
+  select(B) %>%
+  max(na.rm = TRUE), silent = TRUE)
+
+if (class(Maxlive50B) == "try-error") { ## nAb assays are unavailable
+  Maxlive50B <- NA
+}
+
 MaxbAb <- max(MaxbAbB, MaxbAbDay29, MaxbAbDay57, na.rm = TRUE)
 MaxID50ID80 <- max(MaxID50ID80B, MaxID50ID80Day29, MaxID50ID80Day57, na.rm = TRUE)
+Maxlive50 <- max(Maxlive50B, Maxlive50Day29, Maxlive50Day57, na.rm = TRUE)
 # axis limits for plotting assay readouts
 assay_lim <- array(NA, dim = c(length(assay_immuno), length(times), 2))
 dimnames(assay_lim) <- list(assay_immuno, times, c("lb", "ub"))
 
 
 assay_lim[, times %in% c("B", "Day29", "Day57"), "lb"] <- 
-  floor(log10(llods[assay_immuno] / 2))
+  floor(log10(llods[assay_immuno] / 2)) # lower bound same for all assays - days
 assay_lim[assay_immuno %in% bAb_assays, times %in% c("B", "Day29", "Day57"), "ub"] <- 
   max(ceiling(MaxbAb) + ceiling(MaxbAb) %% 2, ceiling(log10(uloqs[assay_immuno])))
 assay_lim[assay_immuno %in% nAb_assays, times %in% c("B", "Day29", "Day57"), "ub"] <-
   ceiling(MaxID50ID80) + ceiling(MaxID50ID80) %% 2
+assay_lim[assay_immuno %in% live_assays, times %in% c("B", "Day29", "Day57"), "ub"] <-
+  ceiling(Maxlive50) + ceiling(Maxlive50) %% 2
 
 
-assay_lim[, times %in% c("Delta29overB", "Delta57overB", "Delta57over29"), "lb"] <- -2
+assay_lim[, times %in% c("Delta29overB", "Delta57overB", "Delta57over29"), "lb"] <- -2 # lower bound same for all assays - delta
 assay_lim[assay_immuno %in% bAb_assays, times %in% c("Delta29overB", "Delta57overB", "Delta57over29"), "ub"] <- 
   ceiling(MaxbAb - min(log10(llods[bAb_assays] / 2))) + ceiling(MaxbAb - min(log10(llods[bAb_assays] / 2))) %% 2
 assay_lim[assay_immuno %in% nAb_assays, times %in% c("Delta29overB", "Delta57overB", "Delta57over29"), "ub"] <- 
   ceiling(MaxID50ID80 - min(log10(llods[nAb_assays] / 2))) + ceiling(MaxID50ID80 - min(log10(llods[nAb_assays] / 2))) %% 2
+assay_lim[assay_immuno %in% live_assays, times %in% c("Delta29overB", "Delta57overB", "Delta57over29"), "ub"] <- 
+  ceiling(Maxlive50 - min(log10(llods[live_assays] / 2))) + ceiling(Maxlive50 - min(log10(llods[live_assays] / 2))) %% 2
+
 
 
 # Quick workaround for janssen presentation report
