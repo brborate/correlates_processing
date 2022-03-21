@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "janssen_pooled_realbAb")
+#Sys.setenv(TRIAL = "janssen_pooled_mock")
 renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -50,16 +50,10 @@ dat_proc <- inputFile_with_riskscore
 
 #with(dat_proc[dat_proc$Trt==1,], table(!is.na(Day29bindSpike), !is.na(Day29bindRBD), EventIndPrimaryIncludeNotMolecConfirmedD29)) # same missingness
 
-
-
-# subset on subset_variable
-if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
-    if(subset_value != "All") {
-        include_in_subset <- dat_proc[[subset_variable]] == subset_value
-        dat_proc <- dat_proc[include_in_subset, , drop = FALSE]
-    }
+# hardcode AnyinfectionD1 for the mock datasets
+if (study_name %in% c("MockENSEMBLE", "MockCOVE")) {
+    dat_proc$AnyinfectionD1=0
 }
-
 
 
 colnames(dat_proc)[1] <- "Ptid" 
@@ -437,13 +431,22 @@ if(study_name=="COVE"){
 # after COVE, the data already comes censored
 ###############################################################################
 
-if(study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")){
+if(study_name %in% c("COVE", "MockCOVE")){
     for (a in assays.includeN) {
       for (t in c("B", paste0("Day", config$timepoints)) ) {
         dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(llods[a]), log10(llods[a] / 2), dat_proc[[t %.% a]])
       }
     }
 }
+
+if(study_name %in% c("MockENSEMBLE")){
+    for (a in assays.includeN) {
+      for (t in c("B", paste0("Day", config$timepoints)) ) {
+        dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(lloqs[a]), log10(lloqs[a] / 2), dat_proc[[t %.% a]])
+      }
+    }
+}
+
 
 
 ###############################################################################
@@ -467,6 +470,22 @@ if(two_marker_timepoints) dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints
 
 
 
+
+###############################################################################
+# subset on subset_variable
+###############################################################################
+
+if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
+    if(subset_value != "All") {
+        include_in_subset <- dat_proc[[subset_variable]] == subset_value
+        dat_proc <- dat_proc[include_in_subset, , drop = FALSE]
+    }
+}
+
+
+
+
+
 ###############################################################################
 # bundle data sets and save as CSV
 ###############################################################################
@@ -476,8 +495,8 @@ if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.ge
     assertthat::assert_that(
         digest(dat_proc[order(names(dat_proc))])==
         ifelse(attr(config, "config")=="janssen_pooled_mock", 
-            "b5835a9df6c6e74f2804a2fbf7cd802e", 
-            "1efd5aad1419d2874f439a2f13a6db83"),
+            "028549acb994980fbb6832198308ec4a", 
+            "1902296f23fca88c4757ed7a84fbe7d7"),
         msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
     print("======================= Passed make_dat_proc digest check =======================")    
 }
