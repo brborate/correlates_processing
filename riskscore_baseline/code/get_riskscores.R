@@ -1,6 +1,7 @@
 # Sys.setenv(TRIAL = "moderna_mock")
 # Sys.setenv(TRIAL = "janssen_pooled_mock")
 # Sys.setenv(TRIAL = "cov002")
+# Sys.setenv(TRIAL = "prevent19")
 
 source("code/loadlibraries_readinputdata.R")
 inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name)
@@ -160,7 +161,7 @@ if(study_name == "COV002"){
   
   # Create binary indicator variables for Country and Region
   inputMod <- inputFile %>%
-    drop_na(all_of(endpoint)) %>%
+    #drop_na(all_of(endpoint)) %>%
     mutate(Country = as.factor(Country))
   
   rec <- recipe(~ Country, data = inputMod)
@@ -171,20 +172,6 @@ if(study_name == "COV002"){
   # %>%
   #   select(-c(Country, Region, CalDtEnrollIND))
   names(inputMod)<-gsub("\\_",".",names(inputMod))
-  
-  # # Create interaction variables between Region and CalDtEnrollIND
-  # rec <- recipe(EventIndPrimaryIncludeNotMolecConfirmedD29 ~., data = inputMod)
-  # int_mod_1 <- rec %>%
-  #   step_interact(terms = ~ starts_with("Region"):starts_with("CalDtEnrollIND"))
-  # int_mod_1 <- prep(int_mod_1, training = inputMod)
-  # inputMod <- bake(int_mod_1, inputMod)
-  # names(inputMod)<-gsub("\\_",".",names(inputMod))
-  # if(run_prod){
-  #   risk_vars <- append(risk_vars, c("Region.X1.x.CalDtEnrollIND.X1", "Region.X1.x.CalDtEnrollIND.X2",
-  #                                    "Region.X1.x.CalDtEnrollIND.X3",
-  #                                    "Region.X2.x.CalDtEnrollIND.X1", "Region.X2.x.CalDtEnrollIND.X2",
-  #                                    "Region.X2.x.CalDtEnrollIND.X3"))
-  # }
 }
 
 # Check there are no NA values in Riskscorecohortflag!

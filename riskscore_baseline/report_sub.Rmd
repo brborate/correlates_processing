@@ -451,7 +451,7 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_
 
 
 ```{r cases-prior, warning=FALSE, echo=FALSE, message=FALSE}
-caption <- "Cases per treatment arm after applying RiskscorecohortFLAG (prior to risk score analysis). 18 subjects with missing value for endpoint were dropped from analysis."
+caption <- "Cases per treatment arm after applying RiskscorecohortFLAG (prior to risk score analysis)."
 new_colnames = c("Non-Cases", paste0("Post-", day, "-Cases"))
 
 read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_riskScoreAnalysis.csv"), row.names = 1,

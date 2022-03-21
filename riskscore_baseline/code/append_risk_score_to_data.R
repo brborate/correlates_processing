@@ -26,7 +26,17 @@ inputFile_with_riskscore <- left_join(inputFile, risk_scores, by = "Ptid")
 save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
 
 # Create table of cases in both arms (post Risk score analyses)
-tab <- inputFile_with_riskscore %>%
+tab <- inputFile_with_riskscore 
+# For Placebo group, consider all COVID cases occurring after Day 1.
+if(study_name %in% c("PREVENT19")){
+  tab <- tab %>%
+    mutate(EventIndPrimaryD35 = ifelse(Trt == 0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD35==1), 1, EventIndPrimaryD35))
+}
+if(study_name %in% c("COV002")){
+  tab <- tab %>%
+    mutate(EventIndPrimaryD57 = ifelse(Trt == 0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD57==1), 1, EventIndPrimaryD57))
+}
+tab <- tab %>%
   filter(Riskscorecohortflag == 1) %>%
   drop_na(Ptid, Trt, all_of(endpoint)) %>%
   mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
