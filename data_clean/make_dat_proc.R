@@ -13,14 +13,6 @@ library(dplyr)
 library(here)
 
 
-#if (startsWith(tolower(study_name), "mock")) {
-#    path_to_data <- here("data_raw", data_raw_dir, data_in_file)
-#} else {
-#    path_to_data <- data_in_file
-#}
-#print(path_to_data)
-#if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ===========================================")
-#dat_raw <- read.csv(path_to_data)
 
 #with(dat_raw, table(Country))
 #summary(dat_raw)
