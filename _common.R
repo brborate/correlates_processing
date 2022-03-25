@@ -111,10 +111,16 @@ if(TRUE) {
         
         # data less than lloq is set to lloq/2 in the raw data
         llods["bindSpike"]=NA 
-        lloqs["bindSpike"]=150.4*0.0090
+        lloqs["bindSpike"]=150.4*0.0090 # 1.3536
         pos.cutoffs["bindSpike"]=10.8424 # use same as COVE
-        uloqs["bindSpike"]=770464.6*0.0090
+        uloqs["bindSpike"]=770464.6*0.0090 # 6934.181
     
+        # data less than lod is set to lod/2
+        llods["pseudoneutid50"]=2.612  
+        lloqs["pseudoneutid50"]=2.7426  
+        pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
+        uloqs["pseudoneutid50"]=619.3052 
+        
     }
     
     # llox is for plotting and can be either llod or lloq depending on trials
@@ -268,6 +274,21 @@ if ((study_name=="COVE" | study_name=="MockCOVE")) {
       "Mexico, Age 18-64",
       "Mexico, Age >= 65"
     )
+} else if ((study_name=="COV002")) {
+  demo.stratum.labels <- c(
+    "US White non-Hisp, Age 18-64, Not at risk",
+    "US White non-Hisp, Age 18-64, At risk",
+    "US White non-Hisp, Age >= 65, Not at risk",
+    "US White non-Hisp, Age >= 65, At risk",
+    "US URM, Age 18-64, Not at risk",
+    "US URM, Age 18-64, At risk",
+    "US URM, Age >= 65, Not at risk",
+    "US URM, Age >= 65, At risk",
+    "Chile, Age 18-64",
+    "Chile, Age >= 65",
+    "Peru, Age 18-64",
+    "Peru, Age >= 65"
+  )
 } else stop("unknown study_name")
 
 labels.regions.ENSEMBLE =c("0"="Northern America", "1"="Latin America", "2"="Southern Africa")
@@ -432,7 +453,7 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
         dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
         # define start1 variables
         if(tp==timepoints[1]) {
-            if (study_name=="MockCOVE" | study_name=="COVE") {
+            if (study_name %in% c("MockCOVE", "COVE", "COV002")) {
                 # a hack: no such variable in the mock or real moderna datasets. It is okay because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
                 dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
             } else if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
@@ -445,7 +466,6 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
                     with(dat_proc, ifelse(EarlyinfectionD21start1==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < NumberdaysD1toD21 + 1),1,0))
             } else stop("unknown study_name")
         }
-        
     }
     
     # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm. It requires:
@@ -454,7 +474,7 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
     # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
     # no NAs allowed. 
-    if (study_name=="COVE" | study_name=="MockCOVE") {
+    if (study_name %in% c("MockCOVE", "COVE")) {
         # COVE is a special case, redefined for backward compatibility
         dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
     } else if (study_name == "PREVENT19") {
@@ -472,3 +492,4 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     
     dat_proc    
 }
+
