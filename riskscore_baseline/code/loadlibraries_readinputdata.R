@@ -33,8 +33,8 @@ if (endsWith(attr(config, "config"), "mock")) {
         # janssen pooled or regions
       path_to_data <- here("..", paste0("data_raw/janssen/", mapped_data))
     } 
-}
-  path_to_data <- mapped_data
+} else {
+    path_to_data <- mapped_data
 }
 print(path_to_data)
 if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ===========================================")
