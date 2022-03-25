@@ -170,7 +170,7 @@ if ((n_strtm1 <- ncol(tab_strtm1)/2-1)!=0) {
                                       case_when(study_name_code=="COVE" ~ "", 
                                                 study_name_code=="ENSEMBLE" ~ "U.S. "),
                                       sum(ds[ds$demo.stratum%in%1:8, ]$ph2.immuno), 
-                                      stringr::str_to_title(data_raw_dir))
+                                      study_name)
   tlf$tab_strtm1$header_above2 <- tab_strtm_header2
   tlf$tab_strtm1$table_footer <- c("Demographic covariate strata:",
                                    paste(1:n_strtm1, 
@@ -198,7 +198,7 @@ if ((n_strtm2 <- ncol(tab_strtm2)/2-1)!=0) {
   names(tab_strtm_header2) <- sprintf("%s Random Subcohort Sample Sizes (N=%s Participants) (%s Trial)", 
                                       paste(c("Latin America", "South Africa")[sort(unique(ds$Region))], collapse=" and "),
                                       sum(ds[ds$demo.stratum%in%9:16, ]$ph2.immuno), 
-                                      stringr::str_to_title(data_raw_dir))
+                                      study_name)
   tlf$tab_strtm2$header_above2 <- tab_strtm_header2
   tlf$tab_strtm2$table_footer <- c("Demographic covariate strata:",
                                    paste(1:n_strtm2, 
@@ -517,5 +517,3 @@ print("Done with all tables")
 save(tlf, tab_dm_pos, tab_dm_neg, tab_strtm1, tab_strtm2, tab_bind1, tab_bind2, tab_pseudo, tab_wt, tab_gm,
      tab_gmr, tab_rgmt, tab_rrdiff, tab_neg, tab_pos, tab_vacc, tab_plcb,
      file = here::here("output", "Tables.Rdata"))
-
-

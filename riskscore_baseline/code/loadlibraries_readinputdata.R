@@ -26,14 +26,19 @@ library(Hmisc) # wtd.quantile, cut2
 library(dplyr)
 library(recipes)
 
-if(startsWith(tolower(study_name), "mock")) {
-  path_to_data <- here("..", "data_raw", data_raw_dir, data_in_file)
-} else {
-  path_to_data <- data_in_file
+if (endsWith(attr(config, "config"), "mock")) {
+    if(attr(config, "config")=="moderna_mock") {
+      path_to_data <- here("..", paste0("data_raw/moderna/", mapped_data))
+    } else {
+        # janssen pooled or regions
+      path_to_data <- here("..", paste0("data_raw/janssen/", mapped_data))
+    } 
+}
+  path_to_data <- mapped_data
 }
 print(path_to_data)
 if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ===========================================")
-inputfileName <- gsub("^.*/", "", data_in_file)
+inputfileName <- gsub("^.*/", "", mapped_data)
 # Define code version to run
 # the demo version is simpler and runs faster!
 # the production version runs SL with a diverse set of learners

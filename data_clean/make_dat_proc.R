@@ -14,9 +14,9 @@ library(here)
 
 
 #if (startsWith(tolower(study_name), "mock")) {
-#    path_to_data <- here("data_raw", data_raw_dir, data_in_file)
+#    path_to_data <- here("data_raw", data_raw_dir, mapped_data)
 #} else {
-#    path_to_data <- data_in_file
+#    path_to_data <- mapped_data
 #}
 #print(path_to_data)
 #if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ===========================================")

@@ -21,40 +21,35 @@ update_reason <- paste0(Sys.Date(), " ", readline(prompt = "Enter reason for upd
 # Copy new copy of risk score dataset from data_clean to adata
 for(j in 1:length(data_name_amended)){
   if(file.exists(paste0("data_clean/", data_name_amended[j], ".csv"))){
-    if(file.exists(paste0(strsplit(data_in_file, "mapping")[[1]][1],
+    if(file.exists(paste0(strsplit(mapped_data, "mapping")[[1]][1],
                           "correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"))){
       
-      if(!file.exists(paste0(strsplit(data_in_file, "mapping")[[1]][1],
+      if(!file.exists(paste0(strsplit(mapped_data, "mapping")[[1]][1],
                              "correlates/Part_A_Blinded_Phase_Data/adata/archive"))){
         
-        dir.create(paste0(strsplit(data_in_file, "mapping")[[1]][1],
+        dir.create(paste0(strsplit(mapped_data, "mapping")[[1]][1],
                           "correlates/Part_A_Blinded_Phase_Data/adata/archive"))
       }
       
-      file.copy(from = paste0(strsplit(data_in_file, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"),
-                to =  paste0(strsplit(data_in_file, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/archive/", data_name_amended[j], "_",
-                             str_replace(str_replace_all(file.info(paste0(strsplit(data_in_file, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"))$mtime,
+      file.copy(from = paste0(strsplit(mapped_data, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"),
+                to =  paste0(strsplit(mapped_data, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/archive/", data_name_amended[j], "_",
+                             str_replace(str_replace_all(file.info(paste0(strsplit(mapped_data, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"))$mtime,
                                                          ":",
                                                          "."), " ", " time "), 
                              ".csv"),
                 copy.date = TRUE)
       
-      file.remove(from = paste0(strsplit(data_in_file, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"))
+      file.remove(from = paste0(strsplit(mapped_data, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"))
     }
     
     file.copy(from = paste0("data_clean/", data_name_amended[j], ".csv"),
-              to = paste0(strsplit(data_in_file, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"),
+              to = paste0(strsplit(mapped_data, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/", data_name_amended[j], ".csv"),
               copy.date = TRUE)
     
     # Add reason for adata update to README file!
-    write(update_reason, file = paste0(strsplit(data_in_file, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/readme.txt"), append=TRUE)
+    write(update_reason, file = paste0(strsplit(mapped_data, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/readme.txt"), append=TRUE)
     
   }else{
     print(paste0("data_clean/", data_name_amended[j], ".csv not found!"))
   }
 }
-
-
-
-
-
