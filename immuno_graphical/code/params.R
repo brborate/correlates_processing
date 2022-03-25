@@ -9,7 +9,7 @@ library(stringr)
 save.results.to <- here("figs")
 
 # Define age cutoff based on trial
-age.cutoff <- switch(study_name_code, "COVE"=65, "ENSEMBLE"=60)
+age.cutoff <- ifelse(study_name %in% c("ENSEMBLE", "MockENSEMBLE"), 60, 65)
 
 trt.labels <- c("Placebo", "Vaccine")
 bstatus.labels <- c("Baseline Neg", "Baseline Pos")
@@ -19,6 +19,7 @@ all_assays <- c("bindSpike", "bindRBD", "bindN",
                 "pseudoneutid50", "pseudoneutid80", "liveneutmn50")
 bAb_assays <- c("bindSpike", "bindRBD", "bindN")
 nAb_assays <- c("pseudoneutid50", "pseudoneutid80")
+live_assays <- c("liveneutmn50")
 times <- c("B", paste0("Day", config$timepoints), paste0("Delta", config$timepoints, "overB"))
 
 # Depends on the Incoming data
