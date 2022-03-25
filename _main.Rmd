@@ -16,7 +16,7 @@ lot: yes
 lof: yes
 always_allow_html: yes
 header-includes:
-   - \usepackage{eso-pic,graphicx,transparent,titling} # keep titling last!
+   - \usepackage{eso-pic,graphicx,transparent,titling,float} # keep titling last!
 ---
 
 
@@ -127,16 +127,10 @@ hash_algorithm <- "sha256"
 
 
 #processed_file_digest is created in _common.R, but because the working directory issue, it is not created properly when _common.R is sourced here.
-if (startsWith(tolower(study_name), "mock")) {
-    data_name_updated <- data_name
-    path_to_data = here::here("data_clean", data_name_updated)
-} else {
-    data_name_updated <- data_cleaned
-    path_to_data = here::here("..", data_name_updated)
-}
+path_to_data = here::here("data_clean", data_name)
 if (file.exists(path_to_data)) {
     dat.mock <- read.csv(path_to_data)
-    print(paste0("reading data from ",data_name_updated))
+    print(paste0("reading data from ",data_name))
 
     # get hash of commit at HEAD
     commit_hash <- system("git rev-parse HEAD", intern = TRUE)    
@@ -158,7 +152,6 @@ if (file.exists(path_to_data)) {
   https://github.com/CoVPN/correlates_reporting/commit/`r system("git rev-parse HEAD", intern = TRUE)`
 
 
-* The `r hash_algorithm` hash sum of the processed file, `r paste0("\"",data_name_updated,"\"")`: `r processed_file_digest`
+* The `r hash_algorithm` hash sum of the processed file, `r paste0("\"",data_name,"\"")`: `r processed_file_digest`
 
 <!--chapter:end:appendix.Rmd-->
-
