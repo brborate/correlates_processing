@@ -8,10 +8,15 @@ source(here::here("_common.R"))
 library(here)
 
 
-if (startsWith(tolower(study_name), "mock")) {
-    path_to_data <- here("data_raw", data_raw_dir, data_in_file)
+if (endsWith(attr(config, "config"), "mock")) {
+    if(attr(config, "config")=="moderna_mock") {
+      path_to_data <- here(".", paste0("data_raw/moderna/", mapped_data))
+    } else {
+        # janssen pooled or regions
+      path_to_data <- here(".", paste0("data_raw/janssen/", mapped_data))
+    } 
 } else {
-    path_to_data <- data_in_file
+    path_to_data <- mapped_data
 }
 print(path_to_data)
 if (!file.exists(path_to_data)) stop ("make raw dat check: dataset not available ===========================================")
