@@ -482,17 +482,19 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
           with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
     } else if (study_name == "PREVENT19") {
       # for this trial we only have markers at D35 at first, so we have to hardcode this
-      # dat_proc$Riskscorecohortflag <- 
+      # dat_proc$Riskscorecohortflag <-
       #   with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & EarlyendpointD21start1==0 & EventTimePrimaryD21>=1, 1, 0))
       dat_proc <- dat_proc %>%
-        mutate(Riskscorecohortflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
-                                               Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7 ~ 1,
-                                               TRUE ~ 0))
+        mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
+               RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
+                                            Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7 ~ 1,
+                                            TRUE ~ 0))
     } else if (study_name == "COV002") {
         dat_proc <- dat_proc %>%
-          mutate(Riskscorecohortflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
-                                                 Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7 ~ 1,
-                                                 TRUE ~ 0))
+          mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
+                 RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
+                                              Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7 ~ 1,
+                                              TRUE ~ 0))
     } else stop("unknown study_name")
 
     assertthat::assert_that(

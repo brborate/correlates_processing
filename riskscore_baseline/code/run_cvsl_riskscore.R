@@ -1,13 +1,3 @@
-# For Placebo group, consider all COVID cases occurring after Day 1.
-if(study_name %in% c("PREVENT19")){
-  inputMod <- inputMod %>%
-    mutate(EventIndPrimaryD35 = ifelse(Trt == 0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD35==1), 1, EventIndPrimaryD35))
-}
-if(study_name %in% c("COV002")){
-  inputMod <- inputMod %>%
-    mutate(EventIndPrimaryD57 = ifelse(Trt == 0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD57==1), 1, EventIndPrimaryD57))
-}
-
 inputMod <- inputMod %>%
   drop_na(all_of(endpoint)) 
 

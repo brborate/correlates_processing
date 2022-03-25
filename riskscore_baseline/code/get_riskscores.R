@@ -122,9 +122,7 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   # }
 }
 
-
-
-if(study_name %in% c("PREVENT19")){
+if(study_name == "PREVENT19"){
   risk_vars <- c(
     "Age", "Sex", "Black", "Asian", "NatAmer", "PacIsl",  
     "Multiracial", "Notreported", "Unknown",
@@ -133,10 +131,18 @@ if(study_name %in% c("PREVENT19")){
   )
   original_risk_vars <- risk_vars
   endpoint <- "EventIndPrimaryD35"
+  endpoint <- paste0(endpoint, "rscore")
   risk_timepoint <- 35
   studyName_for_report <- "PREVENT19"
   inputMod <- inputFile %>%
     filter(Country == 0) # Analysis based off only US subjects 
+  
+  inputMod <- inputMod %>%
+    mutate(#EventIndPrimaryD35risk = ifelse(Trt == 0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD35==1), 1, EventIndPrimaryD35),
+      EventIndPrimaryD35rscore = EventIndPrimaryD1,
+      EventIndPrimaryD35rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD35==1) ~ 1, 
+                                         Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
+                                         TRUE ~ as.double(EventIndPrimaryD35)))
 }
 
 
@@ -156,6 +162,7 @@ if(study_name == "COV002"){
   )
   
   endpoint <- "EventIndPrimaryD57"
+  endpoint <- paste0(endpoint, "rscore")
   risk_timepoint <- 57
   studyName_for_report <- "COV002"
   
@@ -172,6 +179,12 @@ if(study_name == "COV002"){
   # %>%
   #   select(-c(Country, Region, CalDtEnrollIND))
   names(inputMod)<-gsub("\\_",".",names(inputMod))
+  
+  inputMod <- inputMod %>%
+    mutate(EventIndPrimaryD57rscore = EventIndPrimaryD1,
+           EventIndPrimaryD57rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD57==1) ~ 1, 
+                                              Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
+                                              TRUE ~ as.double(EventIndPrimaryD57)))
 }
 
 # Check there are no NA values in Riskscorecohortflag!
