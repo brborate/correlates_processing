@@ -15,7 +15,7 @@
 #' @return Response calls and fold-rise indicator for \code{bl}: \emph{bl}Resp,
 #'  \emph{bl}FR\emph{folds}
 getResponder <- function(data,
-                         cutoff.name, 
+                         # cutoff.name, 
                          times=times, 
                          assays=assays, 
                          folds=c(2, 4),
@@ -23,27 +23,29 @@ getResponder <- function(data,
                          responderFR = 4,
                          pos.cutoffs = pos.cutoffs) {
   
-  cutoff <- get(paste0("l", cutoff.name, "s"))
+  # cutoff <- get(paste0("l", cutoff.name, "s"))
   for (i in times){
     for (j in assays){
       post <- paste0(i, j)
       bl <- paste0("B", j)
       delta <- paste0("Delta", gsub("Day", "", i), "overB", j)
+      cutoff <- pos.cutoffs[j]
       
-      for (k in folds){
-        data[, paste0(post, k, "l", cutoff.name)] <- as.numeric(10^data[, post] >= k*cutoff[j])
-      }
+      # for (k in folds){
+      #   data[, paste0(post, k, "l", cutoff.name)] <- as.numeric(10^data[, post] >= k*cutoff[j])
+      # }
       
       for (k in grtns){
         data[, paste0(post, "FR", k)] <- as.numeric(10^data[, delta] >= k)
       }
       
-      if (!is.na(pos.cutoffs[j])) {
-        data[, paste0(post, "Resp")] <- as.numeric(data[, post] > log10(pos.cutoffs[j]))
+      # if (!is.na(pos.cutoffs[j])) {
+      if(grepl("bind", j)){
+        data[, paste0(post, "Resp")] <- as.numeric(data[, post] > log10(cutoff))
       } else {
       data[, paste0(post, "Resp")] <- as.numeric(
-        (data[, bl] < log10(cutoff[j]) & data[, post] > log10(cutoff[j])) |
-          (data[, bl] >= log10(cutoff[j]) & data[, paste0(post, "FR", responderFR)] == 1))
+        (data[, bl] < log10(cutoff) & data[, post] > log10(cutoff)) |
+          (data[, bl] >= log10(cutoff) & data[, paste0(post, "FR", responderFR)] == 1))
       }
     }
   }
@@ -61,14 +63,22 @@ getResponder <- function(data,
 #' 
 get_rr <- function(dat, v, subs, sub.by, strata, weights, subset){
   rpcnt <- NULL
+  dat_twophase <- dat %>% 
+    group_by_at(strata) %>% 
+    mutate(ph1cnt=n(), ph2cnt=sum(!!as.name(subset), na.rm = T)) %>% 
+    filter(ph1cnt!=0 & ph2cnt!=0) %>% 
+    select_at(gsub("`", "", c("Ptid", strata, weights, subset, sub.by, v, subs)))
+  
   design.full <- twophase(id=list(~Ptid, ~Ptid), 
                           strata=list(NULL, as.formula(sprintf("~%s", strata))),
                           weights=list(NULL, as.formula(sprintf("~%s", weights))),
                           method="simple",
                           subset=as.formula(sprintf("~%s", subset)),
-                          data=dat %>% select_at(gsub("`", "", c("Ptid", strata, weights, subset, sub.by, v, subs))))
+                          data=dat_twophase 
+  )
+  
   for (i in v){
-    design.ij <- subset(design.full, eval(parse(text=sprintf("!is.na(%s)", i))))
+    design.ij <- subset(design.full, eval(parse(text=sprintf("!is.na(%s)",i))))
     for (j in subs){
       # cat(i,"--",j,"\n")
       ret <- svyby(as.formula(sprintf("~%s", i)),
@@ -108,17 +118,22 @@ get_rr <- function(dat, v, subs, sub.by, strata, weights, subset){
 #' 
 get_gm <- function(dat, v, subs, sub.by, strata, weights, subset){
   rgm <- NULL
+  dat_twophase <- dat %>% 
+    group_by_at(strata) %>% 
+    mutate(ph1cnt=n(), ph2cnt=sum(!!as.name(subset), na.rm = T)) %>% 
+    filter(ph1cnt!=0 & ph2cnt!=0) %>% 
+    select_at(gsub("`", "", c("Ptid", strata, weights, subset, sub.by, v, subs)))
+  
   design.full <- twophase(id=list(~Ptid, ~Ptid), 
                           strata=list(NULL, as.formula(sprintf("~%s", strata))),
                           weights=list(NULL, as.formula(sprintf("~%s", weights))),
                           method="simple",
                           subset=as.formula(sprintf("~%s", subset)),
-                          data=dat %>% select_at(gsub("`", "", c("Ptid", strata, weights, subset, sub.by, v, subs))))
-  
+                          data=dat_twophase)
   for (i in v){
+    design.ij <- subset(design.full, eval(parse(text=sprintf("!is.na(%s)", i))))
     for (j in subs){
       # cat(i,"--",j,"\n")
-      design.ij <- subset(design.full, eval(parse(text=sprintf("!is.na(%s)",i))))
       ret <- svyby(as.formula(sprintf("~%s", i)),
                    by=as.formula(sprintf("~%s", paste(c(j, sub.by), collapse="+"))),
                    design=design.ij,
@@ -176,6 +191,9 @@ get_rgmt <- function(dat, v, groups, comp_lev, sub.by, strata, weights, subset){
       
       if (nrow(n.j)!=0){
         dat.ij <- dat %>% 
+          group_by_at(strata) %>% 
+          mutate(ph1cnt=n(), ph2cnt=sum(!!as.name(subset), na.rm = T)) %>% 
+          filter(ph1cnt!=0 & ph2cnt!=0) %>% 
           unite("all.sub.by", match(gsub("`", "", sub.by), names(dat)), remove=F) %>% 
           select_at(gsub("`", "",c("Ptid", strata, weights, subset, sub.by, i, j, "all.sub.by")))
         
@@ -225,6 +243,7 @@ get_rgmt <- function(dat, v, groups, comp_lev, sub.by, strata, weights, subset){
   rgmt <- inner_join(rgmt, distinct(labels_all, mag_cat, Visit, Marker), by="mag_cat")
   return(rgmt)
 }
+
 
 #' Function to remove duplicate key rows from table outputs.
 #'
