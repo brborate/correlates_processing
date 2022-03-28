@@ -11,8 +11,6 @@ library(tidyverse)
 # To select which tables are included in the report.
 # Also to modify the headers, footers, etc. for each table
 
-cutoff.name <- config$llox_label
-
 randomsubcohort <- case_when(study_name_code=="COVE" ~ "This table summarizes the 
       random subcohort, which was randomly sampled from the per-protocol cohort. The 
       sampling was stratified by 24 strata defined by enrollment characteristics: Assigned 
@@ -64,9 +62,9 @@ tlf <-
     ),
     
     tab_bind1 = list(
-      table_header = sprintf("Percentage of responders, and participants
-      with concentrations $\\geq 2\\times$ %s or $\\geq 4\\times$ %s for binding antibody
-      markers", toupper(cutoff.name), toupper(cutoff.name)),
+      table_header = "Percentage of responders, and participants
+      with concentrations $\\geq 2\\times$ LLOQ or $\\geq 4\\times$ LLOQ for binding antibody
+      markers",
       table_footer = c(
         sprintf("Binding Antibody Responders are defined as participants with concentration 
         above the specified positivity cut-off, with a separate cut-off for each 
@@ -234,11 +232,11 @@ tlf <-
 if(include_bindN){
   assays <- sort(c("bindN", assays))
 }
-labels.age <- case_when(study_name_code=="COVE"~ c("Age $<$ 65", "Age $\\geq$ 65"), 
-                        study_name_code=="ENSEMBLE"~ c("Age 18 - 59", "Age $\\geq$ 60"))
 
-labels.minor <- case_when(study_name_code=="COVE"~ c("Communities of Color", "White Non-Hispanic"), 
-                          study_name_code=="ENSEMBLE"~ c("URM", "Non-URM"))
+labels.age <- case_when(study_name %in% c("ENSEMBLE", "MockENSEMBLE") ~ c("Age 18 - 59", "Age $\\geq$ 60"), 
+                        TRUE~ c("Age $<$ 65", "Age $\\geq$ 65"))
+
+labels.minor <- c("Communities of Color", "White Non-Hispanic")
 
 labels.BMI <- c("Underweight BMI < 18.5", "Normal 18.5 $\\leq$ BMI < 25", 
                 "Overweight 25 $\\leq$ BMI < 30", "Obese BMI $\\geq$ 30")
@@ -286,3 +284,4 @@ labels_all <- full_join(labels.assays, resp.lb, by = c("time", "marker")) %>%
   mutate(mag_cat = colname, resp_cat = paste0(colname, ind))
 
 save.image(file = here::here("data_clean", "params.Rdata"))
+
