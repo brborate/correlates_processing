@@ -78,7 +78,7 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
 
 # Step2: Responders, % >=2FR, % >=4FR, % >=2lloq, % >=4lloq
 # Post baseline visits
-ds <- getResponder(ds_s, times=grep("Day", times, value=T), lloqs=lloqx,
+ds <- getResponder(ds_s, times=grep("Day", times, value=T), lloqs=lloqs,
                    assays=assays, pos.cutoffs = pos.cutoffs)
 
 subgrp <- c(
