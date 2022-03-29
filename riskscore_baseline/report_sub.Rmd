@@ -120,7 +120,7 @@ if(studyName_for_report %in% c("PREVENT19")){
 }
 
 tab
-rm(tab)
+rm(tab, footnote1, footnote2, footnote3, footnote4)
   
 ```
 
@@ -429,9 +429,20 @@ Tables 5, 6 and 7 (below) show the number of subjects by study arm and endpoint 
 
 The risk score analysis code appends two columns (risk_score and standardized_risk_score) to the data_processed.csv file and drops out subjects that do not have a risk score (thus keeps only subjects with Riskscorecohortflag == 1 and no missing value for the endpoint). 
 
+
+
 ```{r cases-beforeRiskscorecohortFLAG, warning=FALSE, echo=FALSE, message=FALSE}
 caption <- "Cases per treatment arm in data\\_processed.csv before applying RiskscorecohortFLAG."
-new_colnames = c("Non-Cases", paste0("Post-", day, "-Cases"))
+
+if(any(sapply(c("COVE", "ENSEMBLE"), grepl, studyName_for_report))){
+  new_colnames = c("Non-Cases", paste0("Post-", day, "-Cases"))
+  footnote1 <- paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least ", start, " after the ", day, " visit.")
+  eval.footnote1.table = TRUE
+}else{
+  new_colnames = c("Non-Cases", "Post-Enrollment Cases")
+  footnote1 <- "Post-enrollment Cases: All COVID-19 primary endpoints that occur  after enrollment (Day 1 in study)."
+  eval.footnote1.table = TRUE
+}
 
 read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_to_applying_Riskscorecohortflag.csv"), row.names = 1,
          header = TRUE) %>%
@@ -443,7 +454,7 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_
     caption = caption) %>%
   kable_styling(latex_options = c("hold_position"),
                 font_size = 9) %>%
-  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least ", start, " after the ", day, " visit.")),
+  footnote(footnote1,
              threeparttable = TRUE)
 
 ```
@@ -452,7 +463,6 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_
 
 ```{r cases-prior, warning=FALSE, echo=FALSE, message=FALSE}
 caption <- "Cases per treatment arm after applying RiskscorecohortFLAG (prior to risk score analysis)."
-new_colnames = c("Non-Cases", paste0("Post-", day, "-Cases"))
 
 read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_riskScoreAnalysis.csv"), row.names = 1,
          header = TRUE) %>%
@@ -464,7 +474,7 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_
     caption = caption) %>%
   kable_styling(latex_options = c("hold_position"),
                 font_size = 9) %>%
-  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least ", start, " after the ", day, " visit.")),
+  footnote(footnote1,
              threeparttable = TRUE)
 
 ```
@@ -477,6 +487,26 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_post_r
          header = TRUE) %>%
   tibble::rownames_to_column(var = "Study-Arm") %>%
   rename_with(~new_colnames, c("X0", "X1")) %>%
+  kable(
+    booktabs = TRUE,
+    linesep = "",
+    caption = caption) %>%
+  kable_styling(latex_options = c("hold_position"),
+                font_size = 9) %>%
+  footnote(footnote1,
+             threeparttable = TRUE)
+
+```
+
+
+
+```{r vacc-cases-AUC-calc, warning=FALSE, echo=FALSE, message=FALSE}
+caption <- "Cases/Controls in vaccine cohort used towards evaluation of SL prediction performance."
+
+read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "vacc.cases.AUC.calc_post_riskScoreAnalysis.csv"), row.names = 1,
+         header = TRUE) %>%
+  mutate(Var1 = ifelse(Var1 == 0, "Controls", "Cases")) %>%
+  rename(`Vaccine Arm` = Var1) %>%
   kable(
     booktabs = TRUE,
     linesep = "",

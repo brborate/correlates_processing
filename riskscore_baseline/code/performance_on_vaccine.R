@@ -26,10 +26,11 @@ conflict_prefer("filter", "dplyr")
 conflict_prefer("select", "dplyr")
 load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
 
-if(!any(sapply(c("COVE", "janssen"), grepl, study_name)))
+if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name)))
   endpoint <- paste0(sub("rscore", "", endpoint), "rauc")
 
-vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"))
+vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv")) %>%
+  filter(!is.na(!!sym(endpoint)))
 
 # plot ROC curve on vaccinees
 pred.obj <- ROCR::prediction(vacc$pred, vacc %>% pull(endpoint))
@@ -89,4 +90,8 @@ print(vacc %>%
     axis.title.y = element_text(size = 30)
   ))
 dev.off()
+
+# Create table of case/controls in vaccine cohort used for calculating AUC in risk score report (this cohort changes for TRIALS beyond COVE or janssen!)
+table(vacc %>% pull(endpoint)) %>%
+  write.csv(file = here("output", Sys.getenv("TRIAL"), "vacc.cases.AUC.calc_post_riskScoreAnalysis.csv"))
 

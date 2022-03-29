@@ -18,12 +18,6 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "COV002")){
         Are you sure you want to regenerate them?")
 }
 
-# Save inputFile 
-if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
-  dir.create(paste0("output/", Sys.getenv("TRIAL")))
-}
-save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
-
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
 if(study_name %in% c("COVE", "MockCOVE")){
@@ -123,6 +117,11 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
 }
 
 if(study_name == "PREVENT19"){
+  inputFile <- inputFile %>%
+    mutate(EventIndPrimaryD35rscore = EventIndPrimaryD1,
+           EventIndPrimaryD35rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD35==1) ~ 1, 
+                                              Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
+                                              TRUE ~ as.double(EventIndPrimaryD35)))
   risk_vars <- c(
     "Age", "Sex", "Black", "Asian", "NatAmer", "PacIsl",  
     "Multiracial", "Notreported", "Unknown",
@@ -136,17 +135,14 @@ if(study_name == "PREVENT19"){
   studyName_for_report <- "PREVENT19"
   inputMod <- inputFile %>%
     filter(Country == 0) # Analysis based off only US subjects 
-  
-  inputMod <- inputMod %>%
-    mutate(#EventIndPrimaryD35risk = ifelse(Trt == 0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD35==1), 1, EventIndPrimaryD35),
-      EventIndPrimaryD35rscore = EventIndPrimaryD1,
-      EventIndPrimaryD35rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD35==1) ~ 1, 
-                                         Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
-                                         TRUE ~ as.double(EventIndPrimaryD35)))
 }
 
-
 if(study_name == "COV002"){
+  inputFile <- inputFile %>%
+    mutate(EventIndPrimaryD57rscore = EventIndPrimaryD1,
+           EventIndPrimaryD57rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD57==1) ~ 1, 
+                                              Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
+                                              TRUE ~ as.double(EventIndPrimaryD57)))
   risk_vars <- c(
     "Age", "Sex", "Black", "Asian", "NatAmer", "PacIsl",  
     "Multiracial", "Notreported", "Unknown",
@@ -179,12 +175,6 @@ if(study_name == "COV002"){
   # %>%
   #   select(-c(Country, Region, CalDtEnrollIND))
   names(inputMod)<-gsub("\\_",".",names(inputMod))
-  
-  inputMod <- inputMod %>%
-    mutate(EventIndPrimaryD57rscore = EventIndPrimaryD1,
-           EventIndPrimaryD57rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD57==1) ~ 1, 
-                                              Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
-                                              TRUE ~ as.double(EventIndPrimaryD57)))
 }
 
 # Check there are no NA values in Riskscorecohortflag!
@@ -192,5 +182,10 @@ assertthat::assert_that(
   all(!is.na(inputMod$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag!"
 )
 
-source(here("code", "check_if_SL_needs_be_run.R"))
+# Save inputFile 
+if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
+  dir.create(paste0("output/", Sys.getenv("TRIAL")))
+}
+save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
 
+source(here("code", "check_if_SL_needs_be_run.R"))

@@ -1,4 +1,4 @@
-# Sys.setenv(TRIAL = "janssen_pooled_realbAb")
+# Sys.setenv(TRIAL = "janssen_pooled_real")
 renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -25,19 +25,28 @@ library(xgboost)
 conflict_prefer("filter", "dplyr")
 conflict_prefer("select", "dplyr")
 # conflict_prefer("omp_set_num_threads", "RhpcBLASctl")
-# load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
+load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
 # load(paste0("output/", Sys.getenv("TRIAL"), "/plac_top2learners_SL_discreteSL.rda"))
 # source(here("code", "sl_screens.R")) # set up the screen/algorithm combinations
 # source(here("code", "utils.R")) # get CV-AUC for all algs
 
 load(paste0("output/", Sys.getenv("TRIAL"), "/sl_riskscore_slfits.rda"))
 # Predict on vaccine arm
-dat.ph1.vacc <- inputMod %>%
-  filter(Riskscorecohortflag == 1 & Trt == 1) %>%
-  # Keep only variables to be included in risk score analyses
-  select(Ptid, Trt, all_of(endpoint), all_of(risk_vars)) %>%
-  # Drop any observation with NA values in Ptid, Trt, or endpoint!
-  drop_na(Ptid, Trt, all_of(endpoint))
+if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
+  dat.ph1.vacc <- inputMod %>%
+    filter(Riskscorecohortflag == 1 & Trt == 1) %>%
+    # Keep only variables to be included in risk score analyses
+    select(Ptid, Trt, all_of(endpoint), paste0(sub("rscore", "", endpoint), "rauc"), all_of(risk_vars)) %>%
+    # Drop any observation with NA values in Ptid, Trt, or endpoint!
+    drop_na(Ptid, Trt, all_of(endpoint))
+} else {
+  dat.ph1.vacc <- inputMod %>%
+    filter(Riskscorecohortflag == 1 & Trt == 1) %>%
+    # Keep only variables to be included in risk score analyses
+    select(Ptid, Trt, all_of(endpoint), all_of(risk_vars)) %>%
+    # Drop any observation with NA values in Ptid, Trt, or endpoint!
+    drop_na(Ptid, Trt, all_of(endpoint))
+}
 
 X_covars2adjust_vacc <- dat.ph1.vacc %>%
   select(all_of(risk_vars))
@@ -59,10 +68,13 @@ X_riskVars_vacc <- X_covars2adjust_vacc
 pred_on_vaccine <- predict(sl_riskscore_slfits, newdata = X_riskVars_vacc, onlySL = TRUE)$pred %>%
   as.data.frame()
 
-vacc <- bind_cols(
-  dat.ph1.vacc %>% select(Ptid, all_of(endpoint)),
-  pred_on_vaccine
-) %>%
+if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
+  vacc <- dat.ph1.vacc %>% select(Ptid, all_of(endpoint), paste0(sub("rscore", "", endpoint), "rauc"))
+} else {
+  vacc <- dat.ph1.vacc %>% select(Ptid, all_of(endpoint))
+}
+
+vacc <- bind_cols(vacc, pred_on_vaccine) %>%
   rename(pred = V1) %>%
   # add AUC
   mutate(AUCchar = format(round(fast.auc(pred, get(endpoint)), 3), nsmall = 3),
