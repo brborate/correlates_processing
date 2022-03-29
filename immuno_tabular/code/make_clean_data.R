@@ -48,20 +48,25 @@ ds_s <- dat %>%
     ),
     Arm = factor(ifelse(Trt == 1, "Vaccine", "Placebo"), 
                 levels = c("Vaccine", "Placebo")),
+    demo.stratum.ordered=case_when(!is.na(demo.stratum) ~ as.numeric(demo.stratum), 
+                                   age.geq.65 == 1 ~ 7, 
+                                   age.geq.65 == 0 & HighRiskInd==1 ~ 8,
+                                   age.geq.65 == 0 & HighRiskInd==0 ~ 9), 
     AgeRisk1 = ifelse(AgeC==labels.age[1], AgeRiskC, NA),
     AgeRisk2 = ifelse(AgeC==labels.age[2], AgeRiskC, NA),
     All = "All participants"
   ) 
 
-if(study_name_code=="ENSEMBLE"){
+if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   ds_s <- ds_s %>% 
     mutate(CountryC = labels.countries.ENSEMBLE[Country+1],
            RegionC = labels.regions.ENSEMBLE[Region+1],
-           URMC = case_when(URMforsubcohortsampling == 1 & Country ==0 ~ "URM",
-                            URMforsubcohortsampling == 0 & Country ==0 ~ "Non-URM", 
+           URMC = case_when(URMforsubcohortsampling == 1 & Country ==0 ~ "Communities of Color",
+                            URMforsubcohortsampling == 0 & Country ==0 ~ "White Non-Hispanic", 
                             TRUE ~ as.character(NA)),
            AgeURM = case_when(is.na(URMC) ~ as.character(NA), 
                               TRUE ~ paste(AgeC, URMC)),
+           demo.stratum.ordered=demo.stratum,
            HIVC = c("Positive", "Negative")[2-HIVinfection],
            BMI = case_when(max(BMI, na.rm=T) < 5 ~ labels.BMI[BMI],
                            BMI>=30 ~ "Obese BMI $\\geq$ 30", 
@@ -73,8 +78,8 @@ if(study_name_code=="ENSEMBLE"){
 
 # Step2: Responders, % >=2FR, % >=4FR, % >=2lloq, % >=4lloq
 # Post baseline visits
-ds <- getResponder(ds_s, cutoff.name=cutoff.name, times=grep("Day", times, value=T), 
-                   assays=assays, pos.cutoffs=pos.cutoffs)
+ds <- getResponder(ds_s, times=grep("Day", times, value=T), lloqs=lloqs,
+                   assays=assays, pos.cutoffs = pos.cutoffs)
 
 subgrp <- c(
   All = "All participants", 
@@ -88,7 +93,7 @@ subgrp <- c(
   AgeSexC = "Age, sex",
   ethnicityC = "Hispanic or Latino ethnicity", 
   RaceEthC = "Race",
-  MinorityC = "Communities of color",
+  MinorityC = "Underrepresented Minority Status",
   AgeMinorC = "Age, Communities of color",
   URMC = "Underrepresented Minority Status in the U.S.",
   AgeURM = "Age, Underrepresented Minority Status in the U.S.",
