@@ -4,8 +4,11 @@
 library(knitr)
 library(kableExtra)
 library(dplyr)
+
+config <- config::get(config = Sys.getenv("TRIAL"))
+
 here::i_am("immuno_tabular/report.Rmd")
-base::load(here::here( "immuno_tabular", "output", "Tables.Rdata"))
+base::load(here::here( "immuno_tabular", "output", attr(config,"config"), "Tables.Rdata"))
 
 ```
 \captionsetup[table]{labelformat=empty}
@@ -106,6 +109,8 @@ for (i in 1:length(tlf)){
     }
   numi <- numi + 1
   }
+
+write.table("donedone", "this is done")
 
 ```
 \end{landscape}
