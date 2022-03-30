@@ -1,3 +1,6 @@
+inputMod <- inputMod %>%
+  drop_na(all_of(endpoint)) 
+
 # Create table of cases in both arms (prior to applying Riskscorecohortflag filter)
   tab <- inputMod %>%
     drop_na(Ptid, Trt, all_of(endpoint)) %>%
@@ -98,8 +101,8 @@
 
   if(study_name == "PREVENT19"){
     #if (np < round(length(Y)*2/100)) {  # Update rule: Do Leave-One-Out CV if number of cases in placebo are less than 2%!
-      V_inner <- 20
-      #V_inner <- length(Y) - 1
+      #V_inner <- 20
+      V_inner <- length(Y) - 1
       if(V_inner == length(Y) - 1){
         V_inner_quote <- paste0("length(Y) - 1 = ", length(Y) - 1)
         innerCvControlVar = list(list(V = V_inner))

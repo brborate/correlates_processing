@@ -453,7 +453,7 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
         dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
         # define start1 variables
         if(tp==timepoints[1]) {
-            if (study_name %in% c("MockCOVE", "COVE", "COV002")) {
+            if (study_name %in% c("MockCOVE", "COVE", "COV002")) { # COV002 to be treated similarly as Moderna
                 # a hack: no such variable in the mock or real moderna datasets. It is okay because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
                 dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
             } else if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
@@ -477,14 +477,25 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     if (study_name %in% c("MockCOVE", "COVE")) {
         # COVE is a special case, redefined for backward compatibility
         dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
+    } else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
+        dat_proc$Riskscorecohortflag <-
+          with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
     } else if (study_name == "PREVENT19") {
-        # for this trial we only have markers at D35 at first, so we have to hardcode this
-        dat_proc$Riskscorecohortflag <- 
-            with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & EarlyendpointD21start1==0 & EventTimePrimaryD21>=1, 1, 0))
-    } else {
-        dat_proc$Riskscorecohortflag <- 
-            with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
-    }
+      # for this trial we only have markers at D35 at first, so we have to hardcode this
+      # dat_proc$Riskscorecohortflag <-
+      #   with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & EarlyendpointD21start1==0 & EventTimePrimaryD21>=1, 1, 0))
+      dat_proc <- dat_proc %>%
+        mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
+               RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
+                                            Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7 ~ 1,
+                                            TRUE ~ 0))
+    } else if (study_name == "COV002") {
+        dat_proc <- dat_proc %>%
+          mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
+                 RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
+                                              Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7 ~ 1,
+                                              TRUE ~ 0))
+    } else stop("unknown study_name")
 
     assertthat::assert_that(
         all(!is.na(dat_proc$Riskscorecohortflag)),
