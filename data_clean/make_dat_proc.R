@@ -493,8 +493,7 @@ if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.ge
     print("======================= Passed make_dat_proc digest check =======================")    
 }
 
-write_csv(dat_proc %>% filter(!is.na(risk_score)), file = here("data_clean", paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")))
-write_csv(dat_proc,                                file = here("data_clean", paste0(attr(config, "config"), "_data_processed_for_immunogenicity.csv")))
+write_csv(dat_proc,                                file = here("data_clean", paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")))
 
 
 #print(dat_proc[2,"BbindSpike"], 10)

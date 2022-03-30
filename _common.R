@@ -10,7 +10,7 @@ for(opt in names(config)){
   eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
 }
  
-data_name = paste0(attr(config, "config"), "_data_processed_for_immunogenicity.csv")
+data_name = paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")
 
 
 # disabling lower level parallelization in favor of higher level of parallelization
@@ -503,4 +503,3 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     
     dat_proc    
 }
-
