@@ -91,7 +91,11 @@ if(TRUE) {
     lloqs=sapply(tmp, function(x) unname(x["LLOQ"]))
     uloqs=sapply(tmp, function(x) unname(x["ULOQ"]))    
     
-    if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
+    if(study_name=="COVE" | study_name=="MockCOVE") {
+        
+        # nothing to do
+        
+    } else if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
         
         # data less than pos cutoff is set to pos.cutoff/2
         llods["bindSpike"]=NA 
@@ -121,7 +125,15 @@ if(TRUE) {
         pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
         uloqs["pseudoneutid50"]=619.3052 
         
-    }
+    } else if(study_name=="COV002") {
+           
+        # data less than lod is set to lod/2
+        llods["pseudoneutid50"]=2.612  
+        lloqs["pseudoneutid50"]=3.657  
+        pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
+        uloqs["pseudoneutid50"]=307.432 
+        
+    } else stop("unknown study_name")
     
     # llox is for plotting and can be either llod or lloq depending on trials
     lloxs=llods 
@@ -129,11 +141,24 @@ if(TRUE) {
 }
 
 
-# assays not in this list are imputed
-must_have_assays <- c("bindSpike", "bindRBD")
-if (endsWith(attr(config, "config"),"ADCP")) must_have_assays <- c("ADCP")    
-if (endsWith(attr(config, "config"),"PsV")) must_have_assays <- c("pseudoneutid50")    
-if (study_name=="PREVENT19") must_have_assays <- c("bindSpike")
+if (study_name %in% c("COVE", "MockCOVE")) {
+    must_have_assays <- c("bindSpike", "bindRBD")
+    
+} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")) {
+    if (endsWith(attr(config, "config"),"ADCP")) {
+        must_have_assays <- c("ADCP")    
+    } else {
+        must_have_assays <- c("bindSpike", "bindRBD")
+    }
+    
+} else if (study_name %in% c("PREVENT19")) {
+    must_have_assays <- c("bindSpike")
+    
+} else if (study_name %in% c("COV002")) {
+    must_have_assays <- c("pseudoneutid50")
+    
+} else stop("unknown study_name")
+
 
 
 #assays_to_be_censored_at_uloq_cor <- c(
