@@ -82,8 +82,12 @@ if(length(failed_variables_missing) > 0){
 # check failure times for sanity
 ## EventIndPrimaryDtp2==1 implies EventIndPrimaryDtp1==1
 if(two_marker_timepoints) {
-    pass <- with(dat_proc, all(get("EventIndPrimaryD"%.%timepoints[1])[get("EventIndPrimaryD"%.%timepoints[2]) == 1] == 1))
-    if(!pass){
+    pass <- with(dat_proc, {
+        idx = get("EventIndPrimaryD"%.%timepoints[2]) == 1
+        idx[is.na(idx)]=FALSE
+        all(get("EventIndPrimaryD"%.%timepoints[1])[idx] == 1)
+    })
+    if(is.na(pass) | !pass){
         stop(paste0("Some individuals with qualifying events for Day tp1 analysis are labeled ",
                     "as having no event for the Day tp2 analysis."))
     }
@@ -91,9 +95,10 @@ if(two_marker_timepoints) {
     ## cases that qualify for both events have shorter follow up for Day tp2 analysis
     pass <- with(dat_proc, {
         idx <- get("EventIndPrimaryD"%.%timepoints[2]) == 1 & get("EventIndPrimaryD"%.%timepoints[1]) == 1
+        idx[is.na(idx)]=FALSE
         all(get("EventTimePrimaryD"%.%timepoints[2])[idx] < get("EventTimePrimaryD"%.%timepoints[1])[idx])
     })
-    if(!pass){
+    if(is.na(pass) | !pass){
         stop(paste0("Amongst individuals who have events that qualify for both Day tp1 and Day tp2 ",
                     "some follow up times are *longer* for Day tp2 than for Day tp1"))
     }
@@ -101,7 +106,7 @@ if(two_marker_timepoints) {
     ## consistency between event time variables for the cases
     if (study_name != "MockCOVE") {
         pass <- with(dat_proc, {
-            tmp = get("NumberdaysD1toD"%.%timepoints[1]) - get("NumberdaysD1toD"%.%timepoints[2]) == get("EventIndPrimaryD"%.%timepoints[1]) - get("EventIndPrimaryD"%.%timepoints[2])
+            tmp = get("NumberdaysD1toD"%.%timepoints[2]) - get("NumberdaysD1toD"%.%timepoints[1]) == get("EventTimePrimaryD"%.%timepoints[1]) - get("EventTimePrimaryD"%.%timepoints[2])
             all(tmp | is.na(tmp))
         })
         if(!pass){
