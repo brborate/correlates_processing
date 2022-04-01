@@ -1,6 +1,7 @@
 # Sys.setenv(TRIAL = "moderna_mock")
 # Sys.setenv(TRIAL = "janssen_pooled_mock")
 # Sys.setenv(TRIAL = "cov002")
+# Sys.setenv(TRIAL = "prevent19")
 
 source("code/loadlibraries_readinputdata.R")
 inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name)
@@ -16,12 +17,6 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "COV002")){
   print("Risk scores for Moderna real dataset were generated at Moderna's end using CoVPN Stats/SCHARP code. 
         Are you sure you want to regenerate them?")
 }
-
-# Save inputFile 
-if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
-  dir.create(paste0("output/", Sys.getenv("TRIAL")))
-}
-save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
@@ -121,9 +116,12 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
   # }
 }
 
-
-
-if(study_name %in% c("PREVENT19")){
+if(study_name == "PREVENT19"){
+  inputFile <- inputFile %>%
+    mutate(EventIndPrimaryD35rscore = EventIndPrimaryD1,
+           EventIndPrimaryD35rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD35==1) ~ 1, 
+                                              Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
+                                              TRUE ~ as.double(EventIndPrimaryD35)))
   risk_vars <- c(
     "Age", "Sex", "Black", "Asian", "NatAmer", "PacIsl",  
     "Multiracial", "Notreported", "Unknown",
@@ -132,14 +130,19 @@ if(study_name %in% c("PREVENT19")){
   )
   original_risk_vars <- risk_vars
   endpoint <- "EventIndPrimaryD35"
+  endpoint <- paste0(endpoint, "rscore")
   risk_timepoint <- 35
   studyName_for_report <- "PREVENT19"
   inputMod <- inputFile %>%
     filter(Country == 0) # Analysis based off only US subjects 
 }
 
-
 if(study_name == "COV002"){
+  inputFile <- inputFile %>%
+    mutate(EventIndPrimaryD57rscore = EventIndPrimaryD1,
+           EventIndPrimaryD57rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD57==1) ~ 1, 
+                                              Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
+                                              TRUE ~ as.double(EventIndPrimaryD57)))
   risk_vars <- c(
     "Age", "Sex", "Black", "Asian", "NatAmer", "PacIsl",  
     "Multiracial", "Notreported", "Unknown",
@@ -155,12 +158,13 @@ if(study_name == "COV002"){
   )
   
   endpoint <- "EventIndPrimaryD57"
+  endpoint <- paste0(endpoint, "rscore")
   risk_timepoint <- 57
   studyName_for_report <- "COV002"
   
   # Create binary indicator variables for Country and Region
   inputMod <- inputFile %>%
-    drop_na(all_of(endpoint)) %>%
+    #drop_na(all_of(endpoint)) %>%
     mutate(Country = as.factor(Country))
   
   rec <- recipe(~ Country, data = inputMod)
@@ -171,20 +175,6 @@ if(study_name == "COV002"){
   # %>%
   #   select(-c(Country, Region, CalDtEnrollIND))
   names(inputMod)<-gsub("\\_",".",names(inputMod))
-  
-  # # Create interaction variables between Region and CalDtEnrollIND
-  # rec <- recipe(EventIndPrimaryIncludeNotMolecConfirmedD29 ~., data = inputMod)
-  # int_mod_1 <- rec %>%
-  #   step_interact(terms = ~ starts_with("Region"):starts_with("CalDtEnrollIND"))
-  # int_mod_1 <- prep(int_mod_1, training = inputMod)
-  # inputMod <- bake(int_mod_1, inputMod)
-  # names(inputMod)<-gsub("\\_",".",names(inputMod))
-  # if(run_prod){
-  #   risk_vars <- append(risk_vars, c("Region.X1.x.CalDtEnrollIND.X1", "Region.X1.x.CalDtEnrollIND.X2",
-  #                                    "Region.X1.x.CalDtEnrollIND.X3",
-  #                                    "Region.X2.x.CalDtEnrollIND.X1", "Region.X2.x.CalDtEnrollIND.X2",
-  #                                    "Region.X2.x.CalDtEnrollIND.X3"))
-  # }
 }
 
 # Check there are no NA values in Riskscorecohortflag!
@@ -192,5 +182,10 @@ assertthat::assert_that(
   all(!is.na(inputMod$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag!"
 )
 
-source(here("code", "check_if_SL_needs_be_run.R"))
+# Save inputFile 
+if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
+  dir.create(paste0("output/", Sys.getenv("TRIAL")))
+}
+save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
 
+source(here("code", "check_if_SL_needs_be_run.R"))
