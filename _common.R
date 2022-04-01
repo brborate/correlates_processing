@@ -476,22 +476,13 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     
     for(tp in timepoints) {
         dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
-        # define start1 variables
-        if(tp==timepoints[1]) {
-            if (study_name %in% c("MockCOVE", "COVE", "COV002")) { # COV002 to be treated similarly as Moderna
-                # a hack: no such variable in the mock or real moderna datasets. It is okay because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
-                dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
-            } else if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
-                dat_proc[["EarlyendpointD"%.%tp%.%"start1"]]<- 
-                    with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp%.%"start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 1),1,0))
-            } else if (study_name == "PREVENT19") {
-                # for novavax prevent19 we need this variable to define risk cohort flag
-                # at first we only have markers at D35, so we have to hardcode this
-                dat_proc[["EarlyendpointD21start1"]]<- 
-                    with(dat_proc, ifelse(EarlyinfectionD21start1==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < NumberdaysD1toD21 + 1),1,0))
-            } else stop("unknown study_name")
-        }
     }
+
+    # ENSEMBLE only, since we are not using this variable to define Riskscorecohortflag and we are not doing D29start1 analyses for other trials
+    if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
+        dat_proc[["EarlyendpointD29start1"]]<- with(dat_proc, ifelse(get("EarlyinfectionD29start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD29") + 1),1,0))
+    } # else dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
+    
     
     # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm. It requires:
     # 1. baseline SARS-CoV-2 negative, 
@@ -500,15 +491,14 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
     # no NAs allowed. 
     if (study_name %in% c("MockCOVE", "COVE")) {
-        # COVE is a special case, redefined for backward compatibility
+        # special case, redefined for backward compatibility
         dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
+
     } else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
         dat_proc$Riskscorecohortflag <-
           with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
+
     } else if (study_name == "PREVENT19") {
-      # for this trial we only have markers at D35 at first, so we have to hardcode this
-      # dat_proc$Riskscorecohortflag <-
-      #   with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & EarlyendpointD21start1==0 & EventTimePrimaryD21>=1, 1, 0))
       dat_proc <- dat_proc %>%
         mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
                RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,

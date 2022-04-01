@@ -339,29 +339,20 @@ for (tp in rev(timepoints)) {
     } else {
         imp.markers=c(outer(c("B", "Day"%.%tp), assays, "%.%"))
     }
-    
-    
+        
     for (trt in unique(dat_proc$Trt)) {
-    for (sero in unique(dat_proc$Bserostatus)) {
-    
-      #summary(subset(dat.tmp.impute, Trt == 1 & Bserostatus==0)[imp.markers])
-      
-      imp <- dat.tmp.impute %>%
-        dplyr::filter(Trt == trt & Bserostatus==sero) %>%
-        select(all_of(imp.markers)) 
-        
-      # deal with constant variables
-      for (a in names(imp)) {
-        if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
-      }
-        
-      # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
-      imp <- imp %>%
-        mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)
-        
-      dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero , imp.markers] <-
-        mice::complete(imp, action = 1)
-        
+    for (sero in unique(dat_proc$Bserostatus)) {    
+        #summary(subset(dat.tmp.impute, Trt == 1 & Bserostatus==0)[imp.markers])      
+        imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero) %>% select(all_of(imp.markers))         
+        if(any(is.na(imp))) {
+            # if there is no variability, fill in NA with constant values
+            for (a in names(imp)) {
+                if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
+            }            
+            # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+            imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+            dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero , imp.markers] <- mice::complete(imp, action = 1)
+        }                
     }
     }
     
@@ -383,7 +374,7 @@ for (tp in rev(timepoints)) {
 }
 
 
-assays.includeN=c(assays, "bindN")
+assays.includeN=c(assays, if(!study_name %in% c("PREVENT19","COV002")) "bindN")
 
 
 ###############################################################################
@@ -431,7 +422,7 @@ if(study_name %in% c("COVE", "MockCOVE")){
 
 tmp=list()
 # delta is computed after lloq censoring
-for (a in if(study_name!="PREVENT19") assays.includeN else assays) {
+for (a in assays.includeN) {
   for (t in c("B", paste0("Day", config$timepoints)) ) {
     tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(lloqs[a]), log10(lloqs[a] / 2), dat_proc[[t %.% a]])
   }
@@ -439,12 +430,11 @@ for (a in if(study_name!="PREVENT19") assays.includeN else assays) {
 tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
 
 # some trials have N some don't
-tmp.assays = if(!study_name %in% c("PREVENT19","COV002")) assays.includeN else assays
 for (tp in rev(timepoints)) {
-    dat_proc["Delta"%.%tp%.%"overB" %.% tmp.assays] <- tmp["Day"%.%tp %.% tmp.assays] - tmp["B" %.% tmp.assays]
+    dat_proc["Delta"%.%tp%.%"overB" %.% assays.includeN] <- tmp["Day"%.%tp %.% assays.includeN] - tmp["B" %.% assays.includeN]
 }   
 if(two_marker_timepoints) {
-    dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% tmp.assays] <- tmp["Day"%.% timepoints[2]%.% tmp.assays] - tmp["Day"%.%timepoints[1] %.% tmp.assays]
+    dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays.includeN] <- tmp["Day"%.% timepoints[2]%.% assays.includeN] - tmp["Day"%.%timepoints[1] %.% assays.includeN]
 }
 
 
