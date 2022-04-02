@@ -260,14 +260,35 @@ labels.assays.short <- labels.axis[1, ]
 labels.assays.long <- labels.title
 
 # baseline stratum labeling
-Bstratum.labels <- c(
-  "Age >= 65",
-  "Age < 65, At risk",
-  "Age < 65, Not at risk"
-)
+if (study_name=="COVE" | study_name=="MockCOVE") {
+    Bstratum.labels <- c(
+      "Age >= 65",
+      "Age < 65, At risk",
+      "Age < 65, Not at risk"
+    )
+    
+} else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
+    Bstratum.labels <- c(
+      "Age < 60, Not at risk",
+      "Age < 60, At risk",
+      "Age >= 60, Not at risk",
+      "Age >= 60, At risk"
+    )
+    
+} else if (study_name %in% c("PREVENT19","COV002")) {
+    Bstratum.labels <- c(
+      "Age >= 65",
+      "Age < 65"
+    )
+
+} else if (study_name=="HVTN705") {
+    # do nothing
+
+} else stop("unknown study_name")
+
 
 # baseline stratum labeling
-if ((study_name=="COVE" | study_name=="MockCOVE")) {
+if (study_name=="COVE" | study_name=="MockCOVE") {
     demo.stratum.labels <- c(
       "Age >= 65, URM",
       "Age < 65, At risk, URM",
@@ -276,7 +297,7 @@ if ((study_name=="COVE" | study_name=="MockCOVE")) {
       "Age < 65, At risk, White non-Hisp",
       "Age < 65, Not at risk, White non-Hisp"
     )
-} else if ((study_name=="ENSEMBLE" | study_name=="MockENSEMBLE")) {
+} else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
     demo.stratum.labels <- c(
       "US URM, Age 18-59, Not at risk",
       "US URM, Age 18-59, At risk",
@@ -295,7 +316,7 @@ if ((study_name=="COVE" | study_name=="MockCOVE")) {
       "South Africa, Age >= 60, Not at risk",
       "South Africa, Age >= 60, At risk"
     )
-} else if ((study_name=="PREVENT19")) {
+} else if (study_name=="PREVENT19") {
     demo.stratum.labels <- c(
       "US White non-Hisp, Age 18-64, Not at risk",
       "US White non-Hisp, Age 18-64, At risk",
@@ -308,7 +329,7 @@ if ((study_name=="COVE" | study_name=="MockCOVE")) {
       "Mexico, Age 18-64",
       "Mexico, Age >= 65"
     )
-} else if ((study_name=="COV002")) {
+} else if (study_name=="COV002") {
   demo.stratum.labels <- c(
     "US White non-Hisp, Age 18-64, Not at risk",
     "US White non-Hisp, Age 18-64, At risk",
@@ -323,6 +344,9 @@ if ((study_name=="COVE" | study_name=="MockCOVE")) {
     "Peru, Age 18-64",
     "Peru, Age >= 65"
   )
+} else if (study_name=="HVTN705") {
+    # do nothing
+
 } else stop("unknown study_name")
 
 labels.regions.ENSEMBLE =c("0"="Northern America", "1"="Latin America", "2"="Southern Africa")
