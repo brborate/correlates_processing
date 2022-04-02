@@ -162,7 +162,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$Bstratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
     
 } else if (study_name %in% c("PREVENT19", "COV002")) {
-    # nothing to do
+    dat_proc$Bstratum = with(dat_proc, ifelse(Senior, 1, 0))
     
 } else stop("unknown study_name")
 
