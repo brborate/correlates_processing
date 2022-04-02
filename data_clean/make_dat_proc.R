@@ -11,6 +11,9 @@ library(dplyr)
 library(here)
 
 
+#mapped.dat=read.csv(mapped_data)
+
+
 ########################################################################################################
 # read mapped data with risk score added
 
@@ -192,11 +195,17 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     
 } else if (study_name=="PREVENT19" ) {
     dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior, HighRiskInd), base = 2)) + 1
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 9, 10)))
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 9, 10))) # 0 is US
         
 } else if (study_name=="COV002" ) {
+#    US, <65, non-Minority
+#    US, >65, non-Minority
+#    US, <65, Minority
+#    US, >65, Minority
+#    non-US, <65
+#    non-US, >65
     dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior), base = 2)) + 1
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 5, 6)))
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(!Senior, 5, 6))) # 2 is US
         
 } else stop("unknown study_name")  
   
