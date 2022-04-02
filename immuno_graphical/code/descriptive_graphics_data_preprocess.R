@@ -23,14 +23,14 @@ dat.twophase.sample <- dat %>%
   filter(ph2.immuno == 1)
 twophase_sample_id <- dat.twophase.sample$Ptid
 
-if (study_name_code == "ENSEMBLE") {
+if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
   important.columns <- c("Ptid", "Trt", "MinorityInd", "HighRiskInd", "Age", "Sex",
     "Bserostatus", "Senior", "Bstratum", "wt.subcohort", 
     "race","EthnicityHispanic","EthnicityNotreported", 
     "EthnicityUnknown", "WhiteNonHispanic", "Country", "HIVinfection")
 } else {
   important.columns <- c("Ptid", "Trt", "MinorityInd", "HighRiskInd", "Age", "Sex",
-               "Bserostatus", "Senior", "Bstratum", "wt.subcohort", 
+               "Bserostatus", "Senior", if (study_name!="PREVENT19")"Bstratum", "wt.subcohort", 
                "race","EthnicityHispanic","EthnicityNotreported", 
                "EthnicityUnknown", "WhiteNonHispanic")
 }
@@ -127,7 +127,7 @@ dat.long.twophase.sample$age_risk_label <-
     )
   )
 
-if (study_name_code == "COVE") {
+if (study_name!="ENSEMBLE" & study_name!="MockENSEMBLE") {
 
   dat.long.twophase.sample$sex_label <-
     with(
@@ -152,7 +152,7 @@ if (study_name_code == "COVE") {
       )
     )
 
-} else if (study_name_code == "ENSEMBLE") {
+} else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
   
   dat.long.twophase.sample$sex_label <-
     with(
@@ -234,7 +234,7 @@ dat.long.twophase.sample$age_minority_label <-
     )
   )
 
-if(study_name_code == "ENSEMBLE") {
+if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
   dat.long.twophase.sample$country_label <- factor(sapply(dat.long.twophase.sample$Country, function(x) {
     names(countries.ENSEMBLE)[countries.ENSEMBLE==x]
   }), levels = names(countries.ENSEMBLE))
