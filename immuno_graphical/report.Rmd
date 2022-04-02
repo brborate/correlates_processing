@@ -101,11 +101,11 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = "Pair plots of D1, D29 and D57 Binding Antibody to RBD: baseline negative vaccine arm", eval = (all(c('B', 'Day29', 'Day57') %in% times) & include_bindN == TRUE)}
+```{r, fig.cap = "Pair plots of D1, D29 and D57 Binding Antibody to N: baseline negative vaccine arm", eval = (all(c('B', 'Day29', 'Day57') %in% times) & include_bindN == TRUE)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
-    "pairs_bindRBD_by_times_BaselineNeg_vaccine_",
+    "pairs_bindN_by_times_BaselineNeg_vaccine_",
     study_name, ".png"
   )
 ))

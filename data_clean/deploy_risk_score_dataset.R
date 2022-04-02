@@ -10,8 +10,7 @@ source(here::here("_common.R"))
 # load required libraries, cleaned data, and risk score estimates
 library(here)
 library(tidyverse)
-data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"), 
-                       paste0(attr(config, "config"), "_data_processed_for_immunogenicity"))
+data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
 
 # Request reason for adata update from deployer!
 update_reason <- paste0(Sys.Date(), " ", readline(prompt = "Enter reason for updating adata (this text will be added to adata/README change log): ")) 
