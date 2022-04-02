@@ -11,6 +11,14 @@ immuno_report: immuno_analysis
 risk_report: data_processed
 	bash ./_build.sh riskscore
 	
+## risk_report_clean      : cleans and builds the CoVPN baseline risk score report
+risk_report_clean: risk_clean data_processed
+	bash ./_build.sh riskscore
+	
+## risk_clean      : wipes out TRIAL directory within riskscore_baseline/output
+risk_clean: 
+	rm -rf riskscore_baseline/output/$(TRIAL)/*
+	
 ## deploy risk score processed dataset : Deploy risk score dataset after checking
 deploy_processed_dataset: 
 	Rscript data_clean/deploy_risk_score_dataset.R
