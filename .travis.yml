@@ -23,7 +23,7 @@ jobs:
   - name: Janssen Mock Data Processing
     env:
     - REPORT_TYPE=IMMUNO
-    - TRIAL=moderna_mock
+    - TRIAL=janssen_pooled_mock
     - NOCHECK=1
     script:
     - make risk_report
@@ -32,7 +32,7 @@ jobs:
   - name: Moderna Mock Data Processing
     env:
     - REPORT_TYPE=IMMUNO
-    - TRIAL=janssen_pooled_mock
+    - TRIAL=moderna_mock
     - NOCHECK=1
     script:
     - make risk_report
