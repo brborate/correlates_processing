@@ -45,8 +45,7 @@ assay_lim <- readRDS(here("data_clean", "assay_lim.rds"))
 ## plot for each treatment group by baseline status
 ## ============================================================================
 
-tps <- times[times!="B"] #c("Day29", "Day57", "Delta29overB", "Delta57overB")
-for (tp in tps[tps %in% times]) {
+for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "Delta29overB", "Delta57overB")
   for (trt in 1:2) {
     # Don't produce figures for placebo baseline negative to improve build time
     if(trt==1) {bstatus.range <- 2} else {bstatus.range <- 1:2}
