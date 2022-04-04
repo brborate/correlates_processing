@@ -67,11 +67,12 @@ if(length(failed_llod_check) > 1){
                 paste(failed_llod_check, sep = ", "), "\n"))
 }
 
+
+
 ## missing values in variables that should have no missing values
-## binary variables only take values 0/1
 variables_with_no_missing <- 
     c(
-      c(outer(c("ph1.D", "ph2.D", "EarlyendpointD", "TwophasesampIndD", "EarlyinfectionD", "EventIndPrimaryD", "EventTimePrimaryD", "NumberdaysD1toD"), config$timepoints, paste0)),
+      c(outer(c("ph1.D", "ph2.D", "EarlyendpointD", "TwophasesampIndD", "EarlyinfectionD"), config$timepoints, paste0)),
       "age.geq.65", "MinorityInd",
       "ph1.immuno",
       "ph2.immuno"
@@ -83,16 +84,8 @@ for(variable in variables_with_no_missing){
     if(!pass){
         failed_variables_missing <- c(failed_variables_missing, variable)
     }
-    pass <- all(dat_clean[[variable]] %in% c(0,1))
-    if(!pass){
-        failed_variables_01 <- c(failed_variables_01, variable)
-    }
 }
 
-if(length(failed_variables_missing) > 1){
+if(length(failed_variables_missing) > 0){
     stop(paste0("Unexpected missingness in: ", paste(failed_variables_missing, collapse = ", ")))   
-}
-
-if(length(failed_variables_missing) > 1){
-    stop(paste0("Unexpected values in: ", paste(failed_variables_01, collapse = ", "))) 
 }

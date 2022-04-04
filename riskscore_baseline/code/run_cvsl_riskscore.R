@@ -101,8 +101,8 @@ inputMod <- inputMod %>%
 
   if(study_name == "PREVENT19"){
     #if (np < round(length(Y)*2/100)) {  # Update rule: Do Leave-One-Out CV if number of cases in placebo are less than 2%!
-      #V_inner <- 20
-      V_inner <- length(Y) - 1
+      V_inner <- 20
+      #V_inner <- length(Y) - 1
       if(V_inner == length(Y) - 1){
         V_inner_quote <- paste0("length(Y) - 1 = ", length(Y) - 1)
         innerCvControlVar = list(list(V = V_inner))

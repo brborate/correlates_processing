@@ -3,8 +3,6 @@ renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
 source(here::here("_common.R"))
-#-----------------------------------------------
-
 
 library(tidyverse)
 library(Hmisc) # wtd.quantile, cut2
@@ -13,29 +11,12 @@ library(dplyr)
 library(here)
 
 
-
-#with(dat_raw, table(Country))
-#summary(dat_raw)
-#summary(dat_raw$Age)
-#hist(dat_raw$Day29bindSpike)
-#10**min(dat_raw$Day29bindSpike,na.rm=T)*.009*2
-#hist(dat_raw$Day29bindN)
-#10**min(dat_raw$Day29bindN,na.rm=T)*0.0024*2
-#sort(names(dat_raw))
-#
-#summary(dat_raw$EventTimePrimaryD29[dat_raw$EventIndPrimaryD29==1])
-#hist(dat_raw$EventTimePrimaryD29[dat_raw$EventIndPrimaryD29==1])
-#
-#sort(subset(dat_raw, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD1==1, EventTimePrimaryD1, drop=T))
-#sort(subset(dat_raw, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD29==1, EventTimePrimaryD29, drop=T))
-#sort(subset(dat_raw, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryIncludeNotMolecConfirmedD29==1, EventTimePrimaryIncludeNotMolecConfirmedD29, drop=T))
+#mapped.dat=read.csv(mapped_data)
 
 
 ########################################################################################################
+# read mapped data with risk score added
 
-# dat_proc=preprocess.for.risk.score(dat_raw)
-
-# read raw data with risk score added
 # inputFile_with_riskscore has the same number of rows as dat_raw, but adds columns related to earlyendpoint, earlyinfection (preprocess.for.risk.score) and risk scores
 load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
 dat_proc <- inputFile_with_riskscore
@@ -50,7 +31,7 @@ if (study_name %in% c("MockENSEMBLE", "MockCOVE")) {
 
 colnames(dat_proc)[1] <- "Ptid" 
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
-dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, stop("unknown study_name")))
+dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, COV002=65, stop("unknown study_name")))
   
 
 # ethnicity labeling
@@ -71,14 +52,14 @@ if (study_name %in% c("COVE", "MockCOVE")) {
           PacIsl == 1 ~ labels.race[5],
           Multiracial == 1 ~ labels.race[6],
           Other == 1 ~ labels.race[7],
-          Notreported == 1 | Unknown == 1 ~ labels.race[8],
+          Notreported == 1 | Unknown == 1 ~ labels.race[8], # labels.race has 8 levels for COVE and MockCOVE
           TRUE ~ labels.race[1]
         ),
         race = factor(race, levels = labels.race)
       )
       
-} else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
-    # remove Other
+} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "COV002")) {
+    # remove the Other category
     dat_proc <- dat_proc %>%
       mutate(
         race = labels.race[1],
@@ -89,22 +70,6 @@ if (study_name %in% c("COVE", "MockCOVE")) {
           PacIsl == 1 ~ labels.race[5],
           Multiracial == 1 ~ labels.race[6],
           Notreported == 1 | Unknown == 1 ~ labels.race[7],
-          TRUE ~ labels.race[1]
-        ),
-        race = factor(race, levels = labels.race)
-      )
-
-} else if (study_name %in% c("PREVENT19")) {
-    dat_proc <- dat_proc %>%
-      mutate(
-        race = labels.race[1],
-        race = case_when(
-          Black == 1 ~ labels.race[2],
-          Asian == 1 ~ labels.race[3],
-          NatAmer == 1 ~ labels.race[4],
-          PacIsl == 1 ~ labels.race[5],
-          Multiracial == 1 ~ labels.race[6],
-          Notreported == 1 | Unknown == 1 ~ labels.race[8],
           TRUE ~ labels.race[1]
         ),
         race = factor(race, levels = labels.race)
@@ -129,10 +94,22 @@ dat_proc$MinorityInd = 1-dat_proc$WhiteNonHispanic
 # set NA to 0 in both WhiteNonHispanic and MinorityInd. This means the opposite things for how NA's are interpreted and that gave us the option to use one or the other
 dat_proc$WhiteNonHispanic[is.na(dat_proc$WhiteNonHispanic)] = 0
 dat_proc$MinorityInd[is.na(dat_proc$MinorityInd)] = 0
+
 # set MinorityInd to 0 for latin america and south africa
-if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
+if (study_name %in% c("COVE", "MockCOVE")) {
+    # nothing to do, US data only
+    
+} else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
     dat_proc$MinorityInd[dat_proc$Region!=0] = 0
-}
+
+} else if (study_name=="PREVENT19") {
+    dat_proc$MinorityInd[dat_proc$Country!=0] = 0 # 0 is US
+
+} else if (study_name=="COV002") {
+    dat_proc$MinorityInd[dat_proc$Country!=2] = 0 # 2 is US
+
+} else stop("unknown study_name")
+
 
 
 # check coding via tables
@@ -187,7 +164,11 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 } else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     dat_proc$Bstratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
     
-}
+} else if (study_name %in% c("PREVENT19", "COV002")) {
+    dat_proc$Bstratum = with(dat_proc, ifelse(Senior, 1, 0))
+    
+} else stop("unknown study_name")
+
 names(Bstratum.labels) <- Bstratum.labels
 
 #with(dat_proc, table(Bstratum, Senior, HighRiskInd))
@@ -214,9 +195,19 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     
 } else if (study_name=="PREVENT19" ) {
     dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior, HighRiskInd), base = 2)) + 1
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 9, 10)))
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 9, 10))) # 0 is US
         
-} else stop("unknown study_name_code")  
+} else if (study_name=="COV002" ) {
+#    US, <65, non-Minority
+#    US, >65, non-Minority
+#    US, <65, Minority
+#    US, >65, Minority
+#    non-US, <65
+#    non-US, >65
+    dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior), base = 2)) + 1
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(!Senior, 5, 6))) # 2 is US
+        
+} else stop("unknown study_name")  
   
 names(demo.stratum.labels) <- demo.stratum.labels
 
@@ -235,16 +226,18 @@ dat_proc <- dat_proc %>%
 
 max.tps=max(dat_proc$tps.stratum,na.rm=T)
 dat_proc$Wstratum = dat_proc$tps.stratum
-if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE")) {
+if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "COV002")) {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0)]=max.tps+1
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1)]=max.tps+2
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+    
 } else if (study_name == "PREVENT19") {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==0)]=max.tps+1
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==1)]=max.tps+2
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+    
 } else stop("unknown study_name")
 
 
@@ -288,8 +281,8 @@ for (tp in rev(timepoints)) { # rev is just so that digest passes
 }
 
 
-if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
-    # sensitivity analyses. the population is changed to at risk 1 day post D29 visit
+# Starting at 1 day post D29 visit
+if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")) {
     wts_table2 <-  dat_proc %>% dplyr::filter(EarlyendpointD29start1==0 & Perprotocol==1 & EventTimePrimaryD29>=1) %>%
       with(table(Wstratum, TwophasesampIndD29))
     wts_norm2 <- rowSums(wts_table2) / wts_table2[, 2]
@@ -355,29 +348,20 @@ for (tp in rev(timepoints)) {
     } else {
         imp.markers=c(outer(c("B", "Day"%.%tp), assays, "%.%"))
     }
-    
-    
+        
     for (trt in unique(dat_proc$Trt)) {
-    for (sero in unique(dat_proc$Bserostatus)) {
-    
-      #summary(subset(dat.tmp.impute, Trt == 1 & Bserostatus==0)[imp.markers])
-      
-      imp <- dat.tmp.impute %>%
-        dplyr::filter(Trt == trt & Bserostatus==sero) %>%
-        select(all_of(imp.markers)) 
-        
-      # deal with constant variables
-      for (a in names(imp)) {
-        if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
-      }
-        
-      # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
-      imp <- imp %>%
-        mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)
-        
-      dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero , imp.markers] <-
-        mice::complete(imp, action = 1)
-        
+    for (sero in unique(dat_proc$Bserostatus)) {    
+        #summary(subset(dat.tmp.impute, Trt == 1 & Bserostatus==0)[imp.markers])      
+        imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero) %>% select(all_of(imp.markers))         
+        if(any(is.na(imp))) {
+            # if there is no variability, fill in NA with constant values
+            for (a in names(imp)) {
+                if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
+            }            
+            # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+            imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+            dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero , imp.markers] <- mice::complete(imp, action = 1)
+        }                
     }
     }
     
@@ -399,14 +383,15 @@ for (tp in rev(timepoints)) {
 }
 
 
-assays.includeN=c(assays, "bindN")
+assays.includeN=c(assays, if(!study_name %in% c("PREVENT19","COV002")) "bindN")
 
 
 ###############################################################################
 # converting binding variables from AU to IU for binding assays
-# moderna_real immune.csv file is not on international scale. other raw data files are.
+# moderna_real immune.csv file is not on international scale and other mapped data files are
 ###############################################################################
 
+# COVE only 
 if(study_name=="COVE"){
     # conversion is only done for COVE for backward compatibility
     convf=c(bindSpike=0.0090, bindRBD=0.0272, bindN=0.0024, pseudoneutid50=0.242, pseudoneutid80=1.502)    
@@ -420,18 +405,17 @@ if(study_name=="COVE"){
 
 ###############################################################################
 # censoring values below LLOD
-# after COVE, the data already comes censored
+# after COVE, the mapped data comes censored
 ###############################################################################
 
+# COVE and mock only
 if(study_name %in% c("COVE", "MockCOVE")){
     for (a in assays.includeN) {
       for (t in c("B", paste0("Day", config$timepoints)) ) {
         dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(llods[a]), log10(llods[a] / 2), dat_proc[[t %.% a]])
       }
     }
-}
-
-if(study_name %in% c("MockENSEMBLE")){
+} else if(study_name %in% c("MockENSEMBLE")){
     for (a in assays.includeN) {
       for (t in c("B", paste0("Day", config$timepoints)) ) {
         dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(lloqs[a]), log10(lloqs[a] / 2), dat_proc[[t %.% a]])
@@ -446,18 +430,21 @@ if(study_name %in% c("MockENSEMBLE")){
 ###############################################################################
 
 tmp=list()
-# lloq censoring
-for (a in if(study_name!="PREVENT19") assays.includeN else assays) {
+# delta is computed after lloq censoring
+for (a in assays.includeN) {
   for (t in c("B", paste0("Day", config$timepoints)) ) {
     tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(lloqs[a]), log10(lloqs[a] / 2), dat_proc[[t %.% a]])
   }
 }
 tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
 
-for (tp in rev(timepoints)) dat_proc["Delta"%.%tp%.%"overB"  %.% if(study_name!="PREVENT19") assays.includeN else assays] <- 
-    tmp["Day"%.%tp %.% if(study_name!="PREVENT19") assays.includeN else assays] - tmp["B"     %.% if(study_name!="PREVENT19") assays.includeN else assays]
-if(two_marker_timepoints) dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays.includeN] <- 
-    tmp["Day"%.% timepoints[2]%.% assays.includeN] - tmp["Day"%.%timepoints[1] %.% assays.includeN]
+# some trials have N some don't
+for (tp in rev(timepoints)) {
+    dat_proc["Delta"%.%tp%.%"overB" %.% assays.includeN] <- tmp["Day"%.%tp %.% assays.includeN] - tmp["B" %.% assays.includeN]
+}   
+if(two_marker_timepoints) {
+    dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays.includeN] <- tmp["Day"%.% timepoints[2]%.% assays.includeN] - tmp["Day"%.%timepoints[1] %.% assays.includeN]
+}
 
 
 

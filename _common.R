@@ -89,16 +89,24 @@ if(TRUE) {
     pos.cutoffs=sapply(tmp, function(x) unname(x["pos.cutoff"]))
     llods=sapply(tmp, function(x) unname(x["LLOD"]))
     lloqs=sapply(tmp, function(x) unname(x["LLOQ"]))
-    uloqs=sapply(tmp, function(x) unname(x["ULOQ"]))    
-    
-    if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
+    uloqs=sapply(tmp, function(x) unname(x["ULOQ"]))        
+    # llox is for plotting and can be either llod or lloq depending on trials
+    lloxs=llods 
+
+    if(study_name=="COVE" | study_name=="MockCOVE") {
+        
+        # nothing to do
+        
+    } else if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
         
         # data less than pos cutoff is set to pos.cutoff/2
         llods["bindSpike"]=NA 
+        lloqs["bindSpike"]=NA 
         uloqs["bindSpike"]=238.1165 
     
         # data less than pos cutoff is set to pos.cutoff/2
         llods["bindRBD"]=NA                 
+        lloqs["bindRBD"]=NA                 
         uloqs["bindRBD"]=172.5755    
                 
         # data less than lloq is set to lloq/2
@@ -107,13 +115,16 @@ if(TRUE) {
         pos.cutoffs["pseudoneutid50"]=lloqs["pseudoneutid50"]
         uloqs["pseudoneutid50"]=619.3052 
         
+        lloxs=llods 
+        lloxs["pseudoneutid50"]=lloqs["pseudoneutid50"]
+        
     } else if(study_name=="PREVENT19") {
         
         # data less than lloq is set to lloq/2 in the raw data
         llods["bindSpike"]=NA 
-        lloqs["bindSpike"]=150.4*0.0090 # 1.3536
+        lloqs["bindSpike"]=150.4*0.0090
         pos.cutoffs["bindSpike"]=10.8424 # use same as COVE
-        uloqs["bindSpike"]=770464.6*0.0090 # 6934.181
+        uloqs["bindSpike"]=770464.6*0.0090
     
         # data less than lod is set to lod/2
         llods["pseudoneutid50"]=2.612  
@@ -121,19 +132,42 @@ if(TRUE) {
         pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
         uloqs["pseudoneutid50"]=619.3052 
         
-    }
+        lloxs=llods 
+        
+    } else if(study_name=="COV002") {
+           
+        # data less than lod is set to lod/2
+        llods["pseudoneutid50"]=2.612  
+        lloqs["pseudoneutid50"]=3.657  
+        pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
+        uloqs["pseudoneutid50"]=307.432 
+        
+        lloxs=llods 
+        
+    } else stop("unknown study_name")
     
-    # llox is for plotting and can be either llod or lloq depending on trials
-    lloxs=llods 
     
 }
 
 
-# assays not in this list are imputed
-must_have_assays <- c("bindSpike", "bindRBD")
-if (endsWith(attr(config, "config"),"ADCP")) must_have_assays <- c("ADCP")    
-if (endsWith(attr(config, "config"),"PsV")) must_have_assays <- c("pseudoneutid50")    
-if (study_name=="PREVENT19") must_have_assays <- c("bindSpike")
+if (study_name %in% c("COVE", "MockCOVE")) {
+    must_have_assays <- c("bindSpike", "bindRBD")
+    
+} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")) {
+    if (endsWith(attr(config, "config"),"ADCP")) {
+        must_have_assays <- c("ADCP")    
+    } else {
+        must_have_assays <- c("bindSpike", "bindRBD")
+    }
+    
+} else if (study_name %in% c("PREVENT19")) {
+    must_have_assays <- c("bindSpike")
+    
+} else if (study_name %in% c("COV002")) {
+    must_have_assays <- c("pseudoneutid50")
+    
+} else stop("unknown study_name")
+
 
 
 #assays_to_be_censored_at_uloq_cor <- c(
@@ -226,14 +260,36 @@ labels.assays.short <- labels.axis[1, ]
 labels.assays.long <- labels.title
 
 # baseline stratum labeling
-Bstratum.labels <- c(
-  "Age >= 65",
-  "Age < 65, At risk",
-  "Age < 65, Not at risk"
-)
+if (study_name=="COVE" | study_name=="MockCOVE") {
+    Bstratum.labels <- c(
+      "Age >= 65",
+      "Age < 65, At risk",
+      "Age < 65, Not at risk"
+    )
+    
+} else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
+    Bstratum.labels <- c(
+      "Age < 60, Not at risk",
+      "Age < 60, At risk",
+      "Age >= 60, Not at risk",
+      "Age >= 60, At risk"
+    )
+    
+} else if (study_name %in% c("PREVENT19","COV002")) {
+    Bstratum.labels <- c(
+      "Age >= 65",
+      "Age < 65"
+    )
+
+} else if (study_name=="HVTN705") {
+    # do nothing
+
+} else stop("unknown study_name")
+
+
 
 # baseline stratum labeling
-if ((study_name=="COVE" | study_name=="MockCOVE")) {
+if (study_name=="COVE" | study_name=="MockCOVE") {
     demo.stratum.labels <- c(
       "Age >= 65, URM",
       "Age < 65, At risk, URM",
@@ -242,7 +298,8 @@ if ((study_name=="COVE" | study_name=="MockCOVE")) {
       "Age < 65, At risk, White non-Hisp",
       "Age < 65, Not at risk, White non-Hisp"
     )
-} else if ((study_name=="ENSEMBLE" | study_name=="MockENSEMBLE")) {
+    
+} else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
     demo.stratum.labels <- c(
       "US URM, Age 18-59, Not at risk",
       "US URM, Age 18-59, At risk",
@@ -261,7 +318,8 @@ if ((study_name=="COVE" | study_name=="MockCOVE")) {
       "South Africa, Age >= 60, Not at risk",
       "South Africa, Age >= 60, At risk"
     )
-} else if ((study_name=="PREVENT19")) {
+    
+} else if (study_name=="PREVENT19") {
     demo.stratum.labels <- c(
       "US White non-Hisp, Age 18-64, Not at risk",
       "US White non-Hisp, Age 18-64, At risk",
@@ -274,22 +332,22 @@ if ((study_name=="COVE" | study_name=="MockCOVE")) {
       "Mexico, Age 18-64",
       "Mexico, Age >= 65"
     )
-} else if ((study_name=="COV002")) {
-  demo.stratum.labels <- c(
-    "US White non-Hisp, Age 18-64, Not at risk",
-    "US White non-Hisp, Age 18-64, At risk",
-    "US White non-Hisp, Age >= 65, Not at risk",
-    "US White non-Hisp, Age >= 65, At risk",
-    "US URM, Age 18-64, Not at risk",
-    "US URM, Age 18-64, At risk",
-    "US URM, Age >= 65, Not at risk",
-    "US URM, Age >= 65, At risk",
-    "Chile, Age 18-64",
-    "Chile, Age >= 65",
-    "Peru, Age 18-64",
-    "Peru, Age >= 65"
-  )
+
+} else if (study_name=="COV002") {
+    demo.stratum.labels <- c(
+      "US White non-Hisp, Age 18-64",
+      "US White non-Hisp, Age >= 65",
+      "US URM, Age 18-64",
+      "US URM, Age >= 65",
+      "Non-US, Age 18-64",
+      "Non-US, Age >= 65"
+    )
+
+} else if (study_name=="HVTN705") {
+    # do nothing
+
 } else stop("unknown study_name")
+
 
 labels.regions.ENSEMBLE =c("0"="Northern America", "1"="Latin America", "2"="Southern Africa")
 regions.ENSEMBLE=0:2
@@ -451,22 +509,13 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     
     for(tp in timepoints) {
         dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
-        # define start1 variables
-        if(tp==timepoints[1]) {
-            if (study_name %in% c("MockCOVE", "COVE", "COV002")) { # COV002 to be treated similarly as Moderna
-                # a hack: no such variable in the mock or real moderna datasets. It is okay because for moderna we are not using it to define Riskscorecohortflag and we are not doing D29start1 analyses
-                dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29
-            } else if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
-                dat_proc[["EarlyendpointD"%.%tp%.%"start1"]]<- 
-                    with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp%.%"start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 1),1,0))
-            } else if (study_name == "PREVENT19") {
-                # for novavax prevent19 we need this variable to define risk cohort flag
-                # at first we only have markers at D35, so we have to hardcode this
-                dat_proc[["EarlyendpointD21start1"]]<- 
-                    with(dat_proc, ifelse(EarlyinfectionD21start1==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < NumberdaysD1toD21 + 1),1,0))
-            } else stop("unknown study_name")
-        }
     }
+
+    # ENSEMBLE only, since we are not using this variable to define Riskscorecohortflag and we are not doing D29start1 analyses for other trials
+    if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
+        dat_proc[["EarlyendpointD29start1"]]<- with(dat_proc, ifelse(get("EarlyinfectionD29start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD29") + 1),1,0))
+    } else dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29 # this is not necessary, but it is kept here to make the hash checks for mock datasets happy
+    
     
     # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm. It requires:
     # 1. baseline SARS-CoV-2 negative, 
@@ -475,15 +524,14 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
     # no NAs allowed. 
     if (study_name %in% c("MockCOVE", "COVE")) {
-        # COVE is a special case, redefined for backward compatibility
+        # special case, redefined for backward compatibility
         dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
+
     } else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
         dat_proc$Riskscorecohortflag <-
           with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
+
     } else if (study_name == "PREVENT19") {
-      # for this trial we only have markers at D35 at first, so we have to hardcode this
-      # dat_proc$Riskscorecohortflag <-
-      #   with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & EarlyendpointD21start1==0 & EventTimePrimaryD21>=1, 1, 0))
       dat_proc <- dat_proc %>%
         mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
                RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
