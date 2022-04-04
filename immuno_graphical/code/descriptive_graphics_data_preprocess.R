@@ -23,17 +23,11 @@ dat.twophase.sample <- dat %>%
   filter(ph2.immuno == 1)
 twophase_sample_id <- dat.twophase.sample$Ptid
 
-if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
-  important.columns <- c("Ptid", "Trt", "MinorityInd", "HighRiskInd", "Age", "Sex",
-    "Bserostatus", "Senior", "Bstratum", "wt.subcohort", 
-    "race","EthnicityHispanic","EthnicityNotreported", 
-    "EthnicityUnknown", "WhiteNonHispanic", "Country", "HIVinfection")
-} else {
-  important.columns <- c("Ptid", "Trt", "MinorityInd", "HighRiskInd", "Age", "Sex",
-               "Bserostatus", "Senior", if (study_name!="PREVENT19")"Bstratum", "wt.subcohort", 
-               "race","EthnicityHispanic","EthnicityNotreported", 
-               "EthnicityUnknown", "WhiteNonHispanic")
-}
+important.columns <- c("Ptid", "Trt", "MinorityInd", "HighRiskInd", "Age", "Sex",
+  "Bserostatus", "Senior", "Bstratum", "wt.subcohort", 
+  "race","EthnicityHispanic","EthnicityNotreported", 
+  "EthnicityUnknown", "WhiteNonHispanic", if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") c("Country", "HIVinfection"))
+
 ## arrange the dataset in the long form, expand by assay types
 ## dat.long.subject_level is the subject level covariates;
 ## dat.long.assay_value is the long-form time variables that differ by the assay type
