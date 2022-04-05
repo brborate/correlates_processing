@@ -38,7 +38,7 @@ dat.twophase.sample <- readRDS(here("data_clean", "twophase_data.rds"))
 
 assay_lim <- readRDS(here("data_clean", "assay_lim.rds"))
 
-tps <- c("Day29", "Delta29overB", "Day57", "Delta57overB")
+tps <-  times[!times %in% c("B","Delta57over29")] #c("Day29", "Delta29overB", "Day57", "Delta57overB")
 #-----------------------------------------------
 # PAIR PLOTS
 #-----------------------------------------------
@@ -51,21 +51,13 @@ tps <- c("Day29", "Delta29overB", "Day57", "Delta57overB")
 #   serostrata combined
 #-----------------------------------------------
 print("Pair plots 1:")
-for (tp in tps[tps %in% times]) {
+for (tp in tps) {
   for (trt in 0:1) {
     # Don't produce figures for placebo baseline negative to improve build time
     if(trt==0) {bstatus.range <- 1} else {bstatus.range <- 0:1}
     for (bserostatus in bstatus.range) {
       
-      if(tp == "Day29"){
-        tt <- 2
-      }else if(tp == "Day57"){
-        tt <- 3
-      }else if(tp == "Delta29overB"){
-        tt <- 4
-      }else if(tp == "Delta57overB"){
-        tt <- 5
-      }
+      tt=match(tp, times[!grepl("over29",times)])
       
       subdat <- dat.twophase.sample %>%
         dplyr::filter(Bserostatus == bserostatus & Trt == trt)
@@ -77,10 +69,7 @@ for (tp in tps[tps %in% times]) {
         strata = "Bstratum",
         weight = "wt.subcohort",
         plot_title = paste0(
-          c(
-            "B", "D29", "D57", "D29 Fold-rise over D1",
-            "D57 Fold-rise over D1"
-          )[tt],
+          gsub("ay ","", labels.time)[tt],
           " Ab markers: baseline ",
           ifelse(bserostatus, "positive", "negative"), ", ",
           c("placebo", "vaccine")[trt + 1], " arm"
@@ -138,10 +127,11 @@ for (trt in 0:1) {
   }
 }
 
-print("Pair plots 3:")
+
 
 ## pairplots of assay readouts for multiple timepoints
 ## pairplots by baseline serostatus
+print("Pair plots 3:")
 for (trt in 0:1) {
   # Don't produce figures for placebo baseline negative to improve build time
   if(trt==0) {bstatus.range <- 1} else {bstatus.range <- 0:1}
@@ -152,7 +142,7 @@ for (trt in 0:1) {
     for (aa in assay_immuno) {
       covid_corr_pairplots_by_time(
         plot_dat = subdat,
-        times = intersect(c("B", "Day29", "Day57"), times),
+        times = times[!grepl("Delta",times)],
         assay = aa,
         strata = "Bstratum",
         weight = "wt.subcohort",
@@ -161,7 +151,7 @@ for (trt in 0:1) {
           ifelse(bserostatus, "positive ", "negative "),
           c("placebo", "vaccine")[trt + 1], " arm"
         ),
-        column_labels = paste(c("D1", "D29", "D57")[c("B", "Day29", "Day57") %in% times], 
+        column_labels = paste(gsub("B","D1",gsub("ay ","", labels.time[!grepl("fold",labels.time)])), # paste(c("D1", "D29", "D57")[c("B", "Day29", "Day57") %in% times],
                               labels.axis[, aa][1]),
         filename = paste0(
           save.results.to, "/pairs_", aa, "_by_times_",
@@ -183,7 +173,7 @@ for (trt in 0:1) {
 #   ggarrange()
 #-----------------------------------------------
 print("RCDF 1:")
-for (tp in tps[tps %in% times]) {
+for (tp in tps) {
   covid_corr_rcdf_facets(
     plot_dat = dat.long.twophase.sample,
     x = tp,
@@ -222,22 +212,21 @@ for (bAb in c(0, 1)) {
   
   if (length(rcdf_assays) > 0) {
     
-    for (tp in intersect(c("Day29", "Day57"), times)) {
+    for (tp in times[!grepl("B|Delta", times)]) { # intersect(c("Day29", "Day57"), times)
       covid_corr_rcdf(
         plot_dat = subset(dat.long.twophase.sample, Trt == "Vaccine" & assay %in% rcdf_assays),
         x = tp,
         color = "assay_labels",
         lty = "Bserostatus",
         weight = "wt.subcohort",
-        xlab = paste0(
-          switch(tp, Day29 = "D29", Day57 = "D57"), " Ab Markers"
+        xlab = paste0("D", str_extract(tp, "[[:digit:]]+"), " Ab Markers"
         ),
         xlim = c(min(assay_lim[rcdf_assays, tp, 1]), 
                  max(assay_lim[rcdf_assays, tp, 2])),
         xbreaks = seq(min(assay_lim[rcdf_assays, tp, 1]), 
                       max(assay_lim[rcdf_assays, tp, 2]), 
                       1),
-        plot_title = paste0(switch(tp, Day29 = "Day 29", Day57 = "Day 57"), " Ab Markers"),
+        plot_title = paste0("Day ", str_extract(tp, "[[:digit:]]+"), " Ab Markers"),
         filename = paste0(
           save.results.to, "/Marker_Rcdf_", c("nAb", "bAb")[bAb + 1], "_", tp,
           "_trt_vaccine_bstatus_both_", study_name, ".png"
@@ -250,21 +239,21 @@ for (bAb in c(0, 1)) {
     # one plot, with the line-types distinguishing the baseline serostatus
     #-----------------------------------------------
     print("RCDF 3:")
-    for (tp in intersect(c("Delta29overB", "Delta57overB"), times)) {
+    for (tp in times[grepl("overB",times)]) { #intersect(c("Delta29overB", "Delta57overB"), times)
       covid_corr_rcdf(
         plot_dat = subset(dat.long.twophase.sample, Trt == "Vaccine" & assay %in% rcdf_assays),
         x = tp,
         color = "assay_labels",
         lty = "Bserostatus",
         weight = "wt.subcohort",
-        xlab = paste0(switch(tp, Delta29overB = "D29", Delta57overB = "D57"), 
+        xlab = paste0("D", str_extract(tp, "[[:digit:]]+"), 
                       " Fold-rise over D1 Ab Markers"),
         xlim = c(min(assay_lim[rcdf_assays, tp, 1]), 
                  max(assay_lim[rcdf_assays, tp, 2])),
         xbreaks = seq(min(assay_lim[rcdf_assays, tp, 1]), 
                       max(assay_lim[rcdf_assays, tp, 2]), 
                       1),
-        plot_title = paste0(switch(tp, Delta29overB = "Day 29", Delta57overB = "Day 57"),
+        plot_title = paste0("Day ", str_extract(tp, "[[:digit:]]+"),
                             " over Baseline Ab Markers"),
         filename = paste0(
           save.results.to, "/Marker_Rcdf_", c("nAb", "bAb")[bAb + 1], "_", tp, 
@@ -280,7 +269,7 @@ for (bAb in c(0, 1)) {
     #-----------------------------------------------
     print("RCDF 4:")
     for (bstatus in 1:2) {
-      for (tp in intersect(c("Day29", "Day57"), times)) {
+      for (tp in times[!grepl("B|Delta", times)]) { # intersect(c("Day29", "Day57"), times)
         covid_corr_rcdf(
           plot_dat = filter(dat.long.twophase.sample, Trt == "Vaccine", 
                             Bserostatus == bstatus.labels[bstatus],
@@ -289,16 +278,14 @@ for (bAb in c(0, 1)) {
           color = "assay_labels",
           lty = NULL,
           weight = "wt.subcohort",
-          xlab = paste0(
-            switch(tp, Day29 = "D29", Day57 = "D57"), " Ab Markers"
+          xlab = paste0("D", str_extract(tp, "[[:digit:]]+"), " Ab Markers"
           ),
           xlim = c(min(assay_lim[rcdf_assays, tp, 1]), 
                    max(assay_lim[rcdf_assays, tp, 2])),
           xbreaks = seq(min(assay_lim[rcdf_assays, tp, 1]), 
                         max(assay_lim[rcdf_assays, tp, 2]), 
                         1),
-          plot_title = paste0(
-            switch(tp, Day29 = "Day 29", Day57 = "Day 57"), " Ab Markers"
+          plot_title = paste0("Day ", str_extract(tp, "[[:digit:]]+"), " Ab Markers"
           ),
           filename = paste0(
             save.results.to, "/Marker_Rcdf_", c("nAb", "bAb")[bAb + 1], "_", tp,
@@ -307,7 +294,8 @@ for (bAb in c(0, 1)) {
         )
       }
       
-      for (tp in intersect(c("Delta29overB", "Delta57overB"), times)) {
+      for (tp in times[grepl("overB", times)] #intersect(c("Delta29overB", "Delta57overB"), times)
+           ) {
         covid_corr_rcdf(
           plot_dat = filter(dat.long.twophase.sample, 
                             Trt == "Vaccine", 
@@ -317,8 +305,8 @@ for (bAb in c(0, 1)) {
           color = "assay_labels",
           lty = NULL,
           weight = "wt.subcohort",
-          xlab = paste0(
-            switch(tp, Delta29overB = "D29", Delta57overB = "D57"),
+          xlab = paste0("D", str_extract(tp, "[[:digit:]]+"),
+            #switch(tp, Delta29overB = "D29", Delta57overB = "D57"),
             " Fold-rise over D1 Ab Markers"
           ),
           xlim = c(min(assay_lim[rcdf_assays, tp, 1]), 
@@ -326,8 +314,8 @@ for (bAb in c(0, 1)) {
           xbreaks = seq(min(assay_lim[rcdf_assays, tp, 1]), 
                         max(assay_lim[rcdf_assays, tp, 2]), 
                         1),
-          plot_title = paste0(
-            switch(tp, Delta29overB = "Day 29", Delta57overB = "Day 57"),
+          plot_title = paste0("Day ", str_extract(tp, "[[:digit:]]+"),
+            #switch(tp, Delta29overB = "Day 29", Delta57overB = "Day 57"),
             " Fold-rise over Baseline Ab Markers"
           ),
           filename = paste0(
@@ -354,10 +342,9 @@ for (bAb in c(0, 1)) {
 # baseline negative subjects (main group of interest)
 #-----------------------------------------------
 print("Boxplots 1:")
-
-tps <- c("B", "Day29", "Day57", "Delta29overB", "Delta57overB")
+tps2 <- times[!times %in% c("Delta57over29")] #c("B", "Day29", "Day57", "Delta29overB", "Delta57overB")
 for (bstatus in 1:2) {
-  for (tp in tps[tps %in% times]) {
+  for (tp in tps2) {
 
     covid_corr_boxplot_facets(
       plot_dat = subset(
@@ -369,7 +356,7 @@ for (bstatus in 1:2) {
       color = "Trt",
       facet_by = "assay",
       ylim = assay_lim[, tp, ],
-      plot_LLOD = tp %in% c("B", "Day29", "Day57"),
+      plot_LLOD = !grepl("Delta", tp),#tp %in% c("B", "Day29", "Day57"),
       LLOD = log10(llods[assay_immuno]),
       POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
       LLOQ = log10(lloqs[assay_immuno]),
@@ -392,9 +379,8 @@ for (bstatus in 1:2) {
 #   treatment groups
 # - Make seperate plots for Placebo and Vaccine arms
 #-----------------------------------------------
-tps <- c("B", "Day29", "Day57", "Delta29overB", "Delta57overB")
 for (trt in 1:2) {
-  for (tp in tps[tps %in% times]) {
+  for (tp in tps2) {
     
     covid_corr_boxplot_facets(
       plot_dat = subset(dat.long.twophase.sample, as.numeric(Trt) == trt),
@@ -403,7 +389,7 @@ for (trt in 1:2) {
       color = "Bserostatus",
       facet_by = "assay",
       ylim = assay_lim[, tp,],
-      plot_LLOD = tp %in% c("B", "Day29", "Day57"),
+      plot_LLOD = !grepl("Delta", tp),#tp %in% c("B", "Day29", "Day57"),
       LLOD = log10(llods[assay_immuno]),
       POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
       LLOQ = log10(lloqs[assay_immuno]),
@@ -431,7 +417,7 @@ for (trt in 1:2) {
 print("Spaghetti plots:")
 ## in each baseline serostatus group, randomly select 10 placebo recipients and 20 vaccine recipients
 set.seed(12345)
-var_names <- expand.grid(times = intersect(c("B", "Day29", "Day57"), times),
+var_names <- expand.grid(times = times[!grepl("Delta",times)],#intersect(c("B", "Day29", "Day57"), times),
                          assays = assay_immuno) %>%
   mutate(var_names = paste0(times, assay_immuno)) %>%
   .[, "var_names"]
@@ -450,13 +436,15 @@ spaghetti_ptid <- dat.twophase.sample[, c("Ptid", "Bserostatus", "Trt", var_name
   }) %>% unlist %>% as.character
 
 spaghetti_dat <- dat.long.twophase.sample[, c("Ptid", "Bserostatus", "Trt", "assay",
-                                              intersect(c("B", "Day29", "Day57"), times))] %>%
+                                              times[!grepl("Delta",times)]#intersect(c("B", "Day29", "Day57"), times)
+                                              )] %>%
   filter(Ptid %in% spaghetti_ptid) %>%
-  pivot_longer(cols = intersect(c("B", "Day29", "Day57"), times),
+  pivot_longer(cols = times[!grepl("Delta",times)],#intersect(c("B", "Day29", "Day57"), times)
                names_to = "time") %>%
   mutate(assay = factor(assay, levels = assay_immuno, labels = assay_immuno),
-         time_label = factor(time, levels = intersect(c("B", "Day29", "Day57"), times),
-                             labels = c("D1", "D29", "D57")[c("B", "Day29", "Day57") %in% times])) %>%
+         time_label = factor(time, levels = times[!grepl("Delta",times)],#intersect(c("B", "Day29", "Day57"), times)
+                             labels = gsub("B","D1",gsub("ay","", times[!grepl("Delta",times)]))#c("D1", "D29", "D57")[c("B", "Day29", "Day57") %in% times]
+                             )) %>%
   as.data.frame
 
 for (bstatus in 1:2) {
@@ -467,7 +455,8 @@ for (bstatus in 1:2) {
                               id = "Ptid",
                               color = "Trt",
                               facet_by = "assay",
-                              ylim = assay_lim[, intersect(c("Day29", "Day57"), times)[1],],
+                              ylim = assay_lim[, times[!grepl("B|Delta",times)][1]#intersect(c("Day29", "Day57"), times)[1]
+                                               ,],
                               panel_titles = labels.assays.short,
                               plot_title = paste0(
                                 "Baseline ",
@@ -487,8 +476,8 @@ for (bstatus in 1:2) {
 
 #### Scatter plot, assay vs. age in years, (Day 1) Day 29 Day 57
 print("Scatter plots:")
-tps <- c("B", "Day29", "Day57")
-for (tp in tps[tps %in% times]) {
+tps3 = times[!grepl("Delta",times)]#tps <- c("B", "Day29", "Day57")
+for (tp in tps3) {
   for (trt in 1:2) {
     for (bstatus in 1:2) {
       subdat <- dat.long.twophase.sample %>%

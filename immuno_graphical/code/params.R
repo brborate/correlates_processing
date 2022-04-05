@@ -60,10 +60,7 @@ rownames(labels.axis) <- times
 labels.title <- outer(
   labels.assays[assay_immuno],
   ": " %.%
-    c(
-      "Day 1", "Day 29", "D29 fold-rise over D1", "Day 57",
-      "D57 fold-rise over D1", "D57 fold-rise over D29"
-    )[c("B", "Day29", "Delta29overB", "Day57", "Delta57overB", "Delta57over29") %in% times],
+    labels.time[names(labels.time) %in% times],
   paste0
 ) 
 
