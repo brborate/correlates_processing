@@ -115,19 +115,19 @@ tab_dm <- bind_rows(dm_cat, dm_num) %>%
 
 tab_dm_pos <- tab_dm %>% 
   dplyr::filter(`Baseline SARS-CoV-2` == "Positive") %>% 
-  select_if(~ !all(is.na(.))) %>% 
   select_at(c("subgroup", "Characteristics", 
                          grep("Vaccine" ,names(.), value = T),
                          grep("Placebo" ,names(.), value = T),
-                         grep("Total" ,names(.), value = T)))
+                         grep("Total" ,names(.), value = T))) %>% 
+  select_if(~ !all(is.na(.)))
 
 tab_dm_neg <- tab_dm %>% 
   dplyr::filter(`Baseline SARS-CoV-2` == "Negative") %>% 
-  select_if(~ !all(is.na(.))) %>% 
   select_at(c("subgroup", "Characteristics", 
               grep("Vaccine" ,names(.), value = T),
               grep("Placebo" ,names(.), value = T),
-              grep("Total" ,names(.), value = T)))
+              grep("Total" ,names(.), value = T))) %>% 
+  select_if(~ !all(is.na(.))) 
 
 
 print("Done with table 1") 
@@ -247,10 +247,12 @@ tab_rr <- rpcnt %>%
 
 if(any(grepl("bind", assays))){
   
-  tab_bind1 <- tab_rr %>% 
-    dplyr::filter(Marker %in% labels_all$Marker[grep("bind", labels_all$marker)]) %>% 
-    select(subgroup, Group, Visit, Arm, `Baseline SARS-CoV-2`, Marker, N, Responder, 
-           c("% Greater than 2xLLOQ", "% Greater than 4xLLOQ"))
+  if (all(c("% Greater than 2xLLOQ", "% Greater than 4xLLOQ") %in% names(tab_rr))){
+    tab_bind1 <- tab_rr %>% 
+      dplyr::filter(Marker %in% labels_all$Marker[grep("bind", labels_all$marker)]) %>% 
+      select(subgroup, Group, Visit, Arm, `Baseline SARS-CoV-2`, Marker, N, Responder, 
+             c("% Greater than 2xLLOQ", "% Greater than 4xLLOQ"))
+  }
   
   tab_bind2 <- tab_rr %>% 
     dplyr::filter(Marker %in% labels_all$Marker[grep("bind", labels_all$marker)]) %>% 
