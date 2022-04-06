@@ -29,7 +29,7 @@ names(assays)=assays # add names so that lapply results will have names
 
 # if this flag is true, then the N IgG binding antibody is reported 
 # in the immuno report (but is not analyzed in the cor or cop reports).
-include_bindN <- TRUE
+include_bindN <- !study_name %in% c("PREVENT19","COV002")
 
 
 # For bAb, IU and BAU are the same thing
