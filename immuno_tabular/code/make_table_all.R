@@ -115,19 +115,19 @@ tab_dm <- bind_rows(dm_cat, dm_num) %>%
 
 tab_dm_pos <- tab_dm %>% 
   dplyr::filter(`Baseline SARS-CoV-2` == "Positive") %>% 
-  select_if(~ !all(is.na(.))) %>% 
   select_at(c("subgroup", "Characteristics", 
                          grep("Vaccine" ,names(.), value = T),
                          grep("Placebo" ,names(.), value = T),
-                         grep("Total" ,names(.), value = T)))
+                         grep("Total" ,names(.), value = T))) %>% 
+  select_if(~ !all(is.na(.)))
 
 tab_dm_neg <- tab_dm %>% 
   dplyr::filter(`Baseline SARS-CoV-2` == "Negative") %>% 
-  select_if(~ !all(is.na(.))) %>% 
   select_at(c("subgroup", "Characteristics", 
               grep("Vaccine" ,names(.), value = T),
               grep("Placebo" ,names(.), value = T),
-              grep("Total" ,names(.), value = T)))
+              grep("Total" ,names(.), value = T))) %>% 
+  select_if(~ !all(is.na(.))) 
 
 
 print("Done with table 1") 
@@ -225,6 +225,7 @@ if (ncol(tab_strtm2)==2) tab_strtm2 <- NULL
 
 sub.by <- c("Arm", "`Baseline SARS-CoV-2`")
 resp.v <- grep("Resp|2lloq|4lloq|FR2|FR4", names(ds), value = T) 
+resp.v <- resp.v[sapply(resp.v, function(x)!all(is.na(ds[, x])))]
 
 if (study_name_code=="COVE") {
   subs <- c("All", "AgeC", "HighRiskC", "AgeRiskC", "AgeRisk1", "AgeRisk2", "SexC",
@@ -247,10 +248,12 @@ tab_rr <- rpcnt %>%
 
 if(any(grepl("bind", assays))){
   
-  tab_bind1 <- tab_rr %>% 
-    dplyr::filter(Marker %in% labels_all$Marker[grep("bind", labels_all$marker)]) %>% 
-    select(subgroup, Group, Visit, Arm, `Baseline SARS-CoV-2`, Marker, N, Responder, 
-           c("% Greater than 2xLLOQ", "% Greater than 4xLLOQ"))
+  if (all(c("% Greater than 2xLLOQ", "% Greater than 4xLLOQ") %in% names(tab_rr))){
+    tab_bind1 <- tab_rr %>% 
+      dplyr::filter(Marker %in% labels_all$Marker[grep("bind", labels_all$marker)]) %>% 
+      select(subgroup, Group, Visit, Arm, `Baseline SARS-CoV-2`, Marker, N, Responder, 
+             c("% Greater than 2xLLOQ", "% Greater than 4xLLOQ"))
+  }
   
   tab_bind2 <- tab_rr %>% 
     dplyr::filter(Marker %in% labels_all$Marker[grep("bind", labels_all$marker)]) %>% 
@@ -296,6 +299,7 @@ print("Done with table3 & 4")
 # 
 # Output: tab_gm
 gm.v <- c(assays_col, grep("Delta", names(ds), value = T))
+gm.v <- gm.v[sapply(gm.v, function(x)!all(is.na(ds[, x])))]
 rgm <- get_gm(dat=ds, v=gm.v, subs=subs, sub.by=sub.by, strata="tps.stratum",
               weights="wt.subcohort", subset="ph2.immuno")
 
@@ -362,6 +366,7 @@ groups <- c("AgeC", "HighRiskC", "AgeRisk1", "AgeRisk2",
 
 
 mag_groups <- assays_col
+mag_groups <- mag_groups[sapply(mag_groups, function(x)!all(is.na(ds[,x])))]
 
 rgmt <- get_rgmt(ds, mag_groups, groups, comp_lev=comp_lev, 
                  sub.by, "tps.stratum", "wt.subcohort", "ph2.immuno")
@@ -430,6 +435,7 @@ print("Done with table8")
 groups <- c("Arm")
 comp_i <- c("Vaccine", "Placebo")
 mag_groups <- assays_col
+mag_groups <- mag_groups[sapply(mag_groups, function(x)!all(is.na(ds[,x])))]
 
 rgmt_Rx <- get_rgmt(ds, mag_groups, groups, comp_lev=comp_i, sub.by="`Baseline SARS-CoV-2`", 
                     "tps.stratum", "wt.subcohort", "ph2.immuno") %>% 
