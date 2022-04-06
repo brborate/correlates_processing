@@ -474,7 +474,7 @@ if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.ge
     assertthat::assert_that(
         digest(dat_proc[order(names(dat_proc))])==
         ifelse(attr(config, "config")=="janssen_pooled_mock", 
-            "25dfea264cf3d40b875729b984684788", 
+            "028549acb994980fbb6832198308ec4a", 
             "1902296f23fca88c4757ed7a84fbe7d7"),
         msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
     print("======================= Passed make_dat_proc digest check =======================")    
