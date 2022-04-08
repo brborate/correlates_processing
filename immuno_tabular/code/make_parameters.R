@@ -26,7 +26,14 @@ randomsubcohort <- case_when(study_name_code=="COVE" ~ "This table summarizes th
       strata defined by enrollment characteristics: Assigned randomization arm $\\\\times$ 
       Baseline SARS-CoV-2 seronegative vs. seropositive $\\\\times$ Randomization strata. 
       The U.S. subcohort includes 8 baseline demographic strata; the Latin America 
-      and South Africa subcohorts each include 4 baseline demographic strata."
+      and South Africa subcohorts each include 4 baseline demographic strata.",
+      
+      study_name_code=="PREVENT19" ~ "This table summarizes characteristics of 
+      per-protocol participants in the immunogenicity subcohort, which was randomly 
+      sampled from the study cohort. The sampling was The sampling was stratified by 
+      strata defined by enrollment characteristics: Assigned randomization arm $\\\\times$ 
+      Baseline SARS-CoV-2 seronegative vs. seropositive $\\\\times$ Randomization strata. 
+      The U.S. subcohort includes 8 baseline demographic strata; the Mexico subcohort includes 2 baseline demographic strata."
       )
 
 tlf <-

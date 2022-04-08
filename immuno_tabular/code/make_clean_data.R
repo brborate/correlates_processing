@@ -57,7 +57,7 @@ ds_s <- dat %>%
     All = "All participants"
   ) 
 
-if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
+if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19")){
   ds_s <- ds_s %>% 
     mutate(CountryC = labels.countries.ENSEMBLE[Country+1],
            RegionC = labels.regions.ENSEMBLE[Region+1],
