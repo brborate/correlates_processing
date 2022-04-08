@@ -755,10 +755,10 @@ covid_corr_scatter_facets <- function(plot_dat,
 #' @param y: string: column name in the plot_dat for the value of the boxplots.
 #' @param facet_by: string: column name in the plot_dat for deciding the
 #'  panels.
-#' @param plot_LLOD: logical: whether to plot LLOD lines.
-#' @param LLOD: numeric vector: values of the LLOD lines.
-#' @param LLOD_label_size: numeric: font size of the LLOD labels.
-#' @param LLOW_lwd: LLOD line width.
+#' @param plot_LLOX: logical: whether to plot LLOX lines.
+#' @param LLOX: numeric vector: values of the LLOX lines.
+#' @param LLOX_label_size: numeric: font size of the LLOX labels.
+#' @param LLOX_lwd: LLOX line width.
 #' @param color: string: the variable names in plot_dat, separated by ":", for
 #'  the boxplot colors.
 #' @param lwd: scalar: boxplot border line width.
@@ -799,11 +799,10 @@ covid_corr_boxplot_facets <- function(plot_dat,
                                         "#FF5EBF", "#3700A5",
                                         "#8F8F8F", "#787873"
                                       ),
-                                      plot_LLOD = TRUE,
-                                      LLOD = NULL,
+                                      plot_LLOX = TRUE,
                                       POS.CUTOFFS = NULL,
-                                      LLOD_lwd = 0.5,
-                                      LLOQ = NULL,
+                                      LLOX_lwd = 0.5,
+                                      LLOX = NULL,
                                       ULOQ = NULL,
                                       lwd = 1,
                                       point_size = 1.2,
@@ -901,28 +900,28 @@ covid_corr_boxplot_facets <- function(plot_dat,
         legend.text = element_text(size = legend_size, face = "bold")
       )
 
-    if (plot_LLOD) {
+    if (plot_LLOX) {
       boxplot_list[[aa]] <- boxplot_list[[aa]] +
         geom_hline(
-          yintercept = LLOQ[aa], linetype = 2, color = "black",
-          lwd = LLOD_lwd
+          yintercept = LLOX[aa], linetype = 2, color = "black",
+          lwd = LLOX_lwd
         ) +
         geom_hline(
           yintercept = ULOQ[aa], linetype = 2, color = "black",
-          lwd = LLOD_lwd
+          lwd = LLOX_lwd
         )
       
       if (!is.na(POS.CUTOFFS[aa])) {
         boxplot_list[[aa]] <- boxplot_list[[aa]] +
           geom_hline(
             yintercept = POS.CUTOFFS[aa], linetype = 2, color = "black",
-            lwd = LLOD_lwd
+            lwd = LLOX_lwd
           ) 
       } else {
         boxplot_list[[aa]] <- boxplot_list[[aa]] +
           geom_hline(
-            yintercept = LLOD[aa], linetype = 2, color = "black",
-            lwd = LLOD_lwd
+            yintercept = LLOX[aa], linetype = 2, color = "black",
+            lwd = LLOX_lwd
           )
       }
     }
@@ -952,10 +951,10 @@ covid_corr_boxplot_facets <- function(plot_dat,
 #' @param y: string: column name in the plot_dat for the value of the boxplots.
 #' @param facet_by: string: column name in the plot_dat for deciding the
 #'  panels.
-#' @param plot_LLOD: logical: whether to plot LLOD lines.
-#' @param LLOD: numeric vector: values of the LLOD lines.
-#' @param LLOD_label_size: numeric: font size of the LLOD labels.
-#' @param LLOW_lwd: LLOD line width.
+#' @param plot_LLOX: logical: whether to plot LLOX lines.
+#' @param LLOX: numeric vector: values of the LLOX lines.
+#' @param LLOX_label_size: numeric: font size of the LLOX labels.
+#' @param LLOX_lwd: LLOX line width.
 #' @param color: string: the variable names in plot_dat, separated by ":", for
 #'  the boxplot colors.
 #' @param lwd: scalar: boxplot border line width.
