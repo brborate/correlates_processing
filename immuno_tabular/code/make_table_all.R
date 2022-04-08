@@ -31,12 +31,12 @@ if (study_name_code=="COVE") {
   num_v1 <- c("Age") # Summaries - Mean & Range
   num_v2 <- c("BMI") # Summaries - Mean & St.d
   cat_v <- c("AgeC", "SexC", "raceC", "ethnicityC", "HighRiskC", "AgeRiskC", "MinorityC")
-} else if (study_name_code=="ENSEMBLE") {
+} else if (study_name_code %in% c("ENSEMBLE", "PREVENT19")) {
   num_v1 <- c("Age") # Summaries - Mean & Range
   num_v2 <- NULL # Summaries - Mean & St.d
   cat_v <- c("AgeC", "SexC", "raceC", "ethnicityC", 
              "HighRiskC", "AgeRiskC", "URMC",  "CountryC", "HIVC", "BMI")
-}
+} 
 
 ds_long_ttl <- ds %>%
   dplyr::filter(ph2.immuno) %>% 
@@ -185,7 +185,8 @@ for (i in 1:2){
     names(tab_strtm_header2) <- sprintf("%sRandom Subcohort Sample Sizes (N=%s Participants) (%s Trial)",
                                         case_when(study_name_code=="COVE" ~ "", 
                                                   study_name_code=="ENSEMBLE" ~ 
-                                                    paste0(paste(c("U.S.", "Latin America", "South Africa")[sort(unique(ds.i$Region))+1], collapse=" and "), " ")),
+                                                    paste0(paste(c("U.S.", "Latin America", "South Africa")[sort(unique(ds.i$Region))+1], collapse=" and "), " "),
+                                                  TRUE ~ ""),
                                         sum(ds.i$ph2.immuno),  
                                         study_name)
     
@@ -230,7 +231,7 @@ resp.v <- resp.v[sapply(resp.v, function(x)!all(is.na(ds[, x])))]
 if (study_name_code=="COVE") {
   subs <- c("All", "AgeC", "HighRiskC", "AgeRiskC", "AgeRisk1", "AgeRisk2", "SexC",
             "AgeSexC", "ethnicityC", "RaceEthC", "MinorityC", "AgeMinorC")
-} else if (study_name_code=="ENSEMBLE") {
+} else if (study_name_code %in% c("ENSEMBLE", "PREVENT19")) {
   subs <- c("All", "AgeC", "HIVC", "CountryC", "HighRiskC", "AgeRiskC", "AgeRisk1", "AgeRisk2", "SexC",
             "AgeSexC", "ethnicityC", "RaceEthC", "URMC"[0 %in% ds$Region], "AgeURM"[0 %in% ds$Region])
 }
@@ -361,7 +362,7 @@ comp_lev <- c(labels.age[2:1],
 
 groups <- c("AgeC", "HighRiskC", "AgeRisk1", "AgeRisk2",
             "SexC", "ethnicityC", case_when(study_name_code=="COVE"~"MinorityC",
-                                            study_name_code=="ENSEMBLE"~"URMC"),
+                                            study_name_code%in%c("ENSEMBLE", "PREVENT19")~"URMC"),
             "HIVC"[study_name_code=="ENSEMBLE"])
 
 
