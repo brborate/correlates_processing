@@ -118,7 +118,7 @@ for (trt in 0:1) {
       height = max(1.3 * length(assay_immuno) + 0.1, 5.5),
       width = max(1.3 * length(assay_immuno), 5.5),
       filename = paste0(
-        save.results.to, "/pairs_baselineMarkers_",
+        save.results.to, "/pairs_baseline_Markers_",
         bstatus.labels.2[bserostatus + 1], "_",
         c("placebo", "vaccine")[trt + 1], "_arm_", study_name,
         ".png"
