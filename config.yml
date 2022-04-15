@@ -52,7 +52,7 @@ cov002: &cov002
   times: [B, Day29, Day57, Delta29overB, Delta57overB, Delta57over29]
   time_labels: [Day 1, Day 29, Day 57, D29 fold-rise over D1, D57 fold-rise over D1, D57 fold-rise over D29]
   study_name_code: COV002
-  mapped_data: /trials/covpn/p3002/analysis/mapping_immune_correlates/adata/COVID_AstraZeneca_realdata_20220408.csv 
+  mapped_data: /trials/covpn/p3002/analysis/mapping_immune_correlates/adata/COVID_AstraZeneca_realdata_20220415.csv 
   subset_variable: None
   subset_value: All
   assays: [pseudoneutid50]
