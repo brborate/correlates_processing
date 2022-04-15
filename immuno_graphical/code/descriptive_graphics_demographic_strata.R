@@ -45,8 +45,7 @@ assay_lim <- readRDS(here("data_clean", "assay_lim.rds"))
 ## plot for each treatment group by baseline status
 ## ============================================================================
 
-tps <- c("Day29", "Day57", "Delta29overB", "Delta57overB")
-for (tp in tps[tps %in% times]) {
+for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "Delta29overB", "Delta57overB")
   for (trt in 1:2) {
     # Don't produce figures for placebo baseline negative to improve build time
     if(trt==1) {bstatus.range <- 2} else {bstatus.range <- 1:2}
@@ -63,10 +62,9 @@ for (tp in tps[tps %in% times]) {
         x = "age_geq_65_label",
         y = tp,
         facet_by = "assay",
-        plot_LLOD = tp %in% c("B", "Day29", "Day57"),
-        LLOD = log10(llods[assay_immuno]),
+        plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
-        LLOQ = log10(lloqs[assay_immuno]),
+        LLOX = log10(lloxs[assay_immuno]),
         ULOQ = log10(uloqs[assay_immuno]),
         ylim = assay_lim[assay_immuno, tp, ],
         axis_titles_y = labels.axis[tp, ] %>% unlist(),
@@ -113,10 +111,9 @@ for (tp in tps[tps %in% times]) {
         y = tp,
         facet_by = "assay",
         ylim = assay_lim[assay_immuno, tp, ],
-        plot_LLOD = tp %in% c("B", "Day29", "Day57"),
-        LLOD = log10(llods[assay_immuno]),
+        plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
-        LLOQ = log10(lloqs[assay_immuno]),
+        LLOX = log10(lloxs[assay_immuno]),
         ULOQ = log10(uloqs[assay_immuno]),
         axis_titles_y = labels.axis[tp, ] %>% unlist(),
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -162,10 +159,9 @@ for (tp in tps[tps %in% times]) {
         y = tp,
         facet_by = "assay",
         ylim = assay_lim[assay_immuno, tp, ],
-        plot_LLOD = tp %in% c("B", "Day29", "Day57"),
-        LLOD = log10(llods[assay_immuno]),
+        plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
-        LLOQ = log10(lloqs[assay_immuno]),
+        LLOX = log10(lloxs[assay_immuno]),
         ULOQ = log10(uloqs[assay_immuno]),
         axis_titles_y = labels.axis[tp, ] %>% unlist(),
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -211,10 +207,9 @@ for (tp in tps[tps %in% times]) {
         y = tp,
         facet_by = "assay",
         ylim = assay_lim[assay_immuno, tp, ],
-        plot_LLOD = tp %in% c("B", "Day29", "Day57"),
-        LLOD = log10(llods[assay_immuno]),
+        plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
-        LLOQ = log10(lloqs[assay_immuno]),
+        LLOX = log10(lloxs[assay_immuno]),
         ULOQ = log10(uloqs[assay_immuno]),
         axis_titles_y = labels.axis[tp, ] %>% unlist(),
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -260,10 +255,9 @@ for (tp in tps[tps %in% times]) {
         y = tp,
         facet_by = "assay",
         ylim = assay_lim[assay_immuno, tp, ],
-        plot_LLOD = tp %in% c("B", "Day29", "Day57"),
-        LLOD = log10(llods[assay_immuno]),
+        plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
-        LLOQ = log10(lloqs[assay_immuno]),
+        LLOX = log10(lloxs[assay_immuno]),
         ULOQ = log10(uloqs[assay_immuno]),
         axis_titles_y = labels.axis[tp, ] %>% unlist(),
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -309,10 +303,9 @@ for (tp in tps[tps %in% times]) {
         y = tp,
         facet_by = "assay",
         ylim = assay_lim[assay_immuno, tp, ],
-        plot_LLOD = tp %in% c("B", "Day29", "Day57"),
-        LLOD = log10(llods[assay_immuno]),
+        plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
-        LLOQ = log10(lloqs[assay_immuno]),
+        LLOX = log10(lloxs[assay_immuno]),
         ULOQ = log10(uloqs[assay_immuno]),
         axis_titles_y = labels.axis[tp, ] %>% unlist(),
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -360,10 +353,9 @@ for (tp in tps[tps %in% times]) {
         y = tp,
         facet_by = "assay",
         ylim = assay_lim[assay_immuno, tp, ],
-        plot_LLOD = tp %in% c("B", "Day29", "Day57"),
-        LLOD = log10(llods[assay_immuno]),
+        plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
-        LLOQ = log10(lloqs[assay_immuno]),
+        LLOX = log10(lloxs[assay_immuno]),
         ULOQ = log10(uloqs[assay_immuno]),
         axis_titles_y = labels.axis[tp, ] %>% unlist(),
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -404,7 +396,7 @@ for (tp in tps[tps %in% times]) {
         )
       )
 
-      if(study_name_code=="ENSEMBLE") {
+      if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
         minority.data <- subset(subdat, Country==0)
       } else {
         minority.data <- subdat
@@ -417,10 +409,9 @@ for (tp in tps[tps %in% times]) {
         y = tp,
         facet_by = "assay",
         ylim = assay_lim[assay_immuno, tp, ],
-        plot_LLOD = tp %in% c("B", "Day29", "Day57"),
-        LLOD = log10(llods[assay_immuno]),
+        plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
-        LLOQ = log10(lloqs[assay_immuno]),
+        LLOX = log10(lloxs[assay_immuno]),
         ULOQ = log10(uloqs[assay_immuno]),
         axis_titles_y = labels.axis[tp, ] %>% unlist(),
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -466,10 +457,9 @@ for (tp in tps[tps %in% times]) {
         y = tp,
         facet_by = "assay",
         ylim = assay_lim[assay_immuno, tp, ],
-        plot_LLOD = tp %in% c("B", "Day29", "Day57"),
-        LLOD = log10(llods[assay_immuno]),
+        plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
-        LLOQ = log10(lloqs[assay_immuno]),
+        LLOX = log10(lloxs[assay_immuno]),
         ULOQ = log10(uloqs[assay_immuno]),
         axis_titles_y = labels.axis[tp, ] %>% unlist(),
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -508,7 +498,7 @@ for (tp in tps[tps %in% times]) {
         )
       )
       
-      if(study_name_code=="ENSEMBLE") {
+      if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
         
         ##  (10) country
         covid_corr_boxplot_facets(
@@ -517,10 +507,9 @@ for (tp in tps[tps %in% times]) {
           y = tp,
           facet_by = "assay",
           ylim = assay_lim[assay_immuno, tp, ],
-          plot_LLOD = tp %in% c("B", "Day29", "Day57"),
-          LLOD = log10(llods[assay_immuno]),
+          plot_LLOX = !grepl("Delta", tp),
           POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
-          LLOQ = log10(lloqs[assay_immuno]),
+          LLOX = log10(lloxs[assay_immuno]),
           ULOQ = log10(uloqs[assay_immuno]),
           axis_titles_y = labels.axis[tp, ] %>% unlist(),
           panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -566,10 +555,9 @@ for (tp in tps[tps %in% times]) {
           y = tp,
           facet_by = "assay",
           ylim = assay_lim[assay_immuno, tp, ],
-          plot_LLOD = tp %in% c("B", "Day29", "Day57"),
-          LLOD = log10(llods[assay_immuno]),
+          plot_LLOX = !grepl("Delta", tp),
           POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
-          LLOQ = log10(lloqs[assay_immuno]),
+          LLOX = log10(lloxs[assay_immuno]),
           ULOQ = log10(uloqs[assay_immuno]),
           axis_titles_y = labels.axis[tp, ] %>% unlist(),
           panel_titles = labels.title2[tp, ] %>% unlist(),

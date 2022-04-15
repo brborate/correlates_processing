@@ -60,33 +60,34 @@ assay_lim <- array(NA, dim = c(length(assay_immuno), length(times), 2))
 dimnames(assay_lim) <- list(assay_immuno, times, c("lb", "ub"))
 
 
-assay_lim[, times %in% c("B", "Day29", "Day57"), "lb"] <- 
+assay_lim[, !grepl("Delta", times), "lb"] <- 
   floor(log10(llods[assay_immuno] / 2)) # lower bound same for all assays - days
-assay_lim[assay_immuno %in% bAb_assays, times %in% c("B", "Day29", "Day57"), "ub"] <- 
+if (study_name=="PREVENT19") assay_lim["bindSpike", !grepl("Delta", times), "lb"] <- 0
+assay_lim[assay_immuno %in% bAb_assays, !grepl("Delta", times), "ub"] <- 
   max(ceiling(MaxbAb) + ceiling(MaxbAb) %% 2, ceiling(log10(uloqs[assay_immuno])))
-assay_lim[assay_immuno %in% nAb_assays, times %in% c("B", "Day29", "Day57"), "ub"] <-
+assay_lim[assay_immuno %in% nAb_assays, !grepl("Delta", times), "ub"] <-
   ceiling(MaxID50ID80) + ceiling(MaxID50ID80) %% 2
-assay_lim[assay_immuno %in% live_assays, times %in% c("B", "Day29", "Day57"), "ub"] <-
+assay_lim[assay_immuno %in% live_assays, !grepl("Delta", times), "ub"] <-
   ceiling(Maxlive50) + ceiling(Maxlive50) %% 2
 
 
-assay_lim[, times %in% c("Delta29overB", "Delta57overB", "Delta57over29"), "lb"] <- -2 # lower bound same for all assays - delta
-assay_lim[assay_immuno %in% bAb_assays, times %in% c("Delta29overB", "Delta57overB", "Delta57over29"), "ub"] <- 
-  ceiling(MaxbAb - min(log10(llods[bAb_assays] / 2))) + ceiling(MaxbAb - min(log10(llods[bAb_assays] / 2))) %% 2
-assay_lim[assay_immuno %in% nAb_assays, times %in% c("Delta29overB", "Delta57overB", "Delta57over29"), "ub"] <- 
+assay_lim[, grepl("Delta", times), "lb"] <- -2 # lower bound same for all assays - delta
+assay_lim[assay_immuno %in% bAb_assays, grepl("Delta", times), "ub"] <- 
+  ceiling(MaxbAb - min(log10(llods[bAb_assays] / 2), na.rm=T)) + ceiling(MaxbAb - min(log10(llods[bAb_assays] / 2), na.rm=T)) %% 2
+assay_lim[assay_immuno %in% nAb_assays, grepl("Delta", times), "ub"] <- 
   ceiling(MaxID50ID80 - min(log10(llods[nAb_assays] / 2))) + ceiling(MaxID50ID80 - min(log10(llods[nAb_assays] / 2))) %% 2
-assay_lim[assay_immuno %in% live_assays, times %in% c("Delta29overB", "Delta57overB", "Delta57over29"), "ub"] <- 
+assay_lim[assay_immuno %in% live_assays, grepl("Delta", times), "ub"] <- 
   ceiling(Maxlive50 - min(log10(llods[live_assays] / 2))) + ceiling(Maxlive50 - min(log10(llods[live_assays] / 2))) %% 2
 
 
 
 # Quick workaround for janssen presentation report
-if(study_name_code=="ENSEMBLE") {
-  assay_lim[, times %in% c("B", "Day29", "Day57"),'lb'] <- 0
-  assay_lim[, times %in% c("B", "Day29", "Day57"),'ub'] <- 3
+if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
+  assay_lim[, !grepl("Delta", times),'lb'] <- 0
+  assay_lim[, !grepl("Delta", times),'ub'] <- 3
   
-  assay_lim[, times %in% c("Delta29overB", "Delta57overB", "Delta57over29"),'lb'] <- -1
-  assay_lim[, times %in% c("Delta29overB", "Delta57overB", "Delta57over29"),'ub'] <- 2
+  assay_lim[, grepl("Delta", times),'lb'] <- -1
+  assay_lim[, grepl("Delta", times),'ub'] <- 2
 }
 
 saveRDS(assay_lim,

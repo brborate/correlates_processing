@@ -31,8 +31,10 @@ getResponder <- function(data,
       delta <- paste0("Delta", gsub("Day", "", i), "overB", j)
       cutoff <- pos.cutoffs[j]
       
-      for (k in folds){
-        data[, paste0(post, k, "lloq")] <- as.numeric(10^data[, post] >= k*lloqs[j])
+      if (!is.na(lloqs[j])){
+        for (k in folds){
+          data[, paste0(post, k, "lloq")] <- as.numeric(10^data[, post] >= k*lloqs[j])
+        }
       }
       
       for (k in grtns){
