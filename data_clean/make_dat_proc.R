@@ -254,15 +254,28 @@ with(dat_proc, table(tps.stratum))
 
 # TwophasesampInd: be in the case or subcohort and have the necessary markers
 if (two_marker_timepoints) {
-    dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
-        with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-        complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays, "Day"%.%timepoints[2]%.%must_have_assays)])      
+    if (study_name=="cov002") {
+        # AZ: does not require baseline or D29 marker availability
+        dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
+            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+            complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])        
+    } else {
+        dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
+            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+            complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays, "Day"%.%timepoints[2]%.%must_have_assays)])      
+    }
 }
 
-dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
-    with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-    complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
-  
+if (study_name=="cov002") {
+    # AZ: does not require baseline marker availability
+    dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
+        with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+        complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)])      
+} else {
+    dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
+        with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+        complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
+}  
 
 # weights 
 for (tp in rev(timepoints)) { # rev is just so that digest passes
