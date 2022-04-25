@@ -245,37 +245,60 @@ if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "COV002"))
 
 with(dat_proc, table(tps.stratum))
 
+
+
 ###############################################################################
 # observation-level weights
+# Note that Wstratum may have NA if any variables to form strata has NA
 ###############################################################################
 
-#Note that Wstratum may have NA if any variables to form strata has NA
+
+# define must have assays for ph2 definition
+if (study_name %in% c("COVE", "MockCOVE")) {
+    must_have_assays <- c("bindSpike", "bindRBD")
+    
+} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")) {
+    if (endsWith(attr(config, "config"),"ADCP")) {
+        must_have_assays <- c("ADCP")    
+    } else {
+        must_have_assays <- c("bindSpike", "bindRBD")
+    }    
+} else if (study_name %in% c("PREVENT19")) {
+    must_have_assays <- c("bindSpike")
+    
+} else if (study_name %in% c("COV002")) {
+    must_have_assays <- c("pseudoneutid50")
+    
+} else stop("unknown study_name")
 
 
 # TwophasesampInd: be in the case or subcohort and have the necessary markers
-if (two_marker_timepoints) {
-    if (study_name=="cov002") {
-        # AZ: does not require baseline or D29 marker availability
-        dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
-            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-            complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])        
-    } else {
+if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "PREVENT19")) {
+    if (two_marker_timepoints) {
+    # require baseline and timpoint 1
         dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
             with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
             complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays, "Day"%.%timepoints[2]%.%must_have_assays)])      
     }
-}
-
-if (study_name=="cov002") {
-    # AZ: does not require baseline marker availability
-    dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
-        with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-        complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)])      
-} else {
+    # require baseline
     dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
         with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
         complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
-}  
+
+} else if (study_name=="COV002") {
+    # does not require baseline or time point 1
+    dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
+        with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+        complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])        
+    # does not require baseline
+    dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
+        with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+        # adding | is because if D57 is present, D29 will be imputed if missing
+        (complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)]) | complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])) 
+        
+} else stop("unknown study_name")
+
+
 
 # weights 
 for (tp in rev(timepoints)) { # rev is just so that digest passes
@@ -351,7 +374,9 @@ assertthat::assert_that(
 #     use baseline, each time point, but not Delta
 ###############################################################################
 
-# first do the later time point
+# loop through the time points
+# first impute (B, D29, D57) among TwophasesampIndD57==1
+# next impute (B, D29) among TwophasesampIndD29==1
 for (tp in rev(timepoints)) {    
     n.imp <- 1
     dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD"%.%tp) == 1)
