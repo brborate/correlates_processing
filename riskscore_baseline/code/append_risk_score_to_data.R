@@ -32,7 +32,7 @@ tab <- inputFile_with_riskscore
 #   tab <- tab %>%
 #     mutate(EventIndPrimaryD35 = ifelse(Trt == 0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD35==1), 1, EventIndPrimaryD35))
 # }
-# if(study_name %in% c("COV002")){
+# if(study_name %in% c("AZD1222")){
 #   tab <- tab %>%
 #     mutate(EventIndPrimaryD57 = ifelse(Trt == 0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD57==1), 1, EventIndPrimaryD57))
 # }

@@ -29,7 +29,7 @@ names(assays)=assays # add names so that lapply results will have names
 
 # if this flag is true, then the N IgG binding antibody is reported 
 # in the immuno report (but is not analyzed in the cor or cop reports).
-include_bindN <- !study_name %in% c("PREVENT19","COV002")
+include_bindN <- !study_name %in% c("PREVENT19","AZD1222")
 
 
 # For bAb, IU and BAU are the same thing
@@ -135,7 +135,7 @@ if(TRUE) {
         lloxs=llods 
         lloxs["bindSpike"]=lloqs["bindSpike"]
         
-    } else if(study_name=="COV002") {
+    } else if(study_name=="AZD1222") {
            
         # data less than lod is set to lod/2
         llods["pseudoneutid50"]=2.612  
@@ -164,7 +164,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 } else if (study_name %in% c("PREVENT19")) {
     must_have_assays <- c("bindSpike")
     
-} else if (study_name %in% c("COV002")) {
+} else if (study_name %in% c("AZD1222")) {
     must_have_assays <- c("pseudoneutid50")
     
 } else stop("unknown study_name")
@@ -276,7 +276,7 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "Age >= 60, At risk"
     )
     
-} else if (study_name %in% c("PREVENT19","COV002")) {
+} else if (study_name %in% c("PREVENT19","AZD1222")) {
     Bstratum.labels <- c(
       "Age >= 65",
       "Age < 65"
@@ -334,7 +334,7 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "Mexico, Age >= 65"
     )
 
-} else if (study_name=="COV002") {
+} else if (study_name=="AZD1222") {
     demo.stratum.labels <- c(
       "US White non-Hisp, Age 18-64",
       "US White non-Hisp, Age >= 65",
@@ -538,7 +538,7 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
                RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
                                             Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7 ~ 1,
                                             TRUE ~ 0))
-    } else if (study_name == "COV002") {
+    } else if (study_name == "AZD1222") {
         dat_proc <- dat_proc %>%
           mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
                  RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,

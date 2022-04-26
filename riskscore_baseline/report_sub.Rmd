@@ -81,7 +81,7 @@ if(studyName_for_report == "PREVENT19"){
   day = "Day 35"
   start = "1 day"
 }
-if(studyName_for_report == "COV002"){
+if(studyName_for_report == "AZD1222"){
   day = "Day 57"
   start = "7 days"
 }
