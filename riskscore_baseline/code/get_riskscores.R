@@ -1,12 +1,12 @@
 # Sys.setenv(TRIAL = "moderna_mock")
 # Sys.setenv(TRIAL = "janssen_pooled_mock")
-# Sys.setenv(TRIAL = "cov002")
+# Sys.setenv(TRIAL = "azd1222")
 # Sys.setenv(TRIAL = "prevent19")
 
 source("code/loadlibraries_readinputdata.R")
 inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name)
 
-if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "COV002")){
+if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222")){
   inputFile <- inputFile %>%
     rename(Ptid = Subjectid)
 }else if(study_name == "MockCOVE"){
@@ -137,7 +137,7 @@ if(study_name == "PREVENT19"){
     filter(Country == 0) # Analysis based off only US subjects 
 }
 
-if(study_name == "COV002"){
+if(study_name == "AZD1222"){
   inputFile <- inputFile %>%
     mutate(EventIndPrimaryD57rscore = EventIndPrimaryD1,
            EventIndPrimaryD57rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD57==1) ~ 1, 
@@ -160,7 +160,7 @@ if(study_name == "COV002"){
   endpoint <- "EventIndPrimaryD57"
   endpoint <- paste0(endpoint, "rscore")
   risk_timepoint <- 57
-  studyName_for_report <- "COV002"
+  studyName_for_report <- "AZD1222"
   
   # Create binary indicator variables for Country and Region
   inputMod <- inputFile %>%

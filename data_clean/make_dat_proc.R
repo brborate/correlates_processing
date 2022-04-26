@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "cov002")
+#Sys.setenv(TRIAL = "azd1222")
 renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -31,7 +31,7 @@ if (study_name %in% c("MockENSEMBLE", "MockCOVE")) {
 
 colnames(dat_proc)[1] <- "Ptid" 
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
-dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, COV002=65, stop("unknown study_name")))
+dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, stop("unknown study_name")))
   
 
 # ethnicity labeling
@@ -58,7 +58,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
         race = factor(race, levels = labels.race)
       )
       
-} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "COV002")) {
+} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222")) {
     # remove the Other category
     dat_proc <- dat_proc %>%
       mutate(
@@ -105,7 +105,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 } else if (study_name=="PREVENT19") {
     dat_proc$MinorityInd[dat_proc$Country!=0] = 0 # 0 is US
 
-} else if (study_name=="COV002") {
+} else if (study_name=="AZD1222") {
     dat_proc$MinorityInd[dat_proc$Country!=2] = 0 # 2 is US
 
 } else stop("unknown study_name")
@@ -164,7 +164,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 } else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     dat_proc$Bstratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
     
-} else if (study_name %in% c("PREVENT19", "COV002")) {
+} else if (study_name %in% c("PREVENT19", "AZD1222")) {
     dat_proc$Bstratum = with(dat_proc, ifelse(Senior, 1, 0))
     
 } else stop("unknown study_name")
@@ -197,7 +197,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior, HighRiskInd), base = 2)) + 1
     dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 9, 10))) # 0 is US
         
-} else if (study_name=="COV002" ) {
+} else if (study_name=="AZD1222" ) {
 #    US, <65, non-Minority
 #    US, >65, non-Minority
 #    US, <65, Minority
@@ -226,7 +226,7 @@ dat_proc <- dat_proc %>%
 
 max.tps=max(dat_proc$tps.stratum,na.rm=T)
 dat_proc$Wstratum = dat_proc$tps.stratum
-if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "COV002")) {
+if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "AZD1222")) {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0)]=max.tps+1
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1)]=max.tps+2
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0)]=max.tps+3
@@ -266,7 +266,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 } else if (study_name %in% c("PREVENT19")) {
     must_have_assays <- c("bindSpike")
     
-} else if (study_name %in% c("COV002")) {
+} else if (study_name %in% c("AZD1222")) {
     must_have_assays <- c("pseudoneutid50")
     
 } else stop("unknown study_name")
@@ -285,7 +285,7 @@ if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "PREVENT19
         with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
         complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
 
-} else if (study_name=="COV002") {
+} else if (study_name=="AZD1222") {
     # does not require baseline or time point 1
     dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
         with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
@@ -421,7 +421,7 @@ for (tp in rev(timepoints)) {
 }
 
 
-assays.includeN=c(assays, if(!study_name %in% c("PREVENT19","COV002")) "bindN")
+assays.includeN=c(assays, if(!study_name %in% c("PREVENT19","AZD1222")) "bindN")
 
 
 ###############################################################################
