@@ -39,26 +39,36 @@ prevent19: &prevent19
   times: [B, Day35, Delta35overB]
   time_labels: [Day 1, Day 35, D35 fold-rise over D1]
   study_name_code: PREVENT19
-  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/adata/COVID_Novavax_realdata_20220418.csv 
+  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/adata/COVID_Novavax_realdata_20220506.csv 
   assays: [bindSpike, pseudoneutid50]
   assay_labels: [Binding Antibody to Spike, PsV Neutralization 50% Titer]
   assay_labels_short: [Anti Spike IgG (BAU/ml), Pseudovirus-nAb ID50 (IU50/ml)]
   study_name: PREVENT19
   
-azd1222: &azd1222
+azd1222_base: &azd1222_base
   <<: *ows_trial
   two_marker_timepoints: yes
   timepoints: [29, 57]
   times: [B, Day29, Day57, Delta29overB, Delta57overB, Delta57over29]
   time_labels: [Day 1, Day 29, Day 57, D29 fold-rise over D1, D57 fold-rise over D1, D57 fold-rise over D29]
   study_name_code: AZD1222
-  mapped_data: /trials/covpn/p3002/analysis/mapping_immune_correlates/adata/COVID_AstraZeneca_realdata_20220425.csv 
+  mapped_data: /trials/covpn/p3002/analysis/mapping_immune_correlates/adata/COVID_AstraZeneca_realdata_20220506.csv 
   subset_variable: None
   subset_value: All
+  study_name: AZD1222
+
+azd1222: &azd1222
+  <<: *azd1222_base
   assays: [pseudoneutid50]
   assay_labels: [PsV Neutralization 50% Titer]
   assay_labels_short: [Pseudovirus-nAb ID50 (IU50/ml)]
-  study_name: AZD1222
+
+azd1222_bAb: &azd1222_bAb
+  <<: *azd1222_base
+  assays: [bindSpike]
+  assay_labels: [Binding Antibody to Spike]
+  assay_labels_short: [Anti Spike IgG (BAU/ml)]
+
 
 janssen_trial: &janssen_trial
   <<: *ows_trial

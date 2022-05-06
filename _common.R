@@ -137,6 +137,12 @@ if(TRUE) {
         
     } else if(study_name=="AZD1222") {
            
+        # data less than lloq is set to lloq/2 in the raw data, Nexelis
+        llods["bindSpike"]=NA 
+        lloqs["bindSpike"]=62.8*0.0090 # 0.5652
+        uloqs["bindSpike"]=770464.6*0.0090 # 6934.181
+        pos.cutoffs["bindSpike"]=10.8424 # use same as COVE
+    
         # data less than lod is set to lod/2
         llods["pseudoneutid50"]=2.612  
         lloqs["pseudoneutid50"]=56*0.0653 # 3.6568
@@ -144,31 +150,12 @@ if(TRUE) {
         pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
         
         lloxs=llods 
+        lloxs["bindSpike"]=lloqs["bindSpike"]
         
     } else stop("unknown study_name")
     
     
 }
-
-
-if (study_name %in% c("COVE", "MockCOVE")) {
-    must_have_assays <- c("bindSpike", "bindRBD")
-    
-} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")) {
-    if (endsWith(attr(config, "config"),"ADCP")) {
-        must_have_assays <- c("ADCP")    
-    } else {
-        must_have_assays <- c("bindSpike", "bindRBD")
-    }
-    
-} else if (study_name %in% c("PREVENT19")) {
-    must_have_assays <- c("bindSpike")
-    
-} else if (study_name %in% c("AZD1222")) {
-    must_have_assays <- c("pseudoneutid50")
-    
-} else stop("unknown study_name")
-
 
 
 #assays_to_be_censored_at_uloq_cor <- c(
