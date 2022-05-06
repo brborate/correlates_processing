@@ -272,7 +272,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 } else stop("unknown study_name")
 
 
-# TwophasesampInd: be in the case or subcohort and have the necessary markers
+# TwophasesampInd: be in the case or subcohort  &  have the necessary markers
 if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "PREVENT19")) {
     if (two_marker_timepoints) {
     # require baseline and timpoint 1
