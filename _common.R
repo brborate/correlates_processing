@@ -80,7 +80,7 @@ if(TRUE) {
         ,
         ADCP=c( 
             pos.cutoff=11.57,# as same lod
-            LLOD = 11.57,
+            LLOD = 11.57,    # data less than lod is set to LLOD/2
             ULOD = NA,
             LLOQ = 8.87,
             ULOQ = 211.56)
@@ -140,7 +140,7 @@ if(TRUE) {
         # data less than lloq is set to lloq/2 in the raw data, Nexelis
         llods["bindSpike"]=NA 
         lloqs["bindSpike"]=62.8*0.0090 # 0.5652
-        uloqs["bindSpike"]=770464.6*0.0090 # 6934.181
+        uloqs["bindSpike"]=238528.4*0.0090 # 2146.756
         pos.cutoffs["bindSpike"]=10.8424 # use same as COVE
     
         # data less than lod is set to lod/2
