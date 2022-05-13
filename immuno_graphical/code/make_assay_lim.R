@@ -6,6 +6,7 @@ source(here::here("..", "_common.R"))
 
 library(here)
 library(dplyr)
+library(abind)
 source(here("code", "params.R"))
 
 
@@ -88,6 +89,11 @@ if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
   
   assay_lim[, grepl("Delta", times),'lb'] <- -1
   assay_lim[, grepl("Delta", times),'ub'] <- 2
+}
+
+# dup assay_lim to avoid dimention got dropped for the dataset with only one marker
+if (length(assay_immuno)==1){ # i.e., AZ study
+  assay_lim=abind(assay_lim, assay_lim, along=1)
 }
 
 saveRDS(assay_lim,
