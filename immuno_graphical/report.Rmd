@@ -39,8 +39,9 @@ neut.marker.captions <- switch(study_name,
                                "MockCOVE"="The dashed lines in each figure are ULOQ, LLOQ, and positivity cutoffs for binding antibody assays, or ULOQ, LLOQ, and LLOD for neutralizing antibody assays, from top to bottom respectively.",
                                "ENSEMBLE"="The dashed lines in each figure are ULOQ and positivity cut-off from top to bottom for binding antibody assays, or ULOQ and LLOQ for neutralizing antibody assays, from top to bottom respectively.",
                                "MockENSEMBLE"="The dashed lines in each figure are ULOQ and positivity cut-off for binding antibody assays, or ULOQ and LLOQ for neutralizing antibody assays, from top to bottom respectively.",
-                               "PREVENT19"="The dashed lines in each figure are ULOQ and positivity cut-off for binding antibody assays, or ULOQ and LLOD for neutralizing antibody assays, from top to bottom respectively.",
-                               "AZD1222"="The dashed lines in each figure are ULOQ and positivity cut-off for binding antibody assays, or ULOQ and LLOD for neutralizing antibody assays, from top to bottom respectively.")
+                               "PREVENT19"="The dashed lines in each figure are ULOQ, positivity cut-off and LLOQ for binding antibody assays, or ULOQ and LLOD for neutralizing antibody assays, from top to bottom respectively.",
+                               
+                               "AZD1222"="The dashed lines in each figure are ULOQ, positivity cut-off and LLOQ for binding antibody assays, or ULOQ and LLOD for neutralizing antibody assays, from top to bottom respectively.")
 
 ```
 
