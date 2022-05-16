@@ -38,7 +38,7 @@ dat.twophase.sample <- readRDS(here("data_clean", "twophase_data.rds"))
 
 assay_lim <- readRDS(here("data_clean", "assay_lim.rds"))
 
-tps <-  times[!times %in% c("B","Delta57over29")] #c("Day29", "Delta29overB", "Day57", "Delta57overB")
+tps <-  times[!times %in% c("B",paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))] #c("Day29", "Delta29overB", "Day57", "Delta57overB")
 #-----------------------------------------------
 # PAIR PLOTS
 #-----------------------------------------------
@@ -50,120 +50,131 @@ tps <-  times[!times %in% c("B","Delta57over29")] #c("Day29", "Delta29overB", "D
 # - Again, we made the correlation plots for each serostratum and all
 #   serostrata combined
 #-----------------------------------------------
-print("Pair plots 1:")
-for (tp in tps) {
+if (!length(assay_immuno)==1){ # AZ two datasets only have one marker in each as of 5/13/2022, can't do pair 
+  
+  print("Pair plots 1:")
+  for (tp in tps) {
+    for (trt in 0:1) {
+      # Don't produce figures for placebo baseline negative to improve build time
+      if(trt==0) {bstatus.range <- 1} else {bstatus.range <- unique(dat.twophase.sample$Bserostatus)}
+  
+      for (bserostatus in bstatus.range) {
+        if (!bserostatus %in% unique(dat.twophase.sample$Bserostatus)) next
+        
+        tt=match(tp, times[!grepl("over29",times)])
+        
+        subdat <- dat.twophase.sample %>%
+          dplyr::filter(Bserostatus == bserostatus & Trt == trt)
+        
+        covid_corr_pairplots(
+          plot_dat = subdat,
+          time = tp,
+          assays = assay_immuno,
+          strata = "Bstratum",
+          weight = "wt.subcohort",
+          plot_title = paste0(
+            gsub("ay ","", labels.time)[tt],
+            " Ab markers: baseline ",
+            ifelse(bserostatus, "positive", "negative"), ", ",
+            c("placebo", "vaccine")[trt + 1], " arm"
+          ),
+          column_labels = labels.axis[tp, seq_along(assay_immuno)] %>% unlist(),
+          height = max(1.3 * length(assay_immuno) + 0.1, 5.5),
+          width = max(1.3 * length(assay_immuno), 5.5),
+          filename = paste0(
+            save.results.to, "/pairs_", tp,
+            "_Markers_", bstatus.labels.2[bserostatus + 1],
+            c("_placebo_arm", "_vaccine_arm")[trt + 1], "_",
+            study_name, ".png"
+          )
+        )
+      }
+    }
+  }
+  
+  #-----------------------------------------------
+  # The correlation of each pair of Day 1 antibody marker readouts are compared
+  # within each of the baseline demographic subgroups and baseline serostratum,
+  # pooling over the two treatment arms. Pairs plots/scatterplots and Spearman
+  # rank correlations are used, where the plots and tests pooling over the
+  # baseline demographic subgroups use the case-deleted data set.
+  #-----------------------------------------------
+  print("Pair plots 2:")
   for (trt in 0:1) {
     # Don't produce figures for placebo baseline negative to improve build time
-    if(trt==0) {bstatus.range <- 1} else {bstatus.range <- 0:1}
+    if(trt==0) {bstatus.range <- 1} else {bstatus.range <- unique(dat.twophase.sample$Bserostatus)}
+  
     for (bserostatus in bstatus.range) {
-      
-      tt=match(tp, times[!grepl("over29",times)])
+      if (!bserostatus %in% unique(dat.twophase.sample$Bserostatus)) next
       
       subdat <- dat.twophase.sample %>%
-        dplyr::filter(Bserostatus == bserostatus & Trt == trt)
+        dplyr::filter(Bserostatus == bserostatus & as.numeric(Trt) == trt)
       
       covid_corr_pairplots(
         plot_dat = subdat,
-        time = tp,
+        time = "B",
         assays = assay_immuno,
         strata = "Bstratum",
         weight = "wt.subcohort",
         plot_title = paste0(
-          gsub("ay ","", labels.time)[tt],
-          " Ab markers: baseline ",
+          "D1 Ab markers: baseline ",
           ifelse(bserostatus, "positive", "negative"), ", ",
           c("placebo", "vaccine")[trt + 1], " arm"
         ),
-        column_labels = labels.axis[tp, seq_along(assay_immuno)] %>% unlist(),
+        column_labels = labels.axis[1, seq_along(assay_immuno)] %>% unlist(),
         height = max(1.3 * length(assay_immuno) + 0.1, 5.5),
         width = max(1.3 * length(assay_immuno), 5.5),
         filename = paste0(
-          save.results.to, "/pairs_", tp,
-          "_Markers_", bstatus.labels.2[bserostatus + 1],
-          c("_placebo_arm", "_vaccine_arm")[trt + 1], "_",
-          study_name, ".png"
+          save.results.to, "/pairs_baseline_Markers_",
+          bstatus.labels.2[bserostatus + 1], "_",
+          c("placebo", "vaccine")[trt + 1], "_arm_", study_name,
+          ".png"
         )
       )
     }
   }
-}
-
-#-----------------------------------------------
-# The correlation of each pair of Day 1 antibody marker readouts are compared
-# within each of the baseline demographic subgroups and baseline serostratum,
-# pooling over the two treatment arms. Pairs plots/scatterplots and Spearman
-# rank correlations are used, where the plots and tests pooling over the
-# baseline demographic subgroups use the case-deleted data set.
-#-----------------------------------------------
-print("Pair plots 2:")
-for (trt in 0:1) {
-  # Don't produce figures for placebo baseline negative to improve build time
-  if(trt==0) {bstatus.range <- 1} else {bstatus.range <- 0:1}
-  for (bserostatus in bstatus.range) {
-    subdat <- dat.twophase.sample %>%
-      dplyr::filter(Bserostatus == bserostatus & as.numeric(Trt) == trt)
-    
-    covid_corr_pairplots(
-      plot_dat = subdat,
-      time = "B",
-      assays = assay_immuno,
-      strata = "Bstratum",
-      weight = "wt.subcohort",
-      plot_title = paste0(
-        "D1 Ab markers: baseline ",
-        ifelse(bserostatus, "positive", "negative"), ", ",
-        c("placebo", "vaccine")[trt + 1], " arm"
-      ),
-      column_labels = labels.axis[1, seq_along(assay_immuno)] %>% unlist(),
-      height = max(1.3 * length(assay_immuno) + 0.1, 5.5),
-      width = max(1.3 * length(assay_immuno), 5.5),
-      filename = paste0(
-        save.results.to, "/pairs_baseline_Markers_",
-        bstatus.labels.2[bserostatus + 1], "_",
-        c("placebo", "vaccine")[trt + 1], "_arm_", study_name,
-        ".png"
-      )
-    )
-  }
-}
-
-
-
-## pairplots of assay readouts for multiple timepoints
-## pairplots by baseline serostatus
-print("Pair plots 3:")
-for (trt in 0:1) {
-  # Don't produce figures for placebo baseline negative to improve build time
-  if(trt==0) {bstatus.range <- 1} else {bstatus.range <- 0:1}
-  for (bserostatus in bstatus.range) {
-    subdat <- dat.twophase.sample %>%
-      dplyr::filter(Bserostatus == bserostatus & Trt == trt)
-    
-    for (aa in assay_immuno) {
-      covid_corr_pairplots_by_time(
-        plot_dat = subdat,
-        times = times[!grepl("Delta",times)],
-        assay = aa,
-        strata = "Bstratum",
-        weight = "wt.subcohort",
-        plot_title = paste0(
-          labels.assays[aa], ": baseline ",
-          ifelse(bserostatus, "positive ", "negative "),
-          c("placebo", "vaccine")[trt + 1], " arm"
-        ),
-        column_labels = paste(gsub("B","D1",gsub("ay ","", labels.time[!grepl("fold",labels.time)])), # paste(c("D1", "D29", "D57")[c("B", "Day29", "Day57") %in% times],
-                              labels.axis[, aa][1]),
-        filename = paste0(
-          save.results.to, "/pairs_", aa, "_by_times_",
-          bstatus.labels.2[bserostatus + 1], "_", c("placebo_", "vaccine_")[trt + 1],
-          study_name, ".png"
+  
+  
+  
+  ## pairplots of assay readouts for multiple timepoints
+  ## pairplots by baseline serostatus
+  print("Pair plots 3:")
+  for (trt in 0:1) {
+    # Don't produce figures for placebo baseline negative to improve build time
+    if(trt==0) {bstatus.range <- 1} else {bstatus.range <- unique(dat.twophase.sample$Bserostatus)}
+  
+    for (bserostatus in bstatus.range) {
+      if (!bserostatus %in% unique(dat.twophase.sample$Bserostatus)) next
+      
+      subdat <- dat.twophase.sample %>%
+        dplyr::filter(Bserostatus == bserostatus & Trt == trt)
+      
+      for (aa in assay_immuno) {
+        covid_corr_pairplots_by_time(
+          plot_dat = subdat,
+          times = times[!grepl("Delta",times)],
+          assay = aa,
+          strata = "Bstratum",
+          weight = "wt.subcohort",
+          plot_title = paste0(
+            labels.assays[aa], ": baseline ",
+            ifelse(bserostatus, "positive ", "negative "),
+            c("placebo", "vaccine")[trt + 1], " arm"
+          ),
+          column_labels = paste(gsub("B","D1",gsub("ay ","", labels.time[!grepl("fold",labels.time)])), # paste(c("D1", "D29", "D57")[c("B", "Day29", "Day57") %in% times],
+                                labels.axis[, aa][1]),
+          filename = paste0(
+            save.results.to, "/pairs_", aa, "_by_times_",
+            bstatus.labels.2[bserostatus + 1], "_", c("placebo_", "vaccine_")[trt + 1],
+            study_name, ".png"
+          )
         )
-      )
+      }
     }
   }
 }
-
-
+  
+  
 #-----------------------------------------------
 #-----------------------------------------------
 # - Reverse empirical cdf (rcdf) plots for the Baseline, Day 57, and
@@ -180,7 +191,7 @@ for (tp in tps) {
     facet_by = "assay",
     color = "trt_bstatus_label",
     weight = "wt.subcohort",
-    xlim = assay_lim[assay_immuno, tp, ],
+    xlim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
     arrange_ncol = 3,
     arrange_nrow = ceiling(length(assay_immuno) / 3),
     panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -269,6 +280,8 @@ for (bAb in c(0, 1)) {
     #-----------------------------------------------
     print("RCDF 4:")
     for (bstatus in 1:2) {
+      if (nrow(subset(dat.long.twophase.sample, Bserostatus==bstatus.labels[bstatus]))==0) next 
+      
       for (tp in times[!grepl("B|Delta", times)]) { # intersect(c("Day29", "Day57"), times)
         covid_corr_rcdf(
           plot_dat = filter(dat.long.twophase.sample, Trt == "Vaccine", 
@@ -342,8 +355,10 @@ for (bAb in c(0, 1)) {
 # baseline negative subjects (main group of interest)
 #-----------------------------------------------
 print("Boxplots 1:")
-tps2 <- times[!times %in% c("Delta57over29")] #c("B", "Day29", "Day57", "Delta29overB", "Delta57overB")
+tps2 <- times[!times %in% paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1])] #c("B", "Day29", "Day57", "Delta29overB", "Delta57overB")
 for (bstatus in 1:2) {
+  if (nrow(subset(dat.long.twophase.sample, Bserostatus==bstatus.labels[bstatus]))==0) next 
+  
   for (tp in tps2) {
 
     covid_corr_boxplot_facets(
@@ -447,6 +462,7 @@ spaghetti_dat <- dat.long.twophase.sample[, c("Ptid", "Bserostatus", "Trt", "ass
 
 for (bstatus in 1:2) {
   subdat <- subset(spaghetti_dat, Bserostatus == bstatus.labels[bstatus])
+  if(nrow(subdat)==0) next
   covid_corr_spaghetti_facets(plot_dat = subdat,
                               x = "time_label",
                               y = "value",
@@ -478,8 +494,10 @@ tps3 = times[!grepl("Delta",times)]#tps <- c("B", "Day29", "Day57")
 for (tp in tps3) {
   for (trt in 1:2) {
     for (bstatus in 1:2) {
+      
       subdat <- dat.long.twophase.sample %>%
         filter(Bserostatus == bstatus.labels[bstatus], Trt == trt.labels[trt])
+      if(nrow(subdat)==0) next
       
       ## setting the range of the axes
       xrange <- range(dat.long.twophase.sample$Age)

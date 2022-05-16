@@ -22,24 +22,31 @@ here::i_am("immuno_graphical/report.Rmd")
 
 is.ensemble <- study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" # only ENSEMBLE has by country and by HIV group figures
 
+config <- config::get(config = Sys.getenv("TRIAL"))
+if.pair <- ifelse(length(config$assays)>1, 1, 0)
+if.pos.exist <- ifelse(study_name=="AZD1222", 0, 1)
+
 minority.disclaimer <- switch(study_name, 
                               "COVE"="",
                               "MockCOVE"="",
                               "ENSEMBLE"="These plots are restricted to only United States trial participants.",
                               "MockENSEMBLE"="These plots are restricted to only United States trial participants.",
-                              "PREVENT19"="")
+                              "PREVENT19"="",
+                              "AZD1222"="")
 
 neut.marker.captions <- switch(study_name, 
                                "COVE"="The dashed lines in each figure are ULOQ, LLOQ, and positivity cutoffs for binding antibody assays, or ULOQ, LLOQ, and LLOD for neutralizing antibody assays, from top to bottom respectively.",
                                "MockCOVE"="The dashed lines in each figure are ULOQ, LLOQ, and positivity cutoffs for binding antibody assays, or ULOQ, LLOQ, and LLOD for neutralizing antibody assays, from top to bottom respectively.",
                                "ENSEMBLE"="The dashed lines in each figure are ULOQ and positivity cut-off from top to bottom for binding antibody assays, or ULOQ and LLOQ for neutralizing antibody assays, from top to bottom respectively.",
                                "MockENSEMBLE"="The dashed lines in each figure are ULOQ and positivity cut-off for binding antibody assays, or ULOQ and LLOQ for neutralizing antibody assays, from top to bottom respectively.",
-                               "PREVENT19"="The dashed lines in each figure are ULOQ and positivity cut-off for binding antibody assays, or ULOQ and LLOD for neutralizing antibody assays, from top to bottom respectively.")
+                               "PREVENT19"="The dashed lines in each figure are ULOQ, positivity cut-off and LLOQ for binding antibody assays, or ULOQ and LLOD for neutralizing antibody assays, from top to bottom respectively.",
+                               
+                               "AZD1222"="The dashed lines in each figure are ULOQ, positivity cut-off and LLOQ for binding antibody assays, or ULOQ and LLOD for neutralizing antibody assays, from top to bottom respectively.")
 
 ```
 
 
-```{r, fig.cap = paste0("Pair plots of D1 Ab markers: baseline negative vaccine arm"), eval = ("B" %in% times)}
+```{r, fig.cap = paste0("Pair plots of D1 Ab markers: baseline negative vaccine arm"), eval = ("B" %in% times & if.pair==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -50,7 +57,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," Ab markers: baseline negative vaccine arm"), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," Ab markers: baseline negative vaccine arm"), eval = (paste0("Day",timepoints[1]) %in% times & if.pair==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -62,7 +69,7 @@ include_graphics(here(
 
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D57 Ab markers: baseline negative vaccine arm"), eval = ('Day57' %in% times)}
+```{r, fig.cap = paste0("Pair plots of D57 Ab markers: baseline negative vaccine arm"), eval = ('Day57' %in% times & if.pair==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -73,7 +80,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline negative vaccine arm"), eval = (paste0('Delta',timepoints[1],'overB') %in% times)}
+```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline negative vaccine arm"), eval = (paste0('Delta',timepoints[1],'overB') %in% times & if.pair==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -84,7 +91,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D57 fold-rise over D1 Ab markers: baseline negative vaccine arm"), eval = ('Delta57overB' %in% times)}
+```{r, fig.cap = paste0("Pair plots of D57 fold-rise over D1 Ab markers: baseline negative vaccine arm"), eval = ('Delta57overB' %in% times & if.pair==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -96,7 +103,7 @@ include_graphics(here(
 
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to Spike: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindSpike'%in% assays)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to Spike: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindSpike'%in% assays & if.pair==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -107,7 +114,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to RBD: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindRBD'%in% assays)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to RBD: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindRBD'%in% assays & if.pair==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -118,7 +125,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to N: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & include_bindN == TRUE)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to N: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & include_bindN == TRUE & if.pair==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -129,7 +136,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 50\\% Titer: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid50'%in% assays)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 50\\% Titer: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid50'%in% assays & if.pair==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -141,7 +148,7 @@ include_graphics(here(
 
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 80\\% Titer: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid80'%in% assays)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 80\\% Titer: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid80'%in% assays & if.pair==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -155,7 +162,7 @@ include_graphics(here(
 
 ### Baseline SARS-CoV-2 Positive
 
-```{r, fig.cap = paste0("Pair plots of D1 Ab markers: baseline positive vaccine arm"), eval = ("B" %in% times)}
+```{r, fig.cap = paste0("Pair plots of D1 Ab markers: baseline positive vaccine arm"), eval = ("B" %in% times & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -167,7 +174,7 @@ include_graphics(here(
 
 \clearpage
 
-```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," Ab markers: baseline positive vaccine arm"), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," Ab markers: baseline positive vaccine arm"), eval = (paste0("Day",timepoints[1]) %in% times & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -178,7 +185,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D57 Ab markers: baseline positive vaccine arm"), eval = ('Day57' %in% times)}
+```{r, fig.cap = paste0("Pair plots of D57 Ab markers: baseline positive vaccine arm"), eval = ('Day57' %in% times & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -189,7 +196,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm"), eval = (paste0('Delta',timepoints[1],'overB') %in% times)}
+```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm"), eval = (paste0('Delta',timepoints[1],'overB') %in% times & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -200,7 +207,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm"), eval = ('Delta57overB' %in% times)}
+```{r, fig.cap = paste0("Pair plots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm"), eval = ('Delta57overB' %in% times & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -213,7 +220,7 @@ include_graphics(here(
 
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to Spike: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindSpike'%in% assays)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to Spike: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindSpike'%in% assays & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -224,7 +231,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to RBD: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindRBD'%in% assays)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to RBD: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindRBD'%in% assays & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -236,7 +243,7 @@ include_graphics(here(
 
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to N: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & include_bindN == TRUE)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to N: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & include_bindN == TRUE & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -247,7 +254,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 50\\% Titer: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid50'%in% assays)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 50\\% Titer: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid50'%in% assays & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -258,7 +265,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 80\\% Titer: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid80'%in% assays)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 80\\% Titer: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid80'%in% assays & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -272,7 +279,7 @@ include_graphics(here(
 
 ### Baseline SARS-CoV-2 Positive Placebo Arm
 
-```{r, fig.cap = paste0("Pair plots of D1 Ab markers: baseline positive placebo arm"), eval = ("B" %in% times)}
+```{r, fig.cap = paste0("Pair plots of D1 Ab markers: baseline positive placebo arm"), eval = ("B" %in% times & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -284,7 +291,7 @@ include_graphics(here(
 
 \clearpage
 
-```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," Ab markers: baseline positive placebo arm"), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," Ab markers: baseline positive placebo arm"), eval = (paste0("Day",timepoints[1]) %in% times & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -295,7 +302,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D57 Ab markers: baseline positive placebo arm"), eval = ('Day57' %in% times)}
+```{r, fig.cap = paste0("Pair plots of D57 Ab markers: baseline positive placebo arm"), eval = ('Day57' %in% times & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -306,7 +313,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm"), eval = (paste0('Delta',timepoints[1],'overB') %in% times)}
+```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm"), eval = (paste0('Delta',timepoints[1],'overB') %in% times & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -317,7 +324,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm"), eval = ('Delta57overB' %in% times)}
+```{r, fig.cap = paste0("Pair plots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm"), eval = ('Delta57overB' %in% times & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -330,7 +337,7 @@ include_graphics(here(
 
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to Spike: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindSpike'%in% assays)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to Spike: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindSpike'%in% assays & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -341,7 +348,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to RBD: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindRBD'%in% assays)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to RBD: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindRBD'%in% assays & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -353,7 +360,7 @@ include_graphics(here(
 
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to N: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & include_bindN == TRUE)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to N: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & include_bindN == TRUE & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -364,7 +371,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 50\\% Titer: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid50'%in% assays)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 50\\% Titer: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid50'%in% assays & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -375,7 +382,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 80\\% Titer: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid80'%in% assays)}
+```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 80\\% Titer: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid80'%in% assays & if.pair==1 & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -613,7 +620,7 @@ include_graphics(here(
 
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," bAb markers: baseline positive vaccine arm"), eval = ((paste0("Day",timepoints[1]) %in% times) & (any(c("bindSpike", "bindRBD") %in% assays) | include_bindN == TRUE))}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," bAb markers: baseline positive vaccine arm"), eval = ((paste0("Day",timepoints[1]) %in% times) & (any(c("bindSpike", "bindRBD") %in% assays) | include_bindN == TRUE) & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -624,7 +631,7 @@ include_graphics(here(
 ```
 
 
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," nAb markers: baseline positive vaccine arm"), eval = ((paste0("Day",timepoints[1]) %in% times) & any(c("pseudoneutid50", "pseudoneutid80") %in% assays))}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," nAb markers: baseline positive vaccine arm"), eval = ((paste0("Day",timepoints[1]) %in% times) & any(c("pseudoneutid50", "pseudoneutid80") %in% assays) & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -635,7 +642,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 bAb markers: baseline positive vaccine arm"), eval = (("Day57" %in% times) & (any(c("bindSpike", "bindRBD") %in% assays) | include_bindN == TRUE))}
+```{r, fig.cap = paste0("RCDF plots for D57 bAb markers: baseline positive vaccine arm"), eval = (("Day57" %in% times) & (any(c("bindSpike", "bindRBD") %in% assays) | include_bindN == TRUE) & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -646,7 +653,7 @@ include_graphics(here(
 ```
 
 
-```{r, fig.cap = paste0("RCDF plots for D57 nAb markers: baseline positive vaccine arm"), eval = (("Day57" %in% times) & any(c("pseudoneutid50", "pseudoneutid80") %in% assays))}
+```{r, fig.cap = paste0("RCDF plots for D57 nAb markers: baseline positive vaccine arm"), eval = (("Day57" %in% times) & any(c("pseudoneutid50", "pseudoneutid80") %in% assays) & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -657,7 +664,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 bAb markers: baseline positive vaccine arm"), eval = ((paste0("Delta",timepoints[1],"overB") %in% times) & (any(c("bindSpike", "bindRBD") %in% assays) | include_bindN == TRUE))}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 bAb markers: baseline positive vaccine arm"), eval = ((paste0("Delta",timepoints[1],"overB") %in% times) & (any(c("bindSpike", "bindRBD") %in% assays) | include_bindN == TRUE) & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -669,7 +676,7 @@ include_graphics(here(
 
 
 
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 nAb markers: baseline positive vaccine arm"), eval = ((paste0("Delta",timepoints[1],"overB") %in% times) & any(c("pseudoneutid50", "pseudoneutid80") %in% assays))}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 nAb markers: baseline positive vaccine arm"), eval = ((paste0("Delta",timepoints[1],"overB") %in% times) & any(c("pseudoneutid50", "pseudoneutid80") %in% assays) & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -680,7 +687,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 bAb markers: baseline positive vaccine arm"), eval = (("Delta57overB" %in% times) & (any(c("bindSpike", "bindRBD") %in% assays) | include_bindN == TRUE))}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 bAb markers: baseline positive vaccine arm"), eval = (("Delta57overB" %in% times) & (any(c("bindSpike", "bindRBD") %in% assays) | include_bindN == TRUE) & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -691,7 +698,7 @@ include_graphics(here(
 ```
 
 
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 nAb markers: baseline positive vaccine arm"), eval = (("Delta57overB" %in% times) & any(c("pseudoneutid50", "pseudoneutid80") %in% assays))}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 nAb markers: baseline positive vaccine arm"), eval = (("Delta57overB" %in% times) & any(c("pseudoneutid50", "pseudoneutid80") %in% assays) & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -741,7 +748,7 @@ include_graphics(here(
 \clearpage
 ### Baseline SARS-CoV-2 Positive
 
-```{r, fig.cap = paste0("Scatter plots for D1 Ab markers vs. age: baseline positive vaccine arm"), eval = ("B" %in% times)}
+```{r, fig.cap = paste0("Scatter plots for D1 Ab markers vs. age: baseline positive vaccine arm"), eval = ("B" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -752,7 +759,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Scatter plots for D",timepoints[1]," Ab markers vs. age: baseline positive vaccine arm"), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Scatter plots for D",timepoints[1]," Ab markers vs. age: baseline positive vaccine arm"), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -763,7 +770,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Scatter plots for D57 Ab markers vs. age: baseline positive vaccine arm"), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("Scatter plots for D57 Ab markers vs. age: baseline positive vaccine arm"), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -776,7 +783,7 @@ include_graphics(here(
 \clearpage
 ### Baseline SARS-CoV-2 Positive Placebo Arm
 
-```{r, fig.cap = paste0("Scatter plots for D1 Ab markers vs. age: baseline positive placebo arm"), eval = ("B" %in% times)}
+```{r, fig.cap = paste0("Scatter plots for D1 Ab markers vs. age: baseline positive placebo arm"), eval = ("B" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -787,7 +794,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Scatter plots for D",timepoints[1]," Ab markers vs. age: baseline positive placebo arm"), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Scatter plots for D",timepoints[1]," Ab markers vs. age: baseline positive placebo arm"), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -798,7 +805,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Scatter plots for D57 Ab markers vs. age: baseline positive placebo arm"), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("Scatter plots for D57 Ab markers vs. age: baseline positive placebo arm"), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
@@ -890,7 +897,7 @@ include_graphics(here(
 \clearpage
 ### Baseline SARS-CoV-2 Positive
 
-```{r, fig.cap = paste0("Boxplots of D1 Ab markers: baseline positive vaccine + placebo arms.", neut.marker.captions), eval = ("B" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D1 Ab markers: baseline positive vaccine + placebo arms.", neut.marker.captions), eval = ("B" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_B_x_trt_BaselinePos_", study_name, ".png")
@@ -898,7 +905,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine + placebo arms.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine + placebo arms.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_Day",timepoints[1],"_x_trt_BaselinePos_", study_name, ".png")
@@ -906,7 +913,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine + placebo arms.", neut.marker.captions), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine + placebo arms.", neut.marker.captions), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_Day57_x_trt_BaselinePos_", study_name, ".png")
@@ -914,7 +921,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine + placebo arms"), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine + placebo arms"), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_Delta",timepoints[1],"overB_x_trt_BaselinePos_", study_name, ".png")
@@ -922,7 +929,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine + placebo arms"), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine + placebo arms"), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_Delta57overB_x_trt_BaselinePos_", study_name, ".png")
@@ -932,7 +939,7 @@ include_graphics(here(
 \clearpage
 ### Baseline negative vs. positive vaccine recipients
 
-```{r, fig.cap = paste0("Boxplots of D1 Ab markers: baseline positive + negative vaccine arm.", neut.marker.captions), eval = ("B" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D1 Ab markers: baseline positive + negative vaccine arm.", neut.marker.captions), eval = ("B" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_B_x_bstatus_vaccine_arm_", study_name, ".png")
@@ -940,7 +947,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive + negative vaccine arm.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive + negative vaccine arm.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_Day",timepoints[1],"_x_bstatus_vaccine_arm_", study_name, ".png")
@@ -948,7 +955,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive + negative vaccine arm.", neut.marker.captions), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive + negative vaccine arm.", neut.marker.captions), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_Day57_x_bstatus_vaccine_arm_", study_name, ".png")
@@ -956,7 +963,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive + negative vaccine arm"), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive + negative vaccine arm"), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_Delta",timepoints[1],"overB_x_bstatus_vaccine_arm_", study_name, ".png")
@@ -964,7 +971,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive + negative vaccine arm"), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive + negative vaccine arm"), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_Delta57overB_x_bstatus_vaccine_arm_", study_name, ".png")
@@ -974,7 +981,7 @@ include_graphics(here(
 \clearpage
 ### Baseline negative vs. positive placebo recipients
 
-```{r, fig.cap = paste0("Boxplots of D1 Ab markers: baseline positive + negative placebo arm.", neut.marker.captions), eval = ("B" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D1 Ab markers: baseline positive + negative placebo arm.", neut.marker.captions), eval = ("B" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_B_x_bstatus_placebo_arm_", study_name, ".png")
@@ -982,7 +989,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive + negative placebo arm.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive + negative placebo arm.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_Day",timepoints[1],"_x_bstatus_placebo_arm_", study_name, ".png")
@@ -990,7 +997,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive + negative placebo arm.", neut.marker.captions), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive + negative placebo arm.", neut.marker.captions), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_Day57_x_bstatus_placebo_arm_", study_name, ".png")
@@ -998,7 +1005,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive + negative placebo arm"), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive + negative placebo arm"), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_Delta",timepoints[1],"overB_x_bstatus_placebo_arm_", study_name, ".png")
@@ -1006,7 +1013,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive + negative placebo arm"), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive + negative placebo arm"), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("boxplots_Delta57overB_x_bstatus_placebo_arm_", study_name, ".png")
@@ -1027,7 +1034,7 @@ include_graphics(here(
 
 \clearpage
 ### Baseline SARS-CoV-2 Positive
-```{r, fig.cap = paste0("Spaghetti plots of Ab markers over time: baseline positive vaccine + placebo arm"), eval = any(c("B", paste0("Day",timepoints[1]), "Day57") %in% times)}
+```{r, fig.cap = paste0("Spaghetti plots of Ab markers over time: baseline positive vaccine + placebo arm"), eval = any(c("B", paste0("Day",timepoints[1]), "Day57") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0("spaghetti_plot_BaselinePos_", study_name, ".png")
@@ -1524,7 +1531,7 @@ include_graphics(here(
 \clearpage
 ### Baseline SARS-CoV-2 Positive
 
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by age groups."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by age groups."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1535,7 +1542,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by age groups."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by age groups."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1546,7 +1553,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age groups."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age groups."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1557,7 +1564,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age groups."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age groups."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1568,7 +1575,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by high-risk condition."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by high-risk condition."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1579,7 +1586,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by high-risk condition."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by high-risk condition."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1590,7 +1597,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1601,7 +1608,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by high-risk condition."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by high-risk condition."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1612,7 +1619,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by age and high-risk condition."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by age and high-risk condition."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1623,7 +1630,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by age and high-risk condition."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by age and high-risk condition."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1634,7 +1641,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age and high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age and high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1645,7 +1652,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age and high-risk condition."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age and high-risk condition."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1656,7 +1663,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by sex assigned at birth."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by sex assigned at birth."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1667,7 +1674,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by sex assigned at birth."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by sex assigned at birth."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1678,7 +1685,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1689,7 +1696,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by sex assigned at birth."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by sex assigned at birth."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1700,7 +1707,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by age and sex assigned at birth."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by age and sex assigned at birth."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1711,7 +1718,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by age and sex assigned at birth."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by age and sex assigned at birth."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1722,7 +1729,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age and sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age and sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1733,7 +1740,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age and sex assigned at birth."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age and sex assigned at birth."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1744,7 +1751,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by ethnicity."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by ethnicity."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1755,7 +1762,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by ethnicity."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by ethnicity."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1766,7 +1773,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by ethnicity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by ethnicity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1777,7 +1784,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by ethnicity."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by ethnicity."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1788,7 +1795,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by race."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by race."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1799,7 +1806,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by race."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by race."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1810,7 +1817,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by race."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by race."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1821,7 +1828,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by race."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by race."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1832,7 +1839,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1843,7 +1850,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1854,7 +1861,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1865,7 +1872,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1876,7 +1883,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1887,7 +1894,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1898,7 +1905,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1909,7 +1916,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1920,7 +1927,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by country of residence."), eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by country of residence."), eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1931,7 +1938,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by country of residence."), eval = ("Day57" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by country of residence."), eval = ("Day57" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1942,7 +1949,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by country of residence."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by country of residence."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1953,7 +1960,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by country of residence."), eval = ("Delta57overB" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by country of residence."), eval = ("Delta57overB" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1964,7 +1971,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by HIV positivity."), eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive vaccine arm by HIV positivity."), eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1975,7 +1982,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by HIV positivity."), eval = ("Day57" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive vaccine arm by HIV positivity."), eval = ("Day57" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1986,7 +1993,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by HIV positivity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by HIV positivity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -1997,7 +2004,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by HIV positivity."), eval = ("Delta57overB" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by HIV positivity."), eval = ("Delta57overB" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2010,7 +2017,7 @@ include_graphics(here(
 \clearpage
 ### Baseline SARS-CoV-2 Positive Placebo Arm
 
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by age groups."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by age groups."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2021,7 +2028,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by age groups."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by age groups."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2032,7 +2039,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age groups."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age groups."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2043,7 +2050,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age groups."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age groups."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2054,7 +2061,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by high-risk condition."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by high-risk condition."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2065,7 +2072,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by high-risk condition."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by high-risk condition."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2076,7 +2083,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2087,7 +2094,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by high-risk condition."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by high-risk condition."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2098,7 +2105,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by age and high-risk condition."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by age and high-risk condition."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2109,7 +2116,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by age and high-risk condition."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by age and high-risk condition."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2120,7 +2127,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age and high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age and high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2131,7 +2138,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age and high-risk condition."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age and high-risk condition."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2142,7 +2149,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by sex assigned at birth."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by sex assigned at birth."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2153,7 +2160,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by sex assigned at birth."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by sex assigned at birth."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2164,7 +2171,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2175,7 +2182,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by sex assigned at birth."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by sex assigned at birth."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2186,7 +2193,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by age and sex assigned at birth."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by age and sex assigned at birth."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2197,7 +2204,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by age and sex assigned at birth."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by age and sex assigned at birth."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2208,7 +2215,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age and sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age and sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2219,7 +2226,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age and sex assigned at birth."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age and sex assigned at birth."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2230,7 +2237,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by ethnicity."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by ethnicity."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2241,7 +2248,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by ethnicity."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by ethnicity."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2252,7 +2259,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by ethnicity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by ethnicity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2263,7 +2270,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by ethnicity."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by ethnicity."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2274,7 +2281,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by race."), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by race."), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2285,7 +2292,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by race."), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by race."), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2296,7 +2303,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by race."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by race."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2307,7 +2314,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by race."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by race."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2318,7 +2325,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2329,7 +2336,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2340,7 +2347,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2351,7 +2358,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2362,7 +2369,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2373,7 +2380,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.",minority.disclaimer), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.",minority.disclaimer), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2384,7 +2391,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2395,7 +2402,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2406,7 +2413,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by country of residence."), eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by country of residence."), eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2417,7 +2424,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by country of residence."), eval = ("Day57" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by country of residence."), eval = ("Day57" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2428,7 +2435,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by country of residence."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by country of residence."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2439,7 +2446,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by country of residence."), eval = ("Delta57overB" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by country of residence."), eval = ("Delta57overB" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2450,7 +2457,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by HIV positivity."), eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline positive placebo arm by HIV positivity."), eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2461,7 +2468,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by HIV positivity."), eval = ("Day57" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D57 Ab markers: baseline positive placebo arm by HIV positivity."), eval = ("Day57" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2472,7 +2479,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by HIV positivity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by HIV positivity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2483,7 +2490,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by HIV positivity."), eval = ("Delta57overB" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("RCDF plots for D57 fold-rise over D1 Ab markers: baseline positive placebo arm by HIV positivity."), eval = ("Delta57overB" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2984,7 +2991,7 @@ include_graphics(here(
 \clearpage
 ### Baseline SARS-CoV-2 Positive
 
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by age group.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by age group.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -2995,7 +3002,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by age group.", neut.marker.captions), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by age group.", neut.marker.captions), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3006,7 +3013,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age group."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age group."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3017,7 +3024,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age group."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age group."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3028,7 +3035,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by high-risk condition.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by high-risk condition.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3039,7 +3046,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by high-risk condition.", neut.marker.captions), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by high-risk condition.", neut.marker.captions), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3050,7 +3057,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3061,7 +3068,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by high-risk condition."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by high-risk condition."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3072,7 +3079,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by age and high-risk condition.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by age and high-risk condition.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3083,7 +3090,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by age and high-risk condition.", neut.marker.captions), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by age and high-risk condition.", neut.marker.captions), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3094,7 +3101,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age and high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age and high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3105,7 +3112,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age and high-risk condition."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age and high-risk condition."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3116,7 +3123,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by sex assigned at birth.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by sex assigned at birth.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3127,7 +3134,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by sex assigned at birth.", neut.marker.captions), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by sex assigned at birth.", neut.marker.captions), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3138,7 +3145,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3149,7 +3156,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by sex assigned at birth."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by sex assigned at birth."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3160,7 +3167,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by age and sex assigned at birth.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by age and sex assigned at birth.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3171,7 +3178,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by age and sex assigned at birth.", neut.marker.captions), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by age and sex assigned at birth.", neut.marker.captions), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3182,7 +3189,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age and sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age and sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3193,7 +3200,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age and sex assigned at birth."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age and sex assigned at birth."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3204,7 +3211,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by ethnicity", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by ethnicity", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3215,7 +3222,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by ethnicity.", neut.marker.captions), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by ethnicity.", neut.marker.captions), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3226,7 +3233,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by ethnicity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by ethnicity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3237,7 +3244,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by ethnicity."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by ethnicity."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3248,7 +3255,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by race.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by race.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3259,7 +3266,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by race.", neut.marker.captions), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by race.", neut.marker.captions), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3270,7 +3277,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by race."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by race."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3281,7 +3288,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by race."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by race."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3292,7 +3299,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3303,7 +3310,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3314,7 +3321,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3325,7 +3332,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3336,7 +3343,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3347,7 +3354,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3358,7 +3365,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3369,7 +3376,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3380,7 +3387,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by country of residence.", neut.marker.captions), eval=FALSE, eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by country of residence.", neut.marker.captions), eval=FALSE, eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3391,7 +3398,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by country of residence.", neut.marker.captions), eval=FALSE, eval = ("Day57" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by country of residence.", neut.marker.captions), eval=FALSE, eval = ("Day57" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3402,7 +3409,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by country of residence."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by country of residence."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3413,7 +3420,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by country of residence."), eval = ("Delta57overB" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by country of residence."), eval = ("Delta57overB" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3424,7 +3431,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by HIV positivity.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive vaccine arm by HIV positivity.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3435,7 +3442,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by HIV positivity.", neut.marker.captions), eval = ("Day57" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive vaccine arm by HIV positivity.", neut.marker.captions), eval = ("Day57" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3446,7 +3453,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by HIV positivity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm by HIV positivity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3457,7 +3464,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by HIV positivity."), eval = ("Delta57overB" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm by HIV positivity."), eval = ("Delta57overB" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3469,7 +3476,7 @@ include_graphics(here(
 
 \clearpage
 ### Baseline SARS-CoV-2 Positive Placebo Arm
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by age group.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by age group.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3480,7 +3487,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by age group.", neut.marker.captions), eval = ("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by age group.", neut.marker.captions), eval = ("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3491,7 +3498,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age group."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age group."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3502,7 +3509,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age group."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age group."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3513,7 +3520,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by high-risk condition.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by high-risk condition.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3524,7 +3531,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by high-risk condition.", neut.marker.captions), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by high-risk condition.", neut.marker.captions), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3535,7 +3542,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3546,7 +3553,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by high-risk condition."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by high-risk condition."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3557,7 +3564,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by age and high-risk condition.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by age and high-risk condition.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3568,7 +3575,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by age and high-risk condition.", neut.marker.captions), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by age and high-risk condition.", neut.marker.captions), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3579,7 +3586,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age and high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age and high-risk condition."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3590,7 +3597,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age and high-risk condition."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age and high-risk condition."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3601,7 +3608,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by sex assigned at birth.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by sex assigned at birth.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3612,7 +3619,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by sex assigned at birth.", neut.marker.captions), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by sex assigned at birth.", neut.marker.captions), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3623,7 +3630,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3634,7 +3641,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by sex assigned at birth."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by sex assigned at birth."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3645,7 +3652,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by age and sex assigned at birth.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by age and sex assigned at birth.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3656,7 +3663,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by age and sex assigned at birth.", neut.marker.captions), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by age and sex assigned at birth.", neut.marker.captions), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3667,7 +3674,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age and sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age and sex assigned at birth."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3678,7 +3685,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age and sex assigned at birth."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age and sex assigned at birth."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3689,7 +3696,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by ethnicity", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by ethnicity", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3700,7 +3707,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by ethnicity.", neut.marker.captions), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by ethnicity.", neut.marker.captions), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3711,7 +3718,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by ethnicity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by ethnicity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3722,7 +3729,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by ethnicity."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by ethnicity."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3733,7 +3740,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by race.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by race.", neut.marker.captions), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3744,7 +3751,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by race.", neut.marker.captions), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by race.", neut.marker.captions), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3755,7 +3762,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by race."), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by race."), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3766,7 +3773,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by race."), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by race."), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3777,7 +3784,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3788,7 +3795,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3799,7 +3806,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3810,7 +3817,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3821,7 +3828,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=(paste0("Day",timepoints[1]) %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=(paste0("Day",timepoints[1]) %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3832,7 +3839,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=("Day57" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", neut.marker.captions, minority.disclaimer), eval=("Day57" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3843,7 +3850,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times)}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = (paste0("Delta",timepoints[1],"overB") %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3854,7 +3861,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times)}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by age and dichotomous classification of race and ethnic group.", minority.disclaimer), eval = ("Delta57overB" %in% times & if.pos.exist==1)}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3865,7 +3872,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by country of residence.", neut.marker.captions), eval=FALSE, eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by country of residence.", neut.marker.captions), eval=FALSE, eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3876,7 +3883,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by country of residence.", neut.marker.captions), eval=FALSE, eval = ("Day57" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by country of residence.", neut.marker.captions), eval=FALSE, eval = ("Day57" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3887,7 +3894,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by country of residence."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by country of residence."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3898,7 +3905,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by country of residence."), eval = ("Delta57overB" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by country of residence."), eval = ("Delta57overB" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3909,7 +3916,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by HIV positivity.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," Ab markers: baseline positive placebo arm by HIV positivity.", neut.marker.captions), eval = (paste0("Day",timepoints[1]) %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3920,7 +3927,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by HIV positivity.", neut.marker.captions), eval = ("Day57" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D57 Ab markers: baseline positive placebo arm by HIV positivity.", neut.marker.captions), eval = ("Day57" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3931,7 +3938,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by HIV positivity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm by HIV positivity."), eval = (paste0("Delta",timepoints[1],"overB") %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
@@ -3942,7 +3949,7 @@ include_graphics(here(
 ```
 
 \clearpage
-```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by HIV positivity."), eval = ("Delta57overB" %in% times) & is.ensemble}
+```{r, fig.cap = paste0("Boxplots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm by HIV positivity."), eval = ("Delta57overB" %in% times) & is.ensemble & if.pos.exist==1}
 include_graphics(here(
   "immuno_graphical", "figs", "demographics",
   paste0(
