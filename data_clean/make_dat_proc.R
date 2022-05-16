@@ -267,7 +267,12 @@ if (study_name %in% c("COVE", "MockCOVE")) {
     must_have_assays <- c("bindSpike")
     
 } else if (study_name %in% c("AZD1222")) {
-    must_have_assays <- c("pseudoneutid50")
+    if (attr(config, "config")=="azd1222") {
+        must_have_assays <- c("pseudoneutid50")
+    } else if (attr(config, "config")=="azd1222_bAb") {
+        must_have_assays <- c("bindSpike")
+    } else stop("need to define must_have_assays")
+    
     
 } else stop("unknown study_name")
 
