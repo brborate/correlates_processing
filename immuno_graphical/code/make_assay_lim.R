@@ -6,6 +6,7 @@ source(here::here("..", "_common.R"))
 
 library(here)
 library(dplyr)
+library(abind)
 source(here("code", "params.R"))
 
 
@@ -62,7 +63,9 @@ dimnames(assay_lim) <- list(assay_immuno, times, c("lb", "ub"))
 
 assay_lim[, !grepl("Delta", times), "lb"] <- 
   floor(log10(llods[assay_immuno] / 2)) # lower bound same for all assays - days
-if (study_name=="PREVENT19") assay_lim["bindSpike", !grepl("Delta", times), "lb"] <- 0
+if (study_name=="PREVENT19" | study_name=="AZD1222") {
+  assay_lim["bindSpike", !grepl("Delta", times), "lb"] <- floor(log10(lloqs["bindSpike"] / 2))
+  }# prevent19 and AZ has llod for bAb as NA, use lloq instead
 assay_lim[assay_immuno %in% bAb_assays, !grepl("Delta", times), "ub"] <- 
   max(ceiling(MaxbAb) + ceiling(MaxbAb) %% 2, ceiling(log10(uloqs[assay_immuno])))
 assay_lim[assay_immuno %in% nAb_assays, !grepl("Delta", times), "ub"] <-
@@ -88,6 +91,11 @@ if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
   
   assay_lim[, grepl("Delta", times),'lb'] <- -1
   assay_lim[, grepl("Delta", times),'ub'] <- 2
+}
+
+# dup assay_lim to avoid dimention got dropped for the dataset with only one marker
+if (length(assay_immuno)==1){ # i.e., AZ study
+  assay_lim=abind(assay_lim, assay_lim, along=1)
 }
 
 saveRDS(assay_lim,

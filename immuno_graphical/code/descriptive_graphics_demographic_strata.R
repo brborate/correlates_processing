@@ -45,16 +45,19 @@ assay_lim <- readRDS(here("data_clean", "assay_lim.rds"))
 ## plot for each treatment group by baseline status
 ## ============================================================================
 
-for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "Delta29overB", "Delta57overB")
+for (tp in times[!times %in% c("B",paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]) {  #c("Day29", "Day57", "Delta29overB", "Delta57overB")
   for (trt in 1:2) {
     # Don't produce figures for placebo baseline negative to improve build time
-    if(trt==1) {bstatus.range <- 2} else {bstatus.range <- 1:2}
+    if(trt==1) {bstatus.range <- 2} else {bstatus.range <- unique(dat.twophase.sample$Bserostatus)+1}
     for (bstatus in bstatus.range) {
+      
       subdat <- subset(
         dat.long.twophase.sample,
         Bserostatus == bstatus.labels[bstatus] &
           Trt == trt.labels[trt]
       )
+      
+      if (nrow(subdat)==0) next
 
       ##  (1) age >= 65 or age < 65
       covid_corr_boxplot_facets(
@@ -66,7 +69,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
         LLOX = log10(lloxs[assay_immuno]),
         ULOQ = log10(uloqs[assay_immuno]),
-        ylim = assay_lim[assay_immuno, tp, ],
+        ylim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         axis_titles_y = labels.axis[tp, ] %>% unlist(),
         panel_titles = labels.title2[tp, ] %>% unlist(),
         arrange_ncol = 3,
@@ -86,7 +89,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         plot_dat = subdat,
         x = tp,
         facet_by = "assay",
-        xlim = assay_lim[assay_immuno, tp, ],
+        xlim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         color = "age_geq_65_label",
         weight = "wt.subcohort",
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -110,7 +113,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         x = "highrisk_label",
         y = tp,
         facet_by = "assay",
-        ylim = assay_lim[assay_immuno, tp, ],
+        ylim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
         LLOX = log10(lloxs[assay_immuno]),
@@ -134,7 +137,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         plot_dat = subdat,
         x = tp,
         facet_by = "assay",
-        xlim = assay_lim[assay_immuno, tp, ],
+        xlim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         color = "highrisk_label",
         weight = "wt.subcohort",
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -158,7 +161,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         x = "age_risk_label",
         y = tp,
         facet_by = "assay",
-        ylim = assay_lim[assay_immuno, tp, ],
+        ylim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
         LLOX = log10(lloxs[assay_immuno]),
@@ -182,7 +185,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         plot_dat = subdat,
         x = tp,
         facet_by = "assay",
-        xlim = assay_lim[assay_immuno, tp, ],
+        xlim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         color = "age_risk_label",
         weight = "wt.subcohort",
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -206,7 +209,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         x = "sex_label",
         y = tp,
         facet_by = "assay",
-        ylim = assay_lim[assay_immuno, tp, ],
+        ylim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
         LLOX = log10(lloxs[assay_immuno]),
@@ -230,7 +233,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         plot_dat = subdat,
         x = tp,
         facet_by = "assay",
-        xlim = assay_lim[assay_immuno, tp, ],
+        xlim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         color = "sex_label",
         weight = "wt.subcohort",
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -254,7 +257,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         x = "age_sex_label",
         y = tp,
         facet_by = "assay",
-        ylim = assay_lim[assay_immuno, tp, ],
+        ylim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
         LLOX = log10(lloxs[assay_immuno]),
@@ -278,7 +281,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         plot_dat = subdat,
         x = tp,
         facet_by = "assay",
-        xlim = assay_lim[assay_immuno, tp, ],
+        xlim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         color = "age_sex_label",
         weight = "wt.subcohort",
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -302,7 +305,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         x = "ethnicity_label",
         y = tp,
         facet_by = "assay",
-        ylim = assay_lim[assay_immuno, tp, ],
+        ylim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
         LLOX = log10(lloxs[assay_immuno]),
@@ -326,7 +329,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         plot_dat = subdat,
         x = tp,
         facet_by = "assay",
-        xlim = assay_lim[assay_immuno, tp, ],
+        xlim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         color = "ethnicity_label",
         weight = "wt.subcohort",
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -352,7 +355,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         x = "race",
         y = tp,
         facet_by = "assay",
-        ylim = assay_lim[assay_immuno, tp, ],
+        ylim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
         LLOX = log10(lloxs[assay_immuno]),
@@ -378,7 +381,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
             WhiteNonHispanic == 0)),
         x = tp,
         facet_by = "assay",
-        xlim = assay_lim[assay_immuno, tp, ],
+        xlim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         color = "race",
         weight = "wt.subcohort",
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -408,7 +411,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         x = "minority_label",
         y = tp,
         facet_by = "assay",
-        ylim = assay_lim[assay_immuno, tp, ],
+        ylim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
         LLOX = log10(lloxs[assay_immuno]),
@@ -432,7 +435,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         plot_dat = minority.data,
         x = tp,
         facet_by = "assay",
-        xlim = assay_lim[assay_immuno, tp, ],
+        xlim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         color = "minority_label",
         weight = "wt.subcohort",
         panel_titles = labels.title2[tp, ] %>% unlist(),
@@ -456,7 +459,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         x = "age_minority_label",
         y = tp,
         facet_by = "assay",
-        ylim = assay_lim[assay_immuno, tp, ],
+        ylim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         plot_LLOX = !grepl("Delta", tp),
         POS.CUTOFFS = log10(pos.cutoffs[assay_immuno]),
         LLOX = log10(lloxs[assay_immuno]),
@@ -480,7 +483,7 @@ for (tp in times[!times %in% c("B","Delta57over29")]) {  #c("Day29", "Day57", "D
         plot_dat = minority.data,
         x = tp,
         facet_by = "assay",
-        xlim = assay_lim[assay_immuno, tp, ],
+        xlim = assay_lim[rep(assay_immuno, ifelse(length(assay_immuno)==1, 2, 1)), tp, ], # call the same marker twice if only one marker exists
         color = "age_minority_label",
         weight = "wt.subcohort",
         panel_titles = labels.title2[tp, ] %>% unlist(),
