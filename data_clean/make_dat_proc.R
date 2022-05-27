@@ -278,7 +278,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 
 
 # TwophasesampInd: be in the case or subcohort  &  have the necessary markers
-if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "PREVENT19")) {
+if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
     if (two_marker_timepoints) {
     # require baseline and timpoint 1
         dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
@@ -301,6 +301,19 @@ if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "PREVENT19
         # adding | is because if D57 is present, D29 will be imputed if missing
         (complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)]) | complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])) 
         
+} else if (study_name=="ENSEMBLE") {
+    if (contain(attr(config, "config"), "real")) {
+        # require baseline
+        dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
+            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+            complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
+    } else if (contain(attr(config, "config"), "partA")) {
+        # does not require baseline
+        dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
+            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+            complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)])
+    }
+    
 } else stop("unknown study_name")
 
 
