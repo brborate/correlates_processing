@@ -110,6 +110,17 @@ if(TRUE) {
             lloqs["pseudoneutid50"]=42*0.0653  #2.7426
             pos.cutoffs["pseudoneutid50"]=lloqs["pseudoneutid50"]
             uloqs["pseudoneutid50"]=9484*0.0653 # 619.3052
+            
+                # repeat for two synthetic markers that are adapted to SA and LA
+                llods["pseudoneutid50sa"]=NA  
+                lloqs["pseudoneutid50sa"]=42*0.0653  #2.7426
+                pos.cutoffs["pseudoneutid50sa"]=lloqs["pseudoneutid50sa"]
+                uloqs["pseudoneutid50sa"]=9484*0.0653 # 619.3052
+        
+                llods["pseudoneutid50la"]=NA  
+                lloqs["pseudoneutid50la"]=42*0.0653  #2.7426
+                pos.cutoffs["pseudoneutid50la"]=lloqs["pseudoneutid50la"]
+                uloqs["pseudoneutid50la"]=9484*0.0653 # 619.3052
     
             # data less than lod is set to lod/2
             llods["ADCP"]=11.57
@@ -147,6 +158,7 @@ if(TRUE) {
         lloxs["pseudoneutid50"]=lloqs["pseudoneutid50"]
         
     } else if(study_name=="PREVENT19") {
+        # Novavax
         
         # data less than lloq is set to lloq/2 in the raw data
         llods["bindSpike"]=NA 
@@ -181,6 +193,7 @@ if(TRUE) {
         lloxs["bindSpike"]=lloqs["bindSpike"]
         
     } else if(study_name=="VAT08M") {
+        # Sanofi
            
         # data less than lod is set to lod/2
         llods["pseudoneutid50"]=2.612  
