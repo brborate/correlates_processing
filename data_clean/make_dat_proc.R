@@ -504,6 +504,15 @@ if(two_marker_timepoints) {
 
 
 
+###############################################################################
+# add two synthetic ID50 markers by region for ensemble
+###############################################################################
+
+if(attr(config, "config") %in% c("janssen_pooled_real", "janssen_na_real", "janssen_la_real", "janssen_sa_real")) {
+    dat_proc$Day29pseudoneutid50sa = ifelse(dat_proc$Day29pseudoneutid50-0.470 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.470)
+    dat_proc$Day29pseudoneutid50la = ifelse(dat_proc$Day29pseudoneutid50-0.271 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.271)
+}
+
 
 
 ###############################################################################
