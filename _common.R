@@ -182,7 +182,7 @@ if(TRUE) {
         uloqs["pseudoneutid50"]=47806*0.0653 # 3121.732
         pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
         
-    } else if(study_name=="VAT08M") {
+    } else if(study_name=="VAT08m") {
         # Sanofi
            
         # data less than lod is set to lod/2
@@ -191,7 +191,7 @@ if(TRUE) {
         uloqs["pseudoneutid50"]=191429*0.0653 # 3121.732
         pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
         
-    } else stop("unknown study_name")
+    } else stop("unknown study_name 1")
     
     # llox is for plotting and can be either llod or lloq depending on trials
     lloxs=ifelse(config$llox_label=="LOD", llods[names(config$llox_label)], lloqs[names(config$llox_label)])
@@ -310,10 +310,16 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "Age < 65"
     )
 
+} else if (study_name %in% c("VAT08m","VAT08m")) {
+    Bstratum.labels <- c(
+      "Age >= 60",
+      "Age < 60"
+    )
+
 } else if (study_name=="HVTN705") {
     # do nothing
 
-} else stop("unknown study_name")
+} else stop("unknown study_name 2")
 
 
 
@@ -372,10 +378,26 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "Non-US, Age >= 65"
     )
 
+} else if (study_name=="VAT08m") {
+    demo.stratum.labels <- c(
+      "US URM, Age 18-59, Not at risk",
+      "US URM, Age 18-59, At risk",
+      "US URM, Age >= 60, Not at risk",
+      "US URM, Age >= 60, At risk",
+      "US White non-Hisp, Age 18-59, Not at risk",
+      "US White non-Hisp, Age 18-59, At risk",
+      "US White non-Hisp, Age >= 60, Not at risk",
+      "US White non-Hisp, Age >= 60, At risk",
+      "Japan, Age 18-59, Not at risk",
+      "Japan, Age 18-59, At risk",
+      "Japan, Age >= 60, Not at risk",
+      "Japan, Age >= 60, At risk"
+    )
+
 } else if (study_name=="HVTN705") {
     # do nothing
 
-} else stop("unknown study_name")
+} else stop("unknown study_name 3")
 
 
 labels.regions.ENSEMBLE =c("0"="Northern America", "1"="Latin America", "2"="Southern Africa")
@@ -572,7 +594,13 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
                  RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
                                               Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7 ~ 1,
                                               TRUE ~ 0))
-    } else stop("unknown study_name")
+    } else if (study_name == "VAT08m") {
+        dat_proc <- dat_proc %>%
+          mutate(Riskscorecohortflag = ifelse(Perprotocol==1, 1, 0),
+                 RiskscoreAUCflag = case_when(Trt==0 & Perprotocol==1 ~ 1,
+                                              Trt==1 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7 ~ 1,
+                                              TRUE ~ 0))
+    } else stop("unknown study_name 4")
 
     assertthat::assert_that(
         all(!is.na(dat_proc$Riskscorecohortflag)),

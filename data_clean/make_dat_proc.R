@@ -14,6 +14,7 @@ library(here)
 #mapped.dat=read.csv(mapped_data)
 
 
+
 ########################################################################################################
 # read mapped data with risk score added
 
@@ -31,7 +32,7 @@ if (study_name %in% c("MockENSEMBLE", "MockCOVE")) {
 
 colnames(dat_proc)[1] <- "Ptid" 
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
-dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, stop("unknown study_name")))
+dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08m=60, stop("unknown study_name 1")))
   
 
 # ethnicity labeling
@@ -75,7 +76,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
         race = factor(race, levels = labels.race)
       )
       
-} else stop("unknown study_name")
+} else stop("unknown study_name 2")
 
 dat_proc$WhiteNonHispanic <- NA
 # WhiteNonHispanic=1 IF race is White AND ethnicity is not Hispanic
@@ -108,7 +109,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 } else if (study_name=="AZD1222") {
     dat_proc$MinorityInd[dat_proc$Country!=2] = 0 # 2 is US
 
-} else stop("unknown study_name")
+} else stop("unknown study_name 3")
 
 
 
@@ -167,7 +168,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 } else if (study_name %in% c("PREVENT19", "AZD1222")) {
     dat_proc$Bstratum = with(dat_proc, ifelse(Senior, 1, 0))
     
-} else stop("unknown study_name")
+} else stop("unknown study_name 4")
 
 names(Bstratum.labels) <- Bstratum.labels
 
@@ -207,7 +208,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior), base = 2)) + 1
     dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(!Senior, 5, 6))) # 2 is US
         
-} else stop("unknown study_name")  
+} else stop("unknown study_name 5")  
   
 names(demo.stratum.labels) <- demo.stratum.labels
 
@@ -238,7 +239,7 @@ if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "AZD1222")
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
     
-} else stop("unknown study_name")
+} else stop("unknown study_name 6")
 
 
 #subset(dat_proc, Trt==1 & Bserostatus==1 & EventIndPrimaryD29 == 1)[1:3,]
@@ -274,7 +275,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
     } else stop("need to define must_have_assays")
     
     
-} else stop("unknown study_name")
+} else stop("unknown study_name 7")
 
 
 # TwophasesampInd: be in the case or subcohort  &  have the necessary markers
@@ -314,7 +315,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
             complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)])
     }
     
-} else stop("unknown study_name")
+} else stop("unknown study_name 8")
 
 
 
