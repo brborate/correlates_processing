@@ -40,11 +40,12 @@ vat08m: &vat08m
   subset_value: All
   times: [B, Day22, Day43, Delta22overB, Delta43overB, Delta43over22]
   time_labels: [Day 1, Day 22, Day 43, D22 fold-rise over D1, D43 fold-rise over D1, D43 fold-rise over D22]
+  study_name_code: VAT08m
   assays: [pseudoneutid50]
   assay_labels: [PsV Neutralization 50% Titer]
   assay_labels_short: [Pseudovirus-nAb ID50 (IU50/ml)]
   study_name: VAT08m
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/.csv 
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_realdata_20220606.csv 
   
 
 prevent19: &prevent19

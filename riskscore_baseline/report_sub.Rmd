@@ -72,19 +72,19 @@ if(studyName_for_report == "PREVENT19"){
 if(studyName_for_report %in% c("COVE", "MockCOVE")){
   day = "Day 57"
   start = "7 days"
-}
-if(studyName_for_report %in% c("ENSEMBLE", "MockENSEMBLE")){
+} else if (studyName_for_report %in% c("ENSEMBLE", "MockENSEMBLE")){
   day = "Day 29"
   start = "1 day"
-}
-if(studyName_for_report == "PREVENT19"){
+} else if (studyName_for_report == "PREVENT19"){
   day = "Day 35"
   start = "1 day"
-}
-if(studyName_for_report == "AZD1222"){
+} else if (studyName_for_report == "AZD1222"){
   day = "Day 57"
   start = "7 days"
-}
+} else if (studyName_for_report == "VAT08m"){
+  day = "Day 43"
+  start = "7 days"
+} 
 
 caption <- "Individual baseline variables in baseline SARS-CoV-2 negative per-protocol placebo recipients that were used in the Superlearner model for developing risk score and predicting occurrence of COVID-19."
 
