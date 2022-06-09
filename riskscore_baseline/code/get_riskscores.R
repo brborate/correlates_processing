@@ -2,11 +2,12 @@
 # Sys.setenv(TRIAL = "janssen_pooled_mock")
 # Sys.setenv(TRIAL = "azd1222")
 # Sys.setenv(TRIAL = "prevent19")
+# Sys.setenv(TRIAL = "vat08m")
 
 source("code/loadlibraries_readinputdata.R")
-inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name)
+inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) # this function is in _common.R
 
-if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222")){
+if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m")){
   inputFile <- inputFile %>%
     rename(Ptid = Subjectid)
 }else if(study_name == "MockCOVE"){
@@ -175,6 +176,59 @@ if(study_name == "AZD1222"){
   # %>%
   #   select(-c(Country, Region, CalDtEnrollIND))
   names(inputMod)<-gsub("\\_",".",names(inputMod))
+}
+
+if(study_name == "VAT08m"){
+  inputFile <- inputFile %>%
+    mutate(EventIndPrimaryD43rscore = EventIndPrimaryD1,
+           EventIndPrimaryD43rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD43==1) ~ 1, 
+                                              Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
+                                              TRUE ~ as.double(EventIndPrimaryD43)),
+           pooled.age.grp = ifelse(Age >= 65, 1, 0))
+  
+  risk_vars <- c(
+    "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
+    "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
+    "URMforsubcohortsampling", "HighRiskInd", "HIVinfection",
+    "Sex", "Age", "pooled.age.grp", "BMI", #"BMI.group", "Height", "Weight", 
+    "Country.X2", "Country.X3", "Country.X4", "Country.X5", "Country.X6", "Country.X7",
+    #"USAInd",  
+    "CalDtEnrollIND.X1", "CalDtEnrollIND.X2", "CalDtEnrollIND.X3", "CalDtEnrollIND.X4", "CalDtEnrollIND.X5"
+  )
+  
+  # Store original original risk variables as well to check in check_if_SL_needs_be_run.R!
+  original_risk_vars <- c(
+    "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
+    "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
+    "URMforsubcohortsampling", "HighRiskInd", "HIVinfection",
+    "Sex", "Age", "pooled.age.grp", "BMI", #"BMI.group", "Height", "Weight", 
+    "Country", 
+    #"USAInd", 
+    "CalendarDateEnrollment"
+  )
+  
+  endpoint <- "EventIndPrimaryD43"
+  endpoint <- paste0(endpoint, "rscore")
+  risk_timepoint <- 43
+  studyName_for_report <- "VAT08m"
+  
+  # Create binary indicator variables for Country and CalendarDateEnrollment
+  inputMod <- inputFile %>%
+    mutate(Country = as.factor(Country),
+           CalDtEnrollIND = case_when(CalendarDateEnrollment < 28 ~ 0,
+                                      CalendarDateEnrollment >= 28 & CalendarDateEnrollment < 56 ~ 1,
+                                      CalendarDateEnrollment >= 56 & CalendarDateEnrollment < 84 ~ 2,
+                                      CalendarDateEnrollment >= 84 & CalendarDateEnrollment < 112 ~ 3,
+                                      CalendarDateEnrollment >= 112 & CalendarDateEnrollment < 140 ~ 4,
+                                      CalendarDateEnrollment >= 140 & CalendarDateEnrollment < 168 ~ 5),
+           CalDtEnrollIND = as.factor(CalDtEnrollIND)) 
+  
+  rec <- recipe(~ Country + CalDtEnrollIND, data = inputMod)
+  dummies <- rec %>%
+    step_dummy(Country, CalDtEnrollIND) %>%
+    prep(training = inputMod)
+  inputMod <- inputMod %>% bind_cols(bake(dummies, new_data = NULL)) 
+  names(inputMod) <- gsub("\\_", ".", names(inputMod))
 }
 
 # Check there are no NA values in Riskscorecohortflag!
