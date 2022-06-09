@@ -380,18 +380,10 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
 
 } else if (study_name=="VAT08m") {
     demo.stratum.labels <- c(
-      "US URM, Age 18-59, Not at risk",
-      "US URM, Age 18-59, At risk",
-      "US URM, Age >= 60, Not at risk",
-      "US URM, Age >= 60, At risk",
-      "US White non-Hisp, Age 18-59, Not at risk",
-      "US White non-Hisp, Age 18-59, At risk",
-      "US White non-Hisp, Age >= 60, Not at risk",
-      "US White non-Hisp, Age >= 60, At risk",
-      "Japan, Age 18-59, Not at risk",
-      "Japan, Age 18-59, At risk",
-      "Japan, Age >= 60, Not at risk",
-      "Japan, Age >= 60, At risk"
+      "Not HND, Age 18-59",
+      "Not HND, Age >= 60",
+      "HND, Age 18-59",
+      "HND, Age >= 60"
     )
 
 } else if (study_name=="HVTN705") {
