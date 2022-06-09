@@ -59,7 +59,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
         race = factor(race, levels = labels.race)
       )
       
-} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222")) {
+} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m")) {
     # remove the Other category
     dat_proc <- dat_proc %>%
       mutate(
@@ -108,6 +108,9 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 
 } else if (study_name=="AZD1222") {
     dat_proc$MinorityInd[dat_proc$Country!=2] = 0 # 2 is US
+
+} else if (study_name=="VAT08m") {
+    dat_proc$MinorityInd[dat_proc$Country!=8] = 0 # 8 is US
 
 } else stop("unknown study_name 3")
 
@@ -165,7 +168,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 } else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     dat_proc$Bstratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
     
-} else if (study_name %in% c("PREVENT19", "AZD1222")) {
+} else if (study_name %in% c("PREVENT19", "AZD1222", "VAT08m")) {
     dat_proc$Bstratum = with(dat_proc, ifelse(Senior, 1, 0))
     
 } else stop("unknown study_name 4")
@@ -208,6 +211,14 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior), base = 2)) + 1
     dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(!Senior, 5, 6))) # 2 is US
         
+} else if (study_name=="VAT08m" ) {
+#    Not HND, Not senior
+#    Not HND, senior
+#    HND, Not senior
+#    HND, senior
+    dat_proc$demo.stratum = with(dat_proc, strtoi(Senior, base = 2)) + 1
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country!=3, demo.stratum, demo.stratum+2)) 
+        
 } else stop("unknown study_name 5")  
   
 names(demo.stratum.labels) <- demo.stratum.labels
@@ -239,6 +250,12 @@ if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "AZD1222")
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
     
+} else if (study_name == "VAT08m") {
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0)]=max.tps+1
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1)]=max.tps+2
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0)]=max.tps+3
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+    
 } else stop("unknown study_name 6")
 
 
@@ -254,7 +271,7 @@ with(dat_proc, table(tps.stratum))
 ###############################################################################
 
 
-# define must have assays for ph2 definition
+# define must_have_assays for ph2 definition
 if (study_name %in% c("COVE", "MockCOVE")) {
     must_have_assays <- c("bindSpike", "bindRBD")
     
@@ -264,22 +281,27 @@ if (study_name %in% c("COVE", "MockCOVE")) {
     } else {
         must_have_assays <- c("bindSpike", "bindRBD")
     }    
+    
 } else if (study_name %in% c("PREVENT19")) {
     must_have_assays <- c("bindSpike")
     
 } else if (study_name %in% c("AZD1222")) {
     if (attr(config, "config")=="azd1222") {
         must_have_assays <- c("pseudoneutid50")
+        
     } else if (attr(config, "config")=="azd1222_bAb") {
         must_have_assays <- c("bindSpike")
+        
     } else stop("need to define must_have_assays")
     
-    
+} else if (study_name %in% c("VAT08m")) {
+    must_have_assays <- c("pseudoneutid50")
+        
 } else stop("unknown study_name 7")
 
 
 # TwophasesampInd: be in the case or subcohort  &  have the necessary markers
-if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
+if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19", "VAT08m")) {
     if (two_marker_timepoints) {
     # require baseline and timpoint 1
         dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
@@ -384,6 +406,11 @@ assertthat::assert_that(
     all(!is.na(subset(dat_proc, tmp & !is.na(tps.stratum), select=wt.subcohort, drop=T))), 
     msg = "missing wt.subcohort for immuno analyses ph1 subjects")
         
+
+
+# missing risk score 
+#with(subset(dat_proc, ph1.D35 & Trt==1 & Bserostatus==0), table(is.na(risk_score), Riskscorecohortflag, ph2.D35, EventIndPrimaryD35))
+
 
 
 ###############################################################################
