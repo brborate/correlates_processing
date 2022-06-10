@@ -7,5 +7,10 @@
 * There is no missingness in the markers in the phase 2 sample since we impute the missing
   data here. Only one imputed copy is created. 
 
+
+
 Sanofi VAT08m
 * Country: 8 different countries
+* Ph2: require baseline, D22 and D43 all be present
+* Impute: not applicable
+* Two phase sampling strata: Senior x HND

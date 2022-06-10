@@ -310,7 +310,7 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "Age < 65"
     )
 
-} else if (study_name %in% c("VAT08m","VAT08m")) {
+} else if (study_name %in% c("VAT08m")) {
     Bstratum.labels <- c(
       "Age >= 60",
       "Age < 60"

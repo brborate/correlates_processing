@@ -467,7 +467,8 @@ for (tp in rev(timepoints)) {
 }
 
 
-assays.includeN=c(assays, if(!study_name %in% c("PREVENT19","AZD1222")) "bindN")
+includeN = switch(study_name, COVE=1, MockCOVE=1, ENSEMBLE=1, MockENSEMBLE=1, PREVENT19=0, AZD1222=0, VAT08m=0, stop("unknown study_name 9"))
+assays.includeN=c(assays, if(includeN==1) "bindN")
 
 
 ###############################################################################
