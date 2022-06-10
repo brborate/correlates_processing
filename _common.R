@@ -545,7 +545,9 @@ report.assay.values=function(x, assay){
 preprocess.for.risk.score=function(dat_raw, study_name) {
     dat_proc=dat_raw
     
-    dat_proc=subset(dat_proc, !is.na(Bserostatus))
+    if(study_name != "VAT08m"){
+      dat_proc=subset(dat_proc, !is.na(Bserostatus))
+    }
     
     # EventTimePrimaryIncludeNotMolecConfirmedD29 are the endpoint of interest and should be used to compute weights
     if(study_name=="ENSEMBLE") {
@@ -596,9 +598,9 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
                                               TRUE ~ 0))
     } else if (study_name == "VAT08m") {
         dat_proc <- dat_proc %>%
-          mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
-                 RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
-                                              Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7 ~ 1,
+          mutate(Riskscorecohortflag = ifelse(Perprotocol==1, 1, 0),
+                 RiskscoreAUCflag = case_when(Trt==0 & Perprotocol==1 ~ 1,
+                                              Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7 ~ 1,
                                               TRUE ~ 0))
     } else stop("unknown study_name 4")
 
