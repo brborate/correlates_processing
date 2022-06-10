@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "azd1222")
+#Sys.setenv(TRIAL = "prevent19")
 renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -408,7 +408,7 @@ assertthat::assert_that(
         
 
 
-# missing risk score 
+## check missing risk score 
 #with(subset(dat_proc, ph1.D35 & Trt==1 & Bserostatus==0), table(is.na(risk_score), Riskscorecohortflag, ph2.D35, EventIndPrimaryD35))
 
 
@@ -527,6 +527,7 @@ if(two_marker_timepoints) {
 
 
 
+
 ###############################################################################
 # add two synthetic ID50 markers by region for ensemble
 ###############################################################################
@@ -556,13 +557,14 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 ###############################################################################
 
 library(digest)
-if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.getenv ("NOCHECK")=="") {
-    assertthat::assert_that(
-        digest(dat_proc[order(names(dat_proc))])==
-        ifelse(attr(config, "config")=="janssen_pooled_mock", 
-            "028549acb994980fbb6832198308ec4a", 
-            "1902296f23fca88c4757ed7a84fbe7d7"),
-        msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+if(Sys.getenv ("NOCHECK")=="") {
+    if (attr(config, "config") == "moderna_mock") {
+        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="a1b8077e49ee1b65fd269aeaba2d027f", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+    } else if (attr(config, "config") == "janssen_pooled_mock") {
+        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="028549acb994980fbb6832198308ec4a", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+    } else if (attr(config, "config") == "prevent19") {
+        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="ace94aafd9bd52796e5b5a9b3c3cd399", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+    } 
     print("======================= Passed make_dat_proc digest check =======================")    
 }
 
