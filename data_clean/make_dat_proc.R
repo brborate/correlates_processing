@@ -467,6 +467,7 @@ for (tp in rev(timepoints)) {
 }
 
 
+# some trials have N some don't
 includeN = switch(study_name, COVE=1, MockCOVE=1, ENSEMBLE=1, MockENSEMBLE=1, PREVENT19=0, AZD1222=0, VAT08m=0, stop("unknown study_name 9"))
 assays.includeN=c(assays, if(includeN==1) "bindN")
 
@@ -514,21 +515,14 @@ if(study_name %in% c("COVE", "MockCOVE")){
 # define delta for dat_proc
 ###############################################################################
 
-tmp=list()
-# delta is computed after lloq censoring
-for (a in assays.includeN) {
-  for (t in c("B", paste0("Day", config$timepoints)) ) {
-    tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(lloqs[a]), log10(lloqs[a] / 2), dat_proc[[t %.% a]])
-  }
-}
-tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
+# assuming data has been censored at the lower limit
+# thus no need to do, say, lloq censoring
 
-# some trials have N some don't
 for (tp in rev(timepoints)) {
-    dat_proc["Delta"%.%tp%.%"overB" %.% assays.includeN] <- tmp["Day"%.%tp %.% assays.includeN] - tmp["B" %.% assays.includeN]
+    dat_proc["Delta"%.%tp%.%"overB" %.% assays.includeN] <- dat_proc["Day"%.%tp %.% assays.includeN] - dat_proc["B" %.% assays.includeN]
 }   
 if(two_marker_timepoints) {
-    dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays.includeN] <- tmp["Day"%.% timepoints[2]%.% assays.includeN] - tmp["Day"%.%timepoints[1] %.% assays.includeN]
+    dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays.includeN] <- dat_proc["Day"%.% timepoints[2]%.% assays.includeN] - dat_proc["Day"%.%timepoints[1] %.% assays.includeN]
 }
 
 
@@ -554,8 +548,6 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
         dat_proc <- dat_proc[include_in_subset, , drop = FALSE]
     }
 }
-
-
 
 
 
