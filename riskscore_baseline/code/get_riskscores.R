@@ -184,14 +184,16 @@ if(study_name == "VAT08m"){
            EventIndPrimaryD43rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD43==1) ~ 1, 
                                               Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
                                               TRUE ~ as.double(EventIndPrimaryD43)),
-           pooled.age.grp = ifelse(Age >= 65, 1, 0))
+           pooled.age.grp = ifelse(Age >= 60, 1, 0),
+           # Pool countries (Japan and Nepal) that have sparse endpoints EventIndPrimaryD43)
+           Country = ifelse(Country %in% c(5, 7), 57, Country))
   
   risk_vars <- c(
     "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
     "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
     "URMforsubcohortsampling", "HighRiskInd", "HIVinfection",
     "Sex", "Age", "pooled.age.grp", "BMI", #"BMI.group", "Height", "Weight", 
-    "Country.X2", "Country.X3", "Country.X4", "Country.X5", "Country.X6", "Country.X7",
+    "Country.X2", "Country.X3", "Country.X4", "Country.X57", "Country.X8",
     #"USAInd",  
     "CalDtEnrollIND.X1", "CalDtEnrollIND.X2", "CalDtEnrollIND.X3", "CalDtEnrollIND.X4", "CalDtEnrollIND.X5"
   )
