@@ -410,7 +410,10 @@ assertthat::assert_that(
 
 ## check missing risk score 
 #with(subset(dat_proc, ph1.D35 & Trt==1 & Bserostatus==0), table(is.na(risk_score), Riskscorecohortflag, ph2.D35, EventIndPrimaryD35))
-
+#with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph1.D35 & !is.na(BbindSpike) & !is.na(Day35bindSpike)), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
+#with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph2.D35), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
+#with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph2.immuno & !is.na(BbindSpike) & !is.na(Day35bindSpike)), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
+#with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph2.immuno), table(EventIndPrimaryD35, useNA="ifany"))
 
 
 ###############################################################################
