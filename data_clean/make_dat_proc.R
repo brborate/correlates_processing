@@ -410,7 +410,10 @@ assertthat::assert_that(
 
 ## check missing risk score 
 #with(subset(dat_proc, ph1.D35 & Trt==1 & Bserostatus==0), table(is.na(risk_score), Riskscorecohortflag, ph2.D35, EventIndPrimaryD35))
-
+#with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph1.D35 & !is.na(BbindSpike) & !is.na(Day35bindSpike)), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
+#with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph2.D35), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
+#with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph2.immuno & !is.na(BbindSpike) & !is.na(Day35bindSpike)), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
+#with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph2.immuno), table(EventIndPrimaryD35, useNA="ifany"))
 
 
 ###############################################################################
@@ -517,14 +520,22 @@ if(study_name %in% c("COVE", "MockCOVE")){
 
 # assuming data has been censored at the lower limit
 # thus no need to do, say, lloq censoring
+# but there is a need to do uloq censoring before computing delta
+
+tmp=list()
+for (a in assays.includeN) {
+  for (t in c("B", paste0("Day", config$timepoints)) ) {
+    tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] > log10(uloqs[a]), log10(uloqs[a]), dat_proc[[t %.% a]])
+  }
+}
+tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
 
 for (tp in rev(timepoints)) {
-    dat_proc["Delta"%.%tp%.%"overB" %.% assays.includeN] <- dat_proc["Day"%.%tp %.% assays.includeN] - dat_proc["B" %.% assays.includeN]
+    dat_proc["Delta"%.%tp%.%"overB" %.% assays.includeN] <- tmp["Day"%.%tp %.% assays.includeN] - tmp["B" %.% assays.includeN]
 }   
 if(two_marker_timepoints) {
-    dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays.includeN] <- dat_proc["Day"%.% timepoints[2]%.% assays.includeN] - dat_proc["Day"%.%timepoints[1] %.% assays.includeN]
+    dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays.includeN] <- tmp["Day"%.% timepoints[2]%.% assays.includeN] - tmp["Day"%.%timepoints[1] %.% assays.includeN]
 }
-
 
 
 
