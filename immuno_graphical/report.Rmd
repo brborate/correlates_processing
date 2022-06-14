@@ -6,16 +6,23 @@ output:
 ---
 # Graphical Description of Immunogenicity Data {#immuno-graphical}
 
-## Pairs plots of antibody markers for overall per-protocal cohort
-
-### Baseline SARS-CoV-2 Negative
-
 ```{r immuno-graphical-setup, echo = FALSE, message = FALSE, include=FALSE}
 library(here)
 library(latex2exp)
 library(knitr)
 
 here::i_am("immuno_graphical/report.Rmd")
+
+all_assays <- c("bindSpike", "bindRBD", "bindN", "pseudoneutid50", "pseudoneutid80", "liveneutmn50")
+
+if(include_bindN){
+  assay_immuno <- all_assays[all_assays %in% c(assays, "bindN")]
+  labels.assays.all <- c("Binding Antibody to N", labels.assays)
+  names(labels.assays.all)[1] <- "bindN"
+  labels.assays <- labels.assays.all[assay_immuno]
+} else {
+  assay_immuno <- assays
+}
 ```
 
 ```{r immuno-graphical-caption-setup, echo = FALSE, message = FALSE, include=FALSE}
@@ -45,352 +52,139 @@ neut.marker.captions <- switch(study_name,
 
 ```
 
+## Pairs plots of antibody markers for overall per-protocal cohort
 
-```{r, fig.cap = paste0("Pair plots of D1 Ab markers: baseline negative vaccine arm"), eval = ("B" %in% times & if.pair==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_baseline_Markers_BaselineNeg_vaccine_arm_",
-    study_name, ".png"
-  )
-))
+### Baseline SARS-CoV-2 Negative
+
+```{r, echo=FALSE, results='asis'}
+
+########################################### Pair ########################################### 
+bsero="BaselineNeg" # bsero in c("BaselineNeg","BaselinePos")[1:(if.pos.exist+1)]
+bseroLabel <- ifelse(bsero=="BaselineNeg", "negative", "positive")
+
+trt="vaccine"
+  
+# only doable when there are >1 assays
+if (if.pair==1){
+    
+    for(tp in times[!times %in% c(paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]) {
+      
+      tpLabel <- gsub("ay ", "", labels.time[tp])
+      
+      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_time.Rmd')), quiet = TRUE)
+      cat(res, sep = '\n')
+      cat("\\clearpage", sep = '\n')
+    }
+    
+    for (asy in assay_immuno){
+      
+      asyLabel <- gsub("%","\\\\%", labels.assays[asy])
+      
+      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
+      cat(res, sep = '\n')
+      cat("\\clearpage", sep = '\n')
+    }
+    
+}
 ```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," Ab markers: baseline negative vaccine arm"), eval = (paste0("Day",timepoints[1]) %in% times & if.pair==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_Day",timepoints[1],"_Markers_BaselineNeg_vaccine_arm_",
-    study_name, ".png"
-  )
-))
-```
-
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D57 Ab markers: baseline negative vaccine arm"), eval = ('Day57' %in% times & if.pair==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_Day57_Markers_BaselineNeg_vaccine_arm_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline negative vaccine arm"), eval = (paste0('Delta',timepoints[1],'overB') %in% times & if.pair==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_Delta",timepoints[1],"overB_Markers_BaselineNeg_vaccine_arm_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D57 fold-rise over D1 Ab markers: baseline negative vaccine arm"), eval = ('Delta57overB' %in% times & if.pair==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_Delta57overB_Markers_BaselineNeg_vaccine_arm_",
-    study_name, ".png"
-  )
-))
-```
-
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to Spike: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindSpike'%in% assays & if.pair==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_bindSpike_by_times_BaselineNeg_vaccine_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to RBD: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindRBD'%in% assays & if.pair==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_bindRBD_by_times_BaselineNeg_vaccine_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to N: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & include_bindN == TRUE & if.pair==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_bindN_by_times_BaselineNeg_vaccine_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 50\\% Titer: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid50'%in% assays & if.pair==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_pseudoneutid50_by_times_BaselineNeg_vaccine_",
-    study_name, ".png"
-  )
-))
-```
-
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 80\\% Titer: baseline negative vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid80'%in% assays & if.pair==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_pseudoneutid80_by_times_BaselineNeg_vaccine_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
 
 ### Baseline SARS-CoV-2 Positive
 
-```{r, fig.cap = paste0("Pair plots of D1 Ab markers: baseline positive vaccine arm"), eval = ("B" %in% times & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_baseline_Markers_BaselinePos_vaccine_arm_",
-    study_name, ".png"
-  )
-))
+```{r, echo=FALSE, results='asis'}
+
+########################################### Pair ########################################### 
+bsero="BaselinePos"
+bseroLabel <- ifelse(bsero=="BaselineNeg", "negative", "positive")
+
+trt="vaccine"
+  
+# only doable when there are >1 assays
+if (if.pair==1 & if.pos.exist==1){
+    
+    for(tp in times[!times %in% c(paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]) {
+      
+      tpLabel <- gsub("ay ", "", labels.time[tp])
+      
+      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_time.Rmd')), quiet = TRUE)
+      cat(res, sep = '\n')
+      cat("\\clearpage", sep = '\n')
+    }
+    
+    for (asy in assay_immuno){
+      
+      asyLabel <- gsub("%","\\\\%", labels.assays[asy])
+      
+      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
+      cat(res, sep = '\n')
+      cat("\\clearpage", sep = '\n')
+    }
+    
+}
 ```
-
-\clearpage
-
-```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," Ab markers: baseline positive vaccine arm"), eval = (paste0("Day",timepoints[1]) %in% times & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_Day",timepoints[1],"_Markers_BaselinePos_vaccine_arm_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D57 Ab markers: baseline positive vaccine arm"), eval = ('Day57' %in% times & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_Day57_Markers_BaselinePos_vaccine_arm_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive vaccine arm"), eval = (paste0('Delta',timepoints[1],'overB') %in% times & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_Delta",timepoints[1],"overB_Markers_BaselinePos_vaccine_arm_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D57 fold-rise over D1 Ab markers: baseline positive vaccine arm"), eval = ('Delta57overB' %in% times & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_Delta57overB_Markers_BaselinePos_vaccine_arm_",
-    study_name, ".png"
-  )
-))
-```
-
-
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to Spike: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindSpike'%in% assays & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_bindSpike_by_times_BaselinePos_vaccine_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to RBD: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindRBD'%in% assays & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_bindRBD_by_times_BaselinePos_vaccine_",
-    study_name, ".png"
-  )
-))
-```
-
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to N: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & include_bindN == TRUE & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_bindN_by_times_BaselinePos_vaccine_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 50\\% Titer: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid50'%in% assays & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_pseudoneutid50_by_times_BaselinePos_vaccine_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 80\\% Titer: baseline positive vaccine arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid80'%in% assays & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_pseudoneutid80_by_times_BaselinePos_vaccine_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
 
 ### Baseline SARS-CoV-2 Positive Placebo Arm
 
-```{r, fig.cap = paste0("Pair plots of D1 Ab markers: baseline positive placebo arm"), eval = ("B" %in% times & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_baseline_Markers_BaselinePos_placebo_arm_",
-    study_name, ".png"
-  )
-))
+```{r, echo=FALSE, results='asis'}
+
+bsero="BaselinePos"
+bseroLabel <- ifelse(bsero=="BaselineNeg", "negative", "positive")
+
+trt="placebo"
+  
+# only doable when there are >1 assays
+if (if.pair==1 & if.pos.exist==1){
+    
+    for(tp in times[!times %in% c(paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]) {
+      
+      tpLabel <- gsub("ay ", "", labels.time[tp])
+      
+      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_time.Rmd')), quiet = TRUE)
+      cat(res, sep = '\n')
+      cat("\\clearpage", sep = '\n')
+    }
+    
+    for (asy in assay_immuno){
+      
+      asyLabel <- gsub("%","\\\\%", labels.assays[asy])
+      
+      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
+      cat(res, sep = '\n')
+      cat("\\clearpage", sep = '\n')
+    }
+    
+}
 ```
 
-\clearpage
-
-```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," Ab markers: baseline positive placebo arm"), eval = (paste0("Day",timepoints[1]) %in% times & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_Day",timepoints[1],"_Markers_BaselinePos_placebo_arm_",
-    study_name, ".png"
-  )
-))
+## RCDF plots of antibody markers for overall per-protocol cohort - New
+```{r, echo=FALSE, results='asis'}
+  
+for (trt in c("trt_both", "trt_vaccine")){
+  trtLabel <- ifelse(trt=="trt_both", "x randomization arm", "vaccine arm")
+  
+  for (bsero in c("bstatus_both", "bstatus_Neg", "bstatus_Pos")){
+    if (bsero=="bstatus_Pos" & if.pos.exist==0) next
+    if (trt=="trt_both" & bsero!="bstatus_both") next # trt_both is only for bstatus both
+    
+    bseroLabel <- ifelse(bsero=="bstatus_both", "by baseline status", ifelse(bsero=="bstatus_Neg", "baseline negative", "baseline positive"))
+    
+    for(tp in times[!times %in% c("B",paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]) {
+            
+      tpLabel <- gsub("ay ", "", labels.time[tp])
+      
+      for (asy in c("","bAb","nAb")){
+        if ((!grepl("bind", assays) & asy=="bAb") | (!grepl("pseudo", assays) & asy=="nAb")) next
+        if (asy=="" & (trt!="trt_both" | bsero!="bstatus_both")) next  # trt_both & bstatus_both are only for all assays
+        if (asy!="" & trt=="trt_both" & bsero=="bstatus_both") next  # trt_both & bstatus_both are only for all assays
+        
+        res = knitr::knit_child(c(here::here('immuno_graphical', 'report_rcdf.Rmd')), quiet = TRUE)
+        cat(res, sep = '\n')
+        cat("\\clearpage", sep = '\n')
+      }
+    }
+  }
+}
 ```
 
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D57 Ab markers: baseline positive placebo arm"), eval = ('Day57' %in% times & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_Day57_Markers_BaselinePos_placebo_arm_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D",timepoints[1]," fold-rise over D1 Ab markers: baseline positive placebo arm"), eval = (paste0('Delta',timepoints[1],'overB') %in% times & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_Delta",timepoints[1],"overB_Markers_BaselinePos_placebo_arm_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D57 fold-rise over D1 Ab markers: baseline positive placebo arm"), eval = ('Delta57overB' %in% times & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_Delta57overB_Markers_BaselinePos_placebo_arm_",
-    study_name, ".png"
-  )
-))
-```
-
-
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to Spike: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindSpike'%in% assays & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_bindSpike_by_times_BaselinePos_placebo_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to RBD: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'bindRBD'%in% assays & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_bindRBD_by_times_BaselinePos_placebo_",
-    study_name, ".png"
-  )
-))
-```
-
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," Binding Antibody to N: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & include_bindN == TRUE & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_bindN_by_times_BaselinePos_placebo_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 50\\% Titer: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid50'%in% assays & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_pseudoneutid50_by_times_BaselinePos_placebo_",
-    study_name, ".png"
-  )
-))
-```
-
-\clearpage
-```{r, fig.cap = paste0("Pair plots of D1, ",paste0("D",timepoints, collapse = " and ")," nAb Neutralization 80\\% Titer: baseline positive placebo arm"), eval = (all(c('B', paste0("Day",timepoints[1]), paste0("Day",timepoints[length(timepoints)])) %in% times) & 'pseudoneutid80'%in% assays & if.pair==1 & if.pos.exist==1)}
-include_graphics(here(
-  "immuno_graphical", "figs",
-  paste0(
-    "pairs_pseudoneutid80_by_times_BaselinePos_placebo_",
-    study_name, ".png"
-  )
-))
-```
 
 \clearpage
 ## RCDF plots of antibody markers for overall per-protocol cohort
@@ -399,7 +193,7 @@ include_graphics(here(
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
-    "Marker_RCDF_Day",timepoints[1],"_trt_both_bstatus_both_",
+    "Marker_Rcdf_Day",timepoints[1],"_trt_both_bstatus_both_",
     study_name, ".png"
   )
 ))
@@ -410,7 +204,7 @@ include_graphics(here(
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
-    "Marker_RCDF_Day57_trt_both_bstatus_both_",
+    "Marker_Rcdf_Day57_trt_both_bstatus_both_",
     study_name, ".png"
   )
 ))
@@ -421,7 +215,7 @@ include_graphics(here(
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
-    "Marker_RCDF_Delta",timepoints[1],"overB_trt_both_bstatus_both_",
+    "Marker_Rcdf_Delta",timepoints[1],"overB_trt_both_bstatus_both_",
     study_name, ".png"
   )
 ))
@@ -432,7 +226,7 @@ include_graphics(here(
 include_graphics(here(
   "immuno_graphical", "figs",
   paste0(
-    "Marker_RCDF_Delta57overB_trt_both_bstatus_both_",
+    "Marker_Rcdf_Delta57overB_trt_both_bstatus_both_",
     study_name, ".png"
   )
 ))

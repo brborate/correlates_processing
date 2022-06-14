@@ -1,0 +1,10 @@
+\begin{figure}[H]
+\center
+
+\includegraphics[width=1\textwidth]{`r here("immuno_graphical", "figs", paste0("pairs_", asy, "_by_times_", bsero, "_", trt, "_", study_name, ".png"))`}
+
+\caption{`r paste0("Pair plots of D1, ", paste0("D",timepoints, collapse = " and "), " ", asyLabel, ": baseline ", bseroLabel, " ", trt, " arm")`}
+
+\end{figure}
+
+\hphantom{Random text to appease the latex god}

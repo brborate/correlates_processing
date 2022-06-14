@@ -197,7 +197,7 @@ for (tp in tps) {
     panel_titles = labels.title2[tp, ] %>% unlist(),
     axis_titles = labels.axis[tp, ] %>% unlist(),
     filename = paste0(
-      save.results.to, "/Marker_RCDF_", tp,
+      save.results.to, "/Marker_Rcdf_", tp,
       "_trt_both_bstatus_both_", study_name, ".png"
     )
   )
