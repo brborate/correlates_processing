@@ -318,7 +318,7 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
 
 } else if (study_name=="HVTN705") {
     # do nothing
-
+    
 } else stop("unknown study_name 2")
 
 
