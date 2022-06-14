@@ -3,7 +3,7 @@
 
 \includegraphics[width=1\textwidth]{`r here("immuno_graphical", "figs", paste0("Marker_Rcdf_", ifelse(asy=="","", paste0(asy,"_")), tp, "_", trt, "_", bsero, "_", study_name, ".png"))`}
 
-\caption{`r paste0("RCDF plots for ", tpLabel, " ", ifelse(asy=="","Ab",asy), " markers: ", bseroLabel," ", ifelse(grepl("by", bseroLabel), paste0("for the ", trtLabel), trtLabel))`}
+\caption{`r paste0("RCDF plots for ", tpLabel, " ", ifelse(asy=="","Ab",asy), " markers: ", bseroLabel," ", ifelse(grepl("by", bseroLabel) & trt!="trt_both", paste0("for the ", trtLabel), trtLabel))`}
 
 \end{figure}
 
