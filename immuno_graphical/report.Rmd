@@ -39,7 +39,8 @@ minority.disclaimer <- switch(study_name,
                               "ENSEMBLE"="These plots are restricted to only United States trial participants.",
                               "MockENSEMBLE"="These plots are restricted to only United States trial participants.",
                               "PREVENT19"="",
-                              "AZD1222"="")
+                              "AZD1222"="",
+                              "VAT08m"="")
 
 neut.marker.captions <- switch(study_name, 
                                "COVE"="The dashed lines in each figure are ULOQ, LLOQ, and positivity cutoffs for binding antibody assays, or ULOQ, LLOQ, and LLOD for neutralizing antibody assays, from top to bottom respectively.",
@@ -48,7 +49,9 @@ neut.marker.captions <- switch(study_name,
                                "MockENSEMBLE"="The dashed lines in each figure are ULOQ and positivity cut-off for binding antibody assays, or ULOQ and LLOQ for neutralizing antibody assays, from top to bottom respectively.",
                                "PREVENT19"="The dashed lines in each figure are ULOQ, positivity cut-off and LLOQ for binding antibody assays, or ULOQ and LLOD for neutralizing antibody assays, from top to bottom respectively.",
                                
-                               "AZD1222"="The dashed lines in each figure are ULOQ, positivity cut-off and LLOQ for binding antibody assays, or ULOQ and LLOD for neutralizing antibody assays, from top to bottom respectively.")
+                               "AZD1222"="The dashed lines in each figure are ULOQ, positivity cut-off and LLOQ for binding antibody assays, or ULOQ and LLOD for neutralizing antibody assays, from top to bottom respectively.",
+                               
+                               "VAT08m"="The dashed lines in each figure is LLOD for neutralizing antibody assays.")
 
 ```
 
