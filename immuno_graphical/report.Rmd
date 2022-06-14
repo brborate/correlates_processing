@@ -374,8 +374,6 @@ include_graphics(here(
 \clearpage
 ## RCDF plots of antibody markers by demographics for per-protocol cohort
 
-### Baseline SARS-CoV-2 Negative - New
-
 ### Baseline SARS-CoV-2 Negative
 
 ```{r, fig.cap = paste0("RCDF plots for D",timepoints[1]," Ab markers: baseline negative vaccine arm by age groups."), eval = (paste0("Day",timepoints[1]) %in% times)}
