@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "janssen_pooled_real")
+#Sys.setenv(TRIAL = "vat08m")
 #-----------------------------------------------
 # obligatory to append to the top of each script
 renv::activate(project = here::here(".."))
@@ -39,6 +39,7 @@ dat.twophase.sample <- readRDS(here("data_clean", "twophase_data.rds"))
 assay_lim <- readRDS(here("data_clean", "assay_lim.rds"))
 
 tps <-  times[!times %in% c("B",paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))] #c("Day29", "Delta29overB", "Day57", "Delta57overB")
+
 #-----------------------------------------------
 # PAIR PLOTS
 #-----------------------------------------------
@@ -133,9 +134,9 @@ if (!length(assay_immuno)==1){ # AZ two datasets only have one marker in each as
       )
     }
   }
+}
   
-  
-  
+if (!length(assay_immuno)==1 | study_name=="VAT08m"){
   ## pairplots of assay readouts for multiple timepoints
   ## pairplots by baseline serostatus
   print("Pair plots 3:")
@@ -152,7 +153,7 @@ if (!length(assay_immuno)==1){ # AZ two datasets only have one marker in each as
       for (aa in assay_immuno) {
         covid_corr_pairplots_by_time(
           plot_dat = subdat,
-          times = times[!grepl("Delta",times)],
+          times = times[!times %in% c(paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))],
           assay = aa,
           strata = "Bstratum",
           weight = "wt.subcohort",
@@ -161,8 +162,10 @@ if (!length(assay_immuno)==1){ # AZ two datasets only have one marker in each as
             ifelse(bserostatus, "positive ", "negative "),
             c("placebo", "vaccine")[trt + 1], " arm"
           ),
-          column_labels = paste(gsub("B","D1",gsub("ay ","", labels.time[!grepl("fold",labels.time)])), # paste(c("D1", "D29", "D57")[c("B", "Day29", "Day57") %in% times],
-                                labels.axis[, aa][1]),
+          column_labels = paste(gsub("ay ","", labels.time[times[!times %in% c(paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]]), # paste(c("D1", "D29", "D57")[c("B", "Day29", "Day57") %in% times],
+                                "\n", labels.axis[, aa][1]),
+          column_label_size = ifelse(study_name=="VAT08m", 4.5, 6.5),
+          axis_label_size = ifelse(study_name=="VAT08m", 7, 9),
           filename = paste0(
             save.results.to, "/pairs_", aa, "_by_times_",
             bstatus.labels.2[bserostatus + 1], "_", c("placebo_", "vaccine_")[trt + 1],
