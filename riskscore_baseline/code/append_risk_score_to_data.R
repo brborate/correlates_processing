@@ -20,10 +20,12 @@ vaccinees_risk <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_wi
 # merge risk score with cleaned data by IDs, then save updated data file
 risk_scores <- bind_rows(placebos_risk, vaccinees_risk) %>%
   select(Ptid, risk_score, standardized_risk_score)
+
 inputFile_with_riskscore <- left_join(inputFile, risk_scores, by = "Ptid") 
 
 # For some studies, impute the missing risk scores and standardize them separately for placebo and vaccine groups 
-if(study_name == "some study_name"){
+if(study_name == "PREVENT19" & 
+   any(is.na(inputFile_with_riskscore %>% filter(Country == 0) %>% .$risk_score))){
 
   get_imputed_riskscore <- function(dat_with_riskscore, riskVars){
     imp_vars <- dat_with_riskscore %>% 
