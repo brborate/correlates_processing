@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "azd1222")
+#Sys.setenv(TRIAL = "prevent19")
 renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -408,9 +408,12 @@ assertthat::assert_that(
         
 
 
-# missing risk score 
+## check missing risk score 
 #with(subset(dat_proc, ph1.D35 & Trt==1 & Bserostatus==0), table(is.na(risk_score), Riskscorecohortflag, ph2.D35, EventIndPrimaryD35))
-
+#with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph1.D35 & !is.na(BbindSpike) & !is.na(Day35bindSpike)), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
+#with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph2.D35), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
+#with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph2.immuno & !is.na(BbindSpike) & !is.na(Day35bindSpike)), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
+#with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph2.immuno), table(EventIndPrimaryD35, useNA="ifany"))
 
 
 ###############################################################################
@@ -467,6 +470,7 @@ for (tp in rev(timepoints)) {
 }
 
 
+# some trials have N some don't
 includeN = switch(study_name, COVE=1, MockCOVE=1, ENSEMBLE=1, MockENSEMBLE=1, PREVENT19=0, AZD1222=0, VAT08m=0, stop("unknown study_name 9"))
 assays.includeN=c(assays, if(includeN==1) "bindN")
 
@@ -514,16 +518,18 @@ if(study_name %in% c("COVE", "MockCOVE")){
 # define delta for dat_proc
 ###############################################################################
 
+# assuming data has been censored at the lower limit
+# thus no need to do, say, lloq censoring
+# but there is a need to do uloq censoring before computing delta
+
 tmp=list()
-# delta is computed after lloq censoring
 for (a in assays.includeN) {
   for (t in c("B", paste0("Day", config$timepoints)) ) {
-    tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(lloqs[a]), log10(lloqs[a] / 2), dat_proc[[t %.% a]])
+    tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] > log10(uloqs[a]), log10(uloqs[a]), dat_proc[[t %.% a]])
   }
 }
 tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
 
-# some trials have N some don't
 for (tp in rev(timepoints)) {
     dat_proc["Delta"%.%tp%.%"overB" %.% assays.includeN] <- tmp["Day"%.%tp %.% assays.includeN] - tmp["B" %.% assays.includeN]
 }   
@@ -557,20 +563,19 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 
 
 
-
-
 ###############################################################################
 # bundle data sets and save as CSV
 ###############################################################################
 
 library(digest)
-if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.getenv ("NOCHECK")=="") {
-    assertthat::assert_that(
-        digest(dat_proc[order(names(dat_proc))])==
-        ifelse(attr(config, "config")=="janssen_pooled_mock", 
-            "028549acb994980fbb6832198308ec4a", 
-            "1902296f23fca88c4757ed7a84fbe7d7"),
-        msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+if(Sys.getenv ("NOCHECK")=="") {
+    if (attr(config, "config") == "moderna_mock") {
+        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="993f8c99723c779f4280a9e4125de936", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+    } else if (attr(config, "config") == "janssen_pooled_mock") {
+        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="f3e286effecf1581eec34707fc4d468f", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+    } else if (attr(config, "config") == "prevent19") {
+        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="cd6b667c32e249ac82fb9af2f1094561", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+    } 
     print("======================= Passed make_dat_proc digest check =======================")    
 }
 
