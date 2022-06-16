@@ -212,12 +212,18 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(!Senior, 5, 6))) # 2 is US
         
 } else if (study_name=="VAT08m" ) {
-#    Not HND, Not senior
-#    Not HND, senior
+#    Not HND, US or JPN, Not senior
+#    Not HND, US or JPN, senior
 #    HND, Not senior
 #    HND, senior
+#    USA, Not senior
+#    USA, senior
+#    JPN, Not senior
+#    JPN, senior
     dat_proc$demo.stratum = with(dat_proc, strtoi(Senior, base = 2)) + 1
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country!=3, demo.stratum, demo.stratum+2)) 
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==3, demo.stratum, demo.stratum+2)) # HND
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==8, demo.stratum, demo.stratum+4)) # USA
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==5, demo.stratum, demo.stratum+6)) # JPN
         
 } else stop("unknown study_name 5")  
   
