@@ -383,7 +383,11 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "Not HND, Age 18-59",
       "Not HND, Age >= 60",
       "HND, Age 18-59",
-      "HND, Age >= 60"
+      "HND, Age >= 60",
+      "USA, Age 18-59",
+      "USA, Age >= 60",
+      "JPN, Age 18-59",
+      "JPN, Age >= 60"
     )
 
 } else if (study_name=="HVTN705") {
