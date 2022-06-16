@@ -12,6 +12,23 @@ toc: true
 
 # Baseline Risk Score (Proxy for SARS-CoV-2 Exposure) {#baseline-riskscore}
 
+```{r load-libraries-n-objects, warning=FALSE, echo=FALSE, message=FALSE}
+library(tidyverse, quietly = T)
+library(kableExtra, quietly = T)
+library(conflicted, quietly = T)
+conflicted::conflict_prefer("filter", "dplyr")
+conflict_prefer("summarise", "dplyr")
+load(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
+source(here("riskscore_baseline", "code", "study_specific_functions.R"))
+
+study_name_code <- studyName_for_report
+
+```
+
+
+This baseline risk score report is based off analysis data located here: `r mapped_data`.
+
+
 ```{r riskVarstable, warning=FALSE, echo=FALSE, message=FALSE}
 library(tidyverse, quietly = T)
 library(kableExtra, quietly = T)
@@ -67,6 +84,11 @@ if(studyName_for_report == "PREVENT19"){
   footnote4 <- paste0("4. Baseline risk score development is restricted to only US subjects.")
   eval.footnote4.table = TRUE
 }
+
+if(studyName_for_report == "VAT08m"){
+  footnote4 <- paste0("4. Countries with fewer enrolled subjects (Japan, Kenya and Nepal) were pooled.")
+  eval.footnote4.table = TRUE
+}
 #########################
 
 if(studyName_for_report %in% c("COVE", "MockCOVE")){
@@ -78,6 +100,7 @@ if(studyName_for_report %in% c("COVE", "MockCOVE")){
 } else if (studyName_for_report == "PREVENT19"){
   day = "Day 35"
   start = "1 day"
+  AUCstart = "7 days"
 } else if (studyName_for_report == "AZD1222"){
   day = "Day 57"
   start = "7 days"
@@ -110,7 +133,7 @@ if(studyName_for_report %in% c("ENSEMBLE")){
              threeparttable = TRUE)
 }
 
-if(studyName_for_report %in% c("PREVENT19")){
+if(studyName_for_report %in% c("PREVENT19", "VAT08m")){
   tab <- tab %>% 
     footnote(c(footnote1,
                footnote2,
@@ -513,7 +536,7 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "vacc.cases.A
     caption = caption) %>%
   kable_styling(latex_options = c("hold_position"),
                 font_size = 9) %>%
-  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least ", start, " after the ", day, " visit.")),
+  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least ", AUCstart, " after the ", day, " visit.")),
              threeparttable = TRUE)
 
 ```

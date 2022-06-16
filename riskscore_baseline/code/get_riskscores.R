@@ -1,8 +1,8 @@
 # Sys.setenv(TRIAL = "moderna_mock")
 # Sys.setenv(TRIAL = "janssen_pooled_mock")
-# Sys.setenv(TRIAL = "azd1222")
-# Sys.setenv(TRIAL = "prevent19")
-# Sys.setenv(TRIAL = "vat08m")
+# Sys.setenv(TRIAL = "azd1222") # Astra-Zeneca
+# Sys.setenv(TRIAL = "prevent19") # Novavax
+# Sys.setenv(TRIAL = "vat08m") # Sanofi
 
 source("code/loadlibraries_readinputdata.R")
 inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) # this function is in _common.R
@@ -185,15 +185,15 @@ if(study_name == "VAT08m"){
                                               Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
                                               TRUE ~ as.double(EventIndPrimaryD43)),
            pooled.age.grp = ifelse(Age >= 60, 1, 0),
-           # Pool countries (Japan and Nepal) that have sparse endpoints EventIndPrimaryD43)
-           Country = ifelse(Country %in% c(5, 7), 57, Country))
+           # Pool countries (Japan, Kenya and Nepal) that have sparse endpoints EventIndPrimaryD43)
+           Country.pooled = ifelse(Country %in% c(5, 6, 7), 567, Country))
   
   risk_vars <- c(
     "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
     "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
     "URMforsubcohortsampling", "HighRiskInd", "HIVinfection",
     "Sex", "Age", "pooled.age.grp", "BMI", #"BMI.group", "Height", "Weight", 
-    "Country.X2", "Country.X3", "Country.X4", "Country.X57", "Country.X8",
+    "Country.pooled.X2", "Country.pooled.X3", "Country.pooled.X4", "Country.pooled.X8", "Country.pooled.X567", 
     #"USAInd",  
     "CalDtEnrollIND.X1", "CalDtEnrollIND.X2", "CalDtEnrollIND.X3", "CalDtEnrollIND.X4", "CalDtEnrollIND.X5"
   )
@@ -216,7 +216,7 @@ if(study_name == "VAT08m"){
   
   # Create binary indicator variables for Country and CalendarDateEnrollment
   inputMod <- inputFile %>%
-    mutate(Country = as.factor(Country),
+    mutate(Country.pooled = as.factor(Country.pooled),
            CalDtEnrollIND = case_when(CalendarDateEnrollment < 28 ~ 0,
                                       CalendarDateEnrollment >= 28 & CalendarDateEnrollment < 56 ~ 1,
                                       CalendarDateEnrollment >= 56 & CalendarDateEnrollment < 84 ~ 2,
@@ -225,9 +225,9 @@ if(study_name == "VAT08m"){
                                       CalendarDateEnrollment >= 140 & CalendarDateEnrollment < 168 ~ 5),
            CalDtEnrollIND = as.factor(CalDtEnrollIND)) 
   
-  rec <- recipe(~ Country + CalDtEnrollIND, data = inputMod)
+  rec <- recipe(~ Country.pooled + CalDtEnrollIND, data = inputMod)
   dummies <- rec %>%
-    step_dummy(Country, CalDtEnrollIND) %>%
+    step_dummy(Country.pooled, CalDtEnrollIND) %>%
     prep(training = inputMod)
   inputMod <- inputMod %>% bind_cols(bake(dummies, new_data = NULL)) 
   names(inputMod) <- gsub("\\_", ".", names(inputMod))
