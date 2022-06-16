@@ -26,7 +26,7 @@ twophase_sample_id <- dat.twophase.sample$Ptid
 important.columns <- c("Ptid", "Trt", "MinorityInd", "HighRiskInd", "Age", "Sex",
   "Bserostatus", "Senior", "Bstratum", "wt.subcohort", 
   "race","EthnicityHispanic","EthnicityNotreported", 
-  "EthnicityUnknown", "WhiteNonHispanic", if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") c("Country", "HIVinfection"))
+  "EthnicityUnknown", "WhiteNonHispanic", "Country", "HIVinfection")
 
 ## arrange the dataset in the long form, expand by assay types
 ## dat.long.subject_level is the subject level covariates;
@@ -232,13 +232,13 @@ if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
   dat.long.twophase.sample$country_label <- factor(sapply(dat.long.twophase.sample$Country, function(x) {
     names(countries.ENSEMBLE)[countries.ENSEMBLE==x]
   }), levels = names(countries.ENSEMBLE))
-  
-  dat.long.twophase.sample$hiv_label <- factor(sapply(dat.long.twophase.sample$HIVinfection, function(x) {
-    ifelse(x,
-           "HIV Positive",
-           "HIV Negative")
-  }), levels=c("HIV Negative", "HIV Positive"))
 }
+
+dat.long.twophase.sample$hiv_label <- factor(sapply(dat.long.twophase.sample$HIVinfection, function(x) {
+  ifelse(x,
+         "HIV Positive",
+         "HIV Negative")
+}), levels=c("HIV Negative", "HIV Positive"))
 
 dat.long.twophase.sample$race <- as.factor(dat.long.twophase.sample$race)
 dat.twophase.sample$race <- as.factor(dat.twophase.sample$race)
