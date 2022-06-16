@@ -25,7 +25,7 @@ inputFile_with_riskscore <- left_join(inputFile, risk_scores, by = "Ptid")
 
 # For some studies, impute the missing risk scores and standardize them separately for placebo and vaccine groups 
 if(study_name == "PREVENT19" & 
-   any(is.na(inputFile_with_riskscore %>% filter(Country == 0) %>% .$risk_score))){
+   any(is.na(inputFile_with_riskscore %>% filter(Country == 0 & Riskscorecohortflag == 1) %>% .$risk_score))){
 
   get_imputed_riskscore <- function(dat_with_riskscore, riskVars){
     imp_vars <- dat_with_riskscore %>% 

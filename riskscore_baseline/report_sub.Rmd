@@ -84,6 +84,11 @@ if(studyName_for_report == "PREVENT19"){
   footnote4 <- paste0("4. Baseline risk score development is restricted to only US subjects.")
   eval.footnote4.table = TRUE
 }
+
+if(studyName_for_report == "VAT08m"){
+  footnote4 <- paste0("4. Countries with fewer enrolled subjects (Japan, Kenya and Nepal) were pooled.")
+  eval.footnote4.table = TRUE
+}
 #########################
 
 if(studyName_for_report %in% c("COVE", "MockCOVE")){
@@ -128,7 +133,7 @@ if(studyName_for_report %in% c("ENSEMBLE")){
              threeparttable = TRUE)
 }
 
-if(studyName_for_report %in% c("PREVENT19")){
+if(studyName_for_report %in% c("PREVENT19", "VAT08m")){
   tab <- tab %>% 
     footnote(c(footnote1,
                footnote2,
