@@ -570,11 +570,11 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {
     if (attr(config, "config") == "moderna_mock") {
-        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="a1b8077e49ee1b65fd269aeaba2d027f", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="993f8c99723c779f4280a9e4125de936", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
     } else if (attr(config, "config") == "janssen_pooled_mock") {
-        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="028549acb994980fbb6832198308ec4a", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="f3e286effecf1581eec34707fc4d468f", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
     } else if (attr(config, "config") == "prevent19") {
-        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="ace94aafd9bd52796e5b5a9b3c3cd399", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="cd6b667c32e249ac82fb9af2f1094561", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
     } 
     print("======================= Passed make_dat_proc digest check =======================")    
 }
