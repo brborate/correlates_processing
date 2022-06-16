@@ -362,7 +362,7 @@ for(tp in times[!times %in% c(paste0("Delta",timepoints[length(timepoints)],"ove
 ```
 
 \clearpage
-## Spaghetti plots of antibody markers over time for the overall per-protocol cohort
+## Spaghetti plots of antibody markers over time for overall per-protocol cohort
 
 ### Baseline SARS-CoV-2 Negative
 
