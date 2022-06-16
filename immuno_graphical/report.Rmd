@@ -66,8 +66,9 @@ bseroLabel <- ifelse(bsero=="BaselineNeg", "negative", "positive")
 
 trt="vaccine"
   
-# only doable when there are >1 assays
-if (if.pair==1){
+for (country in c("Nvx_US_Mex", if(study_name=="PREVENT19") "Nvx_US")){
+  # only doable when there are >1 assays
+  if (if.pair==1){
     
     for(tp in times[!times %in% c(paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]) {
       
@@ -77,19 +78,17 @@ if (if.pair==1){
       cat(res, sep = '\n')
       cat("\\clearpage", sep = '\n')
     }
-}
-
-if (if.pair==1 | study_name=="VAT08m"){
-    
-    for (asy in assay_immuno){
+  }
       
-      asyLabel <- gsub("%","\\\\%", labels.assays[asy])
-      
-      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
-      cat(res, sep = '\n')
-      cat("\\clearpage", sep = '\n')
-    }
+  for (asy in assay_immuno){
     
+    asyLabel <- gsub("%","\\\\%", labels.assays[asy])
+    
+    res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
+    cat(res, sep = '\n')
+    cat("\\clearpage", sep = '\n')
+  }
+  
 }
 ```
 
@@ -102,9 +101,11 @@ bseroLabel <- ifelse(bsero=="BaselineNeg", "negative", "positive")
 
 trt="vaccine"
   
-# only doable when there are >1 assays
-if (if.pair==1 & if.pos.exist==1){
-    
+for (country in c("Nvx_US_Mex", if(study_name=="PREVENT19") "Nvx_US")){
+  
+  # only doable when there are >1 assays
+  if (if.pair==1 & if.pos.exist==1){
+      
     for(tp in times[!times %in% c(paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]) {
       
       tpLabel <- gsub("ay ", "", labels.time[tp])
@@ -113,19 +114,17 @@ if (if.pair==1 & if.pos.exist==1){
       cat(res, sep = '\n')
       cat("\\clearpage", sep = '\n')
     }
-}
+  }
 
-if (if.pair==1 | study_name=="VAT08m"){
+  for (asy in assay_immuno){
     
-    for (asy in assay_immuno){
-      
-      asyLabel <- gsub("%","\\\\%", labels.assays[asy])
-      
-      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
-      cat(res, sep = '\n')
-      cat("\\clearpage", sep = '\n')
-    }
+    asyLabel <- gsub("%","\\\\%", labels.assays[asy])
     
+    res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
+    cat(res, sep = '\n')
+    cat("\\clearpage", sep = '\n')
+    
+  }
 }
 ```
 
@@ -138,8 +137,10 @@ bseroLabel <- ifelse(bsero=="BaselineNeg", "negative", "positive")
 
 trt="placebo"
   
-# only doable when there are >1 assays
-if (if.pair==1 & if.pos.exist==1){
+for (country in c("Nvx_US_Mex", if(study_name=="PREVENT19") "Nvx_US")){
+  
+  # only doable when there are >1 assays
+  if (if.pair==1 & if.pos.exist==1){
     
     for(tp in times[!times %in% c(paste0("Delta",timepoints[length(timepoints)],"over",timepoints[1]))]) {
       
@@ -150,18 +151,16 @@ if (if.pair==1 & if.pos.exist==1){
       cat("\\clearpage", sep = '\n')
     }
     
-}
-
-if (if.pair==1 | study_name=="VAT08m"){
+  }
   
-    for (asy in assay_immuno){
-      
-      asyLabel <- gsub("%","\\\\%", labels.assays[asy])
-      
-      res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
-      cat(res, sep = '\n')
-      cat("\\clearpage", sep = '\n')
-    }
+  for (asy in assay_immuno){
+    
+    asyLabel <- gsub("%","\\\\%", labels.assays[asy])
+    
+    res = knitr::knit_child(c(here::here('immuno_graphical', 'report_pair_by_assay.Rmd')), quiet = TRUE)
+    cat(res, sep = '\n')
+    cat("\\clearpage", sep = '\n')
+  }
     
 }
 ```
