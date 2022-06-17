@@ -21,7 +21,7 @@ if (Sys.getenv("NOCHECK") == "") {
     assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "ae6dd4697c65a4b7511f890c219d17be", 
                             msg = "failed risk_score digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
   } else if (attr(config, "config") == "vat08m") {
-    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "232efb271e32526c042350921fa74041", 
+    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "5c91fb4da8dec788f61ac1e41962906e", 
                             msg = "failed risk_score digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
   } 
   print("======================= Passed risk_score digest check =======================")    
