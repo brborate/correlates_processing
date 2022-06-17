@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "prevent19")
+#Sys.setenv(TRIAL = "vat08m")
 renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -221,19 +221,23 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 #    JPN, Not senior
 #    JPN, senior
     dat_proc$demo.stratum = with(dat_proc, strtoi(Senior, base = 2)) + 1
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==3, demo.stratum, demo.stratum+2)) # HND
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==8, demo.stratum, demo.stratum+4)) # USA
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==5, demo.stratum, demo.stratum+6)) # JPN
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==3, demo.stratum+2, demo.stratum)) # HND
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==8, demo.stratum+4, demo.stratum)) # USA
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==5, demo.stratum+6, demo.stratum)) # JPN
+    
+    # in this partial dataset, we need to collapse "Not HND, US or JPN, senior" and "HND, senior" due to sparsity
+    dat_proc$demo.stratum = with(dat_proc, ifelse(demo.stratum==4, 2, demo.stratum)) 
         
 } else stop("unknown study_name 5")  
   
 names(demo.stratum.labels) <- demo.stratum.labels
 
+with(dat_proc, table(demo.stratum))
 
 # tps stratum, 1 ~ 4*max(demo.stratum), used in tps regression
 dat_proc <- dat_proc %>%
   mutate(
-    tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * length(demo.stratum.labels)
+    tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * max(demo.stratum) # the change from length(demo.stratum.labels) to max(demo.stratum) is so that we can skip numbers in demo.stratum
   )
 
 # Wstratum, 1 ~ max(tps.stratum), max(tps.stratum)+1, ..., max(tps.stratum)+4. 
@@ -582,7 +586,6 @@ if(Sys.getenv ("NOCHECK")=="") {
     } else if (attr(config, "config") == "prevent19") {
         assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="cd6b667c32e249ac82fb9af2f1094561", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
     } 
-    print("======================= Passed make_dat_proc digest check =======================")    
 }
 
 

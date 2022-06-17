@@ -379,17 +379,28 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
     )
 
 } else if (study_name=="VAT08m") {
+#    demo.stratum.labels <- c(
+#      "Not HND, Age 18-59",
+#      "Not HND, Age >= 60",
+#      "HND, Age 18-59",
+#      "HND, Age >= 60",
+#      "USA, Age 18-59",
+#      "USA, Age >= 60",
+#      "JPN, Age 18-59",
+#      "JPN, Age >= 60"
+#    )
+
+    # in this partial dataset, we need to collapse "Not HND, US or JPN, senior" and "HND, senior" due to sparsity
     demo.stratum.labels <- c(
       "Not HND, Age 18-59",
-      "Not HND, Age >= 60",
+      "Not USA or JPN, Age >= 60",
       "HND, Age 18-59",
-      "HND, Age >= 60",
       "USA, Age 18-59",
       "USA, Age >= 60",
       "JPN, Age 18-59",
       "JPN, Age >= 60"
     )
-
+    
 } else if (study_name=="HVTN705") {
     # do nothing
 
