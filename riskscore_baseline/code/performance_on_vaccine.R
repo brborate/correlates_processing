@@ -30,7 +30,7 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name)))
   endpoint <- paste0(sub("rscore", "", endpoint), "rauc")
 
 vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv")) %>%
-  filter(!is.na(!!sym(endpoint)))
+  filter(RiskscoreAUCflag == 1) 
 
 # plot ROC curve on vaccinees
 pred.obj <- ROCR::prediction(vacc$pred, vacc %>% pull(endpoint))
