@@ -26,7 +26,7 @@ study_name_code <- studyName_for_report
 ```
 
 
-This baseline risk score report is based off analysis data located here: 
+This baseline risk score report is based off analysis data located here:  
 `r mapped_data`.
 
 
@@ -83,25 +83,29 @@ if(studyName_for_report == "VAT08m"){
 #########################
 
 if(studyName_for_report %in% c("COVE", "MockCOVE")){
-  day = "Day 57"
-  start = "7 days"
+  dayrscore = "Day 57"
+  rscorestart = "7 days"
+  dayrauc = "Day 57"
   aucstart = "7 days"
 } else if (studyName_for_report %in% c("ENSEMBLE", "MockENSEMBLE")){
-  day = "Day 29"
-  start = "1 day"
+  dayrscore = "Day 29"
+  rscorestart = "1 day"
+  dayrauc = "Day 29"
   aucstart = "1 day"
 } else if (studyName_for_report == "PREVENT19"){
   dayrscore = "enrollment"
+  rscorestart = "1 day"
   dayrauc = "Day 35"
-  start = "1 day"
   aucstart = "7 days"
 } else if (studyName_for_report == "AZD1222"){
-  day = "Day 57"
-  start = "1 day"
+  dayrscore = "enrollment"
+  rscorestart = "1 day"
+  dayrauc = "Day 57"
   aucstart = "7 days"
 } else if (studyName_for_report == "VAT08m"){
-  day = "Day 43"
-  start = "1 day"
+  dayrscore = "enrollment"
+  rscorestart = "1 day"
+  dayrauc = "Day 43"
   aucstart = "7 days"
 } 
 
@@ -352,21 +356,21 @@ cvsl_args %>%
 
 
 
-```{r, echo=FALSE, out.width="99%", out.height="120%", fig.cap= paste0("Cross-validated AUC (95\\% CI) of algorithms for predicting COVID-19 disease status starting ", start, " after ", dayrscore, ". CV-AUCs were computed using only data from the placebo arm.")}
+```{r, echo=FALSE, out.width="99%", out.height="120%", fig.cap= paste0("Cross-validated AUC (95\\% CI) of algorithms for predicting COVID-19 disease status starting ", rscorestart, " after ", dayrscore, ". CV-AUCs were computed using only data from the placebo arm.")}
 knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_placebo_cvaucs.png"))
 ```
 
 \end{landscape}
 
 
-```{r, echo=FALSE, out.height="94%", fig.cap=paste0("CV-estimated predicted probabilities of COVID-19 disease starting ", start, " after ", dayrscore, " by case/control status for top 2 learners, SuperLearner and Discrete SL. CV-estimated predicted probabilities were computed using only data from the placebo arm.")}
+```{r, echo=FALSE, out.height="94%", fig.cap=paste0("CV-estimated predicted probabilities of COVID-19 disease starting ", rscorestart, " after ", dayrscore, " by case/control status for top 2 learners, SuperLearner and Discrete SL. CV-estimated predicted probabilities were computed using only data from the placebo arm.")}
 knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "predProb_riskscore_plac.png"))
 ```
 
 \clearpage
 
 
-```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap=paste0("ROC curves based off CV-estimated predicted probabilities for the top 2 learners, Superlearner and Discrete SL. CV-estimated predicted probabilities were derived considering cases as COVID-19 disease endpoints starting ", start, " after ", dayrscore, " using only data from the placebo arm.")}
+```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap=paste0("ROC curves based off CV-estimated predicted probabilities for the top 2 learners, Superlearner and Discrete SL. CV-estimated predicted probabilities were derived considering cases as COVID-19 disease endpoints starting ", rscorestart, " after ", dayrscore, " using only data from the placebo arm.")}
 knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "ROCcurve_riskscore_plac.png"))
 ```
 
@@ -454,12 +458,12 @@ The risk score analysis code appends two columns (risk_score and standardized_ri
 caption <- "Cases per treatment arm in data\\_processed.csv before applying RiskscorecohortFLAG."
 
 if(any(sapply(c("COVE", "ENSEMBLE"), grepl, studyName_for_report))){
-  new_colnames = c("Non-Cases", paste0("Post-", day, "-Cases"))
-  footnote1 <- paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least ", start, " after the ", day, " visit.")
+  new_colnames = c("Non-Cases", paste0("Post-", dayrscore, "-Cases"))
+  footnote1 <- paste0("Post-Day ", dayrscore, " Cases: COVID-19 primary endpoints that occur at least ", rscorestart, " after the ", dayrscore, " visit.")
   eval.footnote1.table = TRUE
 }else{
   new_colnames = c("Non-Cases", "Post-Enrollment Cases")
-  footnote1 <- "Post-enrollment Cases: All COVID-19 primary endpoints that occur  after enrollment (Day 1 in study)."
+  footnote1 <- "Post-enrollment Cases: All COVID-19 primary endpoints that occur after enrollment (Day 1 in study)."
   eval.footnote1.table = TRUE
 }
 

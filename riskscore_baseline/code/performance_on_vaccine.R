@@ -27,7 +27,7 @@ conflict_prefer("select", "dplyr")
 load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
 
 if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name)))
-  endpoint <- paste0(sub("rscore", "", endpoint), "rauc")
+  endpoint <- paste0(sub("1rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc"))
 
 vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv")) %>%
   filter(RiskscoreAUCflag == 1) 
@@ -73,7 +73,7 @@ png(file = here("output", Sys.getenv("TRIAL"), "predProb_riskscore_vacc_onlySL.p
 #   cases = "Post Day 29 Cases"
 # }
 print(vacc %>%
-  mutate(Ychar = ifelse(get(endpoint) == 0, "Non-Cases", paste0("Post Day ", risk_timepoint, " Cases"))) %>%
+  mutate(Ychar = ifelse(get(endpoint) == 0, "Non-Cases", paste0("Post Day ", vaccAUC_timepoint, " Cases"))) %>%
   ggplot(aes(x = Ychar, y = pred, color = Ychar)) +
   geom_jitter(width = 0.06, size = 3, shape = 21, fill = "white") +
   geom_violin(alpha = 0.05, color = "black", lwd=1.5) +
