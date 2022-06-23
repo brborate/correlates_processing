@@ -18,10 +18,13 @@ if (Sys.getenv("NOCHECK") == "") {
     assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "f7a8225eb5fa8cc9a5426211988b9d95", 
                             msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
   } else if (attr(config, "config") == "prevent19") {
-    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "ae6dd4697c65a4b7511f890c219d17be", 
+    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "53f991ec3b75c8643f2c90fe7252c25e", 
                             msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
   } else if (attr(config, "config") == "vat08m") {
-    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "6040d5c672c286679966d5a9c012eca0", 
+    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "fbb4744547f553b39efd08f838b5dca5", 
+                            msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
+  } else if (attr(config, "config") == "azd1222") {
+    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "90bc4f44f626a160d866f1cf7369c645", 
                             msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
   } 
   print("======================= Passed risk_score digest check =======================")    
