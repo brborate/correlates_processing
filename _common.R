@@ -594,21 +594,19 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     } else if (study_name == "PREVENT19") { # Novavax
       dat_proc <- dat_proc %>%
         mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
-               RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
-                                            Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7 ~ 1,
-                                            TRUE ~ 0))
+               RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7, 1, 0)
+               )
     } else if (study_name == "AZD1222") {
         dat_proc <- dat_proc %>%
           mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
-                 RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
-                                              Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7 ~ 1,
-                                              TRUE ~ 0))
+                 # RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
+                 #                              Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7 ~ 1,
+                 #                              TRUE ~ 0),
+                 RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7, 1, 0))
     } else if (study_name == "VAT08m") { # Sanofi
         dat_proc <- dat_proc %>%
           mutate(Riskscorecohortflag = ifelse(Perprotocol==1, 1, 0),
-                 RiskscoreAUCflag = case_when(Trt==0 & Perprotocol==1 ~ 1,
-                                              Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7 ~ 1,
-                                              TRUE ~ 0))
+                 RiskscoreAUCflag = ifelse(Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7, 1, 0))
     } else stop("unknown study_name 4")
 
     assertthat::assert_that(

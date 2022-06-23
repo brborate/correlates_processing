@@ -26,20 +26,11 @@ study_name_code <- studyName_for_report
 ```
 
 
-This baseline risk score report is based off analysis data located here: `r mapped_data`.
+This baseline risk score report is based off analysis data located here:  
+`r mapped_data`.
 
 
 ```{r riskVarstable, warning=FALSE, echo=FALSE, message=FALSE}
-library(tidyverse, quietly = T)
-library(kableExtra, quietly = T)
-library(conflicted, quietly = T)
-conflicted::conflict_prefer("filter", "dplyr")
-conflict_prefer("summarise", "dplyr")
-load(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
-source(here("riskscore_baseline", "code", "study_specific_functions.R"))
-
-study_name_code <- studyName_for_report
-
 ### create footnotes ###
 dropped.riskVars.fewer.0s1s <- read.table(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "drop_riskVars_with_fewer_0s_or_1s.csv")) %>%
   separate(V1, c("droppedVars"), sep = " ") %>%
@@ -92,21 +83,27 @@ if(studyName_for_report == "VAT08m"){
 #########################
 
 if(studyName_for_report %in% c("COVE", "MockCOVE")){
-  day = "Day 57"
-  start = "7 days"
+  dayrscore = "Day 57"
+  rscorestart = "7 days"
+  dayrauc = "Day 57"
+  aucstart = "7 days"
 } else if (studyName_for_report %in% c("ENSEMBLE", "MockENSEMBLE")){
-  day = "Day 29"
-  start = "1 day"
-} else if (studyName_for_report == "PREVENT19"){
-  day = "Day 35"
-  start = "1 day"
-  AUCstart = "7 days"
+  dayrscore = "Day 29"
+  rscorestart = "1 day"
+  dayrauc = "Day 29"
+  aucstart = "1 day"
+} else if (!any(sapply(c("COVE", "ENSEMBLE"), grepl, studyName_for_report))){
+  dayrscore = "enrollment"
+  rscorestart = "1 day"
+  aucstart = "7 days"
+}
+  
+if(studyName_for_report == "PREVENT19"){
+  dayrauc = "Day 35"
 } else if (studyName_for_report == "AZD1222"){
-  day = "Day 57"
-  start = "7 days"
+  dayrauc = "Day 57"
 } else if (studyName_for_report == "VAT08m"){
-  day = "Day 43"
-  start = "7 days"
+  dayrauc = "Day 43"
 } 
 
 caption <- "Individual baseline variables in baseline SARS-CoV-2 negative per-protocol placebo recipients that were used in the Superlearner model for developing risk score and predicting occurrence of COVID-19."
@@ -356,28 +353,28 @@ cvsl_args %>%
 
 
 
-```{r, echo=FALSE, out.width="99%", out.height="120%", fig.cap= paste0("Cross-validated AUC (95\\% CI) of algorithms for predicting COVID-19 disease status starting ", start, " after ", day, ". CV-AUCs were computed using only data from the placebo arm.")}
+```{r, echo=FALSE, out.width="99%", out.height="120%", fig.cap= paste0("Cross-validated AUC (95\\% CI) of algorithms for predicting COVID-19 disease status starting ", rscorestart, " after ", dayrscore, ". CV-AUCs were computed using only data from the placebo arm.")}
 knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_placebo_cvaucs.png"))
 ```
 
 \end{landscape}
 
 
-```{r, echo=FALSE, out.height="94%", fig.cap=paste0("CV-estimated predicted probabilities of COVID-19 disease ", start, " after ", day, " by case/control status for top 2 learners, SuperLearner and Discrete SL. CV-estimated predicted probabilities were computed using only data from the placebo arm.")}
+```{r, echo=FALSE, out.height="94%", fig.cap=paste0("CV-estimated predicted probabilities of COVID-19 disease starting ", rscorestart, " after ", dayrscore, " by case/control status for top 2 learners, SuperLearner and Discrete SL. CV-estimated predicted probabilities were computed using only data from the placebo arm.")}
 knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "predProb_riskscore_plac.png"))
 ```
 
 \clearpage
 
 
-```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap="ROC curves based off CV-estimated predicted probabilities for the top 2 learners, Superlearner and Discrete SL. CV-estimated predicted probabilities were computed using only data from the placebo arm."}
+```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap=paste0("ROC curves based off CV-estimated predicted probabilities for the top 2 learners, Superlearner and Discrete SL. CV-estimated predicted probabilities were derived considering cases as COVID-19 disease endpoints starting ", rscorestart, " after ", dayrscore, " using only data from the placebo arm.")}
 knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "ROCcurve_riskscore_plac.png"))
 ```
 
 \clearpage
 
 ```{r risk-sl-weights, warning=FALSE, echo=FALSE}
-caption <- "Weights assigned by Superlearner."
+caption <- "Weights assigned by Superlearner using data only from the placebo arm."
 read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "SL_weights.csv"), row.names = 1,
          header = TRUE) %>%
   kable(
@@ -423,14 +420,14 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "SL_all_model
 \end{landscape}
 
 
-```{r, echo=FALSE, out.width="100%", out.height="90%", fig.cap=paste0("Superlearner predicted probabilities of COVID-19 disease in vaccinees ", start, " after ", day, " by case/control status.")}
+```{r, echo=FALSE, out.width="100%", out.height="90%", fig.cap=paste0("Superlearner predicted probabilities of COVID-19 disease starting at least ", aucstart, " after ", dayrauc, " in vaccinees by case/control status.")}
 knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "predProb_riskscore_vacc_onlySL.png"))
 ```
 
 \clearpage
 
 
-```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap="ROC curve based off Superlearner predicted probabilities in vaccinees."}
+```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap=paste0("ROC curve based off Superlearner predicted probabilities of COVID-19 disease starting at least ", aucstart, " after ", dayrauc, " in vaccinees.")}
 knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "ROCcurve_riskscore_vacc_onlySL.png"))
 ```
 
@@ -458,12 +455,12 @@ The risk score analysis code appends two columns (risk_score and standardized_ri
 caption <- "Cases per treatment arm in data\\_processed.csv before applying RiskscorecohortFLAG."
 
 if(any(sapply(c("COVE", "ENSEMBLE"), grepl, studyName_for_report))){
-  new_colnames = c("Non-Cases", paste0("Post-", day, "-Cases"))
-  footnote1 <- paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least ", start, " after the ", day, " visit.")
+  new_colnames = c("Non-Cases", paste0("Post-", dayrscore, "-Cases"))
+  footnote1 <- paste0("Post-Day ", dayrscore, " Cases: COVID-19 primary endpoints that occur at least ", rscorestart, " after the ", dayrscore, " visit.")
   eval.footnote1.table = TRUE
 }else{
   new_colnames = c("Non-Cases", "Post-Enrollment Cases")
-  footnote1 <- "Post-enrollment Cases: All COVID-19 primary endpoints that occur  after enrollment (Day 1 in study)."
+  footnote1 <- "Post-enrollment Cases: All COVID-19 primary endpoints that occur after enrollment (Day 1 in study)."
   eval.footnote1.table = TRUE
 }
 
@@ -528,7 +525,7 @@ caption <- "Cases/Controls in vaccine cohort used towards evaluation of SL predi
 
 read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "vacc.cases.AUC.calc_post_riskScoreAnalysis.csv"), row.names = 1,
          header = TRUE) %>%
-  mutate(Var1 = ifelse(Var1 == 0, "Controls", "Cases")) %>%
+  mutate(Var1 = ifelse(Var1 == 0, "Controls", paste0("Post-", dayrauc, " Cases"))) %>%
   rename(`Vaccine Arm` = Var1) %>%
   kable(
     booktabs = TRUE,
@@ -536,7 +533,7 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "vacc.cases.A
     caption = caption) %>%
   kable_styling(latex_options = c("hold_position"),
                 font_size = 9) %>%
-  footnote(c(paste0("Post-Day ", day, " Cases: COVID-19 primary endpoints that occur at least ", AUCstart, " after the ", day, " visit.")),
+  footnote(c(paste0("Post-", dayrauc, " Cases: COVID-19 primary endpoints that occur at least ", aucstart, " after the ", dayrauc, " visit.")),
              threeparttable = TRUE)
 
 ```

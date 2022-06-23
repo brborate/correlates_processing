@@ -13,16 +13,16 @@ library(digest)
 if (Sys.getenv("NOCHECK") == "") {
   if (attr(config, "config") == "moderna_mock") {
     assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "95368009ca10fc4b2e075885442e6e31", 
-                            msg = "failed risk_score digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+                            msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
   } else if (attr(config, "config") == "janssen_pooled_mock") {
     assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "f7a8225eb5fa8cc9a5426211988b9d95", 
-                            msg = "failed risk_score digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+                            msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
   } else if (attr(config, "config") == "prevent19") {
     assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "ae6dd4697c65a4b7511f890c219d17be", 
-                            msg = "failed risk_score digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+                            msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
   } else if (attr(config, "config") == "vat08m") {
-    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "5c91fb4da8dec788f61ac1e41962906e", 
-                            msg = "failed risk_score digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "6040d5c672c286679966d5a9c012eca0", 
+                            msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
   } 
   print("======================= Passed risk_score digest check =======================")    
 }
