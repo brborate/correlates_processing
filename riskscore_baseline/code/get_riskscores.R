@@ -184,10 +184,11 @@ if(study_name == "AZD1222"){
 
 if(study_name == "VAT08m"){
   inputFile <- inputFile %>%
-    mutate(EventIndPrimaryD43rscore = EventIndPrimaryD1,
-           EventIndPrimaryD43rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD43==1) ~ 1, 
-                                              Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
-                                              TRUE ~ as.double(EventIndPrimaryD43)),
+    mutate(EventIndPrimaryD1rscore = EventIndPrimaryD1,
+           # EventIndPrimaryD43rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD43==1) ~ 1, 
+           #                                    Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
+           #                                    TRUE ~ as.double(EventIndPrimaryD43)),
+           EventIndPrimaryD43rauc = ifelse(RiskscoreAUCflag == 1, EventIndPrimaryD43, NA),
            pooled.age.grp = ifelse(Age >= 60, 1, 0),
            # Pool countries (Japan, Kenya and Nepal) that have sparse endpoints EventIndPrimaryD43)
            Country.pooled = ifelse(Country %in% c(5, 6, 7), 567, Country))
@@ -213,11 +214,11 @@ if(study_name == "VAT08m"){
     "CalendarDateEnrollment"
   )
   
-  endpoint <- "EventIndPrimaryD43"
-  endpoint <- paste0(endpoint, "rscore")
-  risk_timepoint <- 43
+  endpoint <- "EventIndPrimaryD1rscore"
+  riskscore_timepoint <- 1
+  vaccAUC_timepoint <- 43
   studyName_for_report <- "VAT08m"
-  
+
   # Create binary indicator variables for Country and CalendarDateEnrollment
   inputMod <- inputFile %>%
     mutate(Country.pooled = as.factor(Country.pooled),
