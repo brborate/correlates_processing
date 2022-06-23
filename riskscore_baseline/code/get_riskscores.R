@@ -120,9 +120,6 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
 if(study_name == "PREVENT19"){
   inputFile <- inputFile %>%
     mutate(EventIndPrimaryD1rscore = EventIndPrimaryD1,
-           # EventIndPrimaryD35rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD35==1) ~ 1, 
-           #                                    Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
-           #                                    TRUE ~ as.double(EventIndPrimaryD35)))
            EventIndPrimaryD35rauc = ifelse(RiskscoreAUCflag == 1, EventIndPrimaryD35, NA)
            )
   
@@ -183,9 +180,6 @@ if(study_name == "AZD1222"){
 if(study_name == "VAT08m"){
   inputFile <- inputFile %>%
     mutate(EventIndPrimaryD1rscore = EventIndPrimaryD1,
-           # EventIndPrimaryD43rauc = case_when(Trt==0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD43==1) ~ 1, 
-           #                                    Trt==0 & !is.na(EventIndPrimaryD1) & EventIndPrimaryD1==0 ~ 0, 
-           #                                    TRUE ~ as.double(EventIndPrimaryD43)),
            EventIndPrimaryD43rauc = ifelse(RiskscoreAUCflag == 1, EventIndPrimaryD43, NA),
            pooled.age.grp = ifelse(Age >= 60, 1, 0),
            # Pool countries (Japan, Kenya and Nepal) that have sparse endpoints EventIndPrimaryD43)
