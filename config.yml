@@ -45,7 +45,7 @@ vat08m: &vat08m
   assay_labels: [PsV Neutralization 50% Titer]
   assay_labels_short: [Pseudovirus-nAb ID50 (IU50/ml)]
   study_name: VAT08m
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_realdata_20220622.csv 
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_realdata_20220623.csv 
   
 
 prevent19: &prevent19
