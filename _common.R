@@ -29,7 +29,7 @@ names(assays)=assays # add names so that lapply results will have names
 
 # if this flag is true, then the N IgG binding antibody is reported 
 # in the immuno report (but is not analyzed in the cor or cop reports).
-include_bindN <- !study_name %in% c("PREVENT19","AZD1222")
+include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08m")
 
 
 # For bAb, IU and BAU are the same thing
@@ -591,24 +591,19 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
         dat_proc$Riskscorecohortflag <-
           with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
 
-    } else if (study_name == "PREVENT19") {
+    } else if (study_name == "PREVENT19") { # Novavax
       dat_proc <- dat_proc %>%
         mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
-               RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
-                                            Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7 ~ 1,
-                                            TRUE ~ 0))
+               RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7, 1, 0)
+               )
     } else if (study_name == "AZD1222") {
         dat_proc <- dat_proc %>%
           mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
-                 RiskscoreAUCflag = case_when(Trt==0 & Bserostatus==0 & Perprotocol==1 ~ 1,
-                                              Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7 ~ 1,
-                                              TRUE ~ 0))
-    } else if (study_name == "VAT08m") {
+                 RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7, 1, 0))
+    } else if (study_name == "VAT08m") { # Sanofi
         dat_proc <- dat_proc %>%
           mutate(Riskscorecohortflag = ifelse(Perprotocol==1, 1, 0),
-                 RiskscoreAUCflag = case_when(Trt==0 & Perprotocol==1 ~ 1,
-                                              Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7 ~ 1,
-                                              TRUE ~ 0))
+                 RiskscoreAUCflag = ifelse(Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7, 1, 0))
     } else stop("unknown study_name 4")
 
     assertthat::assert_that(

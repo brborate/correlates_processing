@@ -163,7 +163,8 @@ inputMod <- inputMod %>%
   save(cvfits, file = here("output", Sys.getenv("TRIAL"), "cvsl_riskscore_cvfits.rda"))
   save(risk_placebo_ptids, file = here("output", Sys.getenv("TRIAL"), "risk_placebo_ptids.rda"))
   save(run_prod, Y, X_riskVars, weights, inputMod, risk_vars, all_risk_vars, endpoint, maxVar,
-       V_outer, V_inner, familyVar, methodVar, scaleVar, studyName_for_report, risk_timepoint, 
-       cvControlVar, inputfileName, 
+       V_outer, V_inner, familyVar, methodVar, scaleVar, studyName_for_report, 
+       riskscore_timepoint, vaccAUC_timepoint,
+       cvControlVar, inputfileName, mapped_data,
        file = here("output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
 

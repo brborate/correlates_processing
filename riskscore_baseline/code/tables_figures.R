@@ -145,7 +145,11 @@ dev.off()
 options(bitmapType = "cairo")
 png(file = here("output", Sys.getenv("TRIAL"), "predProb_riskscore_plac.png"),
     width = 1100, height = 1400)
-p2 <- plot_predicted_probabilities(pred, risk_timepoint)
+if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
+  p2 <- plot_predicted_probabilities(pred, 1)
+} else {
+  p2 <- plot_predicted_probabilities(pred, risk_timepoint)
+}
 print(p2)
 dev.off()
 
