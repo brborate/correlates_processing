@@ -227,6 +227,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     
     # in this partial dataset, we need to collapse "Not HND, US or JPN, senior" and "HND, senior" due to sparsity
     dat_proc$demo.stratum = with(dat_proc, ifelse(demo.stratum==4, 2, demo.stratum)) 
+    dat_proc$demo.stratum = with(dat_proc, ifelse(demo.stratum>4, demo.stratum-1, demo.stratum)) 
         
 } else stop("unknown study_name 5")  
   
