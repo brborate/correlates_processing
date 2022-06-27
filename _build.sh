@@ -20,6 +20,7 @@ pdflatex -halt-on-error -output-directory _report_$1 _report_$1/covpn_correlates
 pdflatex -halt-on-error -output-directory _report_$1 _report_$1/covpn_correlates_$1_$TRIAL.tex
 pdflatex -halt-on-error -output-directory _report_$1 _report_$1/covpn_correlates_$1_$TRIAL.tex
 rm -f _report_$1/*.aux _report_$1/*.log _report_$1/*.lof _report_$1/*.tex _report_$1/*.aux _report_$1/*.toc _report_$1/*.lot _report_$1/*.out
+cp _report_$1/covpn_correlates_$1_$TRIAL.pdf riskscore_baseline/output/$TRIAL/covpn_correlates_$1_$TRIAL.pdf
 
 if [[ "$TRIAL" == "moderna_real" ]] 
 then

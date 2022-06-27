@@ -598,8 +598,8 @@ for (tp in times[!times %in% c("B",paste0("Delta",timepoints[length(timepoints)]
             study_name, ".png"
           )
         )
-        
       }
+
       
       print(paste0("Done with loop of ", tp, ", trt=",
                    trt," and bstatus=", bstatus))
