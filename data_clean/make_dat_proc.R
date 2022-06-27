@@ -419,6 +419,29 @@ assertthat::assert_that(
         
 
 
+# another set of weights for Omicron cases
+if (attr(config,"config")=="vat08m"){
+    # weights for intercurrent cases
+    tp=timepoints[1]
+    tmp = with(dat_proc, 
+          get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 
+        & get("EventIndOmicronD"%.%tp)==1 
+        & get("EventTimeOmicronD"%.%tp) >= 7 
+        & get("EventTimeOmicronD"%.%tp) <= 6 + get("NumberdaysD1toD"%.%timepoints[2]) - get("NumberdaysD1toD"%.%tp))
+    wts_table2 <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
+    wts_norm2 <- rowSums(wts_table2) / wts_table2[, 2]
+    dat_proc$wt.intercurrent.cases.omi <- wts_norm2[dat_proc$Wstratum %.% ""]
+    dat_proc$wt.intercurrent.cases.omi = ifelse(tmp, 
+                                            dat_proc$wt.intercurrent.cases.omi, 
+                                            NA)
+    dat_proc$ph1.intercurrent.cases.omi=!is.na(dat_proc$wt.intercurrent.cases.omi)
+    dat_proc$ph2.intercurrent.cases.omi=with(dat_proc, ph1.intercurrent.cases.omi & get("TwophasesampIndD"%.%tp))    
+    
+    assertthat::assert_that(
+        all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum), select=wt.intercurrent.cases.omi, drop=T))),
+        msg = "missing wt.intercurrent.cases.omi for intercurrent analyses ph1 subjects")
+}
+
 ## check missing risk score 
 #with(subset(dat_proc, ph1.D35 & Trt==1 & Bserostatus==0), table(is.na(risk_score), Riskscorecohortflag, ph2.D35, EventIndPrimaryD35))
 #with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph1.D35 & !is.na(BbindSpike) & !is.na(Day35bindSpike)), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
