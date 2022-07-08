@@ -227,6 +227,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     
     # in this partial dataset, we need to collapse "Not HND, US or JPN, senior" and "HND, senior" due to sparsity
     dat_proc$demo.stratum = with(dat_proc, ifelse(demo.stratum==4, 2, demo.stratum)) 
+    dat_proc$demo.stratum = with(dat_proc, ifelse(demo.stratum>4, demo.stratum-1, demo.stratum)) 
         
 } else stop("unknown study_name 5")  
   
@@ -418,6 +419,29 @@ assertthat::assert_that(
         
 
 
+## another set of weights for Omicron cases
+#if (attr(config,"config")=="vat08m"){
+#    # weights for intercurrent cases
+#    tp=timepoints[1]
+#    tmp = with(dat_proc, 
+#          get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 
+#        & get("EventIndOmicronD"%.%tp)==1 
+#        & get("EventTimeOmicronD"%.%tp) >= 7 
+#        & get("EventTimeOmicronD"%.%tp) <= 6 + get("NumberdaysD1toD"%.%timepoints[2]) - get("NumberdaysD1toD"%.%tp))
+#    wts_table2 <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
+#    wts_norm2 <- rowSums(wts_table2) / wts_table2[, 2]
+#    dat_proc$wt.intercurrent.cases.omi <- wts_norm2[dat_proc$Wstratum %.% ""]
+#    dat_proc$wt.intercurrent.cases.omi = ifelse(tmp, 
+#                                            dat_proc$wt.intercurrent.cases.omi, 
+#                                            NA)
+#    dat_proc$ph1.intercurrent.cases.omi=!is.na(dat_proc$wt.intercurrent.cases.omi)
+#    dat_proc$ph2.intercurrent.cases.omi=with(dat_proc, ph1.intercurrent.cases.omi & get("TwophasesampIndD"%.%tp))    
+#    
+#    assertthat::assert_that(
+#        all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum), select=wt.intercurrent.cases.omi, drop=T))),
+#        msg = "missing wt.intercurrent.cases.omi for intercurrent analyses ph1 subjects")
+#}
+
 ## check missing risk score 
 #with(subset(dat_proc, ph1.D35 & Trt==1 & Bserostatus==0), table(is.na(risk_score), Riskscorecohortflag, ph2.D35, EventIndPrimaryD35))
 #with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph1.D35 & !is.na(BbindSpike) & !is.na(Day35bindSpike)), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
@@ -554,8 +578,8 @@ if(two_marker_timepoints) {
 ###############################################################################
 
 if(attr(config, "config") %in% c("janssen_pooled_real", "janssen_na_real", "janssen_la_real", "janssen_sa_real")) {
-    dat_proc$Day29pseudoneutid50sa = ifelse(dat_proc$Day29pseudoneutid50-0.470 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.470)
-    dat_proc$Day29pseudoneutid50la = ifelse(dat_proc$Day29pseudoneutid50-0.271 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.271)
+    dat_proc$Day29pseudoneutid50la = ifelse(dat_proc$Day29pseudoneutid50-0.124 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.124 )
+    dat_proc$Day29pseudoneutid50sa = ifelse(dat_proc$Day29pseudoneutid50-0.556 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.556 )
 }
 
 
