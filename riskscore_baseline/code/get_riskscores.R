@@ -3,6 +3,7 @@
 # Sys.setenv(TRIAL = "azd1222") # Astra-Zeneca
 # Sys.setenv(TRIAL = "prevent19") # Novavax
 # Sys.setenv(TRIAL = "vat08m") # Sanofi
+# Sys.setenv(TRIAL = "janssen_pooled_partA") 
 
 source("code/loadlibraries_readinputdata.R")
 inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) # this function is in _common.R

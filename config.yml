@@ -99,7 +99,7 @@ janssen_trial: &janssen_trial
 
 janssen_trial_partA: &janssen_trial_partA
   <<: *janssen_trial
-  mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_realdata_PartAComplete_20220509.csv 
+  mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_realdata_PartAComplete_20220609.csv 
   assays: [bindSpike, bindRBD, pseudoneutid50, ADCP]
   assay_labels: [Binding Antibody to Spike, Binding Antibody to RBD, PsV Neutralization 50% Titer, Phagocytic Score]
   assay_labels_short: [Anti Spike IgG (BAU/ml), Anti RBD IgG (BAU/ml), Pseudovirus-nAb ID50 (IU50/ml), Phagocytic Score]
