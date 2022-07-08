@@ -29,8 +29,12 @@ load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
 if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name)))
   endpoint <- paste0(sub("1rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc"))
 
-vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv")) %>%
-  filter(RiskscoreAUCflag == 1) 
+if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
+  vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv")) %>%
+    filter(RiskscoreAUCflag == 1) 
+} else {
+  vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv")) 
+}
 
 # plot ROC curve on vaccinees
 pred.obj <- ROCR::prediction(vacc$pred, vacc %>% pull(endpoint))
