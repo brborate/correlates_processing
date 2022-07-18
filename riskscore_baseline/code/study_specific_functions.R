@@ -80,7 +80,7 @@ get_defs_comments_riskVars <- function(data){
         #`Variable Name` == "EthnicityNotreported" ~ "Indicator ethnicity = Not reported (0 = Non-Hispanic)",
         #`Variable Name` == "EthnicityUnknown" ~ "Indicator ethnicity = Unknown (0 = Non-Hispanic)",
         `Variable Name` == "Black" ~ "Indicator race = Black (0 = White)",
-        #`Variable Name` == "Asian" ~ "Indicator race = Asian (0 = White)",
+        `Variable Name` == "Asian" ~ "Indicator race = Asian (0 = White)",
         #`Variable Name` == "NatAmer" ~ "Indicator race = American Indian or Alaska Native (0 = White)",
         #`Variable Name` == "PacIsl" ~ "Indicator race = Native Hawaiian or Other Pacific Islander (0 = White)",
         #`Variable Name` == "WhiteNonHispanic" ~ "Indicator race = White or Caucasian (1 = White)",
@@ -88,7 +88,7 @@ get_defs_comments_riskVars <- function(data){
         #`Variable Name` == "Other" ~ "Indicator race = Other (0 = White)",
         #`Variable Name` == "Notreported" ~ "Indicator race = Not reported (0 = White)",
         #`Variable Name` == "Unknown" ~ "Indicator race = unknown (0 = White)",
-        #`Variable Name` == "HighRiskInd" ~ "Baseline covariate high risk pre-existing condition (1=yes, 0=no)"
+        `Variable Name` == "HighRiskInd" ~ "Baseline covariate high risk pre-existing condition (1=yes, 0=no)",
         `Variable Name` == "Height" ~ "Height at baseline (cm)",
         `Variable Name` == "Weight" ~ "Weight at baseline (kg)"
       ),

@@ -36,7 +36,8 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
   dat.ph1.vacc <- inputMod %>%
     filter(Riskscorecohortflag == 1 & Trt == 1) %>%
     # Keep only variables to be included in risk score analyses
-    select(Ptid, Trt, all_of(endpoint), paste0(sub("rscore", "", endpoint), "rauc"), all_of(risk_vars)) %>%
+    select(Ptid, Trt, all_of(endpoint), paste0(sub("1rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc")), 
+           all_of(risk_vars), RiskscoreAUCflag) %>%
     # Drop any observation with NA values in Ptid, Trt, or endpoint!
     drop_na(Ptid, Trt, all_of(endpoint))
 } else {
@@ -69,19 +70,32 @@ pred_on_vaccine <- predict(sl_riskscore_slfits, newdata = X_riskVars_vacc, onlyS
   as.data.frame()
 
 if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
-  vacc <- dat.ph1.vacc %>% select(Ptid, all_of(endpoint), paste0(sub("rscore", "", endpoint), "rauc"))
+  vacc <- dat.ph1.vacc %>% select(Ptid, all_of(endpoint), paste0(sub("1rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc")), RiskscoreAUCflag)
 } else {
   vacc <- dat.ph1.vacc %>% select(Ptid, all_of(endpoint))
 }
 
 vacc <- bind_cols(vacc, pred_on_vaccine) %>%
   rename(pred = V1) %>%
-  # add AUC
-  mutate(AUCchar = format(round(fast.auc(pred, get(endpoint)), 3), nsmall = 3),
-         risk_score = log(pred / (1 - pred)),
+  mutate(risk_score = log(pred / (1 - pred)),
          standardized_risk_score = scale(risk_score,
                             center = mean(risk_score, na.rm = T),
-                            scale = sd(risk_score, na.rm = T)))
+                            scale = sd(risk_score, na.rm = T))) 
+
+if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
+  # AUC for vaccine arm computed only on cohort with RiskscoreAUCflag==1 and based off endpoint rauc!
+  AUCvacc <- vacc %>% 
+    filter(RiskscoreAUCflag == 1) %>%
+    mutate(AUCchar = format(round(fast.auc(pred, get(paste0(sub("1rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc")))), 3), nsmall = 3)) %>%
+    distinct(AUCchar)
+} else {
+  AUCvacc <- vacc %>% 
+    mutate(AUCchar = format(round(fast.auc(pred, get(endpoint)), 3), nsmall = 3)) %>%
+    distinct(AUCchar)
+}
+
+
+vacc <- vacc %>% mutate(AUCchar = AUCvacc$AUCchar) 
 
 write.csv(vacc, here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
 

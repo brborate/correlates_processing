@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "prevent19")
+#Sys.setenv(TRIAL = "vat08m")
 renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -212,22 +212,33 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(!Senior, 5, 6))) # 2 is US
         
 } else if (study_name=="VAT08m" ) {
-#    Not HND, Not senior
-#    Not HND, senior
+#    Not HND, US or JPN, Not senior
+#    Not HND, US or JPN, senior
 #    HND, Not senior
 #    HND, senior
+#    USA, Not senior
+#    USA, senior
+#    JPN, Not senior
+#    JPN, senior
     dat_proc$demo.stratum = with(dat_proc, strtoi(Senior, base = 2)) + 1
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country!=3, demo.stratum, demo.stratum+2)) 
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==3, demo.stratum+2, demo.stratum)) # HND
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==8, demo.stratum+4, demo.stratum)) # USA
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==5, demo.stratum+6, demo.stratum)) # JPN
+    
+    # in this partial dataset, we need to collapse "Not HND, US or JPN, senior" and "HND, senior" due to sparsity
+    dat_proc$demo.stratum = with(dat_proc, ifelse(demo.stratum==4, 2, demo.stratum)) 
+    dat_proc$demo.stratum = with(dat_proc, ifelse(demo.stratum>4, demo.stratum-1, demo.stratum)) 
         
 } else stop("unknown study_name 5")  
   
 names(demo.stratum.labels) <- demo.stratum.labels
 
+with(dat_proc, table(demo.stratum))
 
 # tps stratum, 1 ~ 4*max(demo.stratum), used in tps regression
 dat_proc <- dat_proc %>%
   mutate(
-    tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * length(demo.stratum.labels)
+    tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * max(demo.stratum) # the change from length(demo.stratum.labels) to max(demo.stratum) is so that we can skip numbers in demo.stratum
   )
 
 # Wstratum, 1 ~ max(tps.stratum), max(tps.stratum)+1, ..., max(tps.stratum)+4. 
@@ -408,6 +419,29 @@ assertthat::assert_that(
         
 
 
+## another set of weights for Omicron cases
+#if (attr(config,"config")=="vat08m"){
+#    # weights for intercurrent cases
+#    tp=timepoints[1]
+#    tmp = with(dat_proc, 
+#          get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 
+#        & get("EventIndOmicronD"%.%tp)==1 
+#        & get("EventTimeOmicronD"%.%tp) >= 7 
+#        & get("EventTimeOmicronD"%.%tp) <= 6 + get("NumberdaysD1toD"%.%timepoints[2]) - get("NumberdaysD1toD"%.%tp))
+#    wts_table2 <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
+#    wts_norm2 <- rowSums(wts_table2) / wts_table2[, 2]
+#    dat_proc$wt.intercurrent.cases.omi <- wts_norm2[dat_proc$Wstratum %.% ""]
+#    dat_proc$wt.intercurrent.cases.omi = ifelse(tmp, 
+#                                            dat_proc$wt.intercurrent.cases.omi, 
+#                                            NA)
+#    dat_proc$ph1.intercurrent.cases.omi=!is.na(dat_proc$wt.intercurrent.cases.omi)
+#    dat_proc$ph2.intercurrent.cases.omi=with(dat_proc, ph1.intercurrent.cases.omi & get("TwophasesampIndD"%.%tp))    
+#    
+#    assertthat::assert_that(
+#        all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum), select=wt.intercurrent.cases.omi, drop=T))),
+#        msg = "missing wt.intercurrent.cases.omi for intercurrent analyses ph1 subjects")
+#}
+
 ## check missing risk score 
 #with(subset(dat_proc, ph1.D35 & Trt==1 & Bserostatus==0), table(is.na(risk_score), Riskscorecohortflag, ph2.D35, EventIndPrimaryD35))
 #with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph1.D35 & !is.na(BbindSpike) & !is.na(Day35bindSpike)), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
@@ -544,8 +578,8 @@ if(two_marker_timepoints) {
 ###############################################################################
 
 if(attr(config, "config") %in% c("janssen_pooled_real", "janssen_na_real", "janssen_la_real", "janssen_sa_real")) {
-    dat_proc$Day29pseudoneutid50sa = ifelse(dat_proc$Day29pseudoneutid50-0.470 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.470)
-    dat_proc$Day29pseudoneutid50la = ifelse(dat_proc$Day29pseudoneutid50-0.271 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.271)
+    dat_proc$Day29pseudoneutid50la = ifelse(dat_proc$Day29pseudoneutid50-0.124 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.124 )
+    dat_proc$Day29pseudoneutid50sa = ifelse(dat_proc$Day29pseudoneutid50-0.556 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.556 )
 }
 
 
@@ -576,7 +610,6 @@ if(Sys.getenv ("NOCHECK")=="") {
     } else if (attr(config, "config") == "prevent19") {
         assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="cd6b667c32e249ac82fb9af2f1094561", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
     } 
-    print("======================= Passed make_dat_proc digest check =======================")    
 }
 
 
