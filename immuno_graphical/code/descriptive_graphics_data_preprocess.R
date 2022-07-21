@@ -7,6 +7,28 @@ source(here::here("..", "_common.R"))
 library(here)
 library(dplyr)
 library(stringr)
+if (F){
+  # adhoc for AZ, pair plot with spike and pseudovirus side by side
+  # 1. add azd1222_all with both assays in config.yml, Sys.setenv(TRIAL="azd1222_all")
+    # azd1222_all: &azd1222_all
+    # <<: *azd1222_base
+    # assays: [bindSpike, pseudoneutid50]
+    # assay_labels: [Binding Antibody to Spike, PsV Neutralization 50% Titer]
+    # assay_labels_short: [Anti Spike IgG (BAU/ml), Pseudovirus-nAb ID50 (IU50/ml)]
+  # 2. create azd1222_all_data_processed_with_riskscore 
+  # by combining azd1222_data_processed_with_riskscore.csv and azd1222_bAb_data_processed_with_riskscore.csv and assign to dat.mock
+  azd1222_bAb <- read.csv(here("..", "data_clean", "azd1222_bAb_data_processed_with_riskscore.csv"), header = TRUE)
+  azd1222 <- read.csv(here("..", "data_clean", "azd1222_data_processed_with_riskscore.csv"), header = TRUE)
+  azd1222_bAb$Bpseudoneutid50=NULL
+  azd1222_bAb$Day29pseudoneutid50=NULL
+  azd1222_bAb$Day57pseudoneutid50=NULL
+  table(azd1222_bAb$ph2.immuno)
+  table(azd1222$ph2.immuno)
+  dat.mock <- azd1222_bAb %>% 
+    left_join(azd1222[,c("Ptid","Bpseudoneutid50","Day29pseudoneutid50","Day57pseudoneutid50","Delta29overBpseudoneutid50","Delta57overBpseudoneutid50","Delta57over29pseudoneutid50","ph2.immuno")], by="Ptid")
+  table(dat.mock$ph2.immuno.x, dat.mock$ph2.immuno.y)
+  dat.mock$ph2.immuno = with(dat.mock, ph2.immuno.x==1 & ph2.immuno.y==1, 1, 0) # 628
+}
 dat.mock <- read.csv(here("..", "data_clean", data_name), header = TRUE)
 
 # load parameters
