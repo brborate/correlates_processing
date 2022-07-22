@@ -22,8 +22,6 @@ if (F){
   azd1222_bAb$Bpseudoneutid50=NULL
   azd1222_bAb$Day29pseudoneutid50=NULL
   azd1222_bAb$Day57pseudoneutid50=NULL
-  table(azd1222_bAb$ph2.immuno)
-  table(azd1222$ph2.immuno)
   dat.mock <- azd1222_bAb %>% 
     left_join(azd1222[,c("Ptid","Bpseudoneutid50","Day29pseudoneutid50","Day57pseudoneutid50","Delta29overBpseudoneutid50","Delta57overBpseudoneutid50","Delta57over29pseudoneutid50","ph2.immuno")], by="Ptid")
   table(dat.mock$ph2.immuno.x, dat.mock$ph2.immuno.y)
