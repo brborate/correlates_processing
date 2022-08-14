@@ -29,8 +29,12 @@ load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
 if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name)))
   endpoint <- paste0(sub("1rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc"))
 
-vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv")) %>%
-  filter(RiskscoreAUCflag == 1) 
+if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
+  vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv")) %>%
+    filter(RiskscoreAUCflag == 1) 
+} else {
+  vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv")) 
+}
 
 # plot ROC curve on vaccinees
 pred.obj <- ROCR::prediction(vacc$pred, vacc %>% pull(endpoint))
@@ -72,24 +76,48 @@ png(file = here("output", Sys.getenv("TRIAL"), "predProb_riskscore_vacc_onlySL.p
 # if(study_name_code == "ENSEMBLE"){
 #   cases = "Post Day 29 Cases"
 # }
-print(vacc %>%
-  mutate(Ychar = ifelse(get(endpoint) == 0, "Non-Cases", paste0("Post Day ", vaccAUC_timepoint, " Cases"))) %>%
-  ggplot(aes(x = Ychar, y = pred, color = Ychar)) +
-  geom_jitter(width = 0.06, size = 3, shape = 21, fill = "white") +
-  geom_violin(alpha = 0.05, color = "black", lwd=1.5) +
-  geom_boxplot(alpha = 0.05, width = 0.15, color = "black", outlier.size = NA, outlier.shape = NA, lwd=1.5) +
-  theme_bw() +
-  #scale_color_manual(values = c("#56B4E9", "#E69F00")) +
-  scale_color_manual(values = c("#00468B", "#8B0000")) +
-  labs(y = "Predicted probability of COVID-19 disease", x = "") +
-  theme(
-    legend.position = "none",
-    strip.text.x = element_text(size = 25),
-    axis.text = element_text(size = 23),
-    axis.ticks.length = unit(.35, "cm"),
-    axis.title.y = element_text(size = 30)
-  ))
-dev.off()
+if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
+  print(vacc %>%
+          mutate(Ychar = ifelse(get(endpoint) == 0, "Non-Cases", paste0("Post Day ", vaccAUC_timepoint, " Cases"))) %>%
+          ggplot(aes(x = Ychar, y = pred, color = Ychar)) +
+          geom_jitter(width = 0.06, size = 3, shape = 21, fill = "white") +
+          geom_violin(alpha = 0.05, color = "black", lwd=1.5) +
+          geom_boxplot(alpha = 0.05, width = 0.15, color = "black", outlier.size = NA, outlier.shape = NA, lwd=1.5) +
+          theme_bw() +
+          #scale_color_manual(values = c("#56B4E9", "#E69F00")) +
+          scale_color_manual(values = c("#00468B", "#8B0000")) +
+          labs(y = "Predicted probability of COVID-19 disease", x = "") +
+          theme(
+            legend.position = "none",
+            strip.text.x = element_text(size = 25),
+            axis.text = element_text(size = 23),
+            axis.ticks.length = unit(.35, "cm"),
+            axis.title.y = element_text(size = 30)
+          ))
+  dev.off() 
+} else {
+  print(vacc %>%
+          mutate(Ychar = ifelse(get(endpoint) == 0, "Non-Cases", paste0("Post Day ", risk_timepoint, " Cases"))) %>%
+          ggplot(aes(x = Ychar, y = pred, color = Ychar)) +
+          geom_jitter(width = 0.06, size = 3, shape = 21, fill = "white") +
+          geom_violin(alpha = 0.05, color = "black", lwd=1.5) +
+          geom_boxplot(alpha = 0.05, width = 0.15, color = "black", outlier.size = NA, outlier.shape = NA, lwd=1.5) +
+          theme_bw() +
+          #scale_color_manual(values = c("#56B4E9", "#E69F00")) +
+          scale_color_manual(values = c("#00468B", "#8B0000")) +
+          labs(y = "Predicted probability of COVID-19 disease", x = "") +
+          theme(
+            legend.position = "none",
+            strip.text.x = element_text(size = 25),
+            axis.text = element_text(size = 23),
+            axis.ticks.length = unit(.35, "cm"),
+            axis.title.y = element_text(size = 30)
+          ))
+  dev.off() 
+}
+
+
+
 
 # Create table of case/controls in vaccine cohort used for calculating AUC in risk score report (this cohort changes for TRIALS beyond COVE or janssen!)
 table(vacc %>% pull(endpoint)) %>%

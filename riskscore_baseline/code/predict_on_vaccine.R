@@ -82,11 +82,18 @@ vacc <- bind_cols(vacc, pred_on_vaccine) %>%
                             center = mean(risk_score, na.rm = T),
                             scale = sd(risk_score, na.rm = T))) 
 
-# AUC for vaccine arm computed only on cohort with RiskscoreAUCflag==1 and based off endpoint rauc!
-AUCvacc <- vacc %>% 
-  filter(RiskscoreAUCflag == 1) %>%
-  mutate(AUCchar = format(round(fast.auc(pred, get(paste0(sub("1rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc")))), 3), nsmall = 3)) %>%
-  distinct(AUCchar)
+if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
+  # AUC for vaccine arm computed only on cohort with RiskscoreAUCflag==1 and based off endpoint rauc!
+  AUCvacc <- vacc %>% 
+    filter(RiskscoreAUCflag == 1) %>%
+    mutate(AUCchar = format(round(fast.auc(pred, get(paste0(sub("1rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc")))), 3), nsmall = 3)) %>%
+    distinct(AUCchar)
+} else {
+  AUCvacc <- vacc %>% 
+    mutate(AUCchar = format(round(fast.auc(pred, get(endpoint)), 3), nsmall = 3)) %>%
+    distinct(AUCchar)
+}
+
 
 vacc <- vacc %>% mutate(AUCchar = AUCvacc$AUCchar) 
 
