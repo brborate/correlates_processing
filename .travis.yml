@@ -28,7 +28,6 @@ jobs:
     script:
     - make risk_report
     - make data_processed
-    - make immuno_report
   - name: Moderna Mock Data Processing
     env:
     - REPORT_TYPE=IMMUNO
@@ -37,7 +36,6 @@ jobs:
     script:
     - make risk_report
     - make data_processed
-    - make immuno_report
 
 apt_packages:
   - libxml2-dev
