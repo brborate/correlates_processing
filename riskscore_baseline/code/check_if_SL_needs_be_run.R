@@ -11,36 +11,43 @@ generate_new_riskscores <- function(){
   source(here("code", "performance_on_vaccine.R"))
 }
 
-
-if(file.exists(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData")) |
-   (study_name == "ENSEMBLE" & file.exists(paste0("output/janssen_pooled_real/inputFile_with_riskscore.RData")))){
-  
-  if(study_name == "ENSEMBLE" & file.exists(paste0("output/janssen_pooled_real/inputFile_with_riskscore.RData"))){
-    load("output/janssen_pooled_real/inputFile_with_riskscore.RData")
-  }else{
-    load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
-  } 
+if(study_name != "COVE"){
+  if(file.exists(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData")) |
+     (study_name == "ENSEMBLE" & file.exists(paste0("output/janssen_pooled_real/inputFile_with_riskscore.RData")))){
     
-  old_processed <- inputFile_with_riskscore %>%
-    select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars), risk_score, standardized_risk_score)
-
-  new_processed <- inputFile %>%
-    select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars))
-
-  if(all.equal(old_processed %>% select(-c(risk_score, standardized_risk_score)), new_processed) == TRUE){
-    message("Variables related to risk score generation in input data have not changed. Superlearner will not be run. Risk scores from earlier run will be appended to raw data!")
-    inputFile_with_riskscore <- left_join(inputFile,
-                                          old_processed %>%
-                                            select(Ptid, risk_score, standardized_risk_score), by = "Ptid")
-
-    save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
+    if(study_name == "ENSEMBLE" & file.exists(paste0("output/janssen_pooled_real/inputFile_with_riskscore.RData"))){
+      load("output/janssen_pooled_real/inputFile_with_riskscore.RData")
+    }else{
+      load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
+    } 
+    
+    old_processed <- inputFile_with_riskscore %>%
+      select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars), risk_score, standardized_risk_score)
+    
+    new_processed <- inputFile %>%
+      select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars))
+    
+    if(all.equal(old_processed %>% select(-c(risk_score, standardized_risk_score)), new_processed) == TRUE){
+      message("Variables related to risk score generation in input data have not changed. Superlearner will not be run. Risk scores from earlier run will be appended to raw data!")
+      inputFile_with_riskscore <- left_join(inputFile,
+                                            old_processed %>%
+                                              select(Ptid, risk_score, standardized_risk_score), by = "Ptid")
+      
+      save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
     }else{
       message("Variables related to risk score generation in input data have changed! Superlearner needs to be run and new risk scores generated!")
       generate_new_riskscores()
     }
+  }else{
+    message(paste0("riskscore_baseline/", paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"), " does not exist. Superlearner needs to be run and new risk scores generated!"))
+    generate_new_riskscores()
+  }
 }else{
-  message(paste0("riskscore_baseline/", paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"), " does not exist. Superlearner needs to be run and new risk scores generated!"))
-  generate_new_riskscores()
+  print("Risk scores for Moderna real dataset were generated at Moderna's end using CoVPN Stats/SCHARP code. Superlearner will not be run. Risk scores received from Moderna will be appended to raw data!")
+  inputFile_with_riskscore <- inputFile %>% left_join(read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv") %>%
+                                   select(Ptid, risk_score, standardized_risk_score), 
+                                 by = "Ptid")
+  save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
 }
 
 # Perform sanity check if mock data!

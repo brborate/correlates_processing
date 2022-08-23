@@ -11,7 +11,10 @@
 
 library(digest)
 if (Sys.getenv("NOCHECK") == "") {
-  if (attr(config, "config") == "moderna_mock") {
+  if (attr(config, "config") == "moderna_real") {
+    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "4d1e96b334113ce3099ca35f5999637a", 
+                            msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
+  } else if (attr(config, "config") == "moderna_mock") {
     assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "95368009ca10fc4b2e075885442e6e31", 
                             msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
   } else if (attr(config, "config") == "janssen_pooled_mock") {
