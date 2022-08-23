@@ -1,4 +1,5 @@
 # Sys.setenv(TRIAL = "moderna_mock")
+# Sys.setenv(TRIAL = "moderna_real")
 # Sys.setenv(TRIAL = "janssen_pooled_mock")
 # Sys.setenv(TRIAL = "azd1222") # Astra-Zeneca
 # Sys.setenv(TRIAL = "prevent19") # Novavax
@@ -15,27 +16,25 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m
   inputFile <- inputFile %>%
     rename(Ptid = X)
 }else if(study_name == "COVE"){
-  inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name)
-  print("Risk scores for Moderna real dataset were generated at Moderna's end using CoVPN Stats/SCHARP code. 
-        Are you sure you want to regenerate them?")
+  inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) 
 }
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
-if(study_name %in% c("COVE", "MockCOVE")){
+if(study_name %in% c("MockCOVE")){
   endpoint <- "EventIndPrimaryD57"
   risk_timepoint <- 57
   studyName_for_report <- "COVE"
   inputMod <- inputFile
-  if(study_name %in% c("COVE")){
-    risk_vars <- c(
-      "MinorityInd", "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown", 
-      "Black", "Asian", "NatAmer", "PacIsl",  
-      "Multiracial", "Other", 
-      "Notreported", "Unknown",
-      "HighRiskInd", "Sex", "Age", "BMI"
-    )
-  }
+  # if(study_name %in% c("COVE")){
+  #   risk_vars <- c(
+  #     "MinorityInd", "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown", 
+  #     "Black", "Asian", "NatAmer", "PacIsl",  
+  #     "Multiracial", "Other", 
+  #     "Notreported", "Unknown",
+  #     "HighRiskInd", "Sex", "Age", "BMI"
+  #   )
+  # }
 
   if(study_name %in% c("MockCOVE")){ # as MinorityInd variable is absent in mock!
     risk_vars <- c(
@@ -232,14 +231,16 @@ if(study_name == "VAT08m"){
 }
 
 # Check there are no NA values in Riskscorecohortflag!
-assertthat::assert_that(
-  all(!is.na(inputMod$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag!"
-)
-
-# Save inputFile 
-if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
-  dir.create(paste0("output/", Sys.getenv("TRIAL")))
+if(study_name != "COVE"){
+  assertthat::assert_that(
+    all(!is.na(inputMod$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag!"
+  )
+  
+  # Save inputFile 
+  if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
+    dir.create(paste0("output/", Sys.getenv("TRIAL")))
+  }
+  save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
 }
-save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
 
 source(here("code", "check_if_SL_needs_be_run.R"))
