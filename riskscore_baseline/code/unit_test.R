@@ -10,7 +10,9 @@
 
 
 library(digest)
-if (Sys.getenv("NOCHECK") == "") {
+if (Sys.getenv("NOCHECK") == "" &
+    all.equal(names(inputFile_with_riskscore %>% select(Ptid, risk_score, standardized_risk_score)), c("Ptid", "risk_score", "standardized_risk_score"))) {
+  
   if (attr(config, "config") == "moderna_real") {
     assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "e0eed0edd95569334059e09ac374ca50", 
                             msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    

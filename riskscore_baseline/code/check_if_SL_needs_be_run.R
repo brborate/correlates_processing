@@ -43,10 +43,10 @@ if(study_name != "COVE"){
     generate_new_riskscores()
   }
 }else{
-  print("Risk scores for Moderna real dataset were generated at Moderna's end using CoVPN Stats/SCHARP code. Superlearner will not be run. Risk scores received from Moderna will be appended to raw data!")
-  inputFile_with_riskscore <- inputFile %>% left_join(read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv") %>%
-                                   select(Ptid, risk_score, standardized_risk_score), 
-                                 by = "Ptid")
+  inputFile_with_riskscore <- inputFile
+  # Check 
+  all.equal(names(inputFile_with_riskscore %>% select(Ptid, risk_score, standardized_risk_score)), c("Ptid", "risk_score", "standardized_risk_score"))
+  print("Risk scores for Moderna real dataset were generated at Moderna's end using CoVPN Stats/SCHARP code and are already present in input file. Superlearner will not be run!")
   save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
 }
 
