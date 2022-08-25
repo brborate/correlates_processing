@@ -598,18 +598,28 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 
 
 ###############################################################################
-# bundle data sets and save as CSV
+# bring in live virus data for moderna
+###############################################################################
+
+if(attr(config, "config") == "moderna_real") {
+    source(here::here("data_clean", "add_lvmn_to_cove_analysisreadydataset.R"))
+}
+
+
+
+###############################################################################
+# digest check
 ###############################################################################
 
 library(digest)
-if(Sys.getenv ("NOCHECK")=="") {
-    if (attr(config, "config") == "moderna_mock") {
-        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="993f8c99723c779f4280a9e4125de936", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
-    } else if (attr(config, "config") == "janssen_pooled_mock") {
-        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="f3e286effecf1581eec34707fc4d468f", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
-    } else if (attr(config, "config") == "prevent19") {
-        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="cd6b667c32e249ac82fb9af2f1094561", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
-    } 
+if(Sys.getenv ("NOCHECK")=="") {    
+    tmp = switch(attr(config, "config"),
+         moderna_mock = "993f8c99723c779f4280a9e4125de936",
+         moderna_real = "0617289d69a945183052837d9ce42e93",
+         janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
+         prevent19 = "cd6b667c32e249ac82fb9af2f1094561",
+         "")    
+    if (tmp!="") assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
 
 
