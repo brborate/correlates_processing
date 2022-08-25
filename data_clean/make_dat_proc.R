@@ -637,10 +637,10 @@ if(attr(config, "config") == "moderna_real") {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(attr(config, "config"),
-         moderna_mock = "993f8c99723c779f4280a9e4125de936",
+         moderna_mock = "9df4cd6639381811e763c2dddc0a12fd",
          moderna_real = "093233430fdfb688595a206d8473333f",
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
-         prevent19 = "cd6b667c32e249ac82fb9af2f1094561",
+         prevent19 = "",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
