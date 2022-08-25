@@ -574,7 +574,11 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     # ENSEMBLE only, since we are not using this variable to define Riskscorecohortflag and we are not doing D29start1 analyses for other trials
     if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
         dat_proc[["EarlyendpointD29start1"]]<- with(dat_proc, ifelse(get("EarlyinfectionD29start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD29") + 1),1,0))
-    } #else dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29 # this is not necessary, but it is kept here to make the hash checks for mock datasets happy
+    } else {
+#        # commented out on Aug 25, 2022 because it is dangerous
+#        # this is not necessary, but it is kept here to make the hash checks for mock datasets happy
+#        dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29 
+    }
     
     
     # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm. It requires:

@@ -598,21 +598,34 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 
 
 ###############################################################################
-# moderna is a special case
+# special handling for moderna_real
 ###############################################################################
 
 if(attr(config, "config") == "moderna_real") {
 
-    # We will use P3001ModernaCOVEimmunemarkerdata_correlates_processed_v1.1_lvmn_added_Jan14_2022.csv, which was used for the lvmn manuscript, for the baseline seronegative population
-    dat_proc.tmp  =read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_processed_v1.1_lvmn_added_Jan14_2022.csv")
+    # modernal is a special case because how the code and manuscripts co-evolve 
+    # special handling is required to preserve the imputed values used for manuscripts
+    # the following steps treat seroneg and seropos populations separately and combine them to form one dataset
     
-    # And add baseline seropos population, which will impute lvmn data by calling the following script
+    # For the baseline seronegative population, use P3001ModernaCOVEimmunemarkerdata_correlates_processed_v1.1_lvmn_added_Jan14_2022.csv, which was used for the lvmn manuscript
+    dat_proc.tmp=read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_processed_v1.1_lvmn_added_Jan14_2022.csv")
+    # EarlyendpointD29start1 is deprecated at some point after P3001ModernaCOVEimmunemarkerdata_correlates_processed_v1.1_lvmn_added_Jan14_2022.csv was made
+    dat_proc.tmp=subset(dat_proc.tmp, select=-EarlyinfectionD29start1)
+    dat_proc.tmp=subset(dat_proc.tmp, select=-EarlyendpointD29start1)
+    # sort columns to combine with dat_proc
+    dat_proc.tmp=dat_proc.tmp[,sort(names(dat_proc.tmp))]
+    
+    # For the baseline seropos population, impute lvmn data by calling the following script
     dat_proc=subset(dat_proc, Bserostatus==1)
     source(here::here("data_clean", "add_lvmn_to_cove_analysisreadydataset.R"))
+    # sort columns to combine with dat_proc.tmp
+    dat_proc=dat_proc[,sort(names(dat_proc))]
     
-    cbind(c(sort(names(dat_proc)),NA), sort(names(dat_proc.tmp)))
-    
-"EarlyendpointD29start1"
+    # combine
+    stopifnot(all(names(dat_proc) == names(dat_proc.tmp)))
+    stopifnot(all(dat_proc$Bserostatus.tmp == 0))
+    stopifnot(all(dat_proc$Bserostatus == 1))
+    dat_proc=rbind(dat_proc, dat_proc.tmp)
 }
 
 
@@ -625,11 +638,11 @@ library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(attr(config, "config"),
          moderna_mock = "993f8c99723c779f4280a9e4125de936",
-         moderna_real = "0617289d69a945183052837d9ce42e93",
+         moderna_real = "093233430fdfb688595a206d8473333f",
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
          prevent19 = "cd6b667c32e249ac82fb9af2f1094561",
-         "")    
-    if (tmp!="") assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+         NA)    
+    if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
 
 
