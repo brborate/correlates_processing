@@ -598,11 +598,21 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 
 
 ###############################################################################
-# bring in live virus data for moderna
+# moderna is a special case
 ###############################################################################
 
 if(attr(config, "config") == "moderna_real") {
+
+    # We will use P3001ModernaCOVEimmunemarkerdata_correlates_processed_v1.1_lvmn_added_Jan14_2022.csv, which was used for the lvmn manuscript, for the baseline seronegative population
+    dat_proc.tmp  =read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_processed_v1.1_lvmn_added_Jan14_2022.csv")
+    
+    # And add baseline seropos population, which will impute lvmn data by calling the following script
+    dat_proc=subset(dat_proc, Bserostatus==1)
     source(here::here("data_clean", "add_lvmn_to_cove_analysisreadydataset.R"))
+    
+    cbind(c(sort(names(dat_proc)),NA), sort(names(dat_proc.tmp)))
+    
+"EarlyendpointD29start1"
 }
 
 
