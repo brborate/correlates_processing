@@ -238,7 +238,7 @@ with(dat_proc, table(demo.stratum))
 # tps stratum, 1 ~ 4*max(demo.stratum), used in tps regression
 dat_proc <- dat_proc %>%
   mutate(
-    tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * max(demo.stratum) # the change from length(demo.stratum.labels) to max(demo.stratum) is so that we can skip numbers in demo.stratum
+    tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * max(demo.stratum,na.rm=T) # the change from length(demo.stratum.labels) to max(demo.stratum) is so that we can skip numbers in demo.stratum
   )
 
 # Wstratum, 1 ~ max(tps.stratum), max(tps.stratum)+1, ..., max(tps.stratum)+4. 
@@ -598,18 +598,51 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 
 
 ###############################################################################
-# bundle data sets and save as CSV
+# special handling for moderna_real
+###############################################################################
+
+if(attr(config, "config") == "moderna_real") {
+
+    # modernal is a special case because how the code and manuscripts co-evolve 
+    # special handling is required to preserve the imputed values used for manuscripts
+    # the following steps treat seroneg and seropos populations separately and combine them to form one dataset
+    
+    # For the baseline seronegative population, use P3001ModernaCOVEimmunemarkerdata_correlates_processed_v1.1_lvmn_added_Jan14_2022.csv, which was used for the lvmn manuscript
+    dat_proc.tmp=read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_processed_v1.1_lvmn_added_Jan14_2022.csv")
+    # EarlyendpointD29start1 is deprecated at some point after P3001ModernaCOVEimmunemarkerdata_correlates_processed_v1.1_lvmn_added_Jan14_2022.csv was made
+    dat_proc.tmp=subset(dat_proc.tmp, select=-EarlyinfectionD29start1)
+    dat_proc.tmp=subset(dat_proc.tmp, select=-EarlyendpointD29start1)
+    # sort columns to combine with dat_proc
+    dat_proc.tmp=dat_proc.tmp[,sort(names(dat_proc.tmp))]
+    
+    # For the baseline seropos population, impute lvmn data by calling the following script
+    dat_proc=subset(dat_proc, Bserostatus==1)
+    source(here::here("data_clean", "add_lvmn_to_cove_analysisreadydataset.R"))
+    # sort columns to combine with dat_proc.tmp
+    dat_proc=dat_proc[,sort(names(dat_proc))]
+    
+    # combine
+    stopifnot(all(names(dat_proc) == names(dat_proc.tmp)))
+    stopifnot(all(dat_proc$Bserostatus.tmp == 0))
+    stopifnot(all(dat_proc$Bserostatus == 1))
+    dat_proc=rbind(dat_proc, dat_proc.tmp)
+}
+
+
+
+###############################################################################
+# digest check
 ###############################################################################
 
 library(digest)
-if(Sys.getenv ("NOCHECK")=="") {
-    if (attr(config, "config") == "moderna_mock") {
-        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="993f8c99723c779f4280a9e4125de936", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
-    } else if (attr(config, "config") == "janssen_pooled_mock") {
-        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="f3e286effecf1581eec34707fc4d468f", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
-    } else if (attr(config, "config") == "prevent19") {
-        assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])=="cd6b667c32e249ac82fb9af2f1094561", msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
-    } 
+if(Sys.getenv ("NOCHECK")=="") {    
+    tmp = switch(attr(config, "config"),
+         moderna_mock = "9df4cd6639381811e763c2dddc0a12fd",
+         moderna_real = "093233430fdfb688595a206d8473333f",
+         janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
+         prevent19 = "",
+         NA)    
+    if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
 
 
