@@ -15,8 +15,6 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m
 }else if(study_name == "MockCOVE"){
   inputFile <- inputFile %>%
     rename(Ptid = X)
-}else if(study_name == "COVE"){
-  inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) 
 }
 
 # Identify the risk demographic variable names that will be used to compute the risk score
