@@ -1,37 +1,21 @@
-# library(digest)
-# if(attr(config, "config") %in% c("janssen_pooled_mock", "moderna_mock") & Sys.getenv ("NOCHECK")=="") {
-#   assertthat::assert_that(
-#     digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == ifelse(attr(config, "config")=="janssen_pooled_mock", 
-#                                                                                        "f7a8225eb5fa8cc9a5426211988b9d95", 
-#                                                                                        "95368009ca10fc4b2e075885442e6e31"),
-#     msg = "Failed risk score digest check. New digest for inputFile_with_riskscore is "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))
-#   print("======================= Passed risk score digest check. Digest for inputFile_with_riskscore is same: "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))])%.%" =======================")  
-# }
-
-
 library(digest)
+
+tmp <- switch(attr(config, "config"),
+             moderna_real = "e0eed0edd95569334059e09ac374ca50",
+             moderna_mock = "9df4cd6639381811e763c2dddc0a12fd",
+             janssen_pooled_mock = "f7a8225eb5fa8cc9a5426211988b9d95",
+             janssen_pooled_real = "c38fb43e2c87cf2d392757840af68bba",
+             azd1222 = "80829341e9d82ef0e465646a1b715996",
+             #azd1222_bAb = "",
+             prevent19 = "53f991ec3b75c8643f2c90fe7252c25e",
+             NA)    
+
+
 if (Sys.getenv("NOCHECK") == "" &
     all.equal(names(inputFile_with_riskscore %>% select(Ptid, risk_score, standardized_risk_score)), c("Ptid", "risk_score", "standardized_risk_score"))) {
   
-  if (attr(config, "config") == "moderna_real") {
-    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "e0eed0edd95569334059e09ac374ca50", 
-                            msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
-  } else if (attr(config, "config") == "moderna_mock") {
-    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "9df4cd6639381811e763c2dddc0a12fd", 
-                            msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
-  } else if (attr(config, "config") == "janssen_pooled_mock") {
-    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "f7a8225eb5fa8cc9a5426211988b9d95", 
-                            msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
-  } else if (attr(config, "config") == "prevent19") {
-    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "53f991ec3b75c8643f2c90fe7252c25e", 
-                            msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
-  } #else if (attr(config, "config") == "vat08m") {
-    #assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "3cc3c3c9d1536be807bdde83788bddd7", 
-    #                        msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
-  #} 
-  else if (attr(config, "config") == "azd1222") {
-    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == "80829341e9d82ef0e465646a1b715996", 
-                            msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))    
-  } 
+  if (!is.na(tmp)) assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == tmp, 
+                                           msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))])) 
+  
   print("======================= Passed risk_score digest check =======================")    
 }

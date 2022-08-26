@@ -13,8 +13,11 @@ library(here)
 library(tidyverse)
 data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
 
+cat("Enter reason for updating adata (this text will be added to adata/README change log): ")
+args <- readLines(con = "stdin", n = 1)
+
 # Request reason for adata update from deployer!
-update_reason <- paste0(Sys.Date(), " ", readline(prompt = "Enter reason for updating adata (this text will be added to adata/README change log): ")) 
+update_reason <- paste0(Sys.Date(), " ", args[[1]]) 
 
 # Copy current deployed copy of risk score dataset in adata to archive 
 # Remove current deployed copy of risk score dataset from adata
