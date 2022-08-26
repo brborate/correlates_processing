@@ -640,7 +640,10 @@ if(Sys.getenv ("NOCHECK")=="") {
          moderna_mock = "9df4cd6639381811e763c2dddc0a12fd",
          moderna_real = "093233430fdfb688595a206d8473333f",
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
-         prevent19 = "",
+         janssen_pooled_real = "c38fb43e2c87cf2d392757840af68bba",
+         azd1222 = "e5e7f79e140095639350aa782d671acc",
+         azd1222_bAb = "2054f71c46fc73a8c085bcedec8f6bb2",
+         prevent19 = "1764d4e5aadbb67e4ad9885e37fc639f",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
