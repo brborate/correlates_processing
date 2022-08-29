@@ -11,75 +11,27 @@ library(dplyr)
 library(here)
 
 
+
 ########################################################################################################
-# read raw data, do some processing, and call risk score module
+# read mapped data with risk score added
 
-dat_proc=read.csv(mapped_data)
+# inputFile_with_riskscore.Rdata is made from riskscore_analysis
+if (make_riskscore) {
+    load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
+    dat_proc <- inputFile_with_riskscore
+    
+} else {
+    dat_raw=read.csv(mapped_data)
+    dat_proc = preprocess(dat_raw, study_name)
 
-if(study_name != "VAT08m"){
-  dat_proc=subset(dat_proc, !is.na(Bserostatus))
 }
 
-for(tp in timepoints) {
-    dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
-    dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
-}
-
-if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
-    # since we are not using this variable to define Riskscorecohortflag and we are not doing D29start1 analyses for other trials
-    dat_proc[["EarlyendpointD29start1"]]<- with(dat_proc, ifelse(get("EarlyinfectionD29start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD29") + 1),1,0))
-    # EventTimePrimaryIncludeNotMolecConfirmedD29 are the endpoint of interest and should be used to compute weights
-    dat_proc$EventTimePrimaryD29=dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD29
-    dat_proc$EventIndPrimaryD29 =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
-    dat_proc$EventTimePrimaryD1 =dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD1
-    dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
-} 
-    
-## To be moved to risk module    
-## Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm. It requires:
-## 1. baseline SARS-CoV-2 negative, 
-## 2. per-protocol, 
-## 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
-## 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
-## no NAs allowed. 
-#if (study_name %in% c("MockCOVE", "COVE")) {
-#    # special case, redefined for backward compatibility
-#    dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
-#
-#} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
-#    dat_proc$Riskscorecohortflag <-
-#      with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
-#
-#} else if (study_name == "PREVENT19") { # Novavax
-#  dat_proc <- dat_proc %>%
-#    mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
-#           RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7, 1, 0)
-#           )
-#} else if (study_name == "AZD1222") {
-#    dat_proc <- dat_proc %>%
-#      mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
-#             RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7, 1, 0))
-#} else if (study_name == "VAT08m") { # Sanofi
-#    dat_proc <- dat_proc %>%
-#      mutate(Riskscorecohortflag = ifelse(Perprotocol==1, 1, 0),
-#             RiskscoreAUCflag = ifelse(Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7, 1, 0))
-#} 
-#
-#if(!is.null(dat_proc$Riskscorecohortflag)) {
-#    assertthat::assert_that(
-#        all(!is.na(dat_proc$Riskscorecohortflag)),
-#        msg = "missing Riskscorecohortflag")
-#}
-    
-#dat_proc = add.riskscore(dat_proc)
-
-
+#with(dat_proc[dat_proc$Trt==1,], table(!is.na(Day29bindSpike), !is.na(Day29bindRBD), EventIndPrimaryIncludeNotMolecConfirmedD29)) # same missingness
 
 # hardcode AnyinfectionD1 for the mock datasets
 if (study_name %in% c("MockENSEMBLE", "MockCOVE")) {
     dat_proc$AnyinfectionD1=0
 }
-
 
 colnames(dat_proc)[1] <- "Ptid" 
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))

@@ -1,11 +1,13 @@
 default: &default
   is_ows_trial: no
   case_cohort: no
+  make_riskscore: no
 
 ows_trial: &ows_trial
   forestplot_script: cor_coxph_forestplots_ows.R
   is_ows_trial: yes
   case_cohort: yes
+  make_riskscore: yes
 
 
 moderna_trial: &moderna_trial
