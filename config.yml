@@ -218,15 +218,30 @@ janssen_sa_mock:
 
 
 
-profiscov: &profiscov
-  <<: *ows_trial # not a real one, but satisfies the attributes
+profiscov_base: &profiscov_base
   study_name: PROFISCOV
+  case_cohort: yes
+
+profiscov: &profiscov
+  <<: *profiscov_base
   two_marker_timepoints: yes
   timepoints: [43,91]
+  times: [B, Day43, Day91, Delta43overB, Delta91overB, Delta91over43]
+  time_labels: [Day 1, Day 43, Day 91, D43 fold-rise over D1, D91 fold-rise over D1, D91 fold-rise over D43]
+  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID127-Gast/Data/Butantan/mapping_immune_correlates/adata/COVID_Butantan_realdata_20220825.csv
+  assays: [bindSpike, bindSpikeB117, bindSpikeB1351, bindSpikeP1, bindRBD, bindRBDB117, bindRBDB1351, bindRBDP1]
+  assay_labels: [Binding Antibody to Spike, Binding Antibody to Spike B.1.1.7, Binding Antibody to Spike B.1.351, Binding Antibody to Spike P.1, Binding Antibody to RBD, Binding Antibody to RBD B.1.1.7, Binding Antibody to RBD B.1.351, Binding Antibody to RBD P.1]
+  assay_labels_short: [Anti Spike IgG (BAU/ml), Anti Spike B.1.1.7 IgG (BAU/ml), Anti Spike B.1.351 IgG (BAU/ml), Anti Spike P.1 IgG (BAU/ml), Anti RBD IgG (BAU/ml), Anti RBD B.1.1.7 IgG (BAU/ml), Anti RBD B.1.351 IgG (BAU/ml), Anti RBD P.1 IgG (BAU/ml)]
+
+profiscov_lvmn: &profiscov_lvmn
+  <<: *profiscov_base
+  two_marker_timepoints: no
+  timepoints: [43]
   times: [B, Day43, Day91, Delta43overB, Delta91overB, Delta91over43]
   time_labels: [Day 1, Day 43, Day 91, D43 fold-rise over D1, D91 fold-rise over D1, D91 fold-rise over D43]
   mapped_data: /networks/cavd/Objective 4/GH-VAP/ID127-Gast/Data/Butantan/mapping_immune_correlates/adata/COVID_Butantan_realdata_20220825.csv
   assays: [bindSpike, bindSpikeB117, bindSpikeB1351, bindSpikeP1, bindRBD, bindRBDB117, bindRBDB1351, bindRBDP1, liveneutmn50]
   assay_labels: [Binding Antibody to Spike, Binding Antibody to Spike B.1.1.7, Binding Antibody to Spike B.1.351, Binding Antibody to Spike P.1, Binding Antibody to RBD, Binding Antibody to RBD B.1.1.7, Binding Antibody to RBD B.1.351, Binding Antibody to RBD P.1, Live Virus Micro Neut 50% Titer]
   assay_labels_short: [Anti Spike IgG (BAU/ml), Anti Spike B.1.1.7 IgG (BAU/ml), Anti Spike B.1.351 IgG (BAU/ml), Anti Spike P.1 IgG (BAU/ml), Anti RBD IgG (BAU/ml), Anti RBD B.1.1.7 IgG (BAU/ml), Anti RBD B.1.351 IgG (BAU/ml), Anti RBD P.1 IgG (BAU/ml), Live Virus-mnAb ID50 (IU50/ml)]
-  study_name_code: PROFISCOV
+
+  
