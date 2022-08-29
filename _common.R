@@ -603,73 +603,36 @@ report.assay.values=function(x, assay){
 #report.assay.values (dat.vac.seroneg[["Daytp1pseudoneutid80"]], "pseudoneutid80")
 
 
-#preprocess.for.risk.score=function(dat_raw, study_name) {
-#    dat_proc=dat_raw
-#    
-#    if(study_name != "VAT08m"){
-#      dat_proc=subset(dat_proc, !is.na(Bserostatus))
-#    }
-#    
-#    if(study_name=="ENSEMBLE") {
-#        # EventTimePrimaryIncludeNotMolecConfirmedD29 are the endpoint of interest and should be used to compute weights
-#        dat_proc$EventTimePrimaryD29=dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD29
-#        dat_proc$EventIndPrimaryD29 =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
-#        dat_proc$EventTimePrimaryD1 =dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD1
-#        dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
-#    }
-#        
-#    for(tp in timepoints) dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
-#    
-#    
-#    for(tp in timepoints) {
-#        dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
-#    }
-#
-#    # ENSEMBLE only, since we are not using this variable to define Riskscorecohortflag and we are not doing D29start1 analyses for other trials
-#    if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
-#        dat_proc[["EarlyendpointD29start1"]]<- with(dat_proc, ifelse(get("EarlyinfectionD29start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD29") + 1),1,0))
-#    } else {
-##        # commented out on Aug 25, 2022 because it is dangerous
-##        # this is not necessary, but it is kept here to make the hash checks for mock datasets happy
-##        dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29 
-#    }
-#    
-#    
-#    # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm. It requires:
-#    # 1. baseline SARS-CoV-2 negative, 
-#    # 2. per-protocol, 
-#    # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
-#    # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
-#    # no NAs allowed. 
-#    if (study_name %in% c("MockCOVE", "COVE")) {
-#        # special case, redefined for backward compatibility
-#        dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
-#
-#    } else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
-#        dat_proc$Riskscorecohortflag <-
-#          with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
-#
-#    } else if (study_name == "PREVENT19") { # Novavax
-#      dat_proc <- dat_proc %>%
-#        mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
-#               RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7, 1, 0)
-#               )
-#    } else if (study_name == "AZD1222") {
-#        dat_proc <- dat_proc %>%
-#          mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
-#                 RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7, 1, 0))
-#    } else if (study_name == "VAT08m") { # Sanofi
-#        dat_proc <- dat_proc %>%
-#          mutate(Riskscorecohortflag = ifelse(Perprotocol==1, 1, 0),
-#                 RiskscoreAUCflag = ifelse(Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7, 1, 0))
-#    } else if (study_name %in% c("PROFISCOV")) {
-#        # Needs Youyi's check; currently do nothing!
-#      
-#    } else stop("unknown study_name 4")
-#
-#    assertthat::assert_that(
-#        all(!is.na(dat_proc$Riskscorecohortflag)),
-#        msg = "missing Riskscorecohortflag")
-#    
-#    dat_proc    
-#}
+preprocess=function(dat_raw, study_name) {
+    dat_proc=dat_raw
+
+    if(is_ows_trial & !study_name %in% c("VAT08m", "VAT08b")){
+        dat_proc=subset(dat_proc, !is.na(Bserostatus))
+    }
+    
+    if(study_name=="ENSEMBLE") {
+        # EventTimePrimaryIncludeNotMolecConfirmedD29 are the endpoint of interest and should be used to compute weights
+        dat_proc$EventTimePrimaryD29=dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD29
+        dat_proc$EventIndPrimaryD29 =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
+        dat_proc$EventTimePrimaryD1 =dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD1
+        dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
+    }
+        
+    for(tp in timepoints) dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
+    
+    
+    for(tp in timepoints) {
+        dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
+    }
+
+    # ENSEMBLE only, since we are not using this variable to define Riskscorecohortflag and we are not doing D29start1 analyses for other trials
+    if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
+        dat_proc[["EarlyendpointD29start1"]]<- with(dat_proc, ifelse(get("EarlyinfectionD29start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD29") + 1),1,0))
+    } else {
+#        # commented out on Aug 25, 2022 because it is dangerous
+#        # this is not necessary, but it is kept here to make the hash checks for mock datasets happy
+#        dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29 
+    }
+   
+    dat_proc    
+}
