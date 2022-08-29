@@ -218,7 +218,7 @@ janssen_sa_mock:
 
 
 
-butantan: &butantan
+profiscov: &profiscov
   <<: *ows_trial # not a real one, but satisfies the attributes
   study_name: PROFISCOV
   two_marker_timepoints: yes
