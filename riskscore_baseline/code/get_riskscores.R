@@ -5,11 +5,12 @@
 # Sys.setenv(TRIAL = "prevent19") # Novavax
 # Sys.setenv(TRIAL = "vat08m") # Sanofi
 # Sys.setenv(TRIAL = "janssen_pooled_partA") 
+# Sys.setenv(TRIAL = "butantan") 
 
 source("code/loadlibraries_readinputdata.R")
 inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) # this function is in _common.R
 
-if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m")){
+if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m", "PROFISCOV")){
   inputFile <- inputFile %>%
     rename(Ptid = Subjectid)
 }else if(study_name == "MockCOVE"){
@@ -229,7 +230,7 @@ if(study_name == "VAT08m"){
 }
 
 # Check there are no NA values in Riskscorecohortflag!
-if(study_name != "COVE"){
+if(!study_name %in% c("COVE", "PROFISCOV")){
   assertthat::assert_that(
     all(!is.na(inputMod$Riskscorecohortflag)), msg = "NA values present in Riskscorecohortflag!"
   )

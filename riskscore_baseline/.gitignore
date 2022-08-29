@@ -15,6 +15,7 @@ output/janssen_pooled_realPsV/*
 output/novavax_real/*
 output/cov002/*
 output/prevent19/*
+output/butantan/*
 *.Rout
 nohup.out
 .nfs*

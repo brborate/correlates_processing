@@ -191,6 +191,15 @@ if(TRUE) {
         uloqs["pseudoneutid50"]=191429*0.0653 # 3121.732
         pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
         
+    } else if(study_name=="PROFISCOV") { # Needs Youyi's check!
+      # Butantan
+      
+      # data less than lod is set to lod/2
+      llods["pseudoneutid50"]=2.612  
+      lloqs["pseudoneutid50"]=95*0.0653 # 3.6568
+      uloqs["pseudoneutid50"]=191429*0.0653 # 3121.732
+      pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
+      
     } else stop("unknown study_name 1")
     
     # llox is for plotting and can be either llod or lloq depending on trials
@@ -316,6 +325,9 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "Age < 60"
     )
 
+} else if (study_name %in% c("PROFISCOV")) {
+    # Needs Youyi's check; currently do nothing!
+
 } else if (study_name=="HVTN705") {
     # do nothing
     
@@ -401,6 +413,9 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "JPN, Age >= 60"
     )
     
+} else if (study_name %in% c("PROFISCOV")) {
+  # Needs Youyi's check; currently do nothing!
+  
 } else if (study_name=="HVTN705") {
     # do nothing
 
@@ -608,6 +623,9 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
         dat_proc <- dat_proc %>%
           mutate(Riskscorecohortflag = ifelse(Perprotocol==1, 1, 0),
                  RiskscoreAUCflag = ifelse(Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7, 1, 0))
+    } else if (study_name %in% c("PROFISCOV")) {
+      # Needs Youyi's check; currently do nothing!
+      
     } else stop("unknown study_name 4")
 
     assertthat::assert_that(
@@ -616,3 +634,4 @@ preprocess.for.risk.score=function(dat_raw, study_name) {
     
     dat_proc    
 }
+
