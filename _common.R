@@ -191,14 +191,53 @@ if(TRUE) {
         uloqs["pseudoneutid50"]=191429*0.0653 # 3121.732
         pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
         
-    } else if(study_name=="PROFISCOV") { # Needs Youyi's check!
+    } else if(study_name=="PROFISCOV") { 
       # Butantan
       
-      # data less than lod is set to lod/2
-      llods["pseudoneutid50"]=2.612  
-      lloqs["pseudoneutid50"]=95*0.0653 # 3.6568
-      uloqs["pseudoneutid50"]=191429*0.0653 # 3121.732
-      pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
+        # lod and lloq are the same
+        # data less than lod is set to lloq/2
+        
+        #SARS-CoV-2 Spike           49 70,000 1,668 49
+        #SARS-CoV-2 Spike (P.1)     32 36,000 806 32
+        #SARS-CoV-2 Spike (B.1.351) 72 21,000 467 72
+        #SARS-CoV-2 Spike (B.1.1.7) 70 47,000 1,323 70
+        
+        lloqs["bindSpike"] <- lloqs["bindSpike"] <- 49*0.0090 # 0.441
+        uloqs["bindSpike"]=70000*0.0090 # 630
+        pos.cutoffs["bindSpike"]=1668*0.0090 # 15.0
+        
+        lloqs["bindSpikeP1"] <- llods["bindSpikeP1"] <- 32*0.0090 
+        uloqs["bindSpikeP1"]=36000*0.0090 
+        pos.cutoffs["bindSpikeP1"]=806*0.0090 
+        
+        lloqs["bindSpikeB1351"] <- llods["bindSpikeB1351"] <- 72*0.0090 
+        uloqs["bindSpikeB1351"]=21000*0.0090 
+        pos.cutoffs["bindSpikeB1351"]=467*0.0090 
+        
+        lloqs["bindSpikeB117"] <- llods["bindSpikeB117"] <- 70*0.0090 
+        uloqs["bindSpikeB117"]=47000*0.0090 
+        pos.cutoffs["bindSpikeB117"]=1323*0.0090 
+        
+        #SARS-CoV-2 S1 RBD           35  30,000 1,867 35
+        #SARS-CoV-2 S1 RBD (P.1)     91  10,000 929   91
+        #SARS-CoV-2 S1 RBD (B.1.351) 53  6,300  484   53
+        #SARS-CoV-2 S1 RBD (B.1.1.7) 224 20,000 1,575 224
+                
+        lloqs["bindRBD"] <- lloqs["bindRBD"] <- 35*0.0090 # 0.441
+        uloqs["bindRBD"]=30000*0.0090 # 630
+        pos.cutoffs["bindRBD"]=1867*0.0090 # 15.0
+        
+        lloqs["bindRBDP1"] <- llods["bindRBDP1"] <- 91*0.0090 
+        uloqs["bindRBDP1"]=10000*0.0090 
+        pos.cutoffs["bindRBDP1"]=929*0.0090 
+        
+        lloqs["bindRBDB1351"] <- llods["bindRBDB1351"] <- 53*0.0090 
+        uloqs["bindRBDB1351"]=6300*0.0090 
+        pos.cutoffs["bindRBDB1351"]=484*0.0090 
+        
+        lloqs["bindRBDB117"] <- llods["bindRBDB117"] <- 224*0.0090 
+        uloqs["bindRBDB117"]=20000*0.0090 
+        pos.cutoffs["bindRBDB117"]=1575*0.0090 
       
     } else stop("unknown study_name 1")
     
@@ -326,7 +365,7 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
     )
 
 } else if (study_name %in% c("PROFISCOV")) {
-    # Needs Youyi's check; currently do nothing!
+    # do nothing
 
 } else if (study_name=="HVTN705") {
     # do nothing
@@ -414,7 +453,7 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
     )
     
 } else if (study_name %in% c("PROFISCOV")) {
-  # Needs Youyi's check; currently do nothing!
+    # do nothing
   
 } else if (study_name=="HVTN705") {
     # do nothing
@@ -564,74 +603,73 @@ report.assay.values=function(x, assay){
 #report.assay.values (dat.vac.seroneg[["Daytp1pseudoneutid80"]], "pseudoneutid80")
 
 
-preprocess.for.risk.score=function(dat_raw, study_name) {
-    dat_proc=dat_raw
-    
-    if(study_name != "VAT08m"){
-      dat_proc=subset(dat_proc, !is.na(Bserostatus))
-    }
-    
-    # EventTimePrimaryIncludeNotMolecConfirmedD29 are the endpoint of interest and should be used to compute weights
-    if(study_name=="ENSEMBLE") {
-        dat_proc$EventTimePrimaryD29=dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD29
-        dat_proc$EventIndPrimaryD29 =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
-        dat_proc$EventTimePrimaryD1 =dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD1
-        dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
-    }
-        
-    for(tp in timepoints) dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
-    
-    
-    for(tp in timepoints) {
-        dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
-    }
-
-    # ENSEMBLE only, since we are not using this variable to define Riskscorecohortflag and we are not doing D29start1 analyses for other trials
-    if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
-        dat_proc[["EarlyendpointD29start1"]]<- with(dat_proc, ifelse(get("EarlyinfectionD29start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD29") + 1),1,0))
-    } else {
-#        # commented out on Aug 25, 2022 because it is dangerous
-#        # this is not necessary, but it is kept here to make the hash checks for mock datasets happy
-#        dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29 
-    }
-    
-    
-    # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm. It requires:
-    # 1. baseline SARS-CoV-2 negative, 
-    # 2. per-protocol, 
-    # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
-    # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
-    # no NAs allowed. 
-    if (study_name %in% c("MockCOVE", "COVE")) {
-        # special case, redefined for backward compatibility
-        dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
-
-    } else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
-        dat_proc$Riskscorecohortflag <-
-          with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
-
-    } else if (study_name == "PREVENT19") { # Novavax
-      dat_proc <- dat_proc %>%
-        mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
-               RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7, 1, 0)
-               )
-    } else if (study_name == "AZD1222") {
-        dat_proc <- dat_proc %>%
-          mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
-                 RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7, 1, 0))
-    } else if (study_name == "VAT08m") { # Sanofi
-        dat_proc <- dat_proc %>%
-          mutate(Riskscorecohortflag = ifelse(Perprotocol==1, 1, 0),
-                 RiskscoreAUCflag = ifelse(Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7, 1, 0))
-    } else if (study_name %in% c("PROFISCOV")) {
-      # Needs Youyi's check; currently do nothing!
-      
-    } else stop("unknown study_name 4")
-
-    assertthat::assert_that(
-        all(!is.na(dat_proc$Riskscorecohortflag)),
-        msg = "missing Riskscorecohortflag")
-    
-    dat_proc    
-}
-
+#preprocess.for.risk.score=function(dat_raw, study_name) {
+#    dat_proc=dat_raw
+#    
+#    if(study_name != "VAT08m"){
+#      dat_proc=subset(dat_proc, !is.na(Bserostatus))
+#    }
+#    
+#    if(study_name=="ENSEMBLE") {
+#        # EventTimePrimaryIncludeNotMolecConfirmedD29 are the endpoint of interest and should be used to compute weights
+#        dat_proc$EventTimePrimaryD29=dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD29
+#        dat_proc$EventIndPrimaryD29 =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
+#        dat_proc$EventTimePrimaryD1 =dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD1
+#        dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
+#    }
+#        
+#    for(tp in timepoints) dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
+#    
+#    
+#    for(tp in timepoints) {
+#        dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
+#    }
+#
+#    # ENSEMBLE only, since we are not using this variable to define Riskscorecohortflag and we are not doing D29start1 analyses for other trials
+#    if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
+#        dat_proc[["EarlyendpointD29start1"]]<- with(dat_proc, ifelse(get("EarlyinfectionD29start1")==1| (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD29") + 1),1,0))
+#    } else {
+##        # commented out on Aug 25, 2022 because it is dangerous
+##        # this is not necessary, but it is kept here to make the hash checks for mock datasets happy
+##        dat_proc$EarlyinfectionD29start1=dat_proc$EarlyinfectionD29 
+#    }
+#    
+#    
+#    # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm. It requires:
+#    # 1. baseline SARS-CoV-2 negative, 
+#    # 2. per-protocol, 
+#    # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
+#    # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
+#    # no NAs allowed. 
+#    if (study_name %in% c("MockCOVE", "COVE")) {
+#        # special case, redefined for backward compatibility
+#        dat_proc$Riskscorecohortflag <- with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
+#
+#    } else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
+#        dat_proc$Riskscorecohortflag <-
+#          with(dat_proc, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
+#
+#    } else if (study_name == "PREVENT19") { # Novavax
+#      dat_proc <- dat_proc %>%
+#        mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
+#               RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7, 1, 0)
+#               )
+#    } else if (study_name == "AZD1222") {
+#        dat_proc <- dat_proc %>%
+#          mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
+#                 RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7, 1, 0))
+#    } else if (study_name == "VAT08m") { # Sanofi
+#        dat_proc <- dat_proc %>%
+#          mutate(Riskscorecohortflag = ifelse(Perprotocol==1, 1, 0),
+#                 RiskscoreAUCflag = ifelse(Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7, 1, 0))
+#    } else if (study_name %in% c("PROFISCOV")) {
+#        # Needs Youyi's check; currently do nothing!
+#      
+#    } else stop("unknown study_name 4")
+#
+#    assertthat::assert_that(
+#        all(!is.na(dat_proc$Riskscorecohortflag)),
+#        msg = "missing Riskscorecohortflag")
+#    
+#    dat_proc    
+#}
