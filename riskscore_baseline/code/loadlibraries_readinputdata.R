@@ -47,4 +47,4 @@ run_prod <- !grepl("Mock", study_name)
 # get utility files
 source(here("code", "sl_screens.R")) # set up the screen/algorithm combinations
 source(here("code", "utils.R")) # get CV-AUC for all algs
-inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name)
+inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) # this function is in _common.R
