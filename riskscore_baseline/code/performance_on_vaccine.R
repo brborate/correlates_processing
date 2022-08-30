@@ -70,10 +70,10 @@ dev.off()
 options(bitmapType = "cairo")
 png(file = here("output", Sys.getenv("TRIAL"), "predProb_riskscore_vacc_onlySL.png"),
     width = 1100, height = 700)
-# if(study_name_code == "COVE"){
+# if(study_name == "COVE" | study_name == "MockCOVE"){
 #   cases = "Post Day 57 Cases"
 # }
-# if(study_name_code == "ENSEMBLE"){
+# if(study_name == "ENSEMBLE" | study_name == "MockENSEMBLE"){
 #   cases = "Post Day 29 Cases"
 # }
 if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
@@ -122,4 +122,3 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
 # Create table of case/controls in vaccine cohort used for calculating AUC in risk score report (this cohort changes for TRIALS beyond COVE or janssen!)
 table(vacc %>% pull(endpoint)) %>%
   write.csv(file = here("output", Sys.getenv("TRIAL"), "vacc.cases.AUC.calc_post_riskScoreAnalysis.csv"))
-

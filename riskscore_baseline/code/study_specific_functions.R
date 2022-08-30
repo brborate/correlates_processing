@@ -2,7 +2,7 @@
 # @param dataframe containing Variable Name of input variable used in risk score analysis
 # @return dataframe with two new columns: Definition and Comments
 get_defs_comments_riskVars <- function(data){
-  if(study_name_code == "COVE"){
+  if(study_name == "COVE" | study_name == "MockCOVE"){
     data <- data %>%
       mutate(Definition = case_when(
         `Variable Name` == "Age" ~ "Age at enrollment in years, between 18 and 85",
@@ -26,7 +26,7 @@ get_defs_comments_riskVars <- function(data){
       Comments = "")
   }
   
-  if(study_name_code == "ENSEMBLE"){
+  if(study_name == "ENSEMBLE" | study_name == "MockENSEMBLE"){
     data <- data %>%
       mutate(Definition = case_when(
         `Variable Name` == "Age" ~ "Age at enrollment in years (integer >= 18, NA=missing). Note that the randomization strata included Age 18-59 vs. Age >= 60.",
@@ -69,7 +69,7 @@ get_defs_comments_riskVars <- function(data){
       ),
       Comments = "")
   }
-  if(study_name_code == "PREVENT19"){
+  if(study_name == "PREVENT19"){
     data <- data %>%
       mutate(Definition = case_when(
         `Variable Name` == "Age" ~ "Age at enrollment in years",
@@ -95,7 +95,7 @@ get_defs_comments_riskVars <- function(data){
       Comments = "")
   }
   
-  if(study_name_code == "AZD1222"){
+  if(study_name == "AZD1222"){
     data <- data %>%
       mutate(Definition = case_when(
         `Variable Name` == "Age" ~ "Age at enrollment in years",
@@ -121,7 +121,7 @@ get_defs_comments_riskVars <- function(data){
       Comments = "")
   }
   
-  if(study_name_code == "VAT08m"){
+  if(study_name == "VAT08m"){
     data <- data %>%
       mutate(Definition = case_when(
         `Variable Name` == "Age" ~ "Age at enrollment in years",
