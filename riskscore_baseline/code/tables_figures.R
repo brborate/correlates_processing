@@ -86,9 +86,9 @@ if (run_prod) {
 tab %>% write.csv(here("output", Sys.getenv("TRIAL"), "learner-screens.csv"))
 
 ######## SLperformance-plac ####################################################
-if(study_name_code=="COVE"){
+if(study_name=="COVE" | study_name=="MockCOVE"){
   caption <- "Performance of Superlearner and all learner-screen combinations (CV-AUCs with 95\\% CIs) for risk score analyses using placebo group and EventIndPrimaryD57 as outcome. Constraint of np/20 is applied to all learners such that no more than 6 input variables were allowed in any model."
-}else if(study_name_code=="ENSEMBLE"){
+}else if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE"){
   caption <- "Performance of Superlearner and all learner-screen combinations (CV-AUCs with 95\\% CIs) for risk score analyses using placebo group and EventIndPrimaryD29 (including those cases that are not molecularly confirmed) as outcome. Constraint of np/20 is applied to all learners such that no more than 5 input variables were allowed in any model."
 }
   
@@ -170,4 +170,3 @@ write.csv(plac, here("output", Sys.getenv("TRIAL"), "placebo_ptids_with_riskscor
 save(top2_plac, file = here("output", Sys.getenv("TRIAL"), "plac_top2learners_SL_discreteSL.rda"))
 
 rm(cvfits, pred, p1, p2)
-
