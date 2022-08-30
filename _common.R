@@ -202,7 +202,7 @@ if(TRUE) {
         #SARS-CoV-2 Spike (B.1.351) 72 21,000 467 72
         #SARS-CoV-2 Spike (B.1.1.7) 70 47,000 1,323 70
         
-        lloqs["bindSpike"] <- lloqs["bindSpike"] <- 49*0.0090 # 0.441
+        lloqs["bindSpike"] <- llods["bindSpike"] <- 49*0.0090 # 0.441
         uloqs["bindSpike"]=70000*0.0090 # 630
         pos.cutoffs["bindSpike"]=1668*0.0090 # 15.0
         
@@ -223,21 +223,21 @@ if(TRUE) {
         #SARS-CoV-2 S1 RBD (B.1.351) 53  6,300  484   53
         #SARS-CoV-2 S1 RBD (B.1.1.7) 224 20,000 1,575 224
                 
-        lloqs["bindRBD"] <- lloqs["bindRBD"] <- 35*0.0090 # 0.441
-        uloqs["bindRBD"]=30000*0.0090 # 630
-        pos.cutoffs["bindRBD"]=1867*0.0090 # 15.0
+        lloqs["bindRBD"] <- llods["bindRBD"] <- 35*0.0272 
+        uloqs["bindRBD"]=30000*0.0272 # 630
+        pos.cutoffs["bindRBD"]=1867*0.0272 # 15.0
         
-        lloqs["bindRBDP1"] <- llods["bindRBDP1"] <- 91*0.0090 
-        uloqs["bindRBDP1"]=10000*0.0090 
-        pos.cutoffs["bindRBDP1"]=929*0.0090 
+        lloqs["bindRBD_P.1"] <- llods["bindRBD_P.1"] <- 91*0.0272 
+        uloqs["bindRBD_P.1"]=10000*0.0272 
+        pos.cutoffs["bindRBD_P.1"]=929*0.0272 
         
-        lloqs["bindRBDB1351"] <- llods["bindRBDB1351"] <- 53*0.0090 
-        uloqs["bindRBDB1351"]=6300*0.0090 
-        pos.cutoffs["bindRBDB1351"]=484*0.0090 
+        lloqs["bindRBD_B.1.351"] <- llods["bindRBD_B.1.351"] <- 53*0.0272 
+        uloqs["bindRBD_B.1.351"]=6300*0.0272 
+        pos.cutoffs["bindRBD_B.1.351"]=484*0.0272 
         
-        lloqs["bindRBDB117"] <- llods["bindRBDB117"] <- 224*0.0090 
-        uloqs["bindRBDB117"]=20000*0.0090 
-        pos.cutoffs["bindRBDB117"]=1575*0.0090 
+        lloqs["bindRBD_B.1.1.7"] <- llods["bindRBD_B.1.1.7"] <- 224*0.0272 
+        uloqs["bindRBD_B.1.1.7"]=20000*0.0272 
+        pos.cutoffs["bindRBD_B.1.1.7"]=1575*0.0272 
       
     } else stop("unknown study_name 1")
     
