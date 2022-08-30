@@ -8,7 +8,7 @@
 # Sys.setenv(TRIAL = "butantan") 
 
 source("code/loadlibraries_readinputdata.R")
-inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) # this function is in _common.R
+#inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) # this function is in _common.R
 
 if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m", "PROFISCOV")){
   inputFile <- inputFile %>%
