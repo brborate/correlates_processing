@@ -21,7 +21,6 @@ moderna_trial: &moderna_trial
   assay_labels_short: [Anti Spike IgG (BAU/ml), Anti RBD IgG (BAU/ml), Pseudovirus-nAb ID50 (IU50/ml), Pseudovirus-nAb ID80 (IU80/ml), Live Virus-mnAb ID50 (IU50/ml)]
   times: [B, Day29, Day57, Delta29overB, Delta57overB, Delta57over29]
   time_labels: [Day 1, Day 29, Day 57, D29 fold-rise over D1, D57 fold-rise over D1, D57 fold-rise over D29]
-  study_name_code: COVE
 
 moderna_real: &moderna_real
   <<: *moderna_trial
@@ -42,7 +41,6 @@ vat08m: &vat08m
   subset_value: All
   times: [B, Day22, Day43, Delta22overB, Delta43overB, Delta43over22]
   time_labels: [Day 1, Day 22, Day 43, D22 fold-rise over D1, D43 fold-rise over D1, D43 fold-rise over D22]
-  study_name_code: VAT08m
   assays: [pseudoneutid50]
   assay_labels: [PsV Neutralization 50% Titer]
   assay_labels_short: [Pseudovirus-nAb ID50 (IU50/ml)]
@@ -56,7 +54,6 @@ prevent19: &prevent19
   timepoints: [35]
   times: [B, Day35, Delta35overB]
   time_labels: [Day 1, Day 35, D35 fold-rise over D1]
-  study_name_code: PREVENT19
   mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/adata/COVID_Novavax_realdata_20220506.csv 
   assays: [bindSpike, pseudoneutid50]
   assay_labels: [Binding Antibody to Spike, PsV Neutralization 50% Titer]
@@ -69,7 +66,6 @@ azd1222_base: &azd1222_base
   timepoints: [29, 57]
   times: [B, Day29, Day57, Delta29overB, Delta57overB, Delta57over29]
   time_labels: [Day 1, Day 29, Day 57, D29 fold-rise over D1, D57 fold-rise over D1, D57 fold-rise over D29]
-  study_name_code: AZD1222
   mapped_data: /trials/covpn/p3002/analysis/mapping_immune_correlates/adata/COVID_AstraZeneca_realdata_20220506.csv 
   subset_variable: None
   subset_value: All
@@ -94,7 +90,6 @@ janssen_trial: &janssen_trial
   timepoints: [29]
   times: [B, Day29, Delta29overB]
   time_labels: [Day 1, Day 29, D29 fold-rise over D1]
-  study_name_code: ENSEMBLE
 
 
 
