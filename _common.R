@@ -206,17 +206,17 @@ if(TRUE) {
         uloqs["bindSpike"]=70000*0.0090 # 630
         pos.cutoffs["bindSpike"]=1668*0.0090 # 15.0
         
-        lloqs["bindSpikeP1"] <- llods["bindSpikeP1"] <- 32*0.0090 
-        uloqs["bindSpikeP1"]=36000*0.0090 
-        pos.cutoffs["bindSpikeP1"]=806*0.0090 
+        lloqs["bindSpike_P.1"] <- llods["bindSpike_P.1"] <- 32*0.0090 
+        uloqs["bindSpike_P.1"]=36000*0.0090 
+        pos.cutoffs["bindSpike_P.1"]=806*0.0090 
         
-        lloqs["bindSpikeB1351"] <- llods["bindSpikeB1351"] <- 72*0.0090 
-        uloqs["bindSpikeB1351"]=21000*0.0090 
-        pos.cutoffs["bindSpikeB1351"]=467*0.0090 
+        lloqs["bindSpike_B.1.351"] <- llods["bindSpike_B.1.351"] <- 72*0.0090 
+        uloqs["bindSpike_B.1.351"]=21000*0.0090 
+        pos.cutoffs["bindSpike_B.1.351"]=467*0.0090 
         
-        lloqs["bindSpikeB117"] <- llods["bindSpikeB117"] <- 70*0.0090 
-        uloqs["bindSpikeB117"]=47000*0.0090 
-        pos.cutoffs["bindSpikeB117"]=1323*0.0090 
+        lloqs["bindSpike_B.1.1.7"] <- llods["bindSpike_B.1.1.7"] <- 70*0.0090 
+        uloqs["bindSpike_B.1.1.7"]=47000*0.0090 
+        pos.cutoffs["bindSpike_B.1.1.7"]=1323*0.0090 
         
         #SARS-CoV-2 S1 RBD           35  30,000 1,867 35
         #SARS-CoV-2 S1 RBD (P.1)     91  10,000 929   91
@@ -257,8 +257,7 @@ if(TRUE) {
 # figure labels and titles for markers
 ###############################################################################
 
-markers <- c(outer(times[which(times %in% c("B", paste0("Day", config$timepoints)))], 
-                   assays, "%.%"))
+markers <- c(outer(times[which(times %in% c("B", paste0("Day", config$timepoints)))], assays, "%.%"))
 
 # race labeling
 labels.race <- c(
@@ -365,7 +364,9 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
     )
 
 } else if (study_name %in% c("PROFISCOV")) {
-    # do nothing
+    Bstratum.labels <- c(
+      "All"
+    )
 
 } else if (study_name=="HVTN705") {
     # do nothing
@@ -453,7 +454,7 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
     )
     
 } else if (study_name %in% c("PROFISCOV")) {
-    # do nothing
+    demo.stratum.labels <- c("All")
   
 } else if (study_name=="HVTN705") {
     # do nothing
