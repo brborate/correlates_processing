@@ -226,7 +226,7 @@ profiscov: &profiscov
   timepoints: [43,91]
   times: [B, Day43, Day91, Delta43overB, Delta91overB, Delta91over43]
   time_labels: [Day 1, Day 43, Day 91, D43 fold-rise over D1, D91 fold-rise over D1, D91 fold-rise over D43]
-  assays: [bindSpike, bindSpike_B.1.1.7, bindSpike_B.1.351, bindSpike_P.1, bindRBD, bindRBD_B.1.1.7, bindRBD_B.1.351, bindRBD_P.1, N]
+  assays: [bindSpike, bindSpike_B.1.1.7, bindSpike_B.1.351, bindSpike_P.1, bindRBD, bindRBD_B.1.1.7, bindRBD_B.1.351, bindRBD_P.1, bindN]
   assay_labels: [Binding Antibody to Spike, Binding Antibody to Spike B.1.1.7, Binding Antibody to Spike B.1.351, Binding Antibody to Spike P.1, Binding Antibody to RBD, Binding Antibody to RBD B.1.1.7, Binding Antibody to RBD B.1.351, Binding Antibody to RBD P.1, Binding Antibody to Nucleocapsid]
   assay_labels_short: [Anti Spike IgG (BAU/ml), Anti Spike B.1.1.7 IgG (BAU/ml), Anti Spike B.1.351 IgG (BAU/ml), Anti Spike P.1 IgG (BAU/ml), Anti RBD IgG (BAU/ml), Anti RBD B.1.1.7 IgG (BAU/ml), Anti RBD B.1.351 IgG (BAU/ml), Anti RBD P.1 IgG (BAU/ml), Anti N IgG (BAU/ml)]
 
