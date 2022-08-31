@@ -18,12 +18,10 @@ library(here)
 # inputFile_with_riskscore.Rdata is made from riskscore_analysis, which calls preprocess and makes risk scores
 if (make_riskscore) {
     load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
-    dat_proc <- inputFile_with_riskscore
-    
+    dat_proc <- inputFile_with_riskscore    
 } else {
     dat_raw=read.csv(mapped_data)
-    dat_proc = preprocess(dat_raw, study_name)
-
+    dat_proc = preprocess(dat_raw, study_name)    
 }
 
 #with(dat_proc[dat_proc$Trt==1,], table(!is.na(Day29bindSpike), !is.na(Day29bindRBD), EventIndPrimaryIncludeNotMolecConfirmedD29)) # same missingness
