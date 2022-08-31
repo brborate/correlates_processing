@@ -244,6 +244,12 @@ if(TRUE) {
         uloqs["bindN"]=80000*0.00236 
         pos.cutoffs["bindN"]=59115*0.00236 
         
+        #LVMN
+        llods["liveneutmn50"]=27.56 
+        lloqs["liveneutmn50"]=27.84
+        uloqs["liveneutmn50"]=20157.44 
+        pos.cutoffs["liveneutmn50"]=13.78 
+        
     } else stop("unknown study_name 1")
     
     # llox is for plotting and can be either llod or lloq depending on trials
