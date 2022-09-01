@@ -22,7 +22,6 @@ blas_set_num_threads(1L)
 stopifnot(blas_get_num_procs() == 1L)
 omp_set_num_threads(1L)
 
-
 verbose=Sys.getenv("VERBOSE")=="1"
 
 names(assays)=assays # add names so that lapply results will have names
@@ -192,7 +191,7 @@ if(TRUE) {
         pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
         
     } else if(study_name=="PROFISCOV") { 
-      # Butantan
+        # Butantan
       
         # lod and lloq are the same
         # data less than lod is set to lloq/2
@@ -239,6 +238,18 @@ if(TRUE) {
         uloqs["bindRBD_B.1.1.7"]=20000*0.0272 
         pos.cutoffs["bindRBD_B.1.1.7"]=1575*0.0272 
       
+        #SARS-CoV-2 Nucleocapsid 46 80,000 59,115 46
+        
+        lloqs["bindN"] <- llods["bindN"] <- 46*0.00236 
+        uloqs["bindN"]=80000*0.00236 
+        pos.cutoffs["bindN"]=59115*0.00236 
+        
+        #LVMN
+        llods["liveneutmn50"]=27.56 
+        lloqs["liveneutmn50"]=27.84
+        uloqs["liveneutmn50"]=20157.44 
+        pos.cutoffs["liveneutmn50"]=13.78 
+        
     } else stop("unknown study_name 1")
     
     # llox is for plotting and can be either llod or lloq depending on trials

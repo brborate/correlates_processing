@@ -18,12 +18,10 @@ library(here)
 # inputFile_with_riskscore.Rdata is made from riskscore_analysis, which calls preprocess and makes risk scores
 if (make_riskscore) {
     load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
-    dat_proc <- inputFile_with_riskscore
-    
+    dat_proc <- inputFile_with_riskscore    
 } else {
     dat_raw=read.csv(mapped_data)
-    dat_proc = preprocess(dat_raw, study_name)
-
+    dat_proc = preprocess(dat_raw, study_name)    
 }
 
 #with(dat_proc[dat_proc$Trt==1,], table(!is.na(Day29bindSpike), !is.na(Day29bindRBD), EventIndPrimaryIncludeNotMolecConfirmedD29)) # same missingness
@@ -341,7 +339,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 } else stop("unknown study_name 7")
 
 
-# TwophasesampInd: be in the case or subcohort  &  have the necessary markers
+# TwophasesampInd: be in the subcohort or a case after time point 1  &  have the necessary markers
 if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19", "VAT08m")) {
     if (two_marker_timepoints) {
     # require baseline and timpoint 1
@@ -355,15 +353,23 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19", "VAT08m")
         complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
     
 } else if (study_name %in% c("AZD1222", "PROFISCOV")) {
-    # does not require baseline or time point 1
-    dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
-        with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-        complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])        
-    # does not require baseline
-    dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
-        with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-        # adding | is because if D57 is present, D29 will be imputed if missing
-        (complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)]) | complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])) 
+    if (two_marker_timepoints) {
+        # does not require baseline or time point 1
+        dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
+            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+            complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])        
+        
+        # does not require baseline
+        dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
+            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+            # adding | is because if D57 is present, D29 will be imputed if missing
+            (complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)]) | complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])) 
+    } else {
+        # does not require baseline
+        dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
+            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+            (complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)]) ) 
+    }
         
 } else if (study_name=="ENSEMBLE") {
     if (contain(attr(config, "config"), "real")) {
