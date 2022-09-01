@@ -47,4 +47,43 @@ run_prod <- !grepl("Mock", study_name)
 # get utility files
 source(here("code", "sl_screens.R")) # set up the screen/algorithm combinations
 source(here("code", "utils.R")) # get CV-AUC for all algs
-inputFile <- preprocess.for.risk.score(read.csv(path_to_data), study_name) # this function is in _common.R
+
+inputFile <- preprocess(read.csv(path_to_data), study_name)
+
+
+
+# Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm. It requires:
+# 1. baseline SARS-CoV-2 negative, 
+# 2. per-protocol, 
+# 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
+# 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
+# no NAs allowed. 
+if (study_name %in% c("MockCOVE", "COVE")) {
+    # special case, redefined for backward compatibility
+    inputFile$Riskscorecohortflag <- with(inputFile, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
+
+} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
+    inputFile$Riskscorecohortflag <-
+      with(inputFile, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
+
+} else if (study_name == "PREVENT19") { # Novavax
+  inputFile <- inputFile %>%
+    mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
+           RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD35==0 & EventTimePrimaryD35>=7, 1, 0)
+           )
+} else if (study_name == "AZD1222") {
+    inputFile <- inputFile %>%
+      mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
+             RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7, 1, 0))
+} else if (study_name == "VAT08m") { # Sanofi
+    inputFile <- inputFile %>%
+      mutate(Riskscorecohortflag = ifelse(Perprotocol==1, 1, 0),
+             RiskscoreAUCflag = ifelse(Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7, 1, 0))
+} else if (study_name %in% c("PROFISCOV")) {
+    # Needs Youyi's check; currently do nothing!
+  
+} else stop("unknown study_name 4")
+
+assertthat::assert_that(
+    all(!is.na(inputFile$Riskscorecohortflag)),
+    msg = "missing Riskscorecohortflag")

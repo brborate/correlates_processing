@@ -509,10 +509,10 @@ plot_roc_curves <- function(predict, cvaucDAT) {
 # @param pred dataframe returned by get_cv_predictions function
 # @return ggplot object containing the predicted probability plots
 plot_predicted_probabilities <- function(pred, day) {
-  if(study_name_code == "COVE"){
+  if(study_name == "COVE" | study_name == "MockCOVE"){
     cases = "Post Day 57 Cases"
   }
-  if(study_name_code == "ENSEMBLE"){
+  if(study_name == "ENSEMBLE" | study_name == "MockENSEMBLE"){
     cases = "Post Day 29 Cases"
   }
   

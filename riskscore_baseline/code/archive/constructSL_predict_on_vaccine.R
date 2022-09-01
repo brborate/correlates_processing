@@ -107,10 +107,10 @@ dev.off()
 options(bitmapType = "cairo")
 png(file = here("output", Sys.getenv("TRIAL"), "predProb_riskscore_vacc_onlySL.png"),
     width = 1100, height = 700)
-# if(study_name_code == "COVE"){
+# if(study_name == "COVE" | study_name == "MockCOVE"){
 #   cases = "Post Day 57 Cases"
 # }
-# if(study_name_code == "ENSEMBLE"){
+# if(study_name == "ENSEMBLE" | study_name == "MockENSEMBLE"){
 #   cases = "Post Day 29 Cases"
 # }
 print(vacc %>%
@@ -131,4 +131,3 @@ print(vacc %>%
     axis.title.y = element_text(size = 30)
   ))
 dev.off()
-

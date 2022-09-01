@@ -35,7 +35,7 @@ bin_variables_with_no_missing <-
       "Other", "Notreported", "Unknown",
       "SubcohortInd",
       "EventIndPrimaryD1", 
-      if(study_name_code=="ENSEMBLE") c("HIVinfection"))
+      if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") c("HIVinfection"))
 failed_variables_missing <- failed_variables_01 <- NULL
 for(variable in bin_variables_with_no_missing){
     pass <- all(!is.na(dat_proc[[variable]]))
@@ -62,7 +62,7 @@ if(length(failed_variables_01) > 0){
 ## binary variables only take values 0/1
 variables_with_no_missing <-
     c("EventTimePrimaryD1", 
-      if(study_name_code=="ENSEMBLE") c("HIVinfection"))
+      if(study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") c("HIVinfection"))
 failed_variables_missing <- NULL
 for(variable in variables_with_no_missing){
     pass <- all(!is.na(dat_proc[[variable]]))

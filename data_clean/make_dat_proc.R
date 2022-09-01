@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "vat08m")
+#Sys.setenv(TRIAL = "profiscov")
 renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -11,16 +11,20 @@ library(dplyr)
 library(here)
 
 
-#mapped.dat=read.csv(mapped_data)
-
-
 
 ########################################################################################################
 # read mapped data with risk score added
 
-# inputFile_with_riskscore has the same number of rows as dat_raw, but adds columns related to earlyendpoint, earlyinfection (preprocess.for.risk.score) and risk scores
-load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
-dat_proc <- inputFile_with_riskscore
+# inputFile_with_riskscore.Rdata is made from riskscore_analysis, which calls preprocess and makes risk scores
+if (make_riskscore) {
+    load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
+    dat_proc <- inputFile_with_riskscore
+    
+} else {
+    dat_raw=read.csv(mapped_data)
+    dat_proc = preprocess(dat_raw, study_name)
+
+}
 
 #with(dat_proc[dat_proc$Trt==1,], table(!is.na(Day29bindSpike), !is.na(Day29bindRBD), EventIndPrimaryIncludeNotMolecConfirmedD29)) # same missingness
 
@@ -29,10 +33,9 @@ if (study_name %in% c("MockENSEMBLE", "MockCOVE")) {
     dat_proc$AnyinfectionD1=0
 }
 
-
 colnames(dat_proc)[1] <- "Ptid" 
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
-dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08m=60, stop("unknown study_name 1")))
+dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08m=60, PROFISCOV=NA, stop("unknown study_name 1")))
   
 
 # ethnicity labeling
@@ -76,6 +79,9 @@ if (study_name %in% c("COVE", "MockCOVE")) {
         race = factor(race, levels = labels.race)
       )
       
+} else if (study_name %in% c("PROFISCOV")) {
+    dat_proc$race = 0 # not applicable, but has to define a value so that the next chunk of code can run
+    
 } else stop("unknown study_name 2")
 
 dat_proc$WhiteNonHispanic <- NA
@@ -97,21 +103,22 @@ dat_proc$WhiteNonHispanic[is.na(dat_proc$WhiteNonHispanic)] = 0
 dat_proc$MinorityInd[is.na(dat_proc$MinorityInd)] = 0
 
 # set MinorityInd to 0 for latin america and south africa
-if (study_name %in% c("COVE", "MockCOVE")) {
-    # nothing to do, US data only
+if (study_name %in% c("COVE", "MockCOVE", "PROFISCOV")) {
+    # nothing to do
+    # COVE only has US data
     
 } else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
     dat_proc$MinorityInd[dat_proc$Region!=0] = 0
-
+    
 } else if (study_name=="PREVENT19") {
     dat_proc$MinorityInd[dat_proc$Country!=0] = 0 # 0 is US
-
+    
 } else if (study_name=="AZD1222") {
     dat_proc$MinorityInd[dat_proc$Country!=2] = 0 # 2 is US
-
+    
 } else if (study_name=="VAT08m") {
     dat_proc$MinorityInd[dat_proc$Country!=8] = 0 # 8 is US
-
+    
 } else stop("unknown study_name 3")
 
 
@@ -171,6 +178,9 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 } else if (study_name %in% c("PREVENT19", "AZD1222", "VAT08m")) {
     dat_proc$Bstratum = with(dat_proc, ifelse(Senior, 1, 0))
     
+} else if (study_name %in% c("PROFISCOV")) {
+    dat_proc$Bstratum = 1 # there are no demographics stratum for subcohort sampling
+    
 } else stop("unknown study_name 4")
 
 names(Bstratum.labels) <- Bstratum.labels
@@ -229,6 +239,9 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$demo.stratum = with(dat_proc, ifelse(demo.stratum==4, 2, demo.stratum)) 
     dat_proc$demo.stratum = with(dat_proc, ifelse(demo.stratum>4, demo.stratum-1, demo.stratum)) 
         
+} else if (study_name=="PROFISCOV" ) {
+    dat_proc$demo.stratum = 1 # # there are no demographics stratum for subcohort sampling
+    
 } else stop("unknown study_name 5")  
   
 names(demo.stratum.labels) <- demo.stratum.labels
@@ -267,12 +280,20 @@ if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "AZD1222")
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1)]=max.tps+4
     
+} else if (study_name == "PROFISCOV") {
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD43==1 & Trt==0 & Bserostatus==0)]=max.tps+1
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD43==1 & Trt==0 & Bserostatus==1)]=max.tps+2
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD43==1 & Trt==1 & Bserostatus==0)]=max.tps+3
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD43==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+    
 } else stop("unknown study_name 6")
 
 
 #subset(dat_proc, Trt==1 & Bserostatus==1 & EventIndPrimaryD29 == 1)[1:3,]
 
 with(dat_proc, table(tps.stratum))
+with(dat_proc, table(Wstratum))
+
 
 
 
@@ -305,6 +326,15 @@ if (study_name %in% c("COVE", "MockCOVE")) {
         
     } else stop("need to define must_have_assays")
     
+} else if (study_name %in% c("PROFISCOV")) {
+    if (attr(config, "config")=="profiscov") {
+        must_have_assays <- c("bindSpike")
+        
+    } else if (attr(config, "config")=="profiscov_lvmn") {
+        must_have_assays <- c("liveneutmn50")
+        
+    } else stop("need to define must_have_assays")
+    
 } else if (study_name %in% c("VAT08m")) {
     must_have_assays <- c("pseudoneutid50")
         
@@ -323,8 +353,8 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19", "VAT08m")
     dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
         with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
         complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
-
-} else if (study_name=="AZD1222") {
+    
+} else if (study_name %in% c("AZD1222", "PROFISCOV")) {
     # does not require baseline or time point 1
     dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
         with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
@@ -505,7 +535,7 @@ for (tp in rev(timepoints)) {
 
 
 # some trials have N some don't
-includeN = switch(study_name, COVE=1, MockCOVE=1, ENSEMBLE=1, MockENSEMBLE=1, PREVENT19=0, AZD1222=0, VAT08m=0, stop("unknown study_name 9"))
+includeN = switch(study_name, COVE=1, MockCOVE=1, ENSEMBLE=1, MockENSEMBLE=1, PREVENT19=0, AZD1222=0, VAT08m=0, PROFISCOV=1, stop("unknown study_name 9"))
 assays.includeN=c(assays, if(includeN==1) "bindN")
 
 
