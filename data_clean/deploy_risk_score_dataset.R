@@ -21,13 +21,13 @@ update_reason <- paste0(Sys.Date(), " ", args[[1]])
 
 # set deployment path for each study
 deploy_path <- switch(study_name,
-                      COVE = "/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
-                      ENSEMBLE = "/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      COVE =      "/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      AZD1222 =   "/trials/covpn/p3002/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      ENSEMBLE =  "/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
                       PREVENT19 = "/trials/covpn/p3004/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
-                      VAT08m = "/trials/covpn/p3005/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
-                      AZD1222 = NA,
-                      PROFISCOV = NA,
-                      NA)  
+                      VAT08m =    "/trials/covpn/p3005/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      PROFISCOV = "/networks/cavd/Objective 4/GH-VAP/ID127-Gast/correlates/adata/",
+                      stop("study_name not supported 1"))  
 
 # Copy current deployed copy of risk score dataset in adata to archive 
 # Remove current deployed copy of risk score dataset from adata
