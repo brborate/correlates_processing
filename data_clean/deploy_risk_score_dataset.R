@@ -13,44 +13,50 @@ library(here)
 library(tidyverse)
 data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
 
-cat("Enter reason for updating adata (this text will be added to adata/README change log): ")
+cat("Enter reason for updating adata without quotes (this text will be added to adata/README change log): ")
 args <- readLines(con = "stdin", n = 1)
 
 # Request reason for adata update from deployer!
 update_reason <- paste0(Sys.Date(), " ", args[[1]]) 
+
+# set deployment path for each study
+deploy_path <- switch(study_name,
+                      COVE = "/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      ENSEMBLE = "/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      PREVENT19 = "/trials/covpn/p3004/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      VAT08m = "/trials/covpn/p3005/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      AZD1222 = NA,
+                      PROFISCOV = NA,
+                      NA)  
 
 # Copy current deployed copy of risk score dataset in adata to archive 
 # Remove current deployed copy of risk score dataset from adata
 # Copy new copy of risk score dataset from data_clean to adata
 for(j in 1:length(data_name_amended)){
   if(file.exists(paste0("data_clean/", data_name_amended[j], ".csv"))){
-        if(file.exists(paste0(strsplit(mapped_data, "adata")[[1]][1],
-                            "adata/", data_name_amended[j], ".csv"))){
+        if(file.exists(paste0(deploy_path, data_name_amended[j], ".csv"))){
         
-              if(!file.exists(paste0(strsplit(mapped_data, "adata")[[1]][1],
-                                     "adata/archive"))){
-                
-                dir.create(paste0(strsplit(mapped_data, "adata")[[1]][1],
-                                  "adata/archive"))
+              if(!file.exists(paste0(deploy_path, "archive"))){
+                dir.create(paste0(deploy_path, "archive"))
               }
               
-              file.copy(from = paste0(strsplit(mapped_data, "adata")[[1]][1], "adata/", data_name_amended[j], ".csv"),
-                        to =  paste0(strsplit(mapped_data, "adata")[[1]][1], "adata/archive/", data_name_amended[j], "_",
-                                     str_replace(str_replace_all(file.info(paste0(strsplit(mapped_data, "adata")[[1]][1], "adata/", data_name_amended[j], ".csv"))$mtime,
+              file.copy(from = paste0(deploy_path, data_name_amended[j], ".csv"),
+                        to =  paste0(deploy_path, "archive/", data_name_amended[j], "_", 
+                                     str_replace(str_replace_all(file.info(paste0(deploy_path, data_name_amended[j], ".csv"))$mtime,
                                                                  ":",
                                                                  "."), " ", " time "), 
                                      ".csv"),
                         copy.date = TRUE)
               
-              file.remove(from = paste0(strsplit(mapped_data, "adata")[[1]][1], "adata/", data_name_amended[j], ".csv"))
+              file.remove(from = paste0(deploy_path, data_name_amended[j], ".csv"))
         } 
     
     file.copy(from = paste0("data_clean/", data_name_amended[j], ".csv"),
-              to = paste0(strsplit(mapped_data, "adata")[[1]][1], "adata/", data_name_amended[j], ".csv"),
+              to = paste0(deploy_path, data_name_amended[j], ".csv"),
               copy.date = TRUE)
     
     # Add reason for adata update to README file!
-    write(update_reason, file = paste0(strsplit(mapped_data, "adata")[[1]][1], "adata/readme.txt"), append=TRUE)
+    write(update_reason, file = paste0(deploy_path, "readme.txt"), append=TRUE)
     
   }else{
     print(paste0("data_clean/", data_name_amended[j], ".csv not found!"))
