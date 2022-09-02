@@ -174,7 +174,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$Bstratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
     
 } else if (study_name %in% c("PREVENT19", "AZD1222", "VAT08m")) {
-    dat_proc$Bstratum = with(dat_proc, ifelse(Senior, 1, 0))
+    dat_proc$Bstratum = with(dat_proc, ifelse(Senior, 2, 1))
     
 } else if (study_name %in% c("PROFISCOV")) {
     dat_proc$Bstratum = 1 # there are no demographics stratum for subcohort sampling
@@ -673,7 +673,7 @@ if(attr(config, "config") == "moderna_real") {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(attr(config, "config"),
-         moderna_mock = "9df4cd6639381811e763c2dddc0a12fd",
+         moderna_mock = "34e297fd1a736f9320573ff1d2944904",
          moderna_real = "093233430fdfb688595a206d8473333f",
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
          janssen_pooled_real = "c38fb43e2c87cf2d392757840af68bba",
