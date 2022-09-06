@@ -15,13 +15,14 @@ library(here)
 ########################################################################################################
 # read mapped data with risk score added
 
-# inputFile_with_riskscore.Rdata is made from riskscore_analysis, which calls preprocess and makes risk scores
 if (make_riskscore) {
+    # if riskscore is neede, 
+    # inputFile_with_riskscore.Rdata is made from riskscore_analysis, which calls preprocess and makes risk scores
     load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
     dat_proc <- inputFile_with_riskscore    
 } else {
     dat_raw=read.csv(mapped_data)
-    dat_proc = preprocess(dat_raw, study_name)    
+    dat_proc = preprocess(dat_raw, study_name)   
 }
 
 #with(dat_proc[dat_proc$Trt==1,], table(!is.na(Day29bindSpike), !is.na(Day29bindRBD), EventIndPrimaryIncludeNotMolecConfirmedD29)) # same missingness
@@ -630,6 +631,42 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
         dat_proc <- dat_proc[include_in_subset, , drop = FALSE]
     }
 }
+
+
+###############################################################################
+# impute covariates if necessary
+# do this last so as not to change earlier values
+    
+if (attr(config, "config")=="profiscov") {
+    # no risk score for profiscov, but some have missing BMI
+    n.imp <- 1
+    dat.tmp.impute <- dat_proc
+    
+    imp.markers=c("HighRiskInd", "Sex", "Age", "BMI")
+        
+    imp <- dat.tmp.impute %>%  select(all_of(imp.markers))         
+    if(any(is.na(imp))) {
+        # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+        imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+        dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
+    }                
+    
+    # missing markers imputed properly?
+    assertthat::assert_that(
+        all(complete.cases(dat.tmp.impute[, imp.markers])),
+        msg = "missing covariates imputed properly?"
+    )    
+    
+    # populate dat_proc imp.markers with the imputed values
+    dat_proc[, imp.markers] <-
+      dat.tmp.impute[imp.markers][match(dat_proc[, "Ptid"], dat.tmp.impute$Ptid), ]
+    
+    # imputed values of missing markers merged properly for all individuals in the two phase sample?
+    assertthat::assert_that(
+      all(complete.cases(dat_proc[, imp.markers])),
+      msg = "imputed values of missing covariates merged properly for all individuals?"
+    )
+} 
 
 
 
