@@ -93,7 +93,7 @@ janssen_trial: &janssen_trial
 
 
 
-
+# following are for the part A dataset
 janssen_trial_partA: &janssen_trial_partA
   <<: *janssen_trial
   mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_realdata_PartAComplete_20220609.csv 
@@ -123,7 +123,7 @@ janssen_sa_partA:
   subset_value: 2
 
 
-
+# following are for the EUA dataset
 janssen_trial_real: &janssen_trial_real
   <<: *janssen_trial
   mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_realdata_20220310.csv 
@@ -218,7 +218,7 @@ janssen_sa_mock:
 profiscov_base: &profiscov_base
   study_name: PROFISCOV
   case_cohort: yes
-  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID127-Gast/Data/mapping_immune_correlates/adata/COVID_Butantan_realdata_20220830.csv
+  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID127-Gast/Data/mapping_immune_correlates/adata/COVID_Butantan_realdata_20220923.csv
 
 profiscov: &profiscov
   <<: *profiscov_base
