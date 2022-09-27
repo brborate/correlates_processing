@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "profiscov")
+#Sys.setenv(TRIAL = "profiscov_lvmn")
 renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -569,6 +569,7 @@ if(study_name=="COVE"){
 ###############################################################################
 
 # COVE and mock only
+
 if(study_name %in% c("COVE", "MockCOVE")){
     for (a in assays.includeN) {
       for (t in c("B", paste0("Day", config$timepoints)) ) {
