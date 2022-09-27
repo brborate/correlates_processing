@@ -637,7 +637,7 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 # impute covariates if necessary
 # do this last so as not to change earlier values
     
-if (attr(config, "config")=="profiscov") {
+if (attr(config, "config") %in% c("profiscov", "profiscov_lvmn")) {
     # no risk score for profiscov, but some have missing BMI
     n.imp <- 1
     dat.tmp.impute <- dat_proc
