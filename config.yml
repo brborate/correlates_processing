@@ -218,7 +218,7 @@ janssen_sa_mock:
 profiscov_base: &profiscov_base
   study_name: PROFISCOV
   case_cohort: yes
-  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID127-Gast/Data/mapping_immune_correlates/adata/COVID_Butantan_realdata_20220923.csv
+  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID127-Gast/Data/mapping_immune_correlates/adata/COVID_Butantan_realdata_20220927.csv
 
 profiscov: &profiscov
   <<: *profiscov_base
