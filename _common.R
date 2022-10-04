@@ -31,10 +31,16 @@ names(assays)=assays # add names so that lapply results will have names
 include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08m")
 
 
+
+#############
+# the following part should be a copy of the same code from reporting2 repo _common.R
+
 # uloqs etc are hardcoded for ows trials but driven by config for other trials
 # For bAb, IU and BAU are the same thing
 # all values on BAU or IU
 # LOQ can not be NA, it is needed for computing delta
+pos.cutoffs<-llods<-lloqs<-uloqs<-c()
+lloxs=NULL
 if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     tmp=list(
         bindSpike=c(
