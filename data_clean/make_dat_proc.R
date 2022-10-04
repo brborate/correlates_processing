@@ -617,7 +617,7 @@ if(two_marker_timepoints) {
 # add two synthetic ID50 markers by region for ensemble
 ###############################################################################
 
-if(attr(config, "config") %in% c("janssen_pooled_real", "janssen_na_real", "janssen_la_real", "janssen_sa_real")) {
+if(attr(config, "config") %in% c("janssen_pooled_EUA", "janssen_na_EUA", "janssen_la_EUA", "janssen_sa_EUA")) {
     dat_proc$Day29pseudoneutid50la = ifelse(dat_proc$Day29pseudoneutid50-0.124 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.124 )
     dat_proc$Day29pseudoneutid50sa = ifelse(dat_proc$Day29pseudoneutid50-0.556 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.556 )
 }
@@ -716,7 +716,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          moderna_mock = "34e297fd1a736f9320573ff1d2944904",
          moderna_real = "093233430fdfb688595a206d8473333f",
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
-         janssen_pooled_real = "c38fb43e2c87cf2d392757840af68bba",
+         janssen_pooled_EUA = "c38fb43e2c87cf2d392757840af68bba",
          azd1222 = "41ce683cdbade366dc20833039383d3a",
          azd1222_bAb = "9175528b6097bed7ef9d8081ae288310",
          prevent19 = "6fbc3672304303c0aa610170e3cf128d",
