@@ -1,14 +1,14 @@
 #!/bin/bash
 
-for T in moderna_mock janssen_pooled_mock # janssen_pooled_real  janssen_pooled_mock  janssen_na_mock
+for T in moderna_mock janssen_pooled_mock 
 do
-	export TRIAL=$T	
-	echo $TRIAL
-	if [[ "$1" == "data_processed" ]] 
-	then
-		make data_processed
-	else
-		make -k -C $1 all
-		bash ./_build_chapter.sh $1
-	fi
+    export TRIAL=$T 
+    echo $TRIAL
+    if [[ "$1" == "data_processed" ]] 
+    then
+        make data_processed
+    else
+        make -k -C $1 all
+        bash ./_build_chapter.sh $1
+    fi
 done
