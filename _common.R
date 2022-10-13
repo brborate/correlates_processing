@@ -118,7 +118,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     pos.cutoffs["bindN"]=23.4711
     
     # the limits below are different for EUA and Part A datasets
-    if (contain(attr(config, "config"), "real")) {
+    if (contain(attr(config, "config"), "EUA")) {
     # EUA data
         
         # data less than lloq is set to lloq/2
