@@ -373,7 +373,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19", "VAT08m")
     }
         
 } else if (study_name=="ENSEMBLE") {
-    if (contain(attr(config, "config"), "real")) {
+    if (contain(attr(config, "config"), "EUA")) {
         # require baseline
         dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
             with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
@@ -720,7 +720,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222 = "41ce683cdbade366dc20833039383d3a",
          azd1222_bAb = "9175528b6097bed7ef9d8081ae288310",
          prevent19 = "d0958e5a049b1de3845d9f19c67e7e87",
-         janssen_pooled_partA = "348f63323ce87d84d52f3f8c5721257d",
+         #janssen_pooled_partA = "348f63323ce87d84d52f3f8c5721257d",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
@@ -728,3 +728,10 @@ if(Sys.getenv ("NOCHECK")=="") {
 
 
 write_csv(dat_proc, file = here("data_clean", paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")))
+
+
+# split into Senior and non-Senior for ENSEMBLE partA
+if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
+    write_csv(subset(dat_proc, Age>=65), file = here("data_clean", paste0(attr(config, "config"), "senior_data_processed_with_riskscore.csv")))
+    write_csv(subset(dat_proc, Age<65),  file = here("data_clean", paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore.csv")))
+}
