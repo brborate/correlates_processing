@@ -11,7 +11,13 @@ source(here::here("_common.R"))
 # load required libraries, cleaned data, and risk score estimates
 library(here)
 library(tidyverse)
-data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
+if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
+    data_name_amended <- c( paste0(attr(config, "config"), "_data_processed_with_riskscore"), 
+                            paste0(attr(config, "config"), "senior_data_processed_with_riskscore"),
+                            paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore"))
+} else {
+    data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
+}
 
 cat("Enter reason for updating adata without quotes (this text will be added to adata/README change log): ")
 args <- readLines(con = "stdin", n = 1)
