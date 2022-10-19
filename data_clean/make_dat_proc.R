@@ -707,6 +707,10 @@ if(attr(config, "config") == "moderna_real") {
     # for revision, RBD is added. To reproduce results from the first revision, we add RBD to the analysis-ready dataset, instead of reprocessing all three markers together, which will lead to changes in imputed values in the first two markers
     source(here::here("data_clean", "add_rbd_to_prevent19_analysisreadydataset.R"))
     
+} else if(attr(config, "config") == "azd1222") {
+    # add bindSpike data for multivariable modles
+    source(here::here("data_clean", "add_bindSpike_to_azd1222ID50_analysisreadydataset.R"))
+    
 }
 
 
@@ -722,7 +726,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          moderna_real = "093233430fdfb688595a206d8473333f",
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
          janssen_pooled_EUA = "c38fb43e2c87cf2d392757840af68bba",
-         azd1222 = "41ce683cdbade366dc20833039383d3a",
+         azd1222 = "e18671fac3f50181ee84096231ade67f",
          azd1222_bAb = "9175528b6097bed7ef9d8081ae288310",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
          #janssen_pooled_partA = "348f63323ce87d84d52f3f8c5721257d",
