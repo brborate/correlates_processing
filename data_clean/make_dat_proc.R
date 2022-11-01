@@ -741,6 +741,6 @@ write_csv(dat_proc, file = here("data_clean", paste0(attr(config, "config"), "_d
 
 # split into Senior and non-Senior for ENSEMBLE partA
 if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
-    write_csv(subset(dat_proc, Age>=65), file = here("data_clean", paste0(attr(config, "config"), "senior_data_processed_with_riskscore.csv")))
-    write_csv(subset(dat_proc, Age<65),  file = here("data_clean", paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore.csv")))
+    write_csv(subset(dat_proc, Age>=60), file = here("data_clean", paste0(attr(config, "config"), "senior_data_processed_with_riskscore.csv")))
+    write_csv(subset(dat_proc, Age< 60),  file = here("data_clean", paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore.csv")))
 }
