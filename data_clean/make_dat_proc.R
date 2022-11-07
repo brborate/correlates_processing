@@ -702,6 +702,20 @@ if(attr(config, "config") == "moderna_real") {
     stopifnot(all(dat_proc$Bserostatus == 1))
     dat_proc=rbind(dat_proc, dat_proc.tmp)
     
+} else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
+    # add bin numbers associated with the biweekly calendar period of each endpoint 
+    dat.eventtime.bin = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_time_to_event_v6a.csv")
+    if (attr(config, "config") == c("janssen_pooled_partA")) {
+        v.name="endpointDate.Bin.Pooled"
+    } else if (attr(config, "config") == c("janssen_na_partA")) {
+        v.name="endpointDate.Bin.usa"
+    } else if (attr(config, "config") == c("janssen_la_partA")) {
+        v.name="endpointDate.Bin.latin.america"
+    } else if (attr(config, "config") == c("janssen_sa_partA")) {
+        v.name="endpointDate.Bin.rsa"
+    } 
+    dat_proc$endpointDate.Bin = dat.eventtime.bin[[v.name]][match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
+    
 } else if(attr(config, "config") == "prevent19") {
     # first round submission lacks RBD
     # for revision, RBD is added. To reproduce results from the first revision, we add RBD to the analysis-ready dataset, instead of reprocessing all three markers together, which will lead to changes in imputed values in the first two markers
