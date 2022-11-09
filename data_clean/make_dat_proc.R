@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "profiscov_lvmn")
+#Sys.setenv(TRIAL = "prevent19")
 renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -674,11 +674,10 @@ if (attr(config, "config") %in% c("profiscov", "profiscov_lvmn")) {
 
 
 ###############################################################################
-# special handling for moderna_real
+# special handling 
 ###############################################################################
 
 if(attr(config, "config") == "moderna_real") {
-
     # modernal is a special case because how the code and manuscripts co-evolve 
     # special handling is required to preserve the imputed values used for manuscripts
     # the following steps treat seroneg and seropos populations separately and combine them to form one dataset
@@ -697,11 +696,35 @@ if(attr(config, "config") == "moderna_real") {
     # sort columns to combine with dat_proc.tmp
     dat_proc=dat_proc[,sort(names(dat_proc))]
     
-    # combine
+    # combine baseline neg and pos
     stopifnot(all(names(dat_proc) == names(dat_proc.tmp)))
     stopifnot(all(dat_proc$Bserostatus.tmp == 0))
     stopifnot(all(dat_proc$Bserostatus == 1))
     dat_proc=rbind(dat_proc, dat_proc.tmp)
+    
+} else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
+    # add bin numbers associated with the biweekly calendar period of each endpoint 
+    dat.eventtime.bin = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_time_to_event_v6a.csv")
+    if (attr(config, "config") == c("janssen_pooled_partA")) {
+        v.name="endpointDate.Bin.Pooled"
+    } else if (attr(config, "config") == c("janssen_na_partA")) {
+        v.name="endpointDate.Bin.usa"
+    } else if (attr(config, "config") == c("janssen_la_partA")) {
+        v.name="endpointDate.Bin.latin.america"
+    } else if (attr(config, "config") == c("janssen_sa_partA")) {
+        v.name="endpointDate.Bin.rsa"
+    } 
+    dat_proc$endpointDate.Bin = dat.eventtime.bin[[v.name]][match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
+    
+} else if(attr(config, "config") == "prevent19") {
+    # first round submission lacks RBD
+    # for revision, RBD is added. To reproduce results from the first revision, we add RBD to the analysis-ready dataset, instead of reprocessing all three markers together, which will lead to changes in imputed values in the first two markers
+    source(here::here("data_clean", "add_rbd_to_prevent19_analysisreadydataset.R"))
+    
+} else if(attr(config, "config") == "azd1222") {
+    # add bindSpike data for multivariable modles
+    source(here::here("data_clean", "add_bindSpike_to_azd1222ID50_analysisreadydataset.R"))
+    
 }
 
 
@@ -717,9 +740,9 @@ if(Sys.getenv ("NOCHECK")=="") {
          moderna_real = "093233430fdfb688595a206d8473333f",
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
          janssen_pooled_EUA = "c38fb43e2c87cf2d392757840af68bba",
-         azd1222 = "41ce683cdbade366dc20833039383d3a",
+         azd1222 = "e18671fac3f50181ee84096231ade67f",
          azd1222_bAb = "9175528b6097bed7ef9d8081ae288310",
-         prevent19 = "d0958e5a049b1de3845d9f19c67e7e87",
+         prevent19 = "0884dd59a9e9101fbe28e26e70080691",
          #janssen_pooled_partA = "348f63323ce87d84d52f3f8c5721257d",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
@@ -732,6 +755,6 @@ write_csv(dat_proc, file = here("data_clean", paste0(attr(config, "config"), "_d
 
 # split into Senior and non-Senior for ENSEMBLE partA
 if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
-    write_csv(subset(dat_proc, Age>=65), file = here("data_clean", paste0(attr(config, "config"), "senior_data_processed_with_riskscore.csv")))
-    write_csv(subset(dat_proc, Age<65),  file = here("data_clean", paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore.csv")))
+    write_csv(subset(dat_proc, Age>=60), file = here("data_clean", paste0(attr(config, "config"), "senior_data_processed_with_riskscore.csv")))
+    write_csv(subset(dat_proc, Age< 60),  file = here("data_clean", paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore.csv")))
 }

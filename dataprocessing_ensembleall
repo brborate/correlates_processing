@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# note that senior and nonsenior are split within the code and there are no separate labels in data processing for that
+
 for T in  janssen_pooled_partA janssen_sa_partA janssen_na_partA janssen_la_partA 
 do
     export TRIAL=$T 
