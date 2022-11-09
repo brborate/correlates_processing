@@ -7,6 +7,8 @@
 # dateVar=`date`
 # echo "$dateVar"
 
+# senior and nonsenior are also included by code
+
 for T in  janssen_pooled_partA janssen_na_partA janssen_la_partA  janssen_sa_partA 
 do
     export TRIAL=$T
