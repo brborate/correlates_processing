@@ -1,4 +1,5 @@
 #Sys.setenv(TRIAL = "moderna_mock")
+#Sys.setenv(TRIAL = "janssen_pooled_partA")
 #-----------------------------------------------
 renv::activate(here::here())
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
