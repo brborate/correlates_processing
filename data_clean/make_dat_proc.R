@@ -727,7 +727,7 @@ if(attr(config, "config") == "moderna_real") {
                                               include.lowest = T, 
                                               labels = c("0", "1", "2", "3", "4", "5", "6", "7")))
     }else{
-      "The maximum value in CalendarDateEnrollment is higher than MAXBIN! Increase MAXBIN."
+      "The maximum value in CalendarDateEnrollment is higher than max(breaksVec)! Update binVec!"
     }
     rm(bin_timepoint, binVec, breaksVec)
     
