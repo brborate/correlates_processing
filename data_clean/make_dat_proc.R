@@ -729,7 +729,7 @@ if(attr(config, "config") == "moderna_real") {
     }else{
       "The maximum value in CalendarDateEnrollment is higher than max(breaksVec)! Update binVec!"
     }
-    rm(bin_timepoint, binVec, breaksVec)
+    rm(binTime, binVec, breaksVec)
     
 } else if(attr(config, "config") == "prevent19") {
     # first round submission lacks RBD
