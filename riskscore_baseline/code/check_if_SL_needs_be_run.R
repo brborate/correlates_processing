@@ -19,7 +19,7 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
     
     if(startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "EUA") & file.exists(paste0("output/janssen_pooled_EUA/inputFile_with_riskscore.RData"))){
       load("output/janssen_pooled_EUA/inputFile_with_riskscore.RData")
-    } else if(startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "partA") & file.exists(paste0("output/janssen_pooled_EUA/inputFile_with_riskscore.RData"))){
+    } else if(startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "partA") & file.exists(paste0("output/janssen_pooled_partA/inputFile_with_riskscore.RData"))){
       load("output/janssen_pooled_partA/inputFile_with_riskscore.RData")
     }else{
       load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
