@@ -716,6 +716,21 @@ if(attr(config, "config") == "moderna_real") {
     } 
     dat_proc$endpointDate.Bin = dat.eventtime.bin[[v.name]][match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
     
+    # add bin numbers associated with the biweekly calendar period of enrollment
+    binTime = 13 # since bin period is biweekly!
+    binVec = 1:8
+    breaksVec = c(0, binTime*binVec+(binVec-1))
+    
+    if(max(breaksVec) > max(dat_proc$CalendarDateEnrollment)){
+      dat_proc <- dat_proc %>% 
+        mutate(BinnedEnrollmentBiweekly = cut(CalendarDateEnrollment, breaks = breaksVec, 
+                                              include.lowest = T, 
+                                              labels = c("0", "1", "2", "3", "4", "5", "6", "7")))
+    }else{
+      "The maximum value in CalendarDateEnrollment is higher than max(breaksVec)! Update binVec!"
+    }
+    rm(binTime, binVec, breaksVec)
+    
 } else if(attr(config, "config") == "prevent19") {
     # first round submission lacks RBD
     # for revision, RBD is added. To reproduce results from the first revision, we add RBD to the analysis-ready dataset, instead of reprocessing all three markers together, which will lead to changes in imputed values in the first two markers
