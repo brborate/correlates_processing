@@ -16,7 +16,7 @@ library(here)
 # read mapped data with risk score added
 
 if (make_riskscore) {
-    # if riskscore is neede, 
+    # if riskscore is needed, 
     # inputFile_with_riskscore.Rdata is made from riskscore_analysis, which calls preprocess and makes risk scores
     load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
     dat_proc <- inputFile_with_riskscore    
@@ -792,7 +792,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222 = "e18671fac3f50181ee84096231ade67f",
          azd1222_bAb = "9175528b6097bed7ef9d8081ae288310",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
-         #janssen_pooled_partA = "348f63323ce87d84d52f3f8c5721257d",
+         janssen_pooled_partA = "fd748654088d288e728d6c02b43b348a",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
