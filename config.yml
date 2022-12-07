@@ -66,7 +66,7 @@ azd1222_base: &azd1222_base
   timepoints: [29, 57]
   times: [B, Day29, Day57, Delta29overB, Delta57overB, Delta57over29]
   time_labels: [Day 1, Day 29, Day 57, D29 fold-rise over D1, D57 fold-rise over D1, D57 fold-rise over D29]
-  mapped_data: /trials/covpn/p3002/analysis/mapping_immune_correlates/adata/COVID_AstraZeneca_realdata_20220506.csv 
+  mapped_data: /trials/covpn/p3002/analysis/mapping_immune_correlates/adata/COVID_AstraZeneca_realdata_20221207.csv 
   subset_variable: None
   subset_value: All
   study_name: AZD1222
