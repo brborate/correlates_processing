@@ -789,8 +789,8 @@ if(Sys.getenv ("NOCHECK")=="") {
          moderna_real = "093233430fdfb688595a206d8473333f",
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
          janssen_pooled_EUA = "c38fb43e2c87cf2d392757840af68bba",
-         azd1222 = "02fb43e9bebb81bf628b8672fe479f1a",
-         azd1222_bAb = "c3e9a50613d281dff9de33528c103daf",
+         azd1222 = "f573e684800003485094c18120361663",
+         azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
          janssen_pooled_partA = "fd748654088d288e728d6c02b43b348a",
          NA)    
