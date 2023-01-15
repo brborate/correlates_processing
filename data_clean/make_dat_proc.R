@@ -753,8 +753,7 @@ if(attr(config, "config") == "moderna_real") {
     # add bin numbers associated with the biweekly calendar period of enrollment
     binTime = 13 # since bin period is biweekly!
     binVec = 1:8
-    breaksVec = c(0, binTime*binVec+(binVec-1))
-    
+    breaksVec = c(0, binTime*binVec+(binVec-1))    
     if(max(breaksVec) > max(dat_proc$CalendarDateEnrollment)){
       dat_proc <- dat_proc %>% 
         mutate(BinnedEnrollmentBiweekly = cut(CalendarDateEnrollment, breaks = breaksVec, 
@@ -764,6 +763,11 @@ if(attr(config, "config") == "moderna_real") {
       "The maximum value in CalendarDateEnrollment is higher than max(breaksVec)! Update binVec!"
     }
     rm(binTime, binVec, breaksVec)
+    
+    # add Spike physics-chemical weighted Hamming distance pertaining to the sequence that was obtained from the first chronological sample
+    dat.tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_sieve_cases_firstseq_v10a.csv")
+    dat_proc$spike.weighted.hamming.firstseq = dat.tmp$seq1.hdist.zspace.spike[match(dat_proc$Ptid, dat.tmp$USUBJID)]
+    
     
 } else if(attr(config, "config") == "prevent19") {
     # first round submission lacks RBD
@@ -792,7 +796,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
-         janssen_pooled_partA = "c608ba5cae059fea397168251fff0fdf",
+         janssen_pooled_partA = "1cabc0cc57b958a7e784de7df7cef2f2",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
