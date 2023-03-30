@@ -739,6 +739,7 @@ if(attr(config, "config") == "moderna_real") {
     dat_proc=rbind(dat_proc, dat_proc.tmp)
     
 } else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
+
     # add bin numbers associated with the biweekly calendar period of each endpoint 
     dat.eventtime.bin = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_time_to_event_v6a.csv")
     if (attr(config, "config") == c("janssen_pooled_partA")) {
@@ -774,12 +775,17 @@ if(attr(config, "config") == "moderna_real") {
     dat.tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_sieve_cases_firstseq_v10a.csv")
     dat_proc$seq1.spike.weighted.hamming = dat.tmp$seq1.hdist.zspace.spike[match(dat_proc$Ptid, dat.tmp$USUBJID)]
     dat_proc$seq1.log10vl = dat.tmp$seq1.log10vl[match(dat_proc$Ptid, dat.tmp$USUBJID)]
-    
-    # seq1.who.label
+    dat_proc$seq1.variant = dat.tmp$seq1.who.label[match(dat_proc$Ptid, dat.tmp$USUBJID)]
+    # define new endpoint varibles
+    dat_proc$EventIndPrimaryHasVLD29   = ifelse (dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29==1 & !is.na(dat_proc$seq1.log10vl), 1, 0)
+    dat_proc$EventIndPrimaryHasnoVLD29 = ifelse (dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29==1 &  is.na(dat_proc$seq1.log10vl), 1, 0)
     
     # add inv prob weight
     dat.tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/sequence_VL_IPW_weights.csv")
-    dat_proc$seq1.ipw.have.seq = dat.tmp$IPW.weight[match(dat_proc$Ptid, dat.tmp$USUBJID)]
+    dat_proc$seq1.ipw.have.seq = 1/dat.tmp$IPW.weight[match(dat_proc$Ptid, dat.tmp$USUBJID)]
+    # define weights for cases EventIndPrimaryHasVLD29
+    dat_proc$wt.vl.D29  = with(dat_proc, ifelse(EventIndPrimaryHasVLD29==1, wt.D29*seq1.ipw.have.seq, wt.D29))
+    dat_proc$ph2.vl.D29 = with(dat_proc, ifelse(EventIndPrimaryHasVLD29==1, (ph2.D29*!is.na(seq1.spike.weighted.hamming))==1, ph2.D29))
     
     
 } else if(attr(config, "config") == "prevent19") {
@@ -809,7 +815,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
-         janssen_pooled_partA = "54a052b83036b0a5672c8f2f89d8b009",
+#         janssen_pooled_partA = "1cfcbfd90fd3e2919b987649c20c9d0a",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
