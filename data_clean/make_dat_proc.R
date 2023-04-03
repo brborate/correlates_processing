@@ -776,16 +776,16 @@ if(attr(config, "config") == "moderna_real") {
     dat_proc$seq1.spike.weighted.hamming = dat.tmp$seq1.hdist.zspace.spike[match(dat_proc$Ptid, dat.tmp$USUBJID)]
     dat_proc$seq1.log10vl = dat.tmp$seq1.log10vl[match(dat_proc$Ptid, dat.tmp$USUBJID)]
     dat_proc$seq1.variant = dat.tmp$seq1.who.label[match(dat_proc$Ptid, dat.tmp$USUBJID)]
-    # define new endpoint varibles
-    dat_proc$EventIndPrimaryHasVLD29   = ifelse (dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29==1 & !is.na(dat_proc$seq1.log10vl), 1, 0)
-    dat_proc$EventIndPrimaryHasnoVLD29 = ifelse (dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29==1 &  is.na(dat_proc$seq1.log10vl), 1, 0)
+#    # define new endpoint varibles. Deprecated since we now use the hotdeck imputation approach
+#    dat_proc$EventIndPrimaryHasVLD29   = ifelse (dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29==1 & !is.na(dat_proc$seq1.log10vl), 1, 0)
+#    dat_proc$EventIndPrimaryHasnoVLD29 = ifelse (dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29==1 &  is.na(dat_proc$seq1.log10vl), 1, 0)
     
-    # add inv prob weight
+    # add inv prob weight (prob of having seq given that VL is observed)
     dat.tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/sequence_VL_IPW_weights.csv")
     dat_proc$seq1.ipw.have.seq = 1/dat.tmp$IPW.weight[match(dat_proc$Ptid, dat.tmp$USUBJID)]
-    # define weights for cases EventIndPrimaryHasVLD29
-    dat_proc$wt.vl.D29  = with(dat_proc, ifelse(EventIndPrimaryHasVLD29==1, wt.D29*seq1.ipw.have.seq, wt.D29))
-    dat_proc$ph2.vl.D29 = with(dat_proc, ifelse(EventIndPrimaryHasVLD29==1, (ph2.D29*!is.na(seq1.spike.weighted.hamming))==1, ph2.D29))
+#    # define weights for cases EventIndPrimaryHasVLD29. Deprecated since we now use the hotdeck imputation approach
+#    dat_proc$wt.vl.D29  = with(dat_proc, ifelse(EventIndPrimaryHasVLD29==1, wt.D29*seq1.ipw.have.seq, wt.D29))
+#    dat_proc$ph2.vl.D29 = with(dat_proc, ifelse(EventIndPrimaryHasVLD29==1, (ph2.D29*!is.na(seq1.spike.weighted.hamming))==1, ph2.D29))
     
     
 } else if(attr(config, "config") == "prevent19") {
