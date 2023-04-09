@@ -18,14 +18,32 @@ deploy_processed_dataset:
 data_processed: check_raw_data risk_analysis make_clean_data check_clean_data 
 
 check_raw_data:
+ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
+else 
 	Rscript data_clean/make_raw_dat_check.R
+endif
+
 risk_analysis:  
+ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
+else 
 	$(MAKE) -k -C riskscore_baseline all
+endif
+
 make_clean_data: 
+ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
+	Rscript data_clean/make_cove_boost.R
+else 
 	Rscript data_clean/make_dat_proc.R
+endif
+
 check_clean_data: 
+ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
+else 
 	Rscript data_clean/make_clean_dat_check.R
-	
+endif	
+
+
+
 ## help_checks            : see a list of checks that are run on the data during cleaning
 help_tests: data_clean/make_clean_dat_check.R data_clean/make_raw_dat_check.R
 	@echo "\nTests on the raw data: \n"
