@@ -1,15 +1,15 @@
 library(here)
 renv::activate(here::here())
 
+library(dplyr)
 
 ###############################################################################
 #### bring stage1 analysis-ready dataset and stage 2 mapped dataset together
 ###############################################################################
 
 config <- config::get(config = Sys.getenv("TRIAL"))
-for(opt in names(config)){
-  eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
-}
+# this line makes config elements variables in the global scope, it makes coding easier but kind of dangerous
+#for(opt in names(config)) eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
 
 data_name = paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")
 
@@ -17,7 +17,7 @@ data_name = paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")
 dat_stage1 = read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/moderna_real_data_processed_with_riskscore.csv")
 
 # read stage 2 mapped data 
-dat_raw = read.csv(mapped_data)
+dat_raw = read.csv(config$mapped_data)
 if (colnames(dat_raw)[1]=="Subjectid")  colnames(dat_raw)[1] <- "Ptid" else stop("the first column is unexpectedly not Subjectid")
 
 setdiff(names(dat_raw), names(dat_stage1))
@@ -40,7 +40,7 @@ dat_stage2$sampling_bucket = with(dat_stage2,
     strtoi(paste0(
       strtoi(paste0( 
         Trt, 
-        Bserostatus # Bserostatus needs to be replaced by naive/non-naive in the real dataset
+        Bserostatus # hack! Bserostatus needs to be replaced by naive/non-naive in the real dataset
       ), base = 2), 
       CalendarBD1Interval-1
     ), base=4)
@@ -85,24 +85,26 @@ with(dat_stage2, table(Wstratum, sampling_bucket))
 must_have_assays <- c("bindSpike", "bindRBD")
 
 # define ph1 as: (naive or non-naive) & (not censored and no evidence of infection from BD1 to BD7)
-dat_stage2$ph1.BD29 = !is.na(dat_stage2$Bserostatus) & dat_stage2$EventTimePrimaryBD29 >= 7
+dat_stage2$ph1.BD29 = !is.na(dat_stage2$Bserostatus) & dat_stage2$EventTimeOmicronBD29 >= 7
 # expect no NAs
+
+# hack! remove this line after having real data
+dat_stage2$ph1.BD29[is.na(dat_stage2$ph1.BD29)]=FALSE
+
 stopifnot(!any(is.na(dat_stage2$ph1.BD29)))
 
 # TwophasesampInd: be in ph1 &  have the necessary markers
 
-# require baseline
-dat_stage2[["TwophasesampIndBD29"]] = dat_stage2$ph1 & 
+dat_stage2$ph2.BD29 = dat_stage2$ph1.BD29 & 
   complete.cases(dat_stage2[,c("BD1"%.%must_have_assays, "BD29"%.%must_have_assays)])      
 
-dat_stage2[["ph2.BD"%.%tp]]= ifelse(dat_stage2$ph1, dat_stage2[["ph1.BD"%.%tp]] & dat_stage2[["TwophasesampIndBD"%.%tp]], NA)
 
 # weights 
 tp=29
-tmp = with(dat_stage2, ph1)
-wts_table <- with(dat_stage2[tmp,], table(Wstratum, get("TwophasesampIndBD"%.%tp)))
+tmp = with(dat_stage2, ph1.BD29)
+wts_table <- with(dat_stage2[tmp,], table(Wstratum, get("ph2.BD"%.%tp)))
 wts_norm <- rowSums(wts_table) / wts_table[, 2]
-dat_stage2[["wt.BD"%.%tp]] = ifelse(dat_stage2$ph1, wts_norm[dat_stage2$Wstratum %.% ""], NA)
+dat_stage2[["wt.BD"%.%tp]] = ifelse(dat_stage2$ph1.BD29, wts_norm[dat_stage2$Wstratum %.% ""], NA)
 
 assertthat::assert_that(
   all(!is.na(subset(dat_stage2, tmp & !is.na(Wstratum))[["wt.BD"%.%tp]])),
@@ -127,20 +129,19 @@ assertthat::assert_that(
 # thus no need to do, say, lloq censoring
 # but there is a need to do uloq censoring before computing delta
 
+assay_metadata = read.csv(config$assay_metadata)
+
 tmp=list()
-for (a in assays.includeN) {
-  for (t in c("B", paste0("Day", config$timepoints)) ) {
-    tmp[[t %.% a]] <- ifelse(dat_stage2[[t %.% a]] > log10(uloqs[a]), log10(uloqs[a]), dat_stage2[[t %.% a]])
+for (a in assay_metadata$assay) {
+  for (t in c("BD1", "BD29") ) {
+    tmp[[t %.% a]] <- ifelse(dat_stage2[[t %.% a]] > log10(assay_metadata$uloq), log10(assay_metadata$uloq), dat_stage2[[t %.% a]])
   }
 }
 tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
 
-for (tp in rev(timepoints)) {
-  dat_stage2["Delta"%.%tp%.%"overB" %.% assays.includeN] <- tmp["Day"%.%tp %.% assays.includeN] - tmp["B" %.% assays.includeN]
+for (tp in 29) {
+  dat_stage2["DeltaBD"%.%tp%.%"overBD1" %.% assay_metadata$assay] <- tmp["BD"%.%tp %.% assay_metadata$assay] - tmp["BD1" %.% assay_metadata$assay]
 }   
-if(two_marker_timepoints) {
-  dat_stage2["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays.includeN] <- tmp["Day"%.% timepoints[2]%.% assays.includeN] - tmp["Day"%.%timepoints[1] %.% assays.includeN]
-}
 
 
 
@@ -152,7 +153,7 @@ if(two_marker_timepoints) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "34e297fd1a736f9320573ff1d2944904",
+#               moderna_boost = "34e297fd1a736f9320573ff1d2944904",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
