@@ -2,6 +2,7 @@ library(here)
 renv::activate(here::here())
 
 library(dplyr)
+library(kyotil)
 
 ###############################################################################
 #### bring stage1 analysis-ready dataset and stage 2 mapped dataset together
@@ -10,8 +11,6 @@ library(dplyr)
 config <- config::get(config = Sys.getenv("TRIAL"))
 # this line makes config elements variables in the global scope, it makes coding easier but kind of dangerous
 #for(opt in names(config)) eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
-
-data_name = paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")
 
 # read stage1 analysis ready dataset 
 dat_stage1 = read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/moderna_real_data_processed_with_riskscore.csv")
@@ -65,13 +64,13 @@ dat_stage2$Wstratum = dat_stage2$tps.stratum
 dat_stage2[!is.na(dat_stage2$EventIndOmicronBD29) & dat_stage2$EventIndOmicronBD29==1, "Wstratum"] = max.tps + 
   dat_stage2[!is.na(dat_stage2$EventIndOmicronBD29) & dat_stage2$EventIndOmicronBD29==1, "sampling_bucket"] + 1
 
-with(dat_stage2, table(tps.stratum))
-with(dat_stage2, table(Wstratum))
-with(dat_stage2, table(Wstratum, EventIndOmicronBD29, Trt))
-
-with(dat_stage2, table(sampling_bucket, Trt))
-
-with(dat_stage2, table(Wstratum, sampling_bucket))
+# with(dat_stage2, table(tps.stratum))
+# with(dat_stage2, table(Wstratum))
+# with(dat_stage2, table(Wstratum, EventIndOmicronBD29, Trt))
+# 
+# with(dat_stage2, table(sampling_bucket, Trt))
+# 
+# with(dat_stage2, table(Wstratum, sampling_bucket))
 
 
 
@@ -133,8 +132,9 @@ assay_metadata = read.csv(config$assay_metadata)
 
 tmp=list()
 for (a in assay_metadata$assay) {
+  uloq=assay_metadata$uloq[assay_metadata$assay==a]
   for (t in c("BD1", "BD29") ) {
-    tmp[[t %.% a]] <- ifelse(dat_stage2[[t %.% a]] > log10(assay_metadata$uloq), log10(assay_metadata$uloq), dat_stage2[[t %.% a]])
+    tmp[[t %.% a]] <- ifelse(dat_stage2[[t %.% a]] > log10(uloq), log10(uloq), dat_stage2[[t %.% a]])
   }
 }
 tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
@@ -162,4 +162,5 @@ if(Sys.getenv ("NOCHECK")=="") {
 
 
 # save
+data_name = paste0(attr(config, "config"), "_data_processed.csv")
 write.csv(dat_stage2, file = here("data_clean", data_name), row.names=F)
