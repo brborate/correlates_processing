@@ -9,7 +9,7 @@ config <- config::get(config = Sys.getenv("TRIAL"))
 
 if (attr(config, "config")=="moderna_boost") {
   library(stringr)
-  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
+  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed"))
   # Request reason for adata update from deployer!
   cat("Enter reason for updating adata without quotes (this text will be added to adata/README change log): ")
   args <- readLines(con = "stdin", n = 1)

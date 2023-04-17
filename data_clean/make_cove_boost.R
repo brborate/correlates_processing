@@ -27,6 +27,9 @@ dat_stage2 = merge(dat_stage1, dat_raw, by="Ptid", all=T, suffixes=c("",".y"))
 # remove columns ending in .y
 dat_stage2 = dat_stage2[,!endsWith(names(dat_stage2),".y")]
 
+# hack
+dat_stage2$naive = !dat_stage2$Bserostatus
+
 
 ###############################################################################
 #### define sampling stratum variables
@@ -39,7 +42,7 @@ dat_stage2$sampling_bucket = with(dat_stage2,
     strtoi(paste0(
       strtoi(paste0( 
         Trt, 
-        Bserostatus # hack! Bserostatus needs to be replaced by naive/non-naive in the real dataset
+        naive 
       ), base = 2), 
       CalendarBD1Interval-1
     ), base=4)
