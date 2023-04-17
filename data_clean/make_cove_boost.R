@@ -28,7 +28,7 @@ dat_stage2 = merge(dat_stage1, dat_raw, by="Ptid", all=T, suffixes=c("",".y"))
 dat_stage2 = dat_stage2[,!endsWith(names(dat_stage2),".y")]
 
 # hack
-dat_stage2$naive = !dat_stage2$Bserostatus
+dat_stage2$naive = 1-dat_stage2$Bserostatus
 
 
 ###############################################################################
