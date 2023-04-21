@@ -86,10 +86,10 @@ dat_stage2[!is.na(dat_stage2$EventIndOmicronBD29) & dat_stage2$EventIndOmicronBD
 # define must_have_assays for ph2 definition
 must_have_assays <- c("bindSpike", "bindRBD")
 
-# define ph1 as: (naive or non-naive) & (not censored and no evidence of infection from BD1 to BD7)
-dat_stage2$ph1.BD29 = !is.na(dat_stage2$Bserostatus) & dat_stage2$EventTimeOmicronBD29 >= 7
-# expect no NAs
+# define ph1 as: (naive or non-naive but not NA) & (not censored and no evidence of infection from BD1 to BD7) & need to have Wstratum
+dat_stage2$ph1.BD29 = with(dat_stage2, !is.na(Bserostatus) & EventTimeOmicronBD29 >= 7 & !is.na(Wstratum))
 
+# expect no NAs
 # hack! remove this line after having real data
 dat_stage2$ph1.BD29[is.na(dat_stage2$ph1.BD29)]=FALSE
 

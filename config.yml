@@ -28,7 +28,7 @@ moderna_real: &moderna_real
   study_name: COVE
 
 moderna_boost: &moderna_boost
-  mapped_data: /trials/covpn/p3001/analysis/mapping_immune_correlates/stage2_mock/adata/COVID_Moderna_stage2_mockdata_20230407.csv
+  mapped_data: /trials/covpn/p3001/analysis/mapping_immune_correlates/stage2_mock/adata/COVID_Moderna_stage2_mockdata_20230419.csv
   assay_metadata: /trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/assay_metadata.csv
   study_name: COVEBoost
 
