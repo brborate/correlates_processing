@@ -3,6 +3,7 @@ renv::activate(here::here())
 
 library(dplyr)
 library(kyotil)
+library(mice)
 
 ###############################################################################
 #### bring stage1 analysis-ready dataset and stage 2 mapped dataset together
@@ -35,46 +36,46 @@ dat_stage2$naive = 1-dat_stage2$Bserostatus
 ###############################################################################
 # define ph1 
 
-# naive or non-naive but not NA
+# not NA in the three bucket variables: Trt, naive and time period
 dat_stage2$ph1.BD29 = !is.na(dat_stage2$naive) & !is.na(dat_stage2$CalendarBD1Interval) & !is.na(dat_stage2$Trt)
 
 # not censored and no evidence of infection from BD1 to BD7
 # hack alert: is it safe to use EventTimeOmicronBD29 for this?
 dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & !is.na(dat_stage2$EventTimeOmicronBD29) & dat_stage2$EventTimeOmicronBD29 >= 7
 
+# controls should not be NA in the demo vars for stratification, it does not matter for cases since we will impute
+demo.var=c("HighRiskInd", "URMforsubcohortsampling", "Senior")
+dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & (complete.cases(dat_stage2[demo.var]) | dat_stage2$EventIndOmicronBD29==1)
+
 # Wstratum is made up of the demo variables, CalendarBD1Interval, naive, trt
 # controls with missing Wstratum won't be sampled, hence not part of ph1
 # cases having missing Wstratum due to  may still be sampled, hence part of ph1
 #     if cases have missing demo variables, we want to impute them so that we can assign weights, otherwise it gets too complicated
-#     if performed, imputation will be done for both cases and controls for imputation performance
+#     imputation is done for controls without missing demo and all cases. controls are included to improve imputation performance
 
-demo.var=c("HighRiskInd", "URMforsubcohortsampling", "Senior")
-tmp = subset(dat_stage2, ph1.BD29 & EventIndOmicronBD29)[,demo.var]
+imp.markers = demo.var # imp.markers may be a superset of demo.var to improve imputation performance
+dat.tmp.impute <- subset(dat_stage2, ph1.BD29) # only seek to impute within ph1 samples
+imp <- dat.tmp.impute %>%  select(all_of(imp.markers))         
 
-if (any(!complete.cases(tmp))) {
+if(any(is.na(imp))) {
   n.imp <- 1
-  dat.tmp.impute <- subset(dat_stage2, ph1.BD29)
   
-  imp <- dat.tmp.impute %>%  select(all_of(demo.var))         
-  if(any(is.na(imp))) {
-    # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
-    imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
-    dat.tmp.impute[, demo.var] <- mice::complete(imp, action = 1)
-  }                
-  
-  # missing markers imputed properly?
+  # imputation. diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+  dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
+
+  # missing covariates imputed properly?
   assertthat::assert_that(
-    all(complete.cases(dat.tmp.impute[, demo.var])),
+    all(complete.cases(dat.tmp.impute[, imp.markers])),
     msg = "missing covariates imputed properly?"
   )    
   
-  # populate dat_stage2 demo.var with the imputed values
-  dat_stage2[, demo.var] <-
-    dat.tmp.impute[demo.var][match(dat_stage2[, "Ptid"], dat.tmp.impute$Ptid), ]
+  # merged imputed values in dat.tmp.impute with dat_stage2
+  dat_stage2[dat_stage2$ph1.BD29, imp.markers] <- dat.tmp.impute[imp.markers][match(dat_stage2[dat_stage2$ph1.BD29, "Ptid"], dat.tmp.impute$Ptid), ]
   
-  # imputed values of missing markers merged properly for all individuals in the two phase sample?
+  # imputed values of missing covariates merged properly for all individuals in ph1?
   assertthat::assert_that(
-    all(complete.cases(dat_stage2[, demo.var])),
+    all(complete.cases(dat_stage2[dat_stage2$ph1.BD29, imp.markers])),
     msg = "imputed values of missing covariates merged properly for all individuals?"
   )
 }
