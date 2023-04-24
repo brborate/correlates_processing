@@ -119,7 +119,7 @@ dat_stage2$Wstratum = with(dat_stage2, demo.stratum + sampling_bucket * n.demo)
 # this was to amend ph1 definition. 
 # It removes the controls with missing Wstratum since all cases with missing Wstratum are imputed
 # But it is not necessary anymore
-table(dat_stage2$ph1.BD29, !is.na(dat_stage2$Wstratum))
+# table(dat_stage2$ph1.BD29, !is.na(dat_stage2$Wstratum))
 #dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & !is.na(dat_stage2$Wstratum)
 
 
@@ -135,24 +135,23 @@ dat_stage2$sampling_bucket_formergingstrata = with(dat_stage2,
                                                   Trt, 
                                                   naive,
                                                   EventIndOmicronBD29
-                                                ), base = 2)
-)
+                                                ), base = 2))
 
 dat.ph1.tmp=subset(dat_stage2, ph1.BD29, 
           select=c(Ptid, sampling_bucket, ph2.BD29, Wstratum, CalendarBD1Interval, sampling_bucket_formergingstrata))
 dat.ph1.tmp$ph2 = dat.ph1.tmp$ph2.BD29
 
+# adjust Wstratum
 dat.ph1.tmp = cove.boost.collapse.strata (dat.ph1.tmp, n.demo)
-
 # replace dat_stage2 Wstratum with dat.ph1.tmp$Wstratum
 dat_stage2[dat_stage2$ph1.BD29, "Wstratum"] <- 
     dat.ph1.tmp$Wstratum[match(dat_stage2[dat_stage2$ph1.BD29, "Ptid"], dat.ph1.tmp$Ptid)]
 
-# sanity check, there should be no overlap in the two columns
+# sanity checks
+# there should be no overlap in vacc and plac
 tab=with(subset(dat_stage2, ph1.BD29), table(Wstratum, Trt))
 stopifnot(! any(tab[,1]>0 & tab[,2]>0) )
-
-# sanity check, there should be no overlap in the two columns
+# there should be no overlap in naive and nnaive
 tab=with(subset(dat_stage2, ph1.BD29), table(Wstratum, naive))
 stopifnot(! any(tab[,1]>0 & tab[,2]>0) )
 
