@@ -6,7 +6,7 @@ library(kyotil)
 library(mice)
 
 ###############################################################################
-#### bring stage1 analysis-ready dataset and stage 2 mapped dataset together
+#### combine stage1 analysis-ready dataset and stage 2 mapped dataset
 ###############################################################################
 
 config <- config::get(config = Sys.getenv("TRIAL"))
@@ -20,7 +20,7 @@ dat_stage1 = read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Ph
 dat_raw = read.csv(config$mapped_data)
 if (colnames(dat_raw)[1]=="Subjectid")  colnames(dat_raw)[1] <- "Ptid" else stop("the first column is unexpectedly not Subjectid")
 
-setdiff(names(dat_raw), names(dat_stage1))
+#setdiff(names(dat_raw), names(dat_stage1))
 
 # merge two files
 dat_stage2 = merge(dat_stage1, dat_raw, by="Ptid", all=T, suffixes=c("",".y"))
@@ -80,18 +80,29 @@ if(any(is.na(imp))) {
   )
 }
 
+# by construction, there should be no NA. Check to make sure
+stopifnot(!any(is.na(dat_stage2$ph1.BD29)))
 
 
 ###############################################################################
-#### define sampling stratum variables
+#### define ph2
+# This can bde done before Wstratum is defined because Wstratum missingness does not affect ph1 anymore
+
+must_have_assays <- c("bindSpike", "bindRBD")
+
+dat_stage2$ph2.BD29 = dat_stage2$ph1.BD29 & complete.cases(dat_stage2[,c("BD1"%.%must_have_assays, "BD29"%.%must_have_assays)])      
+
+
+
+###############################################################################
+#### define Wstratum, which is used to compute inverse sampling prob weights
 ###############################################################################
 
 # demo.stratum is defined in the same way as in the original COVE correlates, 
 #     but if there are NAs in demo.stratum in cases, we want to impute them
-# tps.stratum has to be updated
+# tps.stratum, which does not depend on EventInd, is no longer needed
 
-# take d digits
-dec_to_bin <- function(x,d) sapply(x, function(xx) ifelse(is.na(xx), NA, paste(rev(as.integer(intToBits(xx))[1:d]), collapse="")))
+n.demo = max(dat_stage2$demo.stratum,na.rm=T) 
 
 # sampling_bucket: 0-31
 dat_stage2$sampling_bucket = with(dat_stage2, 
@@ -99,22 +110,27 @@ dat_stage2$sampling_bucket = with(dat_stage2,
                                     Trt, 
                                     naive,
                                     EventIndOmicronBD29,
-                                    dec_to_bin(CalendarBD1Interval-1, 2)
+                                    dec_to_binary(CalendarBD1Interval-1, 2)
                                   ), base = 2)
 )
 
-# used for defining tps stratum. case status is not used in this variable
-dat_stage2$sampling_bucket_fortpsstratum = with(dat_stage2, 
-                                                strtoi(paste0(
-                                                  Trt, 
-                                                  naive,
-                                                  EventIndOmicronBD29,
-                                                  dec_to_bin(CalendarBD1Interval-1,2) # two digits
-                                                ), base = 2)
-)
+dat_stage2$Wstratum = with(dat_stage2, demo.stratum + sampling_bucket * n.demo)
 
-# used for step 2 of merging sampling strata. calendar period is not used 
-dat_stage2$sampling_bucket_forstratamerging = with(dat_stage2, 
+# this was to amend ph1 definition. 
+# It removes the controls with missing Wstratum since all cases with missing Wstratum are imputed
+# But it is not necessary anymore
+table(dat_stage2$ph1.BD29, !is.na(dat_stage2$Wstratum))
+#dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & !is.na(dat_stage2$Wstratum)
+
+
+
+###############################################################################
+#### collapse sparse Wstratum and compute weights
+
+# the code for collapsing strata is wrapped in the function kyotil::cove.boost.collapse.strata 
+#   because it is needed in bootstrapping code in reporting3 repo
+
+dat_stage2$sampling_bucket_formergingstrata = with(dat_stage2, 
                                                 strtoi(paste0(
                                                   Trt, 
                                                   naive,
@@ -122,151 +138,26 @@ dat_stage2$sampling_bucket_forstratamerging = with(dat_stage2,
                                                 ), base = 2)
 )
 
-n.demo = max(dat_stage2$demo.stratum,na.rm=T) 
+dat.ph1.tmp=subset(dat_stage2, ph1.BD29, 
+          select=c(Ptid, sampling_bucket, ph2.BD29, Wstratum, CalendarBD1Interval, sampling_bucket_formergingstrata))
+dat.ph1.tmp$ph2 = dat.ph1.tmp$ph2.BD29
 
-# Wstratum is used to compute sampling weights. 
-# in case cohort, 1 ~ max(tps.stratum), max(tps.stratum)+1, ..., max(tps.stratum)+16. 
-# Differs from tps stratum in that case is a separate stratum within each of the 16 groups 
-#   defined by Trt, Bserostatus and CalendarBD1Interval
-# in case control, there are as many case strata as control strata
-dat_stage2$Wstratum = with(dat_stage2, demo.stratum + sampling_bucket * n.demo)
+dat.ph1.tmp = cove.boost.collapse.strata (dat.ph1.tmp, n.demo)
 
-# tps stratum, used in tps regression
-# [origina, crossover] x [Naive, non-naive] x [CalendarBD1Interval]
-# 1 ~ 16*max(demo.stratum), 
-dat_stage2$tps.stratum = with(dat_stage2, demo.stratum + sampling_bucket_fortpsstratum * n.demo)
-
-
-# with(dat_stage2, table(tps.stratum))
-# with(dat_stage2, table(Wstratum))
-# with(dat_stage2, table(Wstratum, EventIndOmicronBD29, Trt))
-# with(dat_stage2, table(sampling_bucket, Trt))
-# with(dat_stage2, table(Wstratum, sampling_bucket))
-
-
-# amend ph1 definition now that we have defined Wstratum
-# this only removes the controls with missing Wstratum since all cases with missing Wstratum are imputed
-dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & !is.na(dat_stage2$Wstratum)
-
-# by construction, there should be no NA. Check to make sure
-stopifnot(!any(is.na(dat_stage2$ph1.BD29)))
-
-
-
-###############################################################################
-#### ph2
-
-must_have_assays <- c("bindSpike", "bindRBD")
-
-dat_stage2$ph2.BD29 = dat_stage2$ph1.BD29 & complete.cases(dat_stage2[,c("BD1"%.%must_have_assays, "BD29"%.%must_have_assays)])      
-
-# collapse strata to deal with sparsity
-
-# first, do it across demo strata within each sampling bucket 
-sampling_buckets=0:max(dat_stage2$sampling_bucket, na.rm=T)
-for (i in sampling_buckets) {
-  
-  select = dat_stage2$ph1.BD29 & dat_stage2$sampling_bucket==i 
-  
-  # make sure there are such ph1 samples
-  if (sum(select, na.rm=T)>0) {
-  
-    # make sure there is at least 1 ph2 sample
-    if (sum(dat_stage2[select,"ph2.BD29"], na.rm=T)>=1) {
-      tab = with(dat_stage2[select,], table(Wstratum, ph2.BD29))
-      # merging
-      if (any(tab[,2]==0)) {
-        dat_stage2[select,"Wstratum"] = min(dat_stage2[select,"Wstratum"], na.rm=T)
-      }
-    } else {
-      # if there are no ph2 samples, will collapse in the next level
-    }
-  } # okay if there are no samples in the bucket
-}
-
-
-# second, do it across the 4 calendar periods
-# merge a period with the next period if not the last, merge with the last period with the previous if needed
-
-sampling_buckets.2=0:max(dat_stage2$sampling_bucket_forstratamerging, na.rm=T)
-# need this in the merging process as it needs to be updated
-dat_stage2$tmpCalendarBD1Interval=dat_stage2$CalendarBD1Interval
-
-for (i in sampling_buckets.2) {
-  select = dat_stage2$ph1.BD29 & dat_stage2$sampling_bucket_forstratamerging==i 
-  
-  # make sure there are such ph1 samples
-  if (sum(select, na.rm=T)>0) {
-    
-    # make sure there is at least 1 ph2 sample
-    if (sum(dat_stage2[select,"ph2.BD29"], na.rm=T)>=1) {
-      tab = with(dat_stage2[select,], table(tmpCalendarBD1Interval, ph2.BD29))
-      # merging
-      (tab)
-      jj = which(tab[,2]==0)
-      for (j in jj) {
-        select2 = select & dat_stage2$tmpCalendarBD1Interval==j
-        # if the last is empty, set all to the first
-        dat_stage2[select2,"Wstratum"] = dat_stage2[select2,"Wstratum"] + n.demo * ifelse(j<4, 1, -3)
-        # also need to update sampling bucket so that step 3 can work
-        dat_stage2[select2,"sampling_bucket"] = dat_stage2[select2,"sampling_bucket"] + ifelse(j<4, 1, -3)
-        # need to update this so that select2 will pick these up
-        dat_stage2$tmpCalendarBD1Interval[select2] = dat_stage2$tmpCalendarBD1Interval[select2] + 1
-      }
-    } else {
-      stop("something wrong - no ph2 samples in sampling_buckets.2 "%.%i)
-    }
-  } else {
-    # no ph1 samples in this sampling_buckets.2, probably case
-  }
-}
-
-# third, one more time do it across demo strata within each sampling bucket 
-#       because it is possible that collapsing buckets introduced empty demo strata
-sampling_buckets=0:max(dat_stage2$sampling_bucket, na.rm=T)
-for (i in sampling_buckets) {
-  
-  select = dat_stage2$ph1.BD29 & dat_stage2$sampling_bucket==i 
-  
-  # make sure there are such ph1 samples
-  if (sum(select, na.rm=T)>0) {
-    
-    # make sure there is at least 1 ph2 sample
-    if (sum(dat_stage2[select,"ph2.BD29"], na.rm=T)>=1) {
-      tab = with(dat_stage2[select,], table(Wstratum, ph2.BD29))
-      (tab)
-      # merging
-      if (any(tab[,2]==0)) {
-        dat_stage2[select,"Wstratum"] = min(dat_stage2[select,"Wstratum"], na.rm=T)
-      }
-    } else {
-      # if there are no ph2 samples, will collapse in the next level
-    }
-  } # okay if there are no samples in the bucket
-}
-
-
-# make sure no empty cells after all this
-tab=with(subset(dat_stage2, ph1.BD29), table(Wstratum, ph2.BD29))
-print(tab)
-stopifnot(all(tab[,2]>0))
+# replace dat_stage2 Wstratum with dat.ph1.tmp$Wstratum
+dat_stage2[dat_stage2$ph1.BD29, "Wstratum"] <- 
+    dat.ph1.tmp$Wstratum[match(dat_stage2[dat_stage2$ph1.BD29, "Ptid"], dat.ph1.tmp$Ptid)]
 
 # sanity check, there should be no overlap in the two columns
-tab=with(dat_stage2, table(Wstratum, Trt))
-print(tab)
+tab=with(subset(dat_stage2, ph1.BD29), table(Wstratum, Trt))
 stopifnot(! any(tab[,1]>0 & tab[,2]>0) )
 
 # sanity check, there should be no overlap in the two columns
-tab=with(dat_stage2, table(Wstratum, naive))
-print(tab)
+tab=with(subset(dat_stage2, ph1.BD29), table(Wstratum, naive))
 stopifnot(! any(tab[,1]>0 & tab[,2]>0) )
 
 
-
-
-###############################################################################
-#### inverse probability sampling weights
-
+# now compute inverse probability sampling weights
 tp=29
 tmp = with(dat_stage2, ph1.BD29)
 wts_table <- with(dat_stage2[tmp,], table(Wstratum, get("ph2.BD"%.%tp)))

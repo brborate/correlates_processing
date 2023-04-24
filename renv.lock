@@ -987,15 +987,15 @@
     },
     "kyotil": {
       "Package": "kyotil",
-      "Version": "2021.6-16",
+      "Version": "2023.4-24",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "kyotil",
       "RemoteUsername": "youyifong",
       "RemoteRef": "HEAD",
-      "RemoteSha": "747b28ab902e16d9cbe4da0095f71e75489d6009",
-      "Hash": "f00706e1862a9d267b1a01854c2b44cd"
+      "RemoteSha": "255bdc05ea9f07e0d3e383677a3bad008fa5eb99",
+      "Hash":      "1f731b023e6f990cd616ad343df4e080"
     },
     "labeling": {
       "Package": "labeling",
@@ -1538,10 +1538,10 @@
     },
     "renv": {
       "Package": "renv",
-      "Version": "0.14.0",
+      "Version": "0.17.3",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "30e5eba91b67f7f4d75d31de14bbfbdc"
+      "Hash": "4543b8cd233ae25c6aba8548be9e747e"
     },
     "repr": {
       "Package": "repr",
@@ -1784,13 +1784,6 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "72200a58cae0d7046e416e6be6d9d322"
-    },
-    "speedglm": {
-      "Package": "speedglm",
-      "Version": "0.3-3",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "5955a9bd4ed0275ad45596a49d75946f"
     },
     "stringi": {
       "Package": "stringi",
