@@ -116,10 +116,11 @@ dat_stage2$sampling_bucket = with(dat_stage2,
 
 dat_stage2$Wstratum = with(dat_stage2, demo.stratum + sampling_bucket * n.demo)
 
-# this was to amend ph1 definition. 
+
+# this was to amend ph1 definition, but it is not necessary anymore
+# a check
+stopifnot (0 == sum(with(dat_stage2, ph1.BD29 & is.na(Wstratum))))
 # It removes the controls with missing Wstratum since all cases with missing Wstratum are imputed
-# But it is not necessary anymore
-# table(dat_stage2$ph1.BD29, !is.na(dat_stage2$Wstratum))
 #dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & !is.na(dat_stage2$Wstratum)
 
 
@@ -138,14 +139,15 @@ dat_stage2$sampling_bucket_formergingstrata = with(dat_stage2,
                                                 ), base = 2))
 
 dat.ph1.tmp=subset(dat_stage2, ph1.BD29, 
-          select=c(Ptid, sampling_bucket, ph2.BD29, Wstratum, CalendarBD1Interval, sampling_bucket_formergingstrata))
+          select=c(Ptid, Trt, naive, sampling_bucket, ph2.BD29, Wstratum, CalendarBD1Interval, sampling_bucket_formergingstrata))
 dat.ph1.tmp$ph2 = dat.ph1.tmp$ph2.BD29
 
 # adjust Wstratum
-dat.ph1.tmp = cove.boost.collapse.strata (dat.ph1.tmp, n.demo)
-# replace dat_stage2 Wstratum with dat.ph1.tmp$Wstratum
+dat.ph1.tmp2 = cove.boost.collapse.strata (dat.ph1.tmp, n.demo)
+
+# replace dat_stage2 Wstratum with dat.ph1.tmp2$Wstratum
 dat_stage2[dat_stage2$ph1.BD29, "Wstratum"] <- 
-    dat.ph1.tmp$Wstratum[match(dat_stage2[dat_stage2$ph1.BD29, "Ptid"], dat.ph1.tmp$Ptid)]
+    dat.ph1.tmp2$Wstratum[match(dat_stage2[dat_stage2$ph1.BD29, "Ptid"], dat.ph1.tmp2$Ptid)]
 
 # sanity checks
 # there should be no overlap in vacc and plac
