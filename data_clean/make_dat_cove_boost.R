@@ -9,6 +9,8 @@ library(mice)
 #### combine stage1 analysis-ready dataset and stage 2 mapped dataset
 ###############################################################################
 
+if (Sys.getenv("TRIAL")=="") stop("TRIAL env variable is not defined !!!!!!!!!!!!!!!!!!")
+
 config <- config::get(config = Sys.getenv("TRIAL"))
 # this line makes config elements variables in the global scope, it makes coding easier but kind of dangerous
 #for(opt in names(config)) eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
@@ -132,14 +134,14 @@ stopifnot (0 == sum(with(dat_stage2, ph1.BD29 & is.na(Wstratum))))
 #   because it is needed in bootstrapping code in reporting3 repo
 
 dat_stage2$sampling_bucket_formergingstrata = with(dat_stage2, 
-                                                strtoi(paste0(
-                                                  Trt, 
-                                                  naive,
-                                                  EventIndOmicronBD29
-                                                ), base = 2))
+                                                   strtoi(paste0(
+                                                     Trt, 
+                                                     naive,
+                                                     EventIndOmicronBD29
+                                                   ), base = 2))
 
 dat.ph1.tmp=subset(dat_stage2, ph1.BD29, 
-          select=c(Ptid, Trt, naive, sampling_bucket, ph2.BD29, Wstratum, CalendarBD1Interval, sampling_bucket_formergingstrata))
+                   select=c(Ptid, Trt, naive, sampling_bucket, ph2.BD29, Wstratum, CalendarBD1Interval, sampling_bucket_formergingstrata))
 dat.ph1.tmp$ph2 = dat.ph1.tmp$ph2.BD29
 
 # adjust Wstratum
@@ -147,7 +149,7 @@ dat.ph1.tmp2 = cove.boost.collapse.strata (dat.ph1.tmp, n.demo)
 
 # replace dat_stage2 Wstratum with dat.ph1.tmp2$Wstratum
 dat_stage2[dat_stage2$ph1.BD29, "Wstratum"] <- 
-    dat.ph1.tmp2$Wstratum[match(dat_stage2[dat_stage2$ph1.BD29, "Ptid"], dat.ph1.tmp2$Ptid)]
+  dat.ph1.tmp2$Wstratum[match(dat_stage2[dat_stage2$ph1.BD29, "Ptid"], dat.ph1.tmp2$Ptid)]
 
 # sanity checks
 # there should be no overlap in vacc and plac
@@ -213,7 +215,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-#               moderna_boost = "34e297fd1a736f9320573ff1d2944904",
+               #               moderna_boost = "34e297fd1a736f9320573ff1d2944904",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }
