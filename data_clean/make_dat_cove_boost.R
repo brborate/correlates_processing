@@ -31,7 +31,7 @@ dat_stage2 = merge(dat_stage1, dat_raw, by="Ptid", all=T, suffixes=c("",".y"))
 dat_stage2 = dat_stage2[,!endsWith(names(dat_stage2),".y")]
 
 # hack, need to be replaced with true definition
-dat_stage2$naive = 1-dat_stage2$Bserostatus
+dat_stage2$naive = 1-dat_stage2$nnaive
 
 
 
@@ -39,15 +39,19 @@ dat_stage2$naive = 1-dat_stage2$Bserostatus
 # define ph1 
 
 # not NA in the three bucket variables: Trt, naive and time period
-dat_stage2$ph1.BD29 = !is.na(dat_stage2$naive) & !is.na(dat_stage2$CalendarBD1Interval) & !is.na(dat_stage2$Trt)
+dat_stage2$ph1.BD29 = with(dat_stage2, !is.na(naive) & !is.na(CalendarBD1Interval) & !is.na(Trt) & !is.na(Perprotocol) & !is.na(EventTimeOmicronBD29))
 
 # not censored and no evidence of infection from BD1 to BD7
 # hack alert: is it safe to use EventTimeOmicronBD29 for this?
-dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & !is.na(dat_stage2$EventTimeOmicronBD29) & dat_stage2$EventTimeOmicronBD29 >= 7
+dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & Perprotocol & EventTimeOmicronBD29 >= 7)
 
 # controls should not be NA in the demo vars for stratification, it does not matter for cases since we will impute
 demo.var=c("HighRiskInd", "URMforsubcohortsampling", "Senior")
 dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & (complete.cases(dat_stage2[demo.var]) | dat_stage2$EventIndOmicronBD29==1)
+
+# hack alert. there may be NA in risk score in ph1. what to do
+dat_stage2$risk_score[is.na(dat_stage2$risk_score)] = mean(dat_stage2$risk_score, na.rm=T)
+
 
 # Wstratum is made up of the demo variables, CalendarBD1Interval, naive, trt
 # controls with missing Wstratum won't be sampled, hence not part of ph1
@@ -84,6 +88,12 @@ if(any(is.na(imp))) {
 
 # by construction, there should be no NA. Check to make sure
 stopifnot(!any(is.na(dat_stage2$ph1.BD29)))
+
+
+###############################################################################
+# impute regression covariates?
+
+
 
 
 ###############################################################################
@@ -175,7 +185,7 @@ assertthat::assert_that(
 
 
 ###############################################################################
-#### impute assay values
+#### impute assay values 
 ###############################################################################
 
 # this depends on missingness pattern
