@@ -994,8 +994,8 @@
       "RemoteRepo": "kyotil",
       "RemoteUsername": "youyifong",
       "RemoteRef": "HEAD",
-      "RemoteSha": "ae8864cdabaf79ff2d8c0439722af6935db40cf6",
-      "Hash": "df2a083d8121cfb5f2f22973a9d000ca"
+      "RemoteSha": "25e66a8adf24107dad627d96c5bf00b972069331",
+      "Hash": "764ec04f2babca28d5a0cd2a05b124a6"
     },
     "labeling": {
       "Package": "labeling",
