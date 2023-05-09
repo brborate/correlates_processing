@@ -1,7 +1,7 @@
 #Sys.setenv(TRIAL = "prevent19")
+
 renv::activate(here::here())
-# There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
-if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
+
 source(here::here("_common.R"))
 
 library(tidyverse)
@@ -158,6 +158,8 @@ if (study_name %in% c("COVE", "MockCOVE", "PROFISCOV")) {
 #dat_proc$URM.2 = 1-dat_proc$nonURM
 #
 #with(dat_proc, table(URMforsubcohortsampling, URM.2, useNA="ifany"))
+
+
 
 
 ###############################################################################
@@ -737,6 +739,7 @@ if(attr(config, "config") == "moderna_real") {
     dat_proc=rbind(dat_proc, dat_proc.tmp)
     
 } else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
+
     # add bin numbers associated with the biweekly calendar period of each endpoint 
     dat.eventtime.bin = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_time_to_event_v6a.csv")
     if (attr(config, "config") == c("janssen_pooled_partA")) {
@@ -750,20 +753,40 @@ if(attr(config, "config") == "moderna_real") {
     } 
     dat_proc$endpointDate.Bin = dat.eventtime.bin[[v.name]][match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
     
+    # add event time from sieve analysis
+    dat_proc$sieve.time = dat.eventtime.bin$time[match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
+    dat_proc$sieve.status = dat.eventtime.bin$status[match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
+    
     # add bin numbers associated with the biweekly calendar period of enrollment
     binTime = 13 # since bin period is biweekly!
     binVec = 1:8
-    breaksVec = c(0, binTime*binVec+(binVec-1))
-    
+    breaksVec = c(0, binTime*binVec+(binVec-1))    
     if(max(breaksVec) > max(dat_proc$CalendarDateEnrollment)){
       dat_proc <- dat_proc %>% 
         mutate(BinnedEnrollmentBiweekly = cut(CalendarDateEnrollment, breaks = breaksVec, 
                                               include.lowest = T, 
                                               labels = c("0", "1", "2", "3", "4", "5", "6", "7")))
-    }else{
+    } else {
       "The maximum value in CalendarDateEnrollment is higher than max(breaksVec)! Update binVec!"
     }
     rm(binTime, binVec, breaksVec)
+    
+    # add Spike physics-chemical weighted Hamming distance pertaining to the sequence that was obtained from the first chronological sample
+    dat.tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_sieve_cases_firstseq_v10a.csv")
+    dat_proc$seq1.spike.weighted.hamming = dat.tmp$seq1.hdist.zspace.spike[match(dat_proc$Ptid, dat.tmp$USUBJID)]
+    dat_proc$seq1.log10vl = dat.tmp$seq1.log10vl[match(dat_proc$Ptid, dat.tmp$USUBJID)]
+    dat_proc$seq1.variant = dat.tmp$seq1.who.label[match(dat_proc$Ptid, dat.tmp$USUBJID)]
+#    # define new endpoint varibles. Deprecated since we now use the hotdeck imputation approach
+#    dat_proc$EventIndPrimaryHasVLD29   = ifelse (dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29==1 & !is.na(dat_proc$seq1.log10vl), 1, 0)
+#    dat_proc$EventIndPrimaryHasnoVLD29 = ifelse (dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29==1 &  is.na(dat_proc$seq1.log10vl), 1, 0)
+    
+    # add inv prob weight (prob of having seq given that VL is observed)
+    dat.tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/sequence_VL_IPW_weights.csv")
+    dat_proc$seq1.ipw.have.seq = 1/dat.tmp$IPW.weight[match(dat_proc$Ptid, dat.tmp$USUBJID)]
+#    # define weights for cases EventIndPrimaryHasVLD29. Deprecated since we now use the hotdeck imputation approach
+#    dat_proc$wt.vl.D29  = with(dat_proc, ifelse(EventIndPrimaryHasVLD29==1, wt.D29*seq1.ipw.have.seq, wt.D29))
+#    dat_proc$ph2.vl.D29 = with(dat_proc, ifelse(EventIndPrimaryHasVLD29==1, (ph2.D29*!is.na(seq1.spike.weighted.hamming))==1, ph2.D29))
+    
     
 } else if(attr(config, "config") == "prevent19") {
     # first round submission lacks RBD
@@ -792,7 +815,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
-         janssen_pooled_partA = "c608ba5cae059fea397168251fff0fdf",
+         janssen_pooled_partA = "9ba0c79b49fa0c0f7218fdec347bd7e5",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
