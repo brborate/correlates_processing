@@ -19,6 +19,10 @@ output/butantan/*
 *.Rout
 nohup.out
 .nfs*
+data_clean/janssen_pooled_partA_data_processed_with_riskscore.csv
+data_clean/janssen_pooled_partAnonsenior_data_processed_with_riskscore.csv
+data_clean/janssen_pooled_partAsenior_data_processed_with_riskscore.csv
+
 
 
 

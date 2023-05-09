@@ -592,26 +592,6 @@ ggsave_custom <- function(filename = default_name(plot),
 }
 
 
-
-
-# extract assay from marker name such as Daytp1pseudoneutid80, Bpseudoneutid80
-marker.name.to.assay=function(marker.name) {
-    if(endsWith(marker.name, "bindSpike")) {
-        "bindSpike"
-    } else if(endsWith(marker.name, "bindRBD")) {
-        "bindRBD"
-    } else if(endsWith(marker.name, "bindN")) {
-        "bindN"
-    } else if(endsWith(marker.name, "pseudoneutid50")) {
-        "pseudoneutid50"
-    } else if(endsWith(marker.name, "pseudoneutid80")) {
-        "pseudoneutid80"
-    } else if(endsWith(marker.name, "liveneutmn50")) {
-        "liveneutmn50"
-    } else stop("marker.name.to.assay: wrong marker.name")
-}
-
-
 # x is the marker values
 # assay is one of assays, e.g. pseudoneutid80
 report.assay.values=function(x, assay){
