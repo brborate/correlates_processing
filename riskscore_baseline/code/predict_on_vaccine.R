@@ -82,6 +82,22 @@ vacc <- bind_cols(vacc, pred_on_vaccine) %>%
                             center = mean(risk_score, na.rm = T),
                             scale = sd(risk_score, na.rm = T))) 
 
+
+if(study_name == "COVE"){
+  pred_on_plac_bseropos <- predict(sl_riskscore_slfits, 
+                                   newdata = plac_bseropos %>% select(names(X_riskVars_vacc)), 
+                                   onlySL = TRUE)$pred %>%
+    as.data.frame()
+  
+  plac_bseropos <- bind_cols(plac_bseropos %>% select(Ptid, all_of(endpoint)), pred_on_plac_bseropos) %>%
+    rename(pred = V1) %>%
+    mutate(risk_score = log(pred / (1 - pred)),
+           standardized_risk_score = scale(risk_score,
+                                           center = mean(risk_score, na.rm = T),
+                                           scale = sd(risk_score, na.rm = T))) 
+}
+
+
 if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
   # AUC for vaccine arm computed only on cohort with RiskscoreAUCflag==1 and based off endpoint rauc!
   AUCvacc <- vacc %>% 
@@ -98,4 +114,4 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
 vacc <- vacc %>% mutate(AUCchar = AUCvacc$AUCchar) 
 
 write.csv(vacc, here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
-
+write.csv(plac_bseropos, here("output", Sys.getenv("TRIAL"), "plac_bseropos_ptids_with_riskscores.csv"), row.names = FALSE)

@@ -19,20 +19,20 @@ if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m
 
 # Identify the risk demographic variable names that will be used to compute the risk score
 # Identify the endpoint variable
-if(study_name %in% c("MockCOVE")){
+if(study_name %in% c("COVE", "MockCOVE")){
   endpoint <- "EventIndPrimaryD57"
   risk_timepoint <- 57
   studyName_for_report <- "COVE"
   inputMod <- inputFile
-  # if(study_name %in% c("COVE")){
-  #   risk_vars <- c(
-  #     "MinorityInd", "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown", 
-  #     "Black", "Asian", "NatAmer", "PacIsl",  
-  #     "Multiracial", "Other", 
-  #     "Notreported", "Unknown",
-  #     "HighRiskInd", "Sex", "Age", "BMI"
-  #   )
-  # }
+  if(study_name %in% c("COVE")){
+    risk_vars <- c(
+      "MinorityInd", "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
+      "Black", "Asian", "NatAmer", "PacIsl",
+      "Multiracial", "Other",
+      "Notreported", "Unknown",
+      "HighRiskInd", "Sex", "Age", "BMI"
+    )
+  }
 
   if(study_name %in% c("MockCOVE")){ # as MinorityInd variable is absent in mock!
     risk_vars <- c(
@@ -241,4 +241,7 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
   save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
 }
 
+if(study_name == "COVE"){
+  save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
+}
 source(here("code", "check_if_SL_needs_be_run.R"))
