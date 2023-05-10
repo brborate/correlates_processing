@@ -1,3 +1,5 @@
+# TRIAL moderna_boost
+
 library(here)
 renv::activate(here::here())
 
@@ -17,6 +19,13 @@ config <- config::get(config = Sys.getenv("TRIAL"))
 
 # read stage1 analysis ready dataset 
 dat_stage1 = read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/moderna_real_data_processed_with_riskscore.csv")
+
+# use new risk score, which 99.5% correlated with the old one and is derived for all ptids, including baseline pos
+dat_risk_score = read.csv("/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/inputFile_with_riskscore.csv")
+dat_stage1$risk_score              = dat_risk_score$risk_score             [match(dat_stage1$Ptid, dat_risk_score$Ptid)]
+dat_stage1$Riskscorecohortflag     = dat_risk_score$Riskscorecohortflag    [match(dat_stage1$Ptid, dat_risk_score$Ptid)]
+dat_stage1$standardized_risk_score = dat_risk_score$standardized_risk_score[match(dat_stage1$Ptid, dat_risk_score$Ptid)]
+
 
 # read stage 2 mapped data 
 dat_raw = read.csv(config$mapped_data)
@@ -50,7 +59,10 @@ demo.var=c("HighRiskInd", "URMforsubcohortsampling", "Senior")
 dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & (complete.cases(dat_stage2[demo.var]) | dat_stage2$EventIndOmicronBD29==1)
 
 # hack alert. there may be NA in risk score in ph1. what to do
-dat_stage2$risk_score[is.na(dat_stage2$risk_score)] = mean(dat_stage2$risk_score, na.rm=T)
+stopifnot(all(!is.na(dat_stage2$risk_score)))
+
+# with(subset(dat_stage2, is.na(risk_score)), table(Trt, Bserostatus))
+# with(subset(dat_stage2), table(is.na(risk_score), Bserostatus, Trt))
 
 
 # Wstratum is made up of the demo variables, CalendarBD1Interval, naive, trt
