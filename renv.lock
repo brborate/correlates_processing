@@ -987,7 +987,7 @@
     },
     "kyotil": {
       "Package": "kyotil",
-      "Version": "2023.4-24",
+      "Version": "2023.4-26",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
