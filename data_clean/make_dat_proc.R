@@ -753,9 +753,9 @@ if(attr(config, "config") == "moderna_real") {
     } 
     dat_proc$endpointDate.Bin = dat.eventtime.bin[[v.name]][match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
     
-    # add event time from sieve analysis
-    dat_proc$sieve.time = dat.eventtime.bin$time[match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
-    dat_proc$sieve.status = dat.eventtime.bin$status[match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
+    # # add event time from sieve analysis
+    # dat_proc$sieve.time = dat.eventtime.bin$time[match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
+    # dat_proc$sieve.status = dat.eventtime.bin$status[match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
     
     # add bin numbers associated with the biweekly calendar period of enrollment
     binTime = 13 # since bin period is biweekly!
