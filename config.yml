@@ -53,6 +53,22 @@ vat08m: &vat08m
   mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_realdata_20220624.csv
   
 
+vat08b: &vat08b
+  <<: *ows_trial
+  assay_metadata: ../correlates_reporting3/assay_metadata/vat08b_assay_metadata.csv
+  two_marker_timepoints: yes
+  timepoints: [22, 43]
+  subset_variable: None
+  subset_value: All
+  times: [B, Day22, Day43, Delta22overB, Delta43overB, Delta43over22]
+  time_labels: [Day 1, Day 22, Day 43, D22 fold-rise over D1, D43 fold-rise over D1, D43 fold-rise over D22]
+  study_name: VAT08b
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_realdata_20220624.csv
+  
+
+
+
+
 prevent19: &prevent19 # note that RBD is added as a special step and is not included in the config
   <<: *ows_trial
   two_marker_timepoints: no

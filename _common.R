@@ -24,8 +24,6 @@ omp_set_num_threads(1L)
 
 verbose=Sys.getenv("VERBOSE")=="1"
 
-names(assays)=assays # add names so that lapply results will have names
-
 # if this flag is true, then the N IgG binding antibody is reported 
 # in the immuno report (but is not analyzed in the cor or cop reports).
 include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08m")
@@ -39,51 +37,67 @@ include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08m")
 # For bAb, IU and BAU are the same thing
 # all values on BAU or IU
 # LOQ can not be NA, it is needed for computing delta
-pos.cutoffs<-llods<-lloqs<-uloqs<-c()
-lloxs=NULL
-if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
+
+if (study_name %in% c("vat08b")) {
+  # switch to csv metadata file for assay
+  assay_metadata = read.csv(paste0(dirname(attr(config,"file")),"/",config$assay_metadata))
+  assays=assay_metadata$assay
+  # created named lists for assay metadata to easier access, e.g. assay_labels_short["bindSpike"]
+  assay_labels=assay_metadata$assay_label; names(assay_labels)=assays
+  assay_labels_short=assay_metadata$assay_label_short; names(assay_labels_short)=assays
+  llox_labels=assay_metadata$llox_label; names(llox_labels)=assays
+  lloqs=assay_metadata$lloq; names(lloqs)=assays
+  lods=assay_metadata$lod; names(lods)=assays
+  lloxs=ifelse(llox_labels=="lloq", lloqs, lods)
+  
+  
+} else {
+  names(assays)=assays # add names so that lapply results will have names
+  pos.cutoffs<-llods<-lloqs<-uloqs<-c()
+  lloxs=NULL
+  if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     tmp=list(
-        bindSpike=c(
-            pos.cutoff=10.8424,
-            LLOD = 0.3076,
-            ULOD = 172226.2,
-            LLOQ = 1.7968,
-            ULOQ = 10155.95)
-        ,
-        bindRBD=c(
-            pos.cutoff=14.0858,
-            LLOD = 1.593648,
-            ULOD = 223074,
-            LLOQ = 3.4263,
-            ULOQ = 16269.23)
-        ,
-        bindN=c( 
-            pos.cutoff=23.4711,
-            LLOD = 0.093744,
-            ULOD = 52488,
-            LLOQ = 4.4897,
-            ULOQ = 574.6783)
-        ,
-        pseudoneutid50=c( 
-            pos.cutoff=2.42,# as same lod
-            LLOD = 2.42,
-            ULOD = NA,
-            LLOQ = 4.477,
-            ULOQ = 10919)
-        ,
-        pseudoneutid80=c( 
-            pos.cutoff=15.02,# as same lod
-            LLOD = 15.02,
-            ULOD = NA,
-            LLOQ = 21.4786,
-            ULOQ = 15368)
-        ,
-        liveneutmn50=c( 
-            pos.cutoff=82.1*0.276,# as same lod
-            LLOD = 82.11*0.276,
-            ULOD = NA,
-            LLOQ =  159.79*0.276,
-            ULOQ = 11173.21*0.276)
+      bindSpike=c(
+        pos.cutoff=10.8424,
+        LLOD = 0.3076,
+        ULOD = 172226.2,
+        LLOQ = 1.7968,
+        ULOQ = 10155.95)
+      ,
+      bindRBD=c(
+        pos.cutoff=14.0858,
+        LLOD = 1.593648,
+        ULOD = 223074,
+        LLOQ = 3.4263,
+        ULOQ = 16269.23)
+      ,
+      bindN=c( 
+        pos.cutoff=23.4711,
+        LLOD = 0.093744,
+        ULOD = 52488,
+        LLOQ = 4.4897,
+        ULOQ = 574.6783)
+      ,
+      pseudoneutid50=c( 
+        pos.cutoff=2.42,# as same lod
+        LLOD = 2.42,
+        ULOD = NA,
+        LLOQ = 4.477,
+        ULOQ = 10919)
+      ,
+      pseudoneutid80=c( 
+        pos.cutoff=15.02,# as same lod
+        LLOD = 15.02,
+        ULOD = NA,
+        LLOQ = 21.4786,
+        ULOQ = 15368)
+      ,
+      liveneutmn50=c( 
+        pos.cutoff=82.1*0.276,# as same lod
+        LLOD = 82.11*0.276,
+        ULOD = NA,
+        LLOQ =  159.79*0.276,
+        ULOQ = 11173.21*0.276)
     )
     
     pos.cutoffs=sapply(tmp, function(x) unname(x["pos.cutoff"]))
@@ -91,8 +105,8 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     lloqs=sapply(tmp, function(x) unname(x["LLOQ"]))
     uloqs=sapply(tmp, function(x) unname(x["ULOQ"]))        
     
-        
-} else if(study_name=="ENSEMBLE") {
+    
+  } else if(study_name=="ENSEMBLE") {
     
     # data less than pos cutoff is set to pos.cutoff/2
     llods["bindSpike"]=NA 
@@ -105,7 +119,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     lloqs["bindRBD"]=3.4263                 
     uloqs["bindRBD"]=172.5755    
     pos.cutoffs["bindRBD"]=14.0858
-            
+    
     # data less than lod is set to lod/2
     llods["ADCP"]=11.57
     lloqs["ADCP"]=8.87
@@ -119,37 +133,37 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     
     # the limits below are different for EUA and Part A datasets
     if (contain(attr(config, "config"), "EUA")) {
-    # EUA data
-        
-        # data less than lloq is set to lloq/2
-        llods["pseudoneutid50"]=NA  
-        lloqs["pseudoneutid50"]=42*0.0653  #2.7426
-        uloqs["pseudoneutid50"]=9484*0.0653 # 619.3052
-        pos.cutoffs["pseudoneutid50"]=lloqs["pseudoneutid50"]
-        
-        # repeat for two synthetic markers that are adapted to SA and LA
-        llods["pseudoneutid50sa"]=NA  
-        lloqs["pseudoneutid50sa"]=42*0.0653  #2.7426
-        uloqs["pseudoneutid50sa"]=9484*0.0653 # 619.3052
-        pos.cutoffs["pseudoneutid50sa"]=lloqs["pseudoneutid50sa"]
-    
-        llods["pseudoneutid50la"]=NA  
-        lloqs["pseudoneutid50la"]=42*0.0653  #2.7426
-        uloqs["pseudoneutid50la"]=9484*0.0653 # 619.3052
-        pos.cutoffs["pseudoneutid50la"]=lloqs["pseudoneutid50la"]
-    
-        
+      # EUA data
+      
+      # data less than lloq is set to lloq/2
+      llods["pseudoneutid50"]=NA  
+      lloqs["pseudoneutid50"]=42*0.0653  #2.7426
+      uloqs["pseudoneutid50"]=9484*0.0653 # 619.3052
+      pos.cutoffs["pseudoneutid50"]=lloqs["pseudoneutid50"]
+      
+      # repeat for two synthetic markers that are adapted to SA and LA
+      llods["pseudoneutid50sa"]=NA  
+      lloqs["pseudoneutid50sa"]=42*0.0653  #2.7426
+      uloqs["pseudoneutid50sa"]=9484*0.0653 # 619.3052
+      pos.cutoffs["pseudoneutid50sa"]=lloqs["pseudoneutid50sa"]
+      
+      llods["pseudoneutid50la"]=NA  
+      lloqs["pseudoneutid50la"]=42*0.0653  #2.7426
+      uloqs["pseudoneutid50la"]=9484*0.0653 # 619.3052
+      pos.cutoffs["pseudoneutid50la"]=lloqs["pseudoneutid50la"]
+      
+      
     } else if (contain(attr(config, "config"), "partA")) {
-    # complete part A data
-        
-        # data less than lloq is set to lloq/2
-        llods["pseudoneutid50"]=NA  
-        lloqs["pseudoneutid50"]=75*0.0653  #4.8975
-        uloqs["pseudoneutid50"]=12936*0.0653 # 844.7208
-        pos.cutoffs["pseudoneutid50"]=lloqs["pseudoneutid50"]
+      # complete part A data
+      
+      # data less than lloq is set to lloq/2
+      llods["pseudoneutid50"]=NA  
+      lloqs["pseudoneutid50"]=75*0.0653  #4.8975
+      uloqs["pseudoneutid50"]=12936*0.0653 # 844.7208
+      pos.cutoffs["pseudoneutid50"]=lloqs["pseudoneutid50"]
     }
     
-} else if(study_name=="PREVENT19") {
+  } else if(study_name=="PREVENT19") {
     # Novavax
     
     # data less than lloq is set to lloq/2 in the raw data
@@ -175,8 +189,8 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     uloqs["bindN"]=574.6783
     pos.cutoffs["bindN"]=23.4711
     
-} else if(study_name=="AZD1222") {
-       
+  } else if(study_name=="AZD1222") {
+    
     # data less than lloq is set to lloq/2 in the raw data, Nexelis
     llods["bindSpike"]=NA 
     lloqs["bindSpike"]=62.8*0.0090 # 0.5652
@@ -191,8 +205,8 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     
     # bindN info missing in SAP
     
-} else if(study_name=="VAT08m") { # Sanofi
-       
+  } else if(study_name=="VAT08m") { # Sanofi
+    
     # data less than lod is set to lod/2
     llods["pseudoneutid50"]=2.612  
     lloqs["pseudoneutid50"]=95*0.0653 # 3.6568
@@ -204,7 +218,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     uloqs["bindN"]=574.6783
     pos.cutoffs["bindN"]=23.4711
     
-} else if(study_name=="HVTN705") {
+  } else if(study_name=="HVTN705") {
     
     # get uloqs and lloqs from config
     # config$uloqs is a list before this processing
@@ -213,8 +227,8 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     names(uloqs)=assays # this is necessary because config$uloqs does not have names
     names(lloxs)=assays
     
-} else if(study_name=="PROFISCOV") { # Butantan
-  
+  } else if(study_name=="PROFISCOV") { # Butantan
+    
     # lod and lloq are the same
     # data less than lod is set to lloq/2
     
@@ -243,7 +257,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     #SARS-CoV-2 S1 RBD (P.1)     91  10,000 572  91
     #SARS-CoV-2 S1 RBD (B.1.351) 53  6,300  368  53
     #SARS-CoV-2 S1 RBD (B.1.1.7) 224 20,000 1111 224
-            
+    
     lloqs["bindRBD"] <- llods["bindRBD"] <- 35*0.0272 
     uloqs["bindRBD"]=30000*0.0272 # 630
     pos.cutoffs["bindRBD"]=1264*0.0272 # 15.0
@@ -259,7 +273,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     lloqs["bindRBD_B.1.1.7"] <- llods["bindRBD_B.1.1.7"] <- 224*0.0272 
     uloqs["bindRBD_B.1.1.7"]=20000*0.0272 
     pos.cutoffs["bindRBD_B.1.1.7"]=1111*0.0272 
-  
+    
     #SARS-CoV-2 Nucleocapsid 46 80,000 7015 46
     
     lloqs["bindN"] <- llods["bindN"] <- 46*0.00236 
@@ -272,7 +286,9 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     uloqs["liveneutmn50"]=20157.44 
     pos.cutoffs["liveneutmn50"]=llods["liveneutmn50"] 
     
-} else stop("unknown study_name 1")
+  } else stop("unknown study_name 1")
+  
+}
 
 
 ###############################################################################
