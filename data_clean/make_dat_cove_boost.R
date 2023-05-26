@@ -110,11 +110,14 @@ stopifnot(!any(is.na(dat_stage2$ph1.BD29)))
 
 ###############################################################################
 #### define ph2
-# This can bde done before Wstratum is defined because Wstratum missingness does not affect ph1 anymore
+# This can be done before Wstratum is defined because Wstratum missingness does not affect ph1 anymore
 
 must_have_assays <- c("bindSpike", "bindRBD")
 
 dat_stage2$ph2.BD29 = dat_stage2$ph1.BD29 & complete.cases(dat_stage2[,c("BD1"%.%must_have_assays, "BD29"%.%must_have_assays)])      
+
+# DD1 may be available for a different subset of people than BD29
+dat_stage2$ph2.DD1 = dat_stage2$ph1.BD29 & complete.cases(dat_stage2[,"DD1"%.%must_have_assays])      
 
 
 
@@ -182,17 +185,24 @@ tab=with(subset(dat_stage2, ph1.BD29), table(Wstratum, naive))
 stopifnot(! any(tab[,1]>0 & tab[,2]>0) )
 
 
-# now compute inverse probability sampling weights
-tp=29
-tmp = with(dat_stage2, ph1.BD29)
-wts_table <- with(dat_stage2[tmp,], table(Wstratum, get("ph2.BD"%.%tp)))
+# now compute inverse probability sampling weights wt.BD29
+wts_table <- with(subset(dat_stage2, ph1.BD29), table(Wstratum, ph2.BD29))
 wts_norm <- rowSums(wts_table) / wts_table[, 2]
-dat_stage2[["wt.BD"%.%tp]] = ifelse(dat_stage2$ph1.BD29, wts_norm[dat_stage2$Wstratum %.% ""], NA)
-
+dat_stage2$wt.BD29 = ifelse(dat_stage2$ph1.BD29, wts_norm[dat_stage2$Wstratum %.% ""], NA)
 assertthat::assert_that(
-  all(!is.na(subset(dat_stage2, tmp & !is.na(Wstratum))[["wt.BD"%.%tp]])),
-  msg = "missing wt.BD for D analyses ph1 subjects")
+  all(!is.na(subset(dat_stage2, ph1.BD29 & !is.na(Wstratum))[["wt.BD29"]])),
+  msg = "missing wt.BD29")
 
+
+# now compute inverse probability sampling weights wt.DD1
+# we assume that there will be no empty cells in the following table. If there are, we may need to re-collapse strata.
+wts_table <- with(subset(dat_stage2, ph1.BD29 & EventIndOmicronBD29), table(Wstratum, ph2.DD1))
+if (any(wts_table[,2]==0)) stop("there are empty ph2 cells when computing wt.DD1, need to compute a second collapsed Wstratum")
+wts_norm <- rowSums(wts_table) / wts_table[, 2]
+dat_stage2$wt.DD1 = ifelse(dat_stage2$ph1.BD29 & dat_stage2$EventIndOmicronBD29, wts_norm[dat_stage2$Wstratum %.% ""], NA)
+assertthat::assert_that(
+  all(!is.na(subset(dat_stage2, ph1.BD29 & EventIndOmicronBD29 & !is.na(Wstratum))[["wt.DD1"]])),
+  msg = "missing wt.DD1")
 
 
 
