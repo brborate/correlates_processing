@@ -29,7 +29,7 @@ moderna_real: &moderna_real
 
 moderna_boost: &moderna_boost
   mapped_data: /trials/covpn/p3001/analysis/mapping_immune_correlates/stage2_mock/adata/COVID_Moderna_stage2_mockdata_20230428.csv
-  assay_metadata: /trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/assay_metadata.csv
+  assay_metadata: ../correlates_reporting3/assay_metadata/moderna_boost_assay_metadata.csv
   study_name: COVEBoost
 
 moderna_mock: &moderna_mock
@@ -40,6 +40,7 @@ moderna_mock: &moderna_mock
 
 vat08m: &vat08m
   <<: *ows_trial
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_realdata_20230428_VARTYPE_MBSTRESC.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]
   subset_variable: None
@@ -50,11 +51,11 @@ vat08m: &vat08m
   assay_labels: [PsV Neutralization 50% Titer]
   assay_labels_short: [Pseudovirus-nAb ID50 (IU50/ml)]
   study_name: VAT08m
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_realdata_20220624.csv
   
 
 vat08b: &vat08b
   <<: *ows_trial
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/stage2/adata/COVID_Sanofi_stage2_realdata_20230428_VARTYPE_MBSTRESC.csv
   assay_metadata: ../correlates_reporting3/assay_metadata/vat08b_assay_metadata.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]
@@ -63,7 +64,6 @@ vat08b: &vat08b
   times: [B, Day22, Day43, Delta22overB, Delta43overB, Delta43over22]
   time_labels: [Day 1, Day 22, Day 43, D22 fold-rise over D1, D43 fold-rise over D1, D43 fold-rise over D22]
   study_name: VAT08b
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_realdata_20220624.csv
   
 
 
