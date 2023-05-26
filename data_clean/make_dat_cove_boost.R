@@ -58,8 +58,8 @@ dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & Perprotocol & EventTimeOmicron
 demo.var=c("HighRiskInd", "URMforsubcohortsampling", "Senior")
 dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & (complete.cases(dat_stage2[demo.var]) | dat_stage2$EventIndOmicronBD29==1)
 
-# hack alert. there may be NA in risk score in ph1. what to do
-stopifnot(all(!is.na(dat_stage2$risk_score)))
+#stopifnot(all(!is.na(dat_stage2[,"risk_score"]))) # there are some NA in risk score in the whole dataset, probably due to missing data covariates
+stopifnot(all(!is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])))
 
 # with(subset(dat_stage2, is.na(risk_score)), table(Trt, Bserostatus))
 # with(subset(dat_stage2), table(is.na(risk_score), Bserostatus, Trt))
