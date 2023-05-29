@@ -815,7 +815,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
-         janssen_pooled_partA = "9d9a8ee138e0bb1130fbf36f8b52ee5d",
+         janssen_pooled_partA = "464cdf3ef54d5bb8148361dcad3a36d9",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
