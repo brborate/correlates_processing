@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "prevent19")
+#Sys.setenv(TRIAL = "janssen_pooled_partA")
 
 renv::activate(here::here())
 
@@ -779,6 +779,13 @@ if(attr(config, "config") == "moderna_real") {
 #    # define new endpoint varibles. Deprecated since we now use the hotdeck imputation approach
 #    dat_proc$EventIndPrimaryHasVLD29   = ifelse (dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29==1 & !is.na(dat_proc$seq1.log10vl), 1, 0)
 #    dat_proc$EventIndPrimaryHasnoVLD29 = ifelse (dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29==1 &  is.na(dat_proc$seq1.log10vl), 1, 0)
+    
+    # add hotdeck imputed hamming and variant info
+    dat.tmp = read.csv("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/janssen_pooled_partA_seq1_variant_hamming_hotdeck.csv")
+    for(i in 1:10){
+      dat_proc[["seq1.spike.weighted.hamming.hotdeck"%.%i]] = dat.tmp[["seq1.spike.weighted.hamming.hotdeck"%.%i]][match(dat_proc$Ptid, dat.tmp$Ptid)]
+      dat_proc[["seq1.variant.hotdeck"%.%i]] = dat.tmp[["seq1.variant.hotdeck"%.%i]][match(dat_proc$Ptid, dat.tmp$Ptid)]
+    }
     
     # add inv prob weight (prob of having seq given that VL is observed)
     dat.tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/sequence_VL_IPW_weights.csv")
