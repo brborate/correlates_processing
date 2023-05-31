@@ -40,7 +40,7 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
            all_of(risk_vars), RiskscoreAUCflag) %>%
     # Drop any observation with NA values in Ptid, Trt, or endpoint!
     drop_na(Ptid, Trt, all_of(endpoint))
-} if(study_name == "COVE") {                    # BSEROPOS CHANGE MADE
+} else if(study_name == "COVE") {                    # BSEROPOS CHANGE MADE
   dat.ph1.vacc <- inputMod %>%
     filter(Riskscorecohortflag == 1 & Trt == 1) %>%
     # Keep only variables to be included in risk score analyses
