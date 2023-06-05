@@ -9,16 +9,16 @@ library(Hmisc) # wtd.quantile, cut2
 library(mice)
 library(dplyr)
 library(here)
-
+library(glue)
 
 
 ########################################################################################################
 # read mapped data with risk score added
 
 if (make_riskscore) {
-    # if riskscore is needed, 
     # inputFile_with_riskscore.Rdata is made from riskscore_analysis, which calls preprocess and makes risk scores
-    load(file = paste0("riskscore_baseline/output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
+    # for janssen_pooled_partA_VL, use risk score from janssen_pooled_partA
+    load(file = glue('riskscore_baseline/output/{sub("_VL", "" , Sys.getenv("TRIAL"))}/inputFile_with_riskscore.RData'))
     dat_proc <- inputFile_with_riskscore    
 } else {
     dat_raw=read.csv(mapped_data)
