@@ -149,6 +149,30 @@ janssen_sa_partA:
   subset_value: 2
 
 
+## ENSMEMBLE part A datasets for variants analysis
+## endpoints without VL are censored
+
+janssen_pooled_partA_VL: 
+  <<: *janssen_trial_partA
+  subset_variable: None
+  subset_value: All
+
+janssen_na_partA_VL: 
+  <<: *janssen_trial_partA
+  subset_variable: Region
+  subset_value: 0
+
+janssen_la_partA_VL: 
+  <<: *janssen_trial_partA
+  subset_variable: Region
+  subset_value: 1
+
+janssen_sa_partA_VL: 
+  <<: *janssen_trial_partA
+  subset_variable: Region
+  subset_value: 2
+
+
 # ENSMEMBLE EUA datasets
 
 janssen_trial_EUA: &janssen_trial_EUA
