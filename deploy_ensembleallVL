@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# # Request reason for adata update from deployer!
+# echo "Enter reason for updating adata (this text will be added to adata/README change log): "
+# read update_reason
+# 
+# dateVar=`date`
+# echo "$dateVar"
+
+# senior and nonsenior are also included by code
+
+for T in  janssen_pooled_partA_VL janssen_na_partA_VL janssen_la_partA_VL  janssen_sa_partA_VL 
+do
+    export TRIAL=$T
+    echo $TRIAL
+    make deploy_processed_dataset
+done
+
+# # Add reason for adata update to README file!
+# write(update_reason, file = paste0(strsplit(data_in_file, "mapping")[[1]][1], "correlates/Part_A_Blinded_Phase_Data/adata/readme.txt"), append=TRUE)
+# 
+# echo "this is a new line" >> file.txt
+# 
+# "$STR1$STR2"
