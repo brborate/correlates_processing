@@ -114,4 +114,6 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
 vacc <- vacc %>% mutate(AUCchar = AUCvacc$AUCchar) 
 
 write.csv(vacc, here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
-write.csv(plac_bseropos, here("output", Sys.getenv("TRIAL"), "plac_bseropos_ptids_with_riskscores.csv"), row.names = FALSE)
+if(study_name == "COVE"){
+  write.csv(plac_bseropos, here("output", Sys.getenv("TRIAL"), "plac_bseropos_ptids_with_riskscores.csv"), row.names = FALSE)
+}
