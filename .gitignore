@@ -22,28 +22,15 @@ _report_cor/*.pdf
 _report_cor/*.html
 _report_cop/*.pdf
 _report_cop/*.html
-data_clean/.README.md.swp
-cor_coxph/report - Copy.tex
-cor_coxph/report_sub - Copy.Rmd
-covpn_correlates_cor.Rmd
-covpn_correlates_cor.tex
-._bookdown_cor.yml.swp
 data_clean/verification/dat_clean_specifications.aux
 data_clean/verification/dat_clean_specifications.knit.md
 data_clean/verification/dat_clean_specifications.out
 data_clean/verification/dat_clean_specifications.utf8.md
 data_clean/verification/dat_clean_specifications.tex
-data_clean/practice_data.zip
+data_clean/*.zip
 data_raw/data_raw.zip
 riskscore_baseline/figs
 data_clean/.Rprofile
-data_clean/renv/activate.R
-data_clean/practice_data without 29.zip
-data_clean/practice_data with D29.zip
-data_raw/COVID_VEtrial_practicedata_primarystage1.zip
-data_clean/practice_data no29.zip
-data_clean/practice_data w29.zip
-data_clean/practice_data._wo29zip
 data_raw/READMECOVID_VEtrial_practicedatasets_v3.txt
 *.pdf
 optimal_surrogate/*

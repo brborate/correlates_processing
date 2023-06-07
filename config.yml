@@ -40,7 +40,7 @@ moderna_mock: &moderna_mock
 
 vat08m: &vat08m
   <<: *ows_trial
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_realdata_20230428_VARTYPE_MBSTRESC.csv
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_vat08m_vat08b_realdata_20230607.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]
   subset_variable: None
@@ -55,7 +55,7 @@ vat08m: &vat08m
 
 vat08b: &vat08b
   <<: *ows_trial
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/stage2/adata/COVID_Sanofi_stage2_realdata_20230428_VARTYPE_MBSTRESC.csv
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_vat08m_vat08b_realdata_20230607.csv
   assay_metadata: ../correlates_reporting3/assay_metadata/vat08b_assay_metadata.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]
