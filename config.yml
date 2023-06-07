@@ -28,8 +28,8 @@ moderna_real: &moderna_real
   study_name: COVE
 
 moderna_boost: &moderna_boost
-  mapped_data: /trials/covpn/p3001/analysis/mapping_immune_correlates/stage2_mock/adata/COVID_Moderna_stage2_mockdata_20230426.csv
-  assay_metadata: /trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/assay_metadata.csv
+  mapped_data: /trials/covpn/p3001/analysis/mapping_immune_correlates/stage2_mock/adata/COVID_Moderna_stage2_mockdata_20230428.csv
+  assay_metadata: ../correlates_reporting3/assay_metadata/moderna_boost_assay_metadata.csv
   study_name: COVEBoost
 
 moderna_mock: &moderna_mock
@@ -40,6 +40,7 @@ moderna_mock: &moderna_mock
 
 vat08m: &vat08m
   <<: *ows_trial
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_realdata_20230428_VARTYPE_MBSTRESC.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]
   subset_variable: None
@@ -50,8 +51,23 @@ vat08m: &vat08m
   assay_labels: [PsV Neutralization 50% Titer]
   assay_labels_short: [Pseudovirus-nAb ID50 (IU50/ml)]
   study_name: VAT08m
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_realdata_20220624.csv
   
+
+vat08b: &vat08b
+  <<: *ows_trial
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/stage2/adata/COVID_Sanofi_stage2_realdata_20230428_VARTYPE_MBSTRESC.csv
+  assay_metadata: ../correlates_reporting3/assay_metadata/vat08b_assay_metadata.csv
+  two_marker_timepoints: yes
+  timepoints: [22, 43]
+  subset_variable: None
+  subset_value: All
+  times: [B, Day22, Day43, Delta22overB, Delta43overB, Delta43over22]
+  time_labels: [Day 1, Day 22, Day 43, D22 fold-rise over D1, D43 fold-rise over D1, D43 fold-rise over D22]
+  study_name: VAT08b
+  
+
+
+
 
 prevent19: &prevent19 # note that RBD is added as a special step and is not included in the config
   <<: *ows_trial
@@ -106,7 +122,7 @@ janssen_trial: &janssen_trial
 
 janssen_trial_partA: &janssen_trial_partA
   <<: *janssen_trial
-  mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_realdata_PartAComplete_20230330.csv 
+  mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_realdata_PartAComplete_20230529.csv 
   assays: [bindSpike, bindRBD, pseudoneutid50, pseudoneutid50uncensored, ADCP]
   assay_labels: [Binding Antibody to Spike, Binding Antibody to RBD, PsV Neutralization 50% Titer, PsV Neutralization 50% Titer 2, Phagocytic Score]
   assay_labels_short: [Anti Spike IgG (BAU/ml), Anti RBD IgG (BAU/ml), Pseudovirus-nAb ID50 (IU50/ml), Pseudovirus-nAb ID50 2 (IU50/ml), Phagocytic Score]
@@ -128,6 +144,30 @@ janssen_la_partA:
   subset_value: 1
 
 janssen_sa_partA: 
+  <<: *janssen_trial_partA
+  subset_variable: Region
+  subset_value: 2
+
+
+## ENSMEMBLE part A datasets for variants analysis
+## endpoints without VL are censored
+
+janssen_pooled_partA_VL: 
+  <<: *janssen_trial_partA
+  subset_variable: None
+  subset_value: All
+
+janssen_na_partA_VL: 
+  <<: *janssen_trial_partA
+  subset_variable: Region
+  subset_value: 0
+
+janssen_la_partA_VL: 
+  <<: *janssen_trial_partA
+  subset_variable: Region
+  subset_value: 1
+
+janssen_sa_partA_VL: 
   <<: *janssen_trial_partA
   subset_variable: Region
   subset_value: 2

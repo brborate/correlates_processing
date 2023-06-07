@@ -40,6 +40,14 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
            all_of(risk_vars), RiskscoreAUCflag) %>%
     # Drop any observation with NA values in Ptid, Trt, or endpoint!
     drop_na(Ptid, Trt, all_of(endpoint))
+} else if(study_name == "COVE") {                    # BSEROPOS CHANGE MADE
+  dat.ph1.vacc <- inputMod %>%
+    filter(Riskscorecohortflag == 1 & Trt == 1) %>%
+    # Keep only variables to be included in risk score analyses
+    select(Ptid, Trt, all_of(endpoint), all_of(risk_vars)) %>%
+    # Drop any observation with NA values in Ptid, Trt, or endpoint!
+    drop_na(Ptid, Trt, all_of(endpoint))
+  
 } else {
   dat.ph1.vacc <- inputMod %>%
     filter(Riskscorecohortflag == 1 & Trt == 1) %>%
@@ -59,8 +67,8 @@ X_covars2adjust_vacc <- impute_missing_values(X_covars2adjust_vacc, risk_vars)
 # Scale X_covars2adjust_vacc to have mean 0, sd 1 for all vars
 for (a in colnames(X_covars2adjust_vacc)) {
   X_covars2adjust_vacc[[a]] <- scale(X_covars2adjust_vacc[[a]],
-    center = mean(X_covars2adjust_vacc[[a]], na.rm = T),
-    scale = sd(X_covars2adjust_vacc[[a]], na.rm = T)
+                                     center = mean(X_covars2adjust_vacc[[a]], na.rm = T),
+                                     scale = sd(X_covars2adjust_vacc[[a]], na.rm = T)
   )
 }
 
@@ -79,9 +87,8 @@ vacc <- bind_cols(vacc, pred_on_vaccine) %>%
   rename(pred = V1) %>%
   mutate(risk_score = log(pred / (1 - pred)),
          standardized_risk_score = scale(risk_score,
-                            center = mean(risk_score, na.rm = T),
-                            scale = sd(risk_score, na.rm = T))) 
-
+                                         center = mean(risk_score, na.rm = T),
+                                         scale = sd(risk_score, na.rm = T))) 
 
 if(study_name == "COVE"){
   pred_on_plac_bseropos <- predict(sl_riskscore_slfits, 
@@ -96,7 +103,6 @@ if(study_name == "COVE"){
                                            center = mean(risk_score, na.rm = T),
                                            scale = sd(risk_score, na.rm = T))) 
 }
-
 
 if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
   # AUC for vaccine arm computed only on cohort with RiskscoreAUCflag==1 and based off endpoint rauc!
@@ -115,3 +121,4 @@ vacc <- vacc %>% mutate(AUCchar = AUCvacc$AUCchar)
 
 write.csv(vacc, here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
 write.csv(plac_bseropos, here("output", Sys.getenv("TRIAL"), "plac_bseropos_ptids_with_riskscores.csv"), row.names = FALSE)
+

@@ -58,11 +58,12 @@ inputFile <- preprocess(read.csv(path_to_data), study_name)
 # 3. no evidence of SARS-CoV-2 infection or right-censoring up to time point tinterm (2 dose) or tpeak (1 dose)
 # 4. lack of missing data on a certain set of baseline input variables (not enfored here because the developer of this script need not have knowledge of risk score requirements)
 # no NAs allowed. 
-if (study_name %in% c("MockCOVE", "COVE")) {
+if (study_name == "MockCOVE") {
     # special case, redefined for backward compatibility
     inputFile$Riskscorecohortflag <- with(inputFile, ifelse(Bserostatus==0 & Perprotocol==1, 1, 0))
-
-} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
+} else if (study_name == "COVE"){
+  inputFile$Riskscorecohortflag <- with(inputFile, ifelse(Perprotocol==1, 1, 0))
+}else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
     inputFile$Riskscorecohortflag <-
       with(inputFile, ifelse(Bserostatus==0 & Perprotocol==1 & get("EarlyendpointD"%.%timepoints[1]%.%"start1")==0 & get("EventTimePrimaryD"%.%timepoints[1])>=1, 1, 0))
 

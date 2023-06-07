@@ -1,9 +1,0 @@
-#!/bin/bash
-
-for T in  janssen_pooled_partA
-do
-    export TRIAL=$T 
-    echo $TRIAL
-    make data_processed
-
-done

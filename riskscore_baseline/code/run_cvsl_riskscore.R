@@ -13,12 +13,20 @@ inputMod <- inputMod %>%
   
   dat.ph1 <- inputMod %>% filter(Riskscorecohortflag == 1 & Trt == 0)
   
-  dat.ph1 <- dat.ph1 %>%
-    # Keep only variables to be included in risk score analyses
-    select(Ptid, Trt, all_of(endpoint), all_of(risk_vars)) %>%
-    # Drop any observation with NA values in Ptid, Trt, or endpoint!
-    drop_na(Ptid, Trt, all_of(endpoint))
-  
+  if(study_name == "COVE"){
+    dat.ph1 <- dat.ph1 %>%
+      # Keep only variables to be included in risk score analyses
+      select(Ptid, Trt, Bserostatus, all_of(endpoint), all_of(risk_vars)) %>%
+      # Drop any observation with NA values in Ptid, Trt, or endpoint!
+      drop_na(Ptid, Trt, all_of(endpoint))
+  } else {
+    dat.ph1 <- dat.ph1 %>%
+      # Keep only variables to be included in risk score analyses
+      select(Ptid, Trt, all_of(endpoint), all_of(risk_vars)) %>%
+      # Drop any observation with NA values in Ptid, Trt, or endpoint!
+      drop_na(Ptid, Trt, all_of(endpoint))
+  }  
+    
   # Create table of cases in both arms (prior to Risk score analyses)
   tab <- inputMod %>%
     filter(Riskscorecohortflag == 1) %>%
@@ -40,24 +48,40 @@ inputMod <- inputMod %>%
                                                np = np)
   
   # Update risk_vars
-  risk_vars <- dat.ph1 %>%
-    select(-Ptid, -Trt, -all_of(endpoint)) %>%
-    colnames()
+  if(study_name == "COVE"){
+    risk_vars <- dat.ph1 %>%
+      select(-Ptid, -Trt, -Bserostatus, -all_of(endpoint)) %>%
+      colnames()
+  } else {
+    risk_vars <- dat.ph1 %>%
+      select(-Ptid, -Trt, -all_of(endpoint)) %>%
+      colnames()
+  }  
   
   # Remove any risk_vars with more than 5% missing values. Impute the missing
   # values for other risk variables using mice package!
   dat.ph1 <- drop_riskVars_with_high_total_missing_values(dat.ph1, risk_vars)
   
   # Update risk_vars
-  risk_vars <- dat.ph1 %>%
-    select(-Ptid, -Trt, -all_of(endpoint)) %>%
-    colnames()
+  if(study_name == "COVE"){
+    risk_vars <- dat.ph1 %>%
+      select(-Ptid, -Trt, -Bserostatus, -all_of(endpoint)) %>%
+      colnames()
+  } else {
+    risk_vars <- dat.ph1 %>%
+      select(-Ptid, -Trt, -all_of(endpoint)) %>%
+      colnames()
+  }
   
   X_covars2adjust <- dat.ph1 %>%
     select(all_of(risk_vars))
   
   # Save ptids to merge with predictions later
-  risk_placebo_ptids <- dat.ph1 %>% select(Ptid, all_of(endpoint))
+  if(study_name == "COVE"){
+    risk_placebo_ptids <- dat.ph1 %>% filter(Bserostatus == 0) %>% select(Ptid, all_of(endpoint))
+  } else {
+    risk_placebo_ptids <- dat.ph1 %>% select(Ptid, all_of(endpoint))
+  }
   
   # Impute missing values in any variable included in risk_vars using the mice package!
   print("Make sure data is clean before conducting imputations!")
@@ -74,8 +98,17 @@ inputMod <- inputMod %>%
     )
   }
   
-  X_riskVars <- X_covars2adjust
-  Y <- dat.ph1 %>% pull(endpoint)
+  if(study_name == "COVE"){
+    # Drop Bserostatus == 1 subjects here
+    plac_bseropos <- bind_cols(X_covars2adjust, dat.ph1 %>% select(Ptid, Bserostatus, Trt, all_of(endpoint))) %>% filter(Bserostatus == 1) 
+    plac_bseroneg <- bind_cols(X_covars2adjust, dat.ph1 %>% select(Ptid, Bserostatus, Trt, all_of(endpoint))) %>% filter(Bserostatus == 0) 
+    X_riskVars <- plac_bseroneg %>% select(-c(Ptid, Bserostatus, Trt, all_of(endpoint)))
+    Y <- dat.ph1 %>% filter(Bserostatus == 0) %>% pull(endpoint) 
+  } else {
+    X_riskVars <- X_covars2adjust
+    Y <- dat.ph1 %>% pull(endpoint)
+  }
+  
   
   # set up outer folds for cv variable importance; do stratified sampling
   V_outer <- 5
@@ -170,6 +203,12 @@ inputMod <- inputMod %>%
          riskscore_timepoint, vaccAUC_timepoint,
          cvControlVar, inputfileName, mapped_data,
          file = here("output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
+  } else if (study_name == "COVE"){
+    save(run_prod, Y, X_riskVars, weights, inputMod, risk_vars, all_risk_vars, endpoint, maxVar,
+         V_outer, V_inner, familyVar, methodVar, scaleVar, studyName_for_report, 
+         risk_timepoint, 
+         cvControlVar, inputfileName, mapped_data, plac_bseropos, plac_bseroneg,
+         file = here("output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
   } else {
     save(run_prod, Y, X_riskVars, weights, inputMod, risk_vars, all_risk_vars, endpoint, maxVar,
          V_outer, V_inner, familyVar, methodVar, scaleVar, studyName_for_report, 
@@ -177,3 +216,5 @@ inputMod <- inputMod %>%
          cvControlVar, inputfileName, mapped_data,
          file = here("output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
   }
+
+  

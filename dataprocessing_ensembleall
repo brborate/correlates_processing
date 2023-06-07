@@ -9,3 +9,13 @@ do
     make data_processed
 
 done
+
+
+
+for T in  janssen_pooled_partA_VL janssen_sa_partA_VL janssen_na_partA_VL janssen_la_partA_VL 
+do
+    export TRIAL=$T 
+    echo $TRIAL
+    make data_processed
+
+done
