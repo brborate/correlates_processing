@@ -7,7 +7,7 @@ tmp <- switch(attr(config, "config"),
              janssen_pooled_real = "c38fb43e2c87cf2d392757840af68bba",
              azd1222 = "23cee1e1ba96ef85326dadceb34b3c6f",
              #azd1222_bAb = "",
-             prevent19 = "53f991ec3b75c8643f2c90fe7252c25e",
+             prevent19 = "16ec3b6ee4e5b2f9e03755e0d2b033d7",
              NA)    
 
 
