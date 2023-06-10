@@ -10,6 +10,7 @@ get_riskscores:
 ifeq ($(TRIAL), $(filter $(TRIAL), vat08m vat08b))
 	Rscript code/get_riskscores.R bseroneg
 	Rscript code/get_riskscores.R bseropos
+	Rscript code/stack_bseroneg_bseropos.R
 else 
 	Rscript code/get_riskscores.R 
 endif
