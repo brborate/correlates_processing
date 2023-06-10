@@ -4,12 +4,18 @@
 # Sys.setenv(TRIAL = "azd1222") # Astra-Zeneca
 # Sys.setenv(TRIAL = "prevent19") # Novavax
 # Sys.setenv(TRIAL = "vat08m") # Sanofi
+# Sys.setenv(TRIAL = "vat08b") # Sanofi
 # Sys.setenv(TRIAL = "janssen_pooled_partA") 
 # Sys.setenv(TRIAL = "butantan") 
 
+print("GET_RISKSCORES.R")
+
+#!/usr/bin/env Rscript
+args = commandArgs(trailingOnly=TRUE)
+
 source("code/loadlibraries_readinputdata.R")
 
-if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m", "PROFISCOV")){
+if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m", "VAT08b", "PROFISCOV")){
   inputFile <- inputFile %>%
     rename(Ptid = Subjectid)
 }else if(study_name == "MockCOVE"){
@@ -175,20 +181,29 @@ if(study_name == "AZD1222"){
   names(inputMod)<-gsub("\\_",".",names(inputMod))
 }
 
-if(study_name == "VAT08m"){
+if(study_name %in% c("VAT08m", "VAT08b")){
   inputFile <- inputFile %>%
     mutate(EventIndPrimaryD1rscore = EventIndPrimaryD1,
            EventIndPrimaryD43rauc = ifelse(RiskscoreAUCflag == 1, EventIndPrimaryD43, NA),
            pooled.age.grp = ifelse(Age >= 60, 1, 0),
+           # # Pool countries (Japan, Kenya and Nepal) that have sparse endpoints EventIndPrimaryD43)
+           # Country.pooled = ifelse(Country %in% c(5, 6, 7), 567, Country)
+           
            # Pool countries (Japan, Kenya and Nepal) that have sparse endpoints EventIndPrimaryD43)
-           Country.pooled = ifelse(Country %in% c(5, 6, 7), 567, Country))
+           # Assign geographic region: Honduras, not Honduras for the Stage 1 trial; India, Mexico, Other/Else for the Stage 2 trial)
+           Country.ind = case_when(vacc_trial == "mono" & Country == 3 ~ "Honduras",
+                                      vacc_trial == "mono" & Country != 3 ~ "NotHonduras",
+                                      vacc_trial == "bi" & Country == 3 ~ "India",
+                                      vacc_trial == "bi" & Country == 5 ~ "Mexico",
+                                      TRUE ~ "Other")
+           )
   
   risk_vars <- c(
     "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
     "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
     "URMforsubcohortsampling", "HighRiskInd", "HIVinfection",
     "Sex", "Age", "pooled.age.grp", "BMI", #"BMI.group", "Height", "Weight", 
-    "Country.pooled.X2", "Country.pooled.X3", "Country.pooled.X4", "Country.pooled.X8", "Country.pooled.X567", 
+    "Country.ind.India", "Country.ind.Mexico", "Country.ind.NotHonduras", "Country.ind.Other", 
     #"USAInd",  
     "CalDtEnrollIND.X1", "CalDtEnrollIND.X2", "CalDtEnrollIND.X3", "CalDtEnrollIND.X4", "CalDtEnrollIND.X5"
   )
@@ -207,22 +222,23 @@ if(study_name == "VAT08m"){
   endpoint <- "EventIndPrimaryD1rscore"
   riskscore_timepoint <- 1
   vaccAUC_timepoint <- 43
-  studyName_for_report <- "VAT08m"
+  studyName_for_report <- "VAT08m_VAT08b_combined"
 
   # Create binary indicator variables for Country and CalendarDateEnrollment
   inputMod <- inputFile %>%
-    mutate(Country.pooled = as.factor(Country.pooled),
+    mutate(Country.ind = as.factor(Country.ind),
            CalDtEnrollIND = case_when(CalendarDateEnrollment < 28 ~ 0,
                                       CalendarDateEnrollment >= 28 & CalendarDateEnrollment < 56 ~ 1,
                                       CalendarDateEnrollment >= 56 & CalendarDateEnrollment < 84 ~ 2,
                                       CalendarDateEnrollment >= 84 & CalendarDateEnrollment < 112 ~ 3,
                                       CalendarDateEnrollment >= 112 & CalendarDateEnrollment < 140 ~ 4,
-                                      CalendarDateEnrollment >= 140 & CalendarDateEnrollment < 168 ~ 5),
+                                      CalendarDateEnrollment >= 140 & CalendarDateEnrollment < 168 ~ 5,   
+           CalendarDateEnrollment >= 168 & CalendarDateEnrollment < 196 ~ 6),
            CalDtEnrollIND = as.factor(CalDtEnrollIND)) 
   
-  rec <- recipe(~ Country.pooled + CalDtEnrollIND, data = inputMod)
+  rec <- recipe(~ Country.ind + CalDtEnrollIND, data = inputMod)
   dummies <- rec %>%
-    step_dummy(Country.pooled, CalDtEnrollIND) %>%
+    step_dummy(Country.ind, CalDtEnrollIND) %>%
     prep(training = inputMod)
   inputMod <- inputMod %>% bind_cols(bake(dummies, new_data = NULL)) 
   names(inputMod) <- gsub("\\_", ".", names(inputMod))
@@ -238,7 +254,12 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
   if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
     dir.create(paste0("output/", Sys.getenv("TRIAL")))
   }
-  save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
+  
+  if(study_name %in% c("VAT08m", "VAT08b")){
+    save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/", "inputFile.RData"))
+  }else{
+    save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
+  }
 }
 
 if(study_name == "COVE"){

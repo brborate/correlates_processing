@@ -12,10 +12,20 @@ library(tidyverse)
 library(conflicted)
 conflicted::conflict_prefer("filter", "dplyr")
 conflict_prefer("summarise", "dplyr")
-load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
-load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
-placebos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), "placebo_ptids_with_riskscores.csv"))
-vaccinees_risk <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"))
+
+print("APPEND_RISK_SCORE_TO_DATA.R")
+
+if(study_name %in% c("VAT08m", "VAT08b")){
+  load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/objects_for_running_SL.rda"))
+  load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
+  placebos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), args[1], "placebo_ptids_with_riskscores.csv"))
+  vaccinees_risk <- read.csv(here("output", Sys.getenv("TRIAL"), args[1], "vaccine_ptids_with_riskscores.csv"))
+}else{
+  load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
+  load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
+  placebos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), "placebo_ptids_with_riskscores.csv"))
+  vaccinees_risk <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"))
+}
 
 # merge risk score with cleaned data by IDs, then save updated data file
 if(study_name == "COVE"){
@@ -65,7 +75,11 @@ if(study_name == "PREVENT19"){
   
 
 # Save inputFile 
-save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
+if(study_name %in% c("VAT08m", "VAT08b")){
+    save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile_with_riskscore.RData"))
+}else{
+  save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/inputFile_with_riskscore.RData"))
+}
 
 # Create table of cases in both arms (post Risk score analyses)
 tab <- inputFile_with_riskscore 
@@ -85,6 +99,13 @@ tab <- tab %>%
 
 if(study_name == "PREVENT19")
   tab <- tab %>% filter(Country == 0)
-table(tab$Trt, tab %>% pull(endpoint)) %>%
-  write.csv(file = here("output", Sys.getenv("TRIAL"), "cases_post_riskScoreAnalysis.csv"))
+
+if(study_name %in% c("VAT08m", "VAT08b")){
+  table(tab$Trt, tab %>% pull(endpoint)) %>%
+    write.csv(file = here("output", Sys.getenv("TRIAL"), args[1], "cases_post_riskScoreAnalysis.csv"))
+}else{
+  table(tab$Trt, tab %>% pull(endpoint)) %>%
+    write.csv(file = here("output", Sys.getenv("TRIAL"), "cases_post_riskScoreAnalysis.csv"))
+}
+
 rm(tab)

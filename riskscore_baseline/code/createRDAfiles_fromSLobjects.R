@@ -8,6 +8,9 @@ library(here)
 library(readr)
 require(tidyverse)
 
+
+print("CREATERDAFILES_FROMSLOBJECTS.R")
+
 # Create fancy/tidy screen names for use in tables and figures
 # @param avgs dataframe containing Screen, Learner, AUCs information as columns
 # @return object containing tidy screen names
@@ -83,6 +86,13 @@ readin_SLobjects_fromFolder <- function(data_file, trt) {
 
 
 # Read CV.SL object and save AUCs
-data_file <- here("output", Sys.getenv("TRIAL"), "cvsl_riskscore_cvaucs.rds")
-risk_placebo_cvaucs <- readin_SLobjects_fromFolder(data_file, trt = "placebo")
-save(risk_placebo_cvaucs, file = here("output", Sys.getenv("TRIAL"), "cvsl_risk_placebo_cvaucs.rda"))
+if(study_name %in% c("VAT08m", "VAT08b")){
+  data_file <- here("output", Sys.getenv("TRIAL"), args[1], "cvsl_riskscore_cvaucs.rds")
+  risk_placebo_cvaucs <- readin_SLobjects_fromFolder(data_file, trt = "placebo")
+  save(risk_placebo_cvaucs, file = here("output", Sys.getenv("TRIAL"), args[1], "cvsl_risk_placebo_cvaucs.rda"))
+}else{
+  data_file <- here("output", Sys.getenv("TRIAL"), "cvsl_riskscore_cvaucs.rds")
+  risk_placebo_cvaucs <- readin_SLobjects_fromFolder(data_file, trt = "placebo")
+  save(risk_placebo_cvaucs, file = here("output", Sys.getenv("TRIAL"), "cvsl_risk_placebo_cvaucs.rda"))
+}
+

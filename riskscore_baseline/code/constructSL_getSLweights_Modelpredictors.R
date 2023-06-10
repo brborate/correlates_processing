@@ -26,8 +26,17 @@ library(ranger)
 conflict_prefer("filter", "dplyr")
 conflict_prefer("select", "dplyr")
 conflict_prefer("omp_set_num_threads", "RhpcBLASctl")
-load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
-load(paste0("output/", Sys.getenv("TRIAL"), "/plac_top2learners_SL_discreteSL.rda"))
+
+print("CONSTRUCTSL_GETSLWEIGHTS_MODELPREDICTORS.R")
+
+if(study_name %in% c("VAT08m", "VAT08b")){
+  load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/objects_for_running_SL.rda"))
+  load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/plac_top2learners_SL_discreteSL.rda"))
+}else{
+  load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
+  load(paste0("output/", Sys.getenv("TRIAL"), "/plac_top2learners_SL_discreteSL.rda"))
+}
+
 source(here("code", "sl_screens.R")) # set up the screen/algorithm combinations
 source(here("code", "utils.R")) # get CV-AUC for all algs
 
@@ -45,7 +54,12 @@ sl_riskscore_slfits <- SuperLearner(
   cvControl = cvControlVar, verbose = FALSE
 )
 
-save(sl_riskscore_slfits, file = here("output", Sys.getenv("TRIAL"), "sl_riskscore_slfits.rda"))
+if(study_name %in% c("VAT08m", "VAT08b")){
+  save(sl_riskscore_slfits, file = here("output", Sys.getenv("TRIAL"), args[1], "sl_riskscore_slfits.rda"))
+}else{
+  save(sl_riskscore_slfits, file = here("output", Sys.getenv("TRIAL"), "sl_riskscore_slfits.rda"))
+}
+
 
 # Get Superlearner weights
 sl_weights <- sl_riskscore_slfits$coef %>%
@@ -54,14 +68,22 @@ sl_weights <- sl_riskscore_slfits$coef %>%
   rename(`Weights` = ".") %>%
   arrange(-Weights)
 
-sl_weights %>%
+sl_weights_csv <- sl_weights %>%
   mutate(Weight = format(round(Weights, 3), nsmall = 3)) %>%
   mutate(
     Screen = paste0("screen_", sapply(strsplit(Learner, "_screen_"), `[`, 2)),
     Learner = sapply(strsplit(Learner, "_screen"), `[`, 1)
   ) %>%
-  select(Learner, Screen, Weight) %>%
-  write.csv(here("output", Sys.getenv("TRIAL"), "SL_weights.csv"))
+  select(Learner, Screen, Weight) 
+
+
+if(study_name %in% c("VAT08m", "VAT08b")){
+  sl_weights_csv %>% write.csv(here("output", Sys.getenv("TRIAL"), args[1], "SL_weights.csv"))
+}else{
+  sl_weights_csv %>% write.csv(here("output", Sys.getenv("TRIAL"), "SL_weights.csv"))
+}
+
+rm(sl_weights_csv)
 
 top_models <- sl_weights %>%
   filter(Learner != "SL.mean_screen_all") %>%
@@ -127,7 +149,7 @@ for (i in seq_along(top_models)) {
 options(scipen=999)
 
 if(run_prod){
-  all_models %>%
+  SL_all_models_with_predictors <- all_models %>%
     left_join(sl_weights, by = "Learner") %>%
     mutate(
       Weight = format(round(Weights, 3), nsmall = 3),
@@ -143,10 +165,9 @@ if(run_prod){
       Learner = sapply(strsplit(Learner, "_screen"), `[`, 1)
     ) %>%
     select(Learner, Screen, Weight, Predictors, Coefficient, `Odds Ratio`,
-           Importance, Feature, Gain, Cover, Frequency) %>%
-    write.csv(here("output", Sys.getenv("TRIAL"), "SL_all_models_with_predictors.csv"))
+           Importance, Feature, Gain, Cover, Frequency) 
 }else{
-  all_models %>%
+  SL_all_models_with_predictors <- all_models %>%
     left_join(sl_weights, by = "Learner") %>%
     mutate(
       Weight = format(round(Weights, 3), nsmall = 3),
@@ -157,10 +178,17 @@ if(run_prod){
       Screen = paste0("screen_", sapply(strsplit(Learner, "_screen_"), `[`, 2)),
       Learner = sapply(strsplit(Learner, "_screen"), `[`, 1)
     ) %>%
-    select(Learner, Screen, Weight, Predictors, Coefficient, `Odds Ratio`) %>%
+    select(Learner, Screen, Weight, Predictors, Coefficient, `Odds Ratio`) 
+}
+
+if(study_name %in% c("VAT08m", "VAT08b")){
+  SL_all_models_with_predictors %>% 
+    write.csv(here("output", Sys.getenv("TRIAL"), args[1], "SL_all_models_with_predictors.csv"))
+}else{
+  SL_all_models_with_predictors %>% 
     write.csv(here("output", Sys.getenv("TRIAL"), "SL_all_models_with_predictors.csv"))
 }
 
 
-rm(sl_riskscore_slfits)
+rm(SL_all_models_with_predictors, sl_riskscore_slfits)
 

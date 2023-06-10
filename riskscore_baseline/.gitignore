@@ -2,6 +2,7 @@ report.pdf
 report.aux
 report.log
 report.out
+output
 output/*.*
 output/*
 output/*.Rdata
@@ -16,6 +17,8 @@ output/novavax_real/*
 output/cov002/*
 output/prevent19/*
 output/butantan/*
+output/vat08m/bseroneg/*
+output/vat08m/bseropos/*
 *.Rout
 nohup.out
 .nfs*

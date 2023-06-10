@@ -6,8 +6,13 @@ clean:
 	rm -rf output/$(TRIAL)/*
 
 ## get_riskscores : append previous risk scores if input data has not changed OR generate new risk scores!
-get_riskscores:
-	Rscript code/get_riskscores.R
+get_riskscores:  
+ifeq ($(TRIAL), $(filter $(TRIAL), vat08m vat08b))
+	Rscript code/get_riskscores.R bseroneg
+	Rscript code/get_riskscores.R bseropos
+else 
+	Rscript code/get_riskscores.R 
+endif
 
 ## run_cvsl_riskscore   : run CV-SL on placebo arm
 run_cvsl_riskscore:

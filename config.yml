@@ -46,7 +46,6 @@ vat08_combined: &vat08_combined
   times: [B, Day22, Day43, Delta22overB, Delta43overB, Delta43over22]
   time_labels: [Day 1, Day 22, Day 43, D22 fold-rise over D1, D43 fold-rise over D1, D43 fold-rise over D22]
 
-
 vat08m: &vat08m
   <<: *vat08_combined
   subset_variable: vacc_trial

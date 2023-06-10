@@ -24,13 +24,22 @@ library(gam)
 library(xgboost)
 conflict_prefer("filter", "dplyr")
 conflict_prefer("select", "dplyr")
+
+print("PREDICT_ON_VACCINE.R")
+
 # conflict_prefer("omp_set_num_threads", "RhpcBLASctl")
-load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
+if(study_name %in% c("VAT08m", "VAT08b")){
+  load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/objects_for_running_SL.rda"))
+  load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/sl_riskscore_slfits.rda"))
+}else{
+  load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
+  load(paste0("output/", Sys.getenv("TRIAL"), "/sl_riskscore_slfits.rda"))
+}
+
 # load(paste0("output/", Sys.getenv("TRIAL"), "/plac_top2learners_SL_discreteSL.rda"))
 # source(here("code", "sl_screens.R")) # set up the screen/algorithm combinations
 # source(here("code", "utils.R")) # get CV-AUC for all algs
 
-load(paste0("output/", Sys.getenv("TRIAL"), "/sl_riskscore_slfits.rda"))
 # Predict on vaccine arm
 if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
   dat.ph1.vacc <- inputMod %>%
@@ -113,7 +122,12 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
 
 vacc <- vacc %>% mutate(AUCchar = AUCvacc$AUCchar) 
 
-write.csv(vacc, here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
+if(study_name %in% c("VAT08m", "VAT08b")){
+  write.csv(vacc, here("output", Sys.getenv("TRIAL"), args[1], "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
+}else{
+  write.csv(vacc, here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
+}
+
 if(study_name == "COVE"){
   write.csv(plac_bseropos, here("output", Sys.getenv("TRIAL"), "plac_bseropos_ptids_with_riskscores.csv"), row.names = FALSE)
 }
