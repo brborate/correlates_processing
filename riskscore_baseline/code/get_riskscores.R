@@ -6,9 +6,16 @@
 # Sys.setenv(TRIAL = "vat08m") # Sanofi
 # Sys.setenv(TRIAL = "vat08b") # Sanofi
 # Sys.setenv(TRIAL = "janssen_pooled_partA") 
-# Sys.setenv(TRIAL = "butantan") 
+# Sys.setenv(TRIAL = "butantan")
 
 print("GET_RISKSCORES.R")
+
+# # Since risk scores are generated for VAT08m and VAT08b using the combined data, 
+# # if risk score code is called with study_name = VAT08b, change the study_name to VAT08m
+# riskscore_called_using_STUDYNAME <- config$study_name
+# if(config$study_name == "VAT08b"){
+#   study_name = "VAT08m"
+# }
 
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
@@ -251,13 +258,19 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
   )
   
   # Save inputFile 
-  if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
-    dir.create(paste0("output/", Sys.getenv("TRIAL")))
-  }
-  
   if(study_name %in% c("VAT08m", "VAT08b")){
+    if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
+      dir.create(paste0("output/", Sys.getenv("TRIAL")))
+      dir.create(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))
+    }
+    if(!dir.exists(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))){
+      dir.create(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))
+    }
     save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/", "inputFile.RData"))
   }else{
+    if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
+      dir.create(paste0("output/", Sys.getenv("TRIAL")))
+    }
     save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
   }
 }
