@@ -9,4 +9,4 @@ inputFile_bseroneg_bseropos_with_riskscore <- dplyr::bind_rows(bseroneg_with_ris
                                                         bseropos_with_riskscore)
 
 save(inputFile_bseroneg_bseropos_with_riskscore,
-     file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_bseroneg_bseropos_with_riskscore.RData")) 
+     file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData")) 
