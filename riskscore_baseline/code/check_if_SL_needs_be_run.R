@@ -72,3 +72,8 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
 
 # Perform sanity check if mock data!
 source(here("code", "unit_test.R"))
+
+# # Reset the TRIAL, if it was changed (For example, TRIAL is changed from vat08b to vat08m for risk score development purpose!)
+# if(riskscore_called_using_TRIAL != Sys.getenv("TRIAL")){
+#   Sys.setenv(TRIAL = riskscore_called_using_TRIAL)
+# }

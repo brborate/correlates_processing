@@ -5,6 +5,8 @@ if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/
 source(here::here("..", "_common.R"))
 #-----------------------------------------------
 
+print("PERFORMANCE_ON_VACCINE.R")
+
 # load required libraries and functions
 library(tidyverse)
 library(here)
@@ -24,14 +26,25 @@ library(gam)
 library(xgboost)
 conflict_prefer("filter", "dplyr")
 conflict_prefer("select", "dplyr")
-load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
+
+if(study_name %in% c("VAT08m", "VAT08b")){
+  load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/objects_for_running_SL.rda"))
+}else{
+  load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
+}
+
 
 if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name)))
   endpoint <- paste0(sub("1rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc"))
 
 if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
-  vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv")) %>%
-    filter(RiskscoreAUCflag == 1) 
+  if(study_name %in% c("VAT08m", "VAT08b")){
+    vacc <- read.csv(here("output", Sys.getenv("TRIAL"), args[1], "vaccine_ptids_with_riskscores.csv")) %>%
+      filter(RiskscoreAUCflag == 1) 
+  }else{
+    vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv")) %>%
+      filter(RiskscoreAUCflag == 1) 
+  }
 } else {
   vacc <- read.csv(here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv")) 
 }
@@ -41,8 +54,13 @@ pred.obj <- ROCR::prediction(vacc$pred, vacc %>% pull(endpoint))
 perf.obj <- ROCR::performance(pred.obj, "tpr", "fpr")
 
 options(bitmapType = "cairo")
-png(file = here("output", Sys.getenv("TRIAL"), "ROCcurve_riskscore_vacc_onlySL.png"),
-    width = 1000, height = 1000)
+if(study_name %in% c("VAT08m", "VAT08b")){
+  png(file = here("output", Sys.getenv("TRIAL"), args[1], "ROCcurve_riskscore_vacc_onlySL.png"),
+      width = 1000, height = 1000)
+}else{
+  png(file = here("output", Sys.getenv("TRIAL"), "ROCcurve_riskscore_vacc_onlySL.png"),
+      width = 1000, height = 1000)
+}
 
 print(data.frame(xval = perf.obj@x.values[[1]],
            yval = perf.obj@y.values[[1]],
@@ -68,8 +86,14 @@ dev.off()
 
 # plot pred prob plot on vaccinees
 options(bitmapType = "cairo")
-png(file = here("output", Sys.getenv("TRIAL"), "predProb_riskscore_vacc_onlySL.png"),
-    width = 1100, height = 700)
+if(study_name %in% c("VAT08m", "VAT08b")){
+  png(file = here("output", Sys.getenv("TRIAL"), args[1], "predProb_riskscore_vacc_onlySL.png"),
+      width = 1100, height = 700)
+}else{
+  png(file = here("output", Sys.getenv("TRIAL"), "predProb_riskscore_vacc_onlySL.png"),
+      width = 1100, height = 700)
+}
+
 # if(study_name == "COVE" | study_name == "MockCOVE"){
 #   cases = "Post Day 57 Cases"
 # }
@@ -117,8 +141,12 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
 }
 
 
-
-
 # Create table of case/controls in vaccine cohort used for calculating AUC in risk score report (this cohort changes for TRIALS beyond COVE or janssen!)
-table(vacc %>% pull(endpoint)) %>%
-  write.csv(file = here("output", Sys.getenv("TRIAL"), "vacc.cases.AUC.calc_post_riskScoreAnalysis.csv"))
+if(study_name %in% c("VAT08m", "VAT08b")){
+  table(vacc %>% pull(endpoint)) %>%
+    write.csv(file = here("output", Sys.getenv("TRIAL"), args[1], "vacc.cases.AUC.calc_post_riskScoreAnalysis.csv"))
+}else{
+  table(vacc %>% pull(endpoint)) %>%
+    write.csv(file = here("output", Sys.getenv("TRIAL"), "vacc.cases.AUC.calc_post_riskScoreAnalysis.csv"))
+}
+
