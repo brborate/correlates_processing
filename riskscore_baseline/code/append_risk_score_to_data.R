@@ -44,6 +44,7 @@ if(study_name == "COVE"){
 
 inputFile_with_riskscore <- left_join(inputFile, risk_scores, by = "Ptid") 
 
+
 # For some studies, impute the missing risk scores and standardize them separately for placebo and vaccine groups 
 if(study_name == "PREVENT19"){
   if(any(is.na(inputFile_with_riskscore %>% filter(Country == 0 & Riskscorecohortflag == 1) %>% .$risk_score))){
@@ -76,7 +77,8 @@ if(study_name == "PREVENT19"){
 
 # Save inputFile 
 if(study_name %in% c("VAT08m", "VAT08b")){
-    save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile_with_riskscore.RData"))
+  save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile_with_riskscore.RData"))
+  save(risk_scores, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/risk_scores.RData"))
 }else{
   save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/inputFile_with_riskscore.RData"))
 }

@@ -3,6 +3,13 @@ print("RUN_CVSL_RISKSCORE.R")
 inputMod <- inputMod %>%
   drop_na(all_of(endpoint)) 
 
+if(study_name %in% c("VAT08m", "VAT08b")){
+  if(args[1] == "bseroneg")
+    inputMod <- inputMod %>% filter(Bserostatus == 0)
+  else if(args[1] == "bseropos")
+    inputMod <- inputMod %>% filter(Bserostatus == 1)
+}
+
 # Create table of cases in both arms (prior to applying Riskscorecohortflag filter)
   tab <- inputMod %>%
     drop_na(Ptid, Trt, all_of(endpoint)) %>%

@@ -395,7 +395,7 @@ drop_riskVars_with_high_total_missing_values <- function(X, riskVars) {
 impute_missing_values <- function(X, riskVars) {
   # delete the file impute_missing_values.csv
   if(study_name %in% c("VAT08m", "VAT08b")){
-    unlink(here("output", Sys.getenv("TRIAL"), args[1], "impute_missing_values.csv"))
+    unlink(here("output", Sys.getenv("TRIAL"), "bseroneg", "impute_missing_values.csv"))
   }else{
     unlink(here("output", Sys.getenv("TRIAL"), "impute_missing_values.csv"))
   }
@@ -424,7 +424,7 @@ impute_missing_values <- function(X, riskVars) {
     # Also print to file
     if(study_name %in% c("VAT08m", "VAT08b")){
       paste("Imputing missing values in following variables: None") %>%
-        write.table(file = here("output", Sys.getenv("TRIAL"), args[1], "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
+        write.table(file = here("output", Sys.getenv("TRIAL"), "bseroneg", "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
     }else{
       paste("Imputing missing values in following variables: None") %>%
         write.table(file = here("output", Sys.getenv("TRIAL"), "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
@@ -434,7 +434,7 @@ impute_missing_values <- function(X, riskVars) {
     # Also print to file
     if(study_name %in% c("VAT08m", "VAT08b")){
       paste("Missing values were imputed for the following variables:", paste(as.character(covars), collapse = ", ")) %>%
-        write.table(file = here("output", Sys.getenv("TRIAL"), args[1], "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
+        write.table(file = here("output", Sys.getenv("TRIAL"), "bseroneg", "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
     }else{
       paste("Missing values were imputed for the following variables:", paste(as.character(covars), collapse = ", ")) %>%
         write.table(file = here("output", Sys.getenv("TRIAL"), "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)

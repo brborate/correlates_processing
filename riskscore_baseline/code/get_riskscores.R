@@ -266,7 +266,12 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
     if(!dir.exists(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))){
       dir.create(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))
     }
-    save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/", "inputFile.RData"))
+    save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
+    if(args[1] == "bseroneg"){
+      save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
+    }else if(args[1] == "bseropos"){
+      save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
+    }
   }else{
     if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
       dir.create(paste0("output/", Sys.getenv("TRIAL")))
@@ -278,4 +283,5 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
 if(study_name == "COVE"){
   save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
 }
+
 source(here("code", "check_if_SL_needs_be_run.R"))
