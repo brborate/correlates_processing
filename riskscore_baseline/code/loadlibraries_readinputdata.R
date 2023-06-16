@@ -43,6 +43,7 @@ inputfileName <- gsub("^.*/", "", mapped_data)
 # the demo version is simpler and runs faster!
 # the production version runs SL with a diverse set of learners
 run_prod <- !grepl("Mock", study_name)
+run_prod = FALSE
 
 # get utility files
 source(here("code", "sl_screens.R")) # set up the screen/algorithm combinations

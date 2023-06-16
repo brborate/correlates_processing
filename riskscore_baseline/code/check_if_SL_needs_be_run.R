@@ -44,6 +44,8 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
                                               select(Ptid, risk_score, standardized_risk_score), by = "Ptid")
       
       save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
+      if(study_name %in% c("VAT08m", "VAT08b"))
+        args[1] = "SLnotrun"
     }else{
       message("Variables related to risk score generation in input data have changed! Superlearner needs to be run and new risk scores generated!")
       generate_new_riskscores()

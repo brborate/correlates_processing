@@ -20,9 +20,7 @@ print("GET_RISKSCORES.R")
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 
-print("AAA")
 source("code/loadlibraries_readinputdata.R")
-print("BBB")
 
 if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m", "VAT08b", "PROFISCOV")){
   inputFile <- inputFile %>%
@@ -270,11 +268,9 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
     }
     save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
     if(args[1] == "bseroneg"){
-      inputFile %>% filter(Bserostatus == 0) %>%
-        save(file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
+      save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
     }else if(args[1] == "bseropos"){
-      inputFile %>% filter(Bserostatus == 1) %>%
-        save(file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
+      save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
     }
   }else{
     if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
@@ -287,4 +283,5 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
 if(study_name == "COVE"){
   save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
 }
+
 source(here("code", "check_if_SL_needs_be_run.R"))
