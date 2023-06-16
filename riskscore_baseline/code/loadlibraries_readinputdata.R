@@ -48,16 +48,8 @@ run_prod <- !grepl("Mock", study_name)
 source(here("code", "sl_screens.R")) # set up the screen/algorithm combinations
 source(here("code", "utils.R")) # get CV-AUC for all algs
 
-if(study_name %in% c("VAT08m", "VAT08b")){
-  if(args[1] == "bseroneg")
-    inputFile <- preprocess(read.csv(path_to_data), study_name) %>% filter(Bserostatus == 0)
-  else if(args[1] == "bseropos")
-    inputFile <- preprocess(read.csv(path_to_data), study_name) %>% filter(Bserostatus == 1)
-  #inputFile <- preprocess(read.csv(path_to_data), study_name)
-}else{
-  inputFile <- preprocess(read.csv(path_to_data), study_name)
-}
-  
+inputFile <- preprocess(read.csv(path_to_data), study_name)
+
 # Indicator of membership in the cohort included in the analysis that defines the risk score in the placebo arm. It requires:
 # 1. baseline SARS-CoV-2 negative, 
 # 2. per-protocol, 

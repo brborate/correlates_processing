@@ -12,10 +12,11 @@ generate_new_riskscores <- function(){
 }
 
 if(!study_name %in% c("COVE", "PROFISCOV")){
-  if(file.exists(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData")) |
+  if((file.exists(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData")) |
      (startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "EUA")      & file.exists(paste0("output/janssen_pooled_EUA/inputFile_with_riskscore.RData"))) |
      (startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "partA")    & file.exists(paste0("output/janssen_pooled_partA/inputFile_with_riskscore.RData"))) | 
-     (startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "partA_VL") & file.exists(paste0("output/janssen_pooled_partA/inputFile_with_riskscore.RData")))
+     (startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "partA_VL") & file.exists(paste0("output/janssen_pooled_partA/inputFile_with_riskscore.RData")))) |
+     (study_name %in% c("VAT08m", "VAT08b") & (file.exists(paste0("output/vat08m/inputFile_with_riskscore.RData"))))
   ){
     
     if(startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "EUA") & file.exists(paste0("output/janssen_pooled_EUA/inputFile_with_riskscore.RData"))){
@@ -24,6 +25,8 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
       load("output/janssen_pooled_partA/inputFile_with_riskscore.RData")
     } else if(startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "partA_VL") & file.exists(paste0("output/janssen_pooled_partA/inputFile_with_riskscore.RData"))){
       load("output/janssen_pooled_partA/inputFile_with_riskscore.RData")
+    }else if(study_name %in% c("VAT08m", "VAT08b")){
+      load("output/vat08m/inputFile_with_riskscore.RData")
     }else{
       load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
     } 
