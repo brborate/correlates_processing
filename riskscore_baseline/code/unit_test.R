@@ -2,9 +2,9 @@ library(digest)
 
 if(attr(config, "config") == "vat08m"){
   tmp <- switch(args[1],
-                bseroneg = "f13e4b091d841aab85656b2aff7ce35a", #"b6044e6b8ca8ddfadf0708e89550dfb9",
-                bseropos = "6dbad0adacb720d1cf86657bd7bb0c8b", #"66b6a2e3c7dc48dcfbfa8f2990a39b5f",
-                "SLnotrun" = "6449ce586adc8cb63f89605c01a200b2",
+                bseroneg = "b6044e6b8ca8ddfadf0708e89550dfb9", #"b6044e6b8ca8ddfadf0708e89550dfb9",
+                bseropos = "66b6a2e3c7dc48dcfbfa8f2990a39b5f", #"66b6a2e3c7dc48dcfbfa8f2990a39b5f",
+                SLnotrun = "6aa7eef5237342669199c1be9e0b3f66",
                 NA) 
 } else {
   tmp <- switch(attr(config, "config"),
