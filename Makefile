@@ -31,7 +31,7 @@ endif
 
 make_clean_data: 
 ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
-	Rscript data_clean/make_dat_cove_boost.R
+	Rscript data_clean/make_dat_moderna_boost.R
 else 
 	Rscript data_clean/make_dat_proc.R
 endif
