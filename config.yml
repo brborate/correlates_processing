@@ -40,7 +40,7 @@ moderna_mock: &moderna_mock
 
 vat08_combined: &vat08_combined
   <<: *ows_trial
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_vat08m_vat08b_realdata_20230607.csv
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_vat08m_vat08b_realdata_20230617.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]
   times: [B, Day22, Day43, Delta22overB, Delta43overB, Delta43over22]

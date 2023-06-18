@@ -4,7 +4,7 @@ if(attr(config, "config") == "vat08m"){
   tmp <- switch(args[1],
                 bseroneg = "b6044e6b8ca8ddfadf0708e89550dfb9", #"b6044e6b8ca8ddfadf0708e89550dfb9",
                 bseropos = "66b6a2e3c7dc48dcfbfa8f2990a39b5f", #"66b6a2e3c7dc48dcfbfa8f2990a39b5f",
-                SLnotrun = "6aa7eef5237342669199c1be9e0b3f66",
+                SLnotrun = "33c79bfcc914d18e5efb59c75f0effff",
                 NA) 
 } else {
   tmp <- switch(attr(config, "config"),
