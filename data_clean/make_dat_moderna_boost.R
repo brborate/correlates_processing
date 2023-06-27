@@ -231,18 +231,14 @@ assertthat::assert_that(
 # we assume that there will be no empty cells in the following table. If there are, we may need to re-collapse strata.
 wts_table <- with(subset(dat_stage2, ph1.BD29 & EventIndOmicronBD29), table(Wstratum, ph2.DD1))
 if (any(wts_table[,2]==0)) {
-  # stop("there are empty ph2 cells when computing wt.DD1, need to compute a second collapsed Wstratum")
-  dat_stage2$sampling_bucket_formergingstrata = with(dat_stage2, 
-                                                     strtoi(paste0(
-                                                       Trt, 
-                                                       naive
-                                                     ), base = 2))
-  
-  dat.ph1.tmp=subset(dat_stage2, ph1.BD29 & EventIndOmicronBD29==1, select=c(Ptid, Trt, naive, sampling_bucket, ph2.DD1, Wstratum, CalendarBD1Interval, sampling_bucket_formergingstrata))
+  # there are empty ph2 cells when computing wt.DD1, need to compute a second collapsed Wstratum
+  dat.ph1.tmp=subset(dat_stage2, ph1.BD29 & EventIndOmicronBD29, 
+    select=c(Ptid, Trt, naive, sampling_bucket, ph2.DD1, Wstratum, CalendarBD1Interval, sampling_bucket_formergingstrata))
   dat.ph1.tmp$ph2 = dat.ph1.tmp$ph2.DD1
   
   # adjust Wstratum
   dat.ph1.tmp2 = cove.boost.collapse.strata (dat.ph1.tmp, n.demo)
+  # with(dat.ph1.tmp2, table(Wstratum, ph2.DD1))
   
   # replace dat_stage2 Wstratum with dat.ph1.tmp2$Wstratum
   dat_stage2$WstratumDD1 = NA
@@ -344,7 +340,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "ecb238c7d34e68ad523732d9affd64de",
+               moderna_boost = "a34179a94863a70ed651b876430b24f7",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }
