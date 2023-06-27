@@ -147,7 +147,7 @@ must_have_assays <- c("pseudoneutid50")
 # mypairs(subset(dat_stage2, select=c(BD1bindSpike, BD29bindSpike, BD1bindSpike_BA.1, BD29bindSpike_BA.1, 
 #                                     BD1bindRBD, BD29bindRBD, BD1pseudoneutid50, BD29pseudoneutid50)))
 
-dat_stage2$ph2.BD29 = dat_stage2$ph1.BD29 & complete.cases(dat_stage2[,c("BD1"%.%must_have_assays, "BD29"%.%must_have_assays)])      
+dat_stage2$ph2.BD29 = with(dat_stage2, ph1.BD29 & (!is.na(BD1pseudoneutid50) | !is.na(BD29pseudoneutid50)) )
 
 # DD1 may be available for a different subset of people than BD29
 dat_stage2$ph2.DD1 = dat_stage2$ph1.BD29 & complete.cases(dat_stage2[,"DD1"%.%must_have_assays])      
@@ -344,7 +344,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "8a20e7a6e9fdc98bd7ab994248132c59",
+               moderna_boost = "ecb238c7d34e68ad523732d9affd64de",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }
