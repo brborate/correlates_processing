@@ -1,5 +1,5 @@
 # Note that for moderna_boost, use make_dat_moderna_boost.R
-#Sys.setenv(TRIAL = "xx")
+#Sys.setenv(TRIAL = "moderna_real")
 
 renv::activate(here::here())
 

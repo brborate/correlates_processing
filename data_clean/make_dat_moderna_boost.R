@@ -14,8 +14,6 @@ library(mice)
 
 
 config <- config::get(config = TRIAL)
-# this line makes config elements variables in the global scope, it makes coding easier but kind of dangerous
-#for(opt in names(config)) eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
 
 # read stage 2 mapped data 
 dat_raw = read.csv(config$mapped_data)
@@ -33,10 +31,10 @@ dat_stage1$standardized_risk_score = dat_risk_score$standardized_risk_score[matc
 
 #setdiff(names(dat_raw), names(dat_stage1))
 
-# merge two files
-# dat_raw has about 14K rows while dat_stage1 has about 29K rows
-# dat_stage2 keeps all rows from dat_stage1
-dat_stage2 = merge(dat_stage1, dat_raw, by="Ptid", all=T, suffixes=c("",".y"))
+# merge stage2 mapped data and stage1 analysis-ready data
+# for the duplicated columns, take from stage2 mapped data because stage 1 analysis ready data missed a few ptids, e.g. US3632155 for reasons that are impossible to track down
+# dat_raw has about 14K rows while dat_stage1 has about 29K rows. dat_stage2 keeps all rows from dat_stage1
+dat_stage2 = merge(dat_raw, dat_stage1, by="Ptid", all=T, suffixes=c("",".y"))
 
 # remove columns ending in .y
 dat_stage2 = dat_stage2[,!endsWith(names(dat_stage2),".y")]
@@ -49,14 +47,43 @@ dat_stage2$naive = 1-dat_stage2$nnaive
 ###############################################################################
 # define ph1 
 
-# not NA in the three bucket variables: Trt, naive and time period
-dat_stage2$ph1.BD29 = with(dat_stage2, !is.na(naive) & !is.na(CalendarBD1Interval) & !is.na(Trt) & !is.na(Perprotocol) & !is.na(EventTimeOmicronBD29))
+dat_stage2$ph1.BD29=T
+with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 
-# Perprotocol and BDPerprotocol are actually all 1 already in the mapped data stage 2 dataset
+# not NA in the three bucket variables: Trt, naive and time period
+dat_stage2$ph1.BD29 = with(dat_stage2,
+                             !is.na(naive) & !is.na(Trt) & 
+                             !is.na(Perprotocol) & !is.na(BDPerprotocol) & 
+                             !is.na(CalendarBD1Interval) & !is.na(NumberdaysBD1toBD29) &
+                             !is.na(EventTimeOmicronBD29)
+                            )
+with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
+
+
+# Perprotocol 
 dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & Perprotocol)
+with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 
 # not censored and no evidence of infection from BD1 to BD7, implemented with EventTimeOmicronBD29
 dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & EventTimeOmicronBD29 >= 7)
+with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
+with(subset(dat_stage2, ph1.BD29 & naive==0 & (!is.na(BD29pseudoneutid50) | !is.na(BD1pseudoneutid50))), table(Trt, EventIndOmicronBD29))
+with(subset(dat_raw, nnaive==1 & (!is.na(BD29pseudoneutid50) | !is.na(BD1pseudoneutid50))), table(Trt, EventIndOmicronBD29))
+
+sort(subset(dat_raw, nnaive==1 & (!is.na(BD29pseudoneutid50) | !is.na(BD1pseudoneutid50)) & Trt==0 & EventIndOmicronBD29==0, Ptid, drop=T))
+subset(dat_stage2, nnaive==1 & (!is.na(BD29pseudoneutid50) | !is.na(BD1pseudoneutid50)) & Trt==0 & EventIndOmicronBD29==0, Ptid)
+subset(dat_raw, Ptid=="US3632155")
+subset(dat_stage1, Ptid=="US3632155")
+
+
+
+with(subset(dat_stage2, ph1.BD29 & naive==0 ), table(Trt, EventIndOmicronBD29))
+with(subset(dat_raw, nnaive==1 ), table(Trt, EventIndOmicronBD29))
+
+
+# BDPerprotocol 
+dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & BDPerprotocol)
+with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 
 
 # interval bt BD1 and BD29 has to be [19,49] days
@@ -88,9 +115,20 @@ stopifnot(all(!is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])))
 # with(subset(dat_stage2, ph1.BD29 & EventIndPrimaryOmicronBD29 & !is.na(BD29bindSpike)), table(Trt, naive))
 # with(subset(dat_stage2, ph1.BD29 & is.na(URMforsubcohortsampling) & EventIndPrimaryOmicronBD29), cbind(Trt, naive, MinorityInd))
 
-# these two subjects ware white with unknown hispanic ethnicity
-# since by convention these are assigned MinorityInd 0, we assign their URMforsubcohortsampling 0 as well
-dat_stage2[with(dat_stage2, ph1.BD29 & is.na(URMforsubcohortsampling) & EventIndPrimaryOmicronBD29), "URMforsubcohortsampling"]=0
+
+# length(dat_stage2[with(dat_stage2, ph1.BD29 & is.na(demo.stratum) ), "Ptid"])
+# dat_stage2[with(dat_stage2, ph1.BD29 & is.na(demo.stratum) & !is.na(BD29pseudoneutid50)), "Ptid"]
+# dat_stage2[with(dat_stage2, ph1.BD29 & is.na(demo.stratum) & !is.na(BD1pseudoneutid50)), "Ptid"]
+
+
+
+# there are two subjects, "US3252458" "US3702017", who have NA as URMforsubcohortsampling
+dat_stage2[with(dat_stage2, ph1.BD29 & is.na(URMforsubcohortsampling) & EventIndPrimaryOmicronBD29), "Ptid"]
+# they are white with unknown hispanic ethnicity. since by convention these are assigned MinorityInd 0, we assign their URMforsubcohortsampling 0 as well
+dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),"URMforsubcohortsampling"]=0
+# also need to update their demo.stratum
+tmp=dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),]
+dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),"demo.stratum"]=3+ifelse(tmp$Senior, 1, ifelse(tmp$HighRiskInd == 1, 2, 3))
 
 
 # impute demo variables if there are missingness
@@ -187,12 +225,9 @@ dat_stage2$sampling_bucket = with(dat_stage2,
 dat_stage2$Wstratum = with(dat_stage2, demo.stratum + sampling_bucket * n.demo)
 
 
-# this was to amend ph1 definition, but it is not necessary anymore
-# a check
+# there should not be na in demo.
 # stopifnot (0 == sum(with(dat_stage2, ph1.BD29 & is.na(Wstratum))))
-# It removes the controls with missing Wstratum since all cases with missing Wstratum are imputed
 dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & !is.na(dat_stage2$Wstratum)
-
 
 
 ###############################################################################
@@ -210,6 +245,10 @@ dat_stage2$sampling_bucket_formergingstrata = with(dat_stage2,
 
 dat.ph1.tmp=subset(dat_stage2, ph1.BD29, select=c(Ptid, Trt, naive, sampling_bucket, ph2.BD29, Wstratum, CalendarBD1Interval, sampling_bucket_formergingstrata))
 dat.ph1.tmp$ph2 = dat.ph1.tmp$ph2.BD29
+
+with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
+with(subset(dat_stage2, ph1.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
+
 
 # adjust Wstratum
 dat.ph1.tmp2 = cove.boost.collapse.strata (dat.ph1.tmp, n.demo)

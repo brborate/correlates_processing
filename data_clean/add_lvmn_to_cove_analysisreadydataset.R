@@ -2,7 +2,7 @@
 #dat_proc  =read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_processed_v1.0_Oct28_2021.csv") # analysis ready dataset containing bAb and PsV markers
 
 # read LVMN marker data
-dat.1=read.csv("/trials/covpn/p3001/download_data/Moderna COVE mRNA 1273P301_immune/P3001ModernaCOVEimmunemarkerdata_correlates_LVMN_2022-01-13.csv") 
+dat.1=read.csv("/trials/covpn/p3001/download_data/ModernaCOVEmRNA1273P301_immune/P3001ModernaCOVEimmunemarkerdata_correlates_LVMN_2022-01-13.csv") 
 
 conv.f.lvmn50=0.276
 
