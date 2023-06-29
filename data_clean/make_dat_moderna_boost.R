@@ -34,6 +34,8 @@ dat_stage1$standardized_risk_score = dat_risk_score$standardized_risk_score[matc
 #setdiff(names(dat_raw), names(dat_stage1))
 
 # merge two files
+# dat_raw has about 14K rows while dat_stage1 has about 29K rows
+# dat_stage2 keeps all rows from dat_stage1
 dat_stage2 = merge(dat_stage1, dat_raw, by="Ptid", all=T, suffixes=c("",".y"))
 
 # remove columns ending in .y
@@ -50,8 +52,16 @@ dat_stage2$naive = 1-dat_stage2$nnaive
 # not NA in the three bucket variables: Trt, naive and time period
 dat_stage2$ph1.BD29 = with(dat_stage2, !is.na(naive) & !is.na(CalendarBD1Interval) & !is.na(Trt) & !is.na(Perprotocol) & !is.na(EventTimeOmicronBD29))
 
+# Perprotocol and BDPerprotocol are all 1 in the mapped data stage 2 dataset
+with(subset(dat_stage2, ph1.BD29), table(Perprotocol, BDPerprotocol))
+
 # not censored and no evidence of infection from BD1 to BD7, implemented with EventTimeOmicronBD29
-dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & Perprotocol & EventTimeOmicronBD29 >= 7)
+dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & EventTimeOmicronBD29 >= 7)
+
+
+# interval bt BD1 and BD29 has to be [19,49] days
+dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 49)
+
 
 # controls should not be NA in the demo vars for stratification, it does not matter for cases since we will impute
 demo.var=c("HighRiskInd", "URMforsubcohortsampling", "Senior")
@@ -340,7 +350,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "a34179a94863a70ed651b876430b24f7",
+               moderna_boost = "82a44fade6369d21d0b13b6a93d1cb9c",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }
