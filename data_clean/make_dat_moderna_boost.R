@@ -52,8 +52,8 @@ dat_stage2$naive = 1-dat_stage2$nnaive
 # not NA in the three bucket variables: Trt, naive and time period
 dat_stage2$ph1.BD29 = with(dat_stage2, !is.na(naive) & !is.na(CalendarBD1Interval) & !is.na(Trt) & !is.na(Perprotocol) & !is.na(EventTimeOmicronBD29))
 
-# Perprotocol and BDPerprotocol are all 1 in the mapped data stage 2 dataset
-with(subset(dat_stage2, ph1.BD29), table(Perprotocol, BDPerprotocol))
+# Perprotocol and BDPerprotocol are actually all 1 already in the mapped data stage 2 dataset
+dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & Perprotocol)
 
 # not censored and no evidence of infection from BD1 to BD7, implemented with EventTimeOmicronBD29
 dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & EventTimeOmicronBD29 >= 7)
