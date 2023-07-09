@@ -64,7 +64,7 @@ dat_stage2 = dat_stage2[,!endsWith(names(dat_stage2),".y")]
 # redefine Senior because some ptids are missing in stage 1 and Senior was not defined in stage 2 mappe data
 dat_stage2$Senior = ifelse(dat_stage2$Age>=65, 1, 0)
 
-sum(subset(dat_stage2, T, SubcohortInd), na.rm=T)
+sum(subset(dat_stage2, T, Stage2SamplingInd), na.rm=T)
 
 
 ###############################################################################
@@ -75,7 +75,7 @@ with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29, us
 with(subset(dat_stage2, ph1.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
 # 
 with(dat_stage2, table(is.na(EventIndOmicronBD29), is.na(EventTimeOmicronBD29)))
-sum(subset(dat_stage2, ph1.BD29, SubcohortInd), na.rm=T)
+sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
 
 # not NA in the three bucket variables: Trt, naive and time period
 # EventTimeOmicronBD29 missingness and NumberdaysBD1toBD29 missingness are concordant and they are participants who missed the BD29 visit.
@@ -89,7 +89,7 @@ dat_stage2$ph1.BD29 = with(dat_stage2,
                             )
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29, useNA="ifany"))
 with(subset(dat_stage2, ph1.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
-sum(subset(dat_stage2, ph1.BD29, SubcohortInd), na.rm=T)
+sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
 
 # EventIndPrimaryOmicronBD29 usea a more stringent case def. Our main focus is EventIndOmicronBD29
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndPrimaryOmicronBD29))
@@ -100,26 +100,36 @@ with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 # Perprotocol is part of BDPerprotocol def
 dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & BDPerprotocolIncludeSeroPos)
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
-sum(subset(dat_stage2, ph1.BD29, SubcohortInd), na.rm=T)
+sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
 
 # not censored and no evidence of infection from BD1 to BD7
 # no loss of ph1 samples from this in the nnaive population
 dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & EventTimeOmicronBD29 >= 7)
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
-sum(subset(dat_stage2, ph1.BD29, SubcohortInd), na.rm=T)
+sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
 
 # interval bt BD1 and BD29 has to be [19,49] days
 # lose 0 cases and 6 controls from this step in the nnaive population
 dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 49)
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
-sum(subset(dat_stage2, ph1.BD29, SubcohortInd), na.rm=T)
+sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
+
+with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 49 & Stage2SamplingInd), sum(ph1.BD29))
+with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 45 & Stage2SamplingInd), sum(ph1.BD29))
+with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 44 & Stage2SamplingInd), sum(ph1.BD29))
+with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 43 & Stage2SamplingInd), sum(ph1.BD29))
+with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 42 & Stage2SamplingInd), sum(ph1.BD29))
+with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 41 & Stage2SamplingInd), sum(ph1.BD29))
+with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 40 & Stage2SamplingInd), sum(ph1.BD29))
+with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 39 & Stage2SamplingInd), sum(ph1.BD29))
+
 
 # controls should not be NA in the demo vars for stratification, it does not matter for cases since we will impute
 # lose 0 cases and 1 control from this step in the nnaive population
 demo.var=c("HighRiskInd", "URMforsubcohortsampling", "Senior")
 dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & (complete.cases(dat_stage2[demo.var]) | dat_stage2$EventIndOmicronBD29==1)
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
-sum(subset(dat_stage2, ph1.BD29, SubcohortInd), na.rm=T)
+sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
 
 
 # Wstratum is made up of the demo variables, CalendarBD1Interval, naive, trt
@@ -211,7 +221,7 @@ dat_stage2$ph2.BD29 = with(dat_stage2, ph1.BD29 & (!is.na(BD29pseudoneutid50) & 
 with(subset(dat_stage2, ph2.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 with(subset(dat_stage2, ph2.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
 nrow(subset(dat_stage2, ph2.BD29))
-nrow(subset(dat_stage2, ph1.BD29 & SubcohortInd))
+nrow(subset(dat_stage2, ph1.BD29 & Stage2SamplingInd))
 
 
 # DD1 may be available for a different subset of people than BD29
