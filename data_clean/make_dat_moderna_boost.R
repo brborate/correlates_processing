@@ -1,3 +1,5 @@
+#why stage 2 have ptids than stage 1
+
 Sys.setenv(TRIAL = "moderna_boost")
 TRIAL=Sys.getenv("TRIAL")
 
@@ -8,97 +10,114 @@ library(dplyr)
 library(kyotil)
 library(mice)
 
-###############################################################################
-#### combine stage1 analysis-ready dataset and stage 2 mapped dataset
-###############################################################################
-
-
 config <- config::get(config = TRIAL)
 
+
+###############################################################################
+# combine stage1 analysis-ready dataset and stage 2 mapped dataset
+
 # read stage 2 mapped data 
-dat_raw = read.csv(config$mapped_data)
-if (colnames(dat_raw)[1]=="Subjectid")  colnames(dat_raw)[1] <- "Ptid" else stop("the first column is unexpectedly not Subjectid")
+dat_stage2_mapped = read.csv(config$mapped_data)
+if (colnames(dat_stage2_mapped)[1]=="Subjectid")  colnames(dat_stage2_mapped)[1] <- "Ptid" else stop("the first column is unexpectedly not Subjectid")
+dat_stage2_mapped$naive = 1-dat_stage2_mapped$nnaive
 
 # read stage1 analysis ready dataset 
-dat_stage1 = read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/moderna_real_data_processed_with_riskscore.csv")
-
+dat_stage1_adata = read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/moderna_real_data_processed_with_riskscore.csv")
 # use new risk score, which 99.5% correlated with the old one and is derived for all ptids, including baseline pos
 dat_risk_score = read.csv("/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/inputFile_with_riskscore.csv")
-dat_stage1$risk_score              = dat_risk_score$risk_score             [match(dat_stage1$Ptid, dat_risk_score$Ptid)]
-dat_stage1$Riskscorecohortflag     = dat_risk_score$Riskscorecohortflag    [match(dat_stage1$Ptid, dat_risk_score$Ptid)]
-dat_stage1$standardized_risk_score = dat_risk_score$standardized_risk_score[match(dat_stage1$Ptid, dat_risk_score$Ptid)]
+dat_stage1_adata$risk_score              = dat_risk_score$risk_score             [match(dat_stage1_adata$Ptid, dat_risk_score$Ptid)]
+dat_stage1_adata$Riskscorecohortflag     = dat_risk_score$Riskscorecohortflag    [match(dat_stage1_adata$Ptid, dat_risk_score$Ptid)]
+dat_stage1_adata$standardized_risk_score = dat_risk_score$standardized_risk_score[match(dat_stage1_adata$Ptid, dat_risk_score$Ptid)]
 
 
-#setdiff(names(dat_raw), names(dat_stage1))
+#
+ptids2=dat_stage2_mapped$Ptid
+ptids1=dat_stage1_adata$Ptid
+dat_stage1_mapped=read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv")
+ptids1.raw=dat_stage1_mapped$Ptid
 
-# merge stage2 mapped data and stage1 analysis-ready data
-# for the duplicated columns, take from stage2 mapped data because stage 1 analysis ready data missed a few ptids, e.g. US3632155 for reasons that are impossible to track down
-# dat_raw has about 14K rows while dat_stage1 has about 29K rows. dat_stage2 keeps all rows from dat_stage1
-dat_stage2 = merge(dat_raw, dat_stage1, by="Ptid", all=T, suffixes=c("",".y"))
+ptids.2minus1 = sort(ptids2[!ptids2 %in% ptids1])
+ptids.2minus1raw = sort(ptids2[!ptids2 %in% ptids1.raw])
+ptids.stage1.rawonly=setdiff(ptids.2minus1, ptids.2minus1raw)
 
-# remove columns ending in .y
+subset(dat_stage2_mapped, Ptid %in% ptids.2minus1, c(Ptid, Bserostatus, EventTimePrimaryD1, EventTimePrimaryD29, EventTimePrimaryD57))
+
+subset(dat_stage1_mapped, Ptid %in% ptids.stage1.rawonly, c(Ptid, Bserostatus, EventTimePrimaryD1, EventTimePrimaryD29, EventTimePrimaryD57))
+
+subset(dat_stage1_mapped, Ptid=="US3002290", Perprotocol)
+subset(dat_stage2_mapped, Ptid=="US3002290", Perprotocol)
+
+subset(dat_stage1_adata, Ptid=="US3002290")
+subset(dat_stage1_mapped, Ptid=="US3002290")
+
+
+
+
+# merge stage2 mapped data and stage1 analysis-ready data, keep all rows
+# dat_stage2_mapped has about 14K rows while dat_stage1_adata has about 29K rows. \
+# dat_stage2 keeps all rows from dat_stage1_adata
+dat_stage2 = merge(dat_stage2_mapped, dat_stage1_adata, by="Ptid", all=T, suffixes=c("",".y"))
+#setdiff(names(dat_stage2_mapped), names(dat_stage1_adata))
+# for the duplicated columns, take from stage2 mapped data because stage 1 analysis ready data misses a few ptids, e.g. US3632155, for reasons that are impossible to track down
+# this has the consequence that the subjects in stage 1 but not stage 2 would have NA for the duplicated columns
 dat_stage2 = dat_stage2[,!endsWith(names(dat_stage2),".y")]
-
-# hack, need to be replaced with true definition
-dat_stage2$naive = 1-dat_stage2$nnaive
+# subset(dat_stage2_mapped, Ptid=="US3632155")
+# subset(dat_stage1_adata, Ptid=="US3632155")
+# redefine Senior because some ptids are missing in stage 1 and Senior was not defined in stage 2 mappe data
+dat_stage2$Senior = ifelse(dat_stage2$Age>=65, 1, 0)
 
 
 
 ###############################################################################
-# define ph1 
+# define ph1.BD29
 
 dat_stage2$ph1.BD29=T
-with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
+with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29, useNA="ifany"))
+with(subset(dat_stage2, ph1.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
+# 
+with(dat_stage2, table(is.na(EventIndOmicronBD29), is.na(EventTimeOmicronBD29)))
 
 # not NA in the three bucket variables: Trt, naive and time period
+# EventTimeOmicronBD29 missingness and NumberdaysBD1toBD29 missingness are concordant and they are participants who missed the BD29 visit.
 dat_stage2$ph1.BD29 = with(dat_stage2,
-                             !is.na(naive) & !is.na(Trt) & 
-                             !is.na(Perprotocol) & !is.na(BDPerprotocol) & 
-                             !is.na(CalendarBD1Interval) & !is.na(NumberdaysBD1toBD29) &
+                             !is.na(naive) & !is.na(Trt) &
+                             !is.na(Perprotocol) & !is.na(BDPerprotocol) &
+                             !is.na(NumberdaysBD1toBD29) &
+                             !is.na(CalendarBD1Interval) &
                              !is.na(EventTimeOmicronBD29)
                             )
+with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29, useNA="ifany"))
+with(subset(dat_stage2, ph1.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
+
+# EventIndPrimaryOmicronBD29 usea a more stringent case def. Our main focus is EventIndOmicronBD29
+with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndPrimaryOmicronBD29))
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 
-
-# Perprotocol 
+# Perprotocol
+# no loss of ph1 samples from this in the nnaive population
 dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & Perprotocol)
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 
-# not censored and no evidence of infection from BD1 to BD7, implemented with EventTimeOmicronBD29
+# BDPerprotocolIncludeSeroPos, which is based on BDPerprotocol but keep sero+ at BD baseline
+# lose 2 cases and 10 controls from this step in the nnaive population
+dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & BDPerprotocolIncludeSeroPos)
+with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
+
+# not censored and no evidence of infection from BD1 to BD7
+# no loss of ph1 samples from this in the nnaive population
 dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & EventTimeOmicronBD29 >= 7)
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
-with(subset(dat_stage2, ph1.BD29 & naive==0 & (!is.na(BD29pseudoneutid50) | !is.na(BD1pseudoneutid50))), table(Trt, EventIndOmicronBD29))
-with(subset(dat_raw, nnaive==1 & (!is.na(BD29pseudoneutid50) | !is.na(BD1pseudoneutid50))), table(Trt, EventIndOmicronBD29))
-
-sort(subset(dat_raw, nnaive==1 & (!is.na(BD29pseudoneutid50) | !is.na(BD1pseudoneutid50)) & Trt==0 & EventIndOmicronBD29==0, Ptid, drop=T))
-subset(dat_stage2, nnaive==1 & (!is.na(BD29pseudoneutid50) | !is.na(BD1pseudoneutid50)) & Trt==0 & EventIndOmicronBD29==0, Ptid)
-subset(dat_raw, Ptid=="US3632155")
-subset(dat_stage1, Ptid=="US3632155")
-
-
-
-with(subset(dat_stage2, ph1.BD29 & naive==0 ), table(Trt, EventIndOmicronBD29))
-with(subset(dat_raw, nnaive==1 ), table(Trt, EventIndOmicronBD29))
-
-
-# BDPerprotocol 
-dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & BDPerprotocol)
-with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
-
 
 # interval bt BD1 and BD29 has to be [19,49] days
+# lose 0 cases and 6 controls from this step in the nnaive population
 dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 49)
-
+with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 
 # controls should not be NA in the demo vars for stratification, it does not matter for cases since we will impute
+# lose 0 cases and 1 control from this step in the nnaive population
 demo.var=c("HighRiskInd", "URMforsubcohortsampling", "Senior")
 dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & (complete.cases(dat_stage2[demo.var]) | dat_stage2$EventIndOmicronBD29==1)
-
-#stopifnot(all(!is.na(dat_stage2[,"risk_score"]))) # there are some NA in risk score in the whole dataset, probably due to missing data covariates
-stopifnot(all(!is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])))
-
-# with(subset(dat_stage2, is.na(risk_score)), table(Trt, Bserostatus))
-# with(subset(dat_stage2), table(is.na(risk_score), Bserostatus, Trt))
+with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 
 
 # Wstratum is made up of the demo variables, CalendarBD1Interval, naive, trt
@@ -115,21 +134,13 @@ stopifnot(all(!is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])))
 # with(subset(dat_stage2, ph1.BD29 & EventIndPrimaryOmicronBD29 & !is.na(BD29bindSpike)), table(Trt, naive))
 # with(subset(dat_stage2, ph1.BD29 & is.na(URMforsubcohortsampling) & EventIndPrimaryOmicronBD29), cbind(Trt, naive, MinorityInd))
 
+# there are two subjects, "US3252458" "US3702017", who have NA as URMforsubcohortsampling in stage 1 data, but not in stage 2 data, from Moderna
+# the two ptids are white with unknown hispanic ethnicity. since by convention these are assigned MinorityInd 0, we assign their URMforsubcohortsampling 0 as well
+dat_stage1_adata[dat_stage1_adata$Ptid %in% c("US3252458", "US3702017"),c("URMforsubcohortsampling","demo.stratum")]
+dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),c("URMforsubcohortsampling","demo.stratum")]
 
-# length(dat_stage2[with(dat_stage2, ph1.BD29 & is.na(demo.stratum) ), "Ptid"])
-# dat_stage2[with(dat_stage2, ph1.BD29 & is.na(demo.stratum) & !is.na(BD29pseudoneutid50)), "Ptid"]
-# dat_stage2[with(dat_stage2, ph1.BD29 & is.na(demo.stratum) & !is.na(BD1pseudoneutid50)), "Ptid"]
-
-
-
-# there are two subjects, "US3252458" "US3702017", who have NA as URMforsubcohortsampling
-dat_stage2[with(dat_stage2, ph1.BD29 & is.na(URMforsubcohortsampling) & EventIndPrimaryOmicronBD29), "Ptid"]
-# they are white with unknown hispanic ethnicity. since by convention these are assigned MinorityInd 0, we assign their URMforsubcohortsampling 0 as well
-dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),"URMforsubcohortsampling"]=0
-# also need to update their demo.stratum
-tmp=dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),]
+# since we use stage 2 data for duplicate columns, we just need to fix the demo.stratum in the merged dataset
 dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),"demo.stratum"]=3+ifelse(tmp$Senior, 1, ifelse(tmp$HighRiskInd == 1, 2, 3))
-
 
 # impute demo variables if there are missingness
 imp.markers = demo.var # imp.markers may be a superset of demo.var to improve imputation performance
@@ -139,42 +150,40 @@ imp <- dat.tmp.impute %>%  select(all_of(imp.markers))
 # after assigning URMforsubcohortsampling, there should be no missingness
 stopifnot(0==sum(is.na(imp)))
 
-# the code for imputation if there is missingness
-if(any(is.na(imp))) {
-  n.imp <- 1
-  
-  # imputation. diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
-  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
-  dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
+# # the code for imputation if there is missingness
+# if(any(is.na(imp))) {
+#   n.imp <- 1
+#   
+#   # imputation. diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+#   imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+#   dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
+# 
+#   # missing covariates imputed properly?
+#   assertthat::assert_that(
+#     all(complete.cases(dat.tmp.impute[, imp.markers])),
+#     msg = "missing covariates imputed properly?"
+#   )    
+#   
+#   # merged imputed values in dat.tmp.impute with dat_stage2
+#   dat_stage2[dat_stage2$ph1.BD29, imp.markers] <- dat.tmp.impute[imp.markers][match(dat_stage2[dat_stage2$ph1.BD29, "Ptid"], dat.tmp.impute$Ptid), ]
+#   
+#   # imputed values of missing covariates merged properly for all individuals in ph1?
+#   assertthat::assert_that(
+#     all(complete.cases(dat_stage2[dat_stage2$ph1.BD29, imp.markers])),
+#     msg = "imputed values of missing covariates merged properly for all individuals?"
+#   )
+# }
 
-  # missing covariates imputed properly?
-  assertthat::assert_that(
-    all(complete.cases(dat.tmp.impute[, imp.markers])),
-    msg = "missing covariates imputed properly?"
-  )    
-  
-  # merged imputed values in dat.tmp.impute with dat_stage2
-  dat_stage2[dat_stage2$ph1.BD29, imp.markers] <- dat.tmp.impute[imp.markers][match(dat_stage2[dat_stage2$ph1.BD29, "Ptid"], dat.tmp.impute$Ptid), ]
-  
-  # imputed values of missing covariates merged properly for all individuals in ph1?
-  assertthat::assert_that(
-    all(complete.cases(dat_stage2[dat_stage2$ph1.BD29, imp.markers])),
-    msg = "imputed values of missing covariates merged properly for all individuals?"
-  )
+#stopifnot(all(!is.na(dat_stage2[,"risk_score"]))) # there are some NA in risk score in the whole dataset, probably due to missing data covariates
+stopifnot(all(!is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])))
+
+# need to impute regression covariates?
+if(any(is.na(subset(dat_stage2, ph1.BD29, select=c(MinorityInd, HighRiskInd, risk_score))))) {
+  stop("need to immpute missing regression covariates")
 }
 
 # by construction, there should be no NA. Check to make sure
 stopifnot(!any(is.na(dat_stage2$ph1.BD29)))
-
-
-
-###############################################################################
-# impute regression covariates
-
-# no missing data
-if(any(is.na(subset(dat_stage2, ph1.BD29, select=c(MinorityInd, HighRiskInd, risk_score))))) {
-  stop("need to immpute missing regression covariates")
-}
 
 
 
@@ -196,6 +205,11 @@ must_have_assays <- c("pseudoneutid50")
 #                                     BD1bindRBD, BD29bindRBD, BD1pseudoneutid50, BD29pseudoneutid50)))
 
 dat_stage2$ph2.BD29 = with(dat_stage2, ph1.BD29 & (!is.na(BD1pseudoneutid50) | !is.na(BD29pseudoneutid50)) )
+dat_stage2$ph2.BD29 = with(dat_stage2, ph1.BD29 & (!is.na(BD29pseudoneutid50) & !is.na(BD29bindSpike)) )
+with(subset(dat_stage2, ph2.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
+with(subset(dat_stage2, ph2.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
+nrow(subset(dat_stage2, ph2.BD29))
+
 
 # DD1 may be available for a different subset of people than BD29
 dat_stage2$ph2.DD1 = dat_stage2$ph1.BD29 & complete.cases(dat_stage2[,"DD1"%.%must_have_assays])      
@@ -356,6 +370,25 @@ assertthat::assert_that(
   all(complete.cases(dat_stage2[dat_stage2$ph2.BD29 == 1, imp.markers])),
   msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
 )
+
+
+###############################################################################
+# using the same conversion factor for stage 1 analyses to make variables comparable to stage 1 analyses
+# units will still be labeled as AU/ml
+###############################################################################
+
+# stage 1 conversion factors
+# convf=c(bindSpike=0.0090, bindRBD=0.0272, bindN=0.0024, pseudoneutid50=0.242, pseudoneutid80=1.502)    
+for (a in assay_metadata$assay) {
+  for (t in c("BD1","BD29","DD1") ) {
+    convf = ifelse(
+      # ID50 assays:
+      startsWith(a,"pseudoneutid50"), 0.242/1.04, 
+      # other assays:
+      1) 
+    dat_stage2[[t %.% a]] <- dat_stage2[[t %.% a]] + log10(convf)
+  }
+}
 
 
 ###############################################################################

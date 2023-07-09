@@ -1,5 +1,6 @@
 # Note that for moderna_boost, use make_dat_moderna_boost.R
 #Sys.setenv(TRIAL = "moderna_real")
+#Sys.setenv(TRIAL = "janssen_pooled_partA")
 
 renv::activate(here::here())
 
