@@ -108,20 +108,20 @@ dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & EventTimeOmicronBD29 >= 7)
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
 
-# interval bt BD1 and BD29 has to be [19,49] days
+# interval bt BD1 and BD29 has to be [19,45] days. 45 is chosen because 45 and 49 lead to the same number of samples
 # lose 0 cases and 6 controls from this step in the nnaive population
-dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 49)
+dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 45)
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
 
-with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 49 & Stage2SamplingInd), sum(ph1.BD29))
-with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 45 & Stage2SamplingInd), sum(ph1.BD29))
-with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 44 & Stage2SamplingInd), sum(ph1.BD29))
-with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 43 & Stage2SamplingInd), sum(ph1.BD29))
-with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 42 & Stage2SamplingInd), sum(ph1.BD29))
-with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 41 & Stage2SamplingInd), sum(ph1.BD29))
-with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 40 & Stage2SamplingInd), sum(ph1.BD29))
-with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 39 & Stage2SamplingInd), sum(ph1.BD29))
+# with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 49 & Stage2SamplingInd), sum(ph1.BD29))
+# with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 45 & Stage2SamplingInd), sum(ph1.BD29))
+# with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 44 & Stage2SamplingInd), sum(ph1.BD29))
+# with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 43 & Stage2SamplingInd), sum(ph1.BD29))
+# with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 42 & Stage2SamplingInd), sum(ph1.BD29))
+# with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 41 & Stage2SamplingInd), sum(ph1.BD29))
+# with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 40 & Stage2SamplingInd), sum(ph1.BD29))
+# with(subset(dat_stage2, ph1.BD29 & NumberdaysBD1toBD29 >= 19 & NumberdaysBD1toBD29 <= 39 & Stage2SamplingInd), sum(ph1.BD29))
 
 
 # controls should not be NA in the demo vars for stratification, it does not matter for cases since we will impute
