@@ -286,6 +286,9 @@ if (study_name %in% c("vat08b")) {
     uloqs["liveneutmn50"]=20157.44 
     pos.cutoffs["liveneutmn50"]=llods["liveneutmn50"] 
     
+  } else if(study_name=="COVEBoost") { 
+    # nothing to do, but this is needed so that _common.R can be called for making risk score
+    
   } else stop("unknown study_name 1")
   
 }
@@ -409,6 +412,9 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
 } else if (study_name=="HVTN705") {
     # do nothing
     
+} else if(study_name=="COVEBoost") { 
+  # nothing to do, but this is needed so that _common.R can be called for making risk score
+  
 } else stop("unknown study_name 2")
 
 
@@ -497,6 +503,9 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
 } else if (study_name=="HVTN705") {
     # do nothing
 
+} else if(study_name=="COVEBoost") { 
+  # nothing to do, but this is needed so that _common.R can be called for making risk score
+  
 } else stop("unknown study_name 3")
 
 
