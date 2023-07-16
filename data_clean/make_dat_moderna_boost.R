@@ -70,6 +70,10 @@ sum(subset(dat_stage2, T, Stage2SamplingInd), na.rm=T)
 ###############################################################################
 # define ph1.BD29
 
+# remove cases that are EventIndOmicronBD29 but not EventIndPrimaryOmicronBD29
+dat_stage2 = subset(dat_stage2, !(EventIndOmicronBD29==1 & EventIndPrimaryOmicronBD29==0))
+
+
 dat_stage2$ph1.BD29=T
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29, useNA="ifany"))
 with(subset(dat_stage2, ph1.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
@@ -94,6 +98,11 @@ sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
 # EventIndPrimaryOmicronBD29 usea a more stringent case def. Our main focus is EventIndOmicronBD29
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndPrimaryOmicronBD29))
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
+
+#
+with(subset(dat_stage2, EventIndPrimaryOmicronBD29==0 & EventIndOmicronBD29==1), cbind(Ptid, EventIndPrimaryOmicronBD29, EventIndOmicronBD29, Trt, naive, EventTimeOmicronBD29))
+
+with(subset(dat_stage2, EventIndOmicronBD29==1), table(Trt, naive))
 
 # BDPerprotocolIncludeSeroPos, which is based on BDPerprotocol but keep sero+ at BD baseline
 # lose 2 cases and 10 controls from this step in the nnaive population
