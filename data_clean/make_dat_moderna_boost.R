@@ -196,10 +196,17 @@ stopifnot(0==sum(is.na(imp)))
 # }
 
 #stopifnot(all(!is.na(dat_stage2[,"risk_score"]))) # there are some NA in risk score in the whole dataset, probably due to missing data covariates
-stopifnot(all(!is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])))
+#stopifnot(all(!is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])))
+
+if (any(is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"]))) {
+  print("impute risk score")
+  dat_stage2[is.na(dat_stage2$risk_score), "risk_score"]=mean(dat_stage2$risk_score, na.rm=T)
+  dat_stage2[is.na(dat_stage2$standardized_risk_score), "standardized_risk_score"]=mean(dat_stage2$standardized_risk_score, na.rm=T)
+}
+
 
 # need to impute regression covariates?
-if(any(is.na(subset(dat_stage2, ph1.BD29, select=c(MinorityInd, HighRiskInd, risk_score))))) {
+if(any(is.na(subset(dat_stage2, ph1.BD29, select=c(MinorityInd, HighRiskInd))))) {
   stop("need to immpute missing regression covariates")
 }
 
