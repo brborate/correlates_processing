@@ -1,11 +1,9 @@
-#why stage 2 have ptids than stage 1
+renv::activate(here::here())
 
 Sys.setenv(TRIAL = "moderna_boost")
 TRIAL=Sys.getenv("TRIAL")
 
 library(here)
-renv::activate(here::here())
-
 library(dplyr)
 library(kyotil)
 library(mice)
@@ -161,7 +159,8 @@ dat_stage1_adata[dat_stage1_adata$Ptid %in% c("US3252458", "US3702017"),c("URMfo
 dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),c("URMforsubcohortsampling","demo.stratum")]
 
 # since we use stage 2 data for duplicate columns, we just need to fix the demo.stratum in the merged dataset
-dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),"demo.stratum"]=3+ifelse(tmp$Senior, 1, ifelse(tmp$HighRiskInd == 1, 2, 3))
+tmp = dat_stage2$Ptid %in% c("US3252458", "US3702017")
+dat_stage2[tmp,"demo.stratum"]=3+ifelse(dat_stage2[tmp,"Senior"], 1, ifelse(dat_stage2[tmp,"HighRiskInd"] == 1, 2, 3))
 
 # impute demo variables if there are missingness
 imp.markers = demo.var # imp.markers may be a superset of demo.var to improve imputation performance
@@ -451,7 +450,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "82a44fade6369d21d0b13b6a93d1cb9c",
+               moderna_boost = "6bfe543dba030a1f83621542eff2d01c",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }
