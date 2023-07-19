@@ -696,3 +696,22 @@ make_forest_plot_prod <- function(avgs) {
 
   return(list(top_learner_plot = top_learner_plot, top_learner_nms_plot = top_learner_nms_plot))
 }
+
+
+
+# This function scales each column in a numeric dataset and also stores the 
+# scaling parameters as attributes to be accessed later
+get_scaleParams_scaledData <- function(inputdat, groupStr){
+  # Calculate mean and standard deviation for each column
+  means <- colMeans(inputdat, na.rm=T)
+  stds <- apply(inputdat, 2, sd, na.rm=T)
+  
+  # Scale each column using mean and standard deviation
+  scaled_inputdat <- scale(inputdat, center = means, scale = stds)
+  
+  # Scaling params can be accessed using:
+  # attr(scaled_inputdat ,"scaled:center")
+  # attr(scaled_inputdat, "scaled:scale")
+  # These params are accessed for scaling the extra 15 subjects from COVEBoost!
+  scaled_inputdat
+}

@@ -7,7 +7,6 @@
 # Sys.setenv(TRIAL = "vat08b") # Sanofi
 # Sys.setenv(TRIAL = "janssen_pooled_partA") 
 # Sys.setenv(TRIAL = "butantan")
-# Sys.setenv(TRIAL = "moderna_boost")
 
 print("GET_RISKSCORES.R")
 
