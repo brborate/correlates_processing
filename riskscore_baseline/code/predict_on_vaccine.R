@@ -193,4 +193,5 @@ if(study_name == "COVE"){
   write.csv(plac_bseropos, here("output", Sys.getenv("TRIAL"), "plac_bseropos_ptids_with_riskscores.csv"), row.names = FALSE)
   write.csv(plac_coveboost_6extra, here("output", Sys.getenv("TRIAL"), "plac_coveboost_6extra_ptids_with_riskscores.csv"), row.names = FALSE)
   write.csv(vacc_coveboost_9extra, here("output", Sys.getenv("TRIAL"), "vacc_coveboost_9extra_ptids_with_riskscores.csv"), row.names = FALSE)
+  save(X_covars2adjust_scaled_vacc, file = here("output", Sys.getenv("TRIAL"), "X_covars2adjust_scaled_vacc.rda"))
 }
