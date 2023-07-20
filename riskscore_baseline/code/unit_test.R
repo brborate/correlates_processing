@@ -8,7 +8,7 @@ if(attr(config, "config") == "vat08m"){
                 NA) 
 } else {
   tmp <- switch(attr(config, "config"),
-                moderna_real = "e0eed0edd95569334059e09ac374ca50",
+                moderna_real = "f5f0883e8217925af085b34ef8038559",
                 moderna_mock = "9df4cd6639381811e763c2dddc0a12fd",
                 janssen_pooled_mock = "f7a8225eb5fa8cc9a5426211988b9d95",
                 janssen_pooled_real = "c38fb43e2c87cf2d392757840af68bba",

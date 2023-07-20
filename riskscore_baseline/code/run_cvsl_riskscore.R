@@ -112,17 +112,22 @@ if(study_name %in% c("VAT08m", "VAT08b")){
   # sapply(X_covars2adjust, function(x) sum(is.na(x)))
   
   # Scale X_covars2adjust to have mean 0, sd 1 for all vars
-  for (a in colnames(X_covars2adjust)) {
-    X_covars2adjust[[a]] <- scale(X_covars2adjust[[a]],
-                                  center = mean(X_covars2adjust[[a]], na.rm = T),
-                                  scale = sd(X_covars2adjust[[a]], na.rm = T)
-    )
-  }
+  X_covars2adjust_scaled_plac <- get_scaleParams_scaledData(X_covars2adjust)
+  X_covars2adjust_scaled_plac_noattr <- X_covars2adjust_scaled_plac
+  attr(X_covars2adjust_scaled_plac_noattr, "scaled:center") <- NULL
+  attr(X_covars2adjust_scaled_plac_noattr, "scaled:scale") <- NULL
+ 
+  # # Scale X_covars2adjust to have mean 0, sd 1 for all vars
+  # for (a in colnames(X_covars2adjust)) {
+  #   X_covars2adjust[[a]] <- scale(X_covars2adjust[[a]],
+  #                                 center = mean(X_covars2adjust[[a]], na.rm = T),
+  #                                 scale = sd(X_covars2adjust[[a]], na.rm = T))
+  # }
   
   if(study_name == "COVE"){
     # Drop Bserostatus == 1 subjects here
-    plac_bseropos <- bind_cols(X_covars2adjust, dat.ph1 %>% select(Ptid, Bserostatus, Trt, all_of(endpoint))) %>% filter(Bserostatus == 1) 
-    plac_bseroneg <- bind_cols(X_covars2adjust, dat.ph1 %>% select(Ptid, Bserostatus, Trt, all_of(endpoint))) %>% filter(Bserostatus == 0) 
+    plac_bseropos <- bind_cols(data.frame(X_covars2adjust_scaled_plac_noattr), dat.ph1 %>% select(Ptid, Bserostatus, Trt, all_of(endpoint))) %>% filter(Bserostatus == 1) 
+    plac_bseroneg <- bind_cols(data.frame(X_covars2adjust_scaled_plac_noattr), dat.ph1 %>% select(Ptid, Bserostatus, Trt, all_of(endpoint))) %>% filter(Bserostatus == 0) 
     X_riskVars <- plac_bseroneg %>% select(-c(Ptid, Bserostatus, Trt, all_of(endpoint)))
     Y <- dat.ph1 %>% filter(Bserostatus == 0) %>% pull(endpoint) 
   } else {
@@ -235,7 +240,7 @@ if(study_name %in% c("VAT08m", "VAT08b")){
     save(run_prod, Y, X_riskVars, weights, inputMod, risk_vars, all_risk_vars, endpoint, maxVar,
          V_outer, V_inner, familyVar, methodVar, scaleVar, studyName_for_report, 
          risk_timepoint, 
-         cvControlVar, inputfileName, mapped_data, plac_bseropos, plac_bseroneg,
+         cvControlVar, inputfileName, mapped_data, plac_bseropos, plac_bseroneg, X_covars2adjust_scaled_plac,
          file = here("output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
   } else if (study_name %in% c("VAT08m", "VAT08b")){
     save(run_prod, Y, X_riskVars, weights, inputMod, risk_vars, all_risk_vars, endpoint, maxVar,

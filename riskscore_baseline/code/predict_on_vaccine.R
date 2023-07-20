@@ -3,6 +3,7 @@ renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
 source(here::here("..", "_common.R"))
+source(here::here("code", "utils.R"))
 #-----------------------------------------------
 
 # load required libraries and functions
@@ -65,15 +66,21 @@ X_covars2adjust_vacc <- dat.ph1.vacc %>%
 print("Make sure data is clean before conducting imputations!")
 X_covars2adjust_vacc <- impute_missing_values(X_covars2adjust_vacc, risk_vars)
 
-# Scale X_covars2adjust_vacc to have mean 0, sd 1 for all vars
-for (a in colnames(X_covars2adjust_vacc)) {
-  X_covars2adjust_vacc[[a]] <- scale(X_covars2adjust_vacc[[a]],
-    center = mean(X_covars2adjust_vacc[[a]], na.rm = T),
-    scale = sd(X_covars2adjust_vacc[[a]], na.rm = T)
-  )
-}
+# Scale X_covars2adjust to have mean 0, sd 1 for all vars
+X_covars2adjust_scaled_vacc <- get_scaleParams_scaledData(X_covars2adjust_vacc)
+X_covars2adjust_scaled_vacc_noattr <- X_covars2adjust_scaled_vacc
+attr(X_covars2adjust_scaled_vacc_noattr, "scaled:center") <- NULL
+attr(X_covars2adjust_scaled_vacc_noattr, "scaled:scale") <- NULL
 
-X_riskVars_vacc <- X_covars2adjust_vacc
+# # Scale X_covars2adjust_vacc to have mean 0, sd 1 for all vars
+# for (a in colnames(X_covars2adjust_vacc)) {
+#   X_covars2adjust_vacc[[a]] <- scale(X_covars2adjust_vacc[[a]],
+#     center = mean(X_covars2adjust_vacc[[a]], na.rm = T),
+#     scale = sd(X_covars2adjust_vacc[[a]], na.rm = T)
+#   )
+# }
+
+X_riskVars_vacc <- data.frame(X_covars2adjust_scaled_vacc_noattr)
 
 pred_on_vaccine <- predict(sl_riskscore_slfits, newdata = X_riskVars_vacc, onlySL = TRUE)$pred %>%
   as.data.frame()
@@ -93,6 +100,7 @@ vacc <- bind_cols(vacc, pred_on_vaccine) %>%
 
 
 if(study_name == "COVE"){
+  # Predict on baseline seropositives!
   pred_on_plac_bseropos <- predict(sl_riskscore_slfits, 
                                    newdata = plac_bseropos %>% select(names(X_riskVars_vacc)), 
                                    onlySL = TRUE)$pred %>%
@@ -104,6 +112,59 @@ if(study_name == "COVE"){
            standardized_risk_score = scale(risk_score,
                                            center = mean(risk_score, na.rm = T),
                                            scale = sd(risk_score, na.rm = T))) 
+  
+  # Predict on the 6 extra placebo arm + 9 extra vaccine arm subjects in COVEboost (Moderna Stage 2 trial)!
+  cove <- read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv")
+  coveboost <- read.csv("/trials/covpn/p3001/analysis/mapping_immune_correlates/Part_C_Unblinded_Phase_Data/adata/COVID_Moderna_stage2_20230710.csv") %>%
+    rename(Ptid = Subjectid)
+  
+  # First, predict on the 6 extra placebo arm subjects in COVEboost trial!
+  coveboost_6extra_plac <- coveboost %>% filter(!Ptid %in% cove$Ptid) %>% filter(Trt == 0) 
+  coveboost_6extra_plac_riskvars <- coveboost_6extra_plac %>% select(all_of(risk_vars))
+  # Scale based off mean and sd for X_covars2adjust_scaled_plac
+  scaled_coveboost_6extra_plac_riskvars <- scale(coveboost_6extra_plac_riskvars, 
+                                                 center = attr(X_covars2adjust_scaled_plac, "scaled:center"), 
+                                                 scale = attr(X_covars2adjust_scaled_plac, "scaled:scale"))
+  attr(scaled_coveboost_6extra_plac_riskvars, "scaled:center") <- NULL
+  attr(scaled_coveboost_6extra_plac_riskvars, "scaled:scale") <- NULL
+  
+  # Predict!
+  pred_on_scaled_coveboost_6extra_plac_riskvars <- predict(sl_riskscore_slfits, 
+                                                           newdata = data.frame(scaled_coveboost_6extra_plac_riskvars),
+                                                           onlySL = TRUE)$pred %>%
+    as.data.frame()
+  
+  plac_coveboost_6extra <- bind_cols(coveboost_6extra_plac %>% select(Ptid), pred_on_scaled_coveboost_6extra_plac_riskvars) %>%
+    rename(pred = V1) %>%
+    mutate(risk_score = log(pred / (1 - pred)),
+           standardized_risk_score = scale(risk_score,
+                                           center = mean(risk_score, na.rm = T),
+                                           scale = sd(risk_score, na.rm = T))) 
+  
+  # Second, predict on the 9 extra vaccine arm subjects in COVEboost trial!
+  coveboost_9extra_vacc <- coveboost %>% filter(!Ptid %in% cove$Ptid) %>% filter(Trt == 1)
+  coveboost_9extra_vacc_riskvars <- coveboost_9extra_vacc %>% select(all_of(risk_vars))
+  # Scale based off mean and sd for X_covars2adjust_scaled_plac
+  scaled_coveboost_9extra_vacc_riskvars <- scale(coveboost_9extra_vacc_riskvars, 
+                                                 center = attr(X_covars2adjust_scaled_vacc, "scaled:center"), 
+                                                 scale = attr(X_covars2adjust_scaled_vacc, "scaled:scale"))
+  
+  attr(scaled_coveboost_9extra_vacc_riskvars, "scaled:center") <- NULL
+  attr(scaled_coveboost_9extra_vacc_riskvars, "scaled:scale") <- NULL
+  
+  # Predict!
+  pred_on_scaled_coveboost_9extra_vacc_riskvars <- predict(sl_riskscore_slfits, 
+                                                           newdata = data.frame(scaled_coveboost_9extra_vacc_riskvars),
+                                                           onlySL = TRUE)$pred %>%
+    as.data.frame()
+  
+  vacc_coveboost_9extra <- bind_cols(coveboost_9extra_vacc %>% select(Ptid), pred_on_scaled_coveboost_9extra_vacc_riskvars) %>%
+    rename(pred = V1) %>%
+    mutate(risk_score = log(pred / (1 - pred)),
+           standardized_risk_score = scale(risk_score,
+                                           center = mean(risk_score, na.rm = T),
+                                           scale = sd(risk_score, na.rm = T))) 
+  
 }
 
 
@@ -130,4 +191,6 @@ if(study_name %in% c("VAT08m", "VAT08b")){
 
 if(study_name == "COVE"){
   write.csv(plac_bseropos, here("output", Sys.getenv("TRIAL"), "plac_bseropos_ptids_with_riskscores.csv"), row.names = FALSE)
+  write.csv(plac_coveboost_6extra, here("output", Sys.getenv("TRIAL"), "plac_coveboost_6extra_ptids_with_riskscores.csv"), row.names = FALSE)
+  write.csv(vacc_coveboost_9extra, here("output", Sys.getenv("TRIAL"), "vacc_coveboost_9extra_ptids_with_riskscores.csv"), row.names = FALSE)
 }
