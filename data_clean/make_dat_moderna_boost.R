@@ -21,9 +21,9 @@ dat_stage2_mapped$naive = 1-dat_stage2_mapped$nnaive
 
 # add risk score variables
 # the rda file is produced by make riskscore_analysis
-load('riskscore_baseline/output/moderna_real/inputFile_with_riskscore.rda')
+#load('riskscore_baseline/output/moderna_real/inputFile_with_riskscore.rda')
 # a transient solution, file created by Bhavesh
-# load("/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/inputFile_with_riskscore.rda")
+ load("/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/inputFile_with_riskscore.rda")
 dat_risk_score = inputFile_with_riskscore
 
 # dat_risk_score = read.csv("/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/inputFile_with_riskscore.csv")
