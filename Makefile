@@ -25,6 +25,8 @@ endif
 
 risk_analysis:  
 ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
+	# moderna_real needs to run first
+	Rscript riskscore_baseline/code/get_riskscores_for_COVEBoost.R
 else 
 	$(MAKE) -k -C riskscore_baseline all
 endif

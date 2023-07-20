@@ -19,13 +19,21 @@ dat_stage2_mapped = read.csv(config$mapped_data)
 if (colnames(dat_stage2_mapped)[1]=="Subjectid")  colnames(dat_stage2_mapped)[1] <- "Ptid" else stop("the first column is unexpectedly not Subjectid")
 dat_stage2_mapped$naive = 1-dat_stage2_mapped$nnaive
 
+# add risk score variables
+# the rda file is produced by make riskscore_analysis
+load('riskscore_baseline/output/moderna_real/inputFile_with_riskscore.rda')
+# a transient solution, file created by Bhavesh
+# load("/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/inputFile_with_riskscore.rda")
+dat_risk_score = inputFile_with_riskscore
+
+# dat_risk_score = read.csv("/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/inputFile_with_riskscore.csv")
+
+dat_stage2_mapped$risk_score              = dat_risk_score$risk_score             [match(dat_stage2_mapped$Ptid, dat_risk_score$Ptid)]
+dat_stage2_mapped$Riskscorecohortflag     = dat_risk_score$Riskscorecohortflag    [match(dat_stage2_mapped$Ptid, dat_risk_score$Ptid)]
+dat_stage2_mapped$standardized_risk_score = dat_risk_score$standardized_risk_score[match(dat_stage2_mapped$Ptid, dat_risk_score$Ptid)]
+
 # read stage1 analysis ready dataset 
 dat_stage1_adata = read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/moderna_real_data_processed_with_riskscore.csv")
-# use new risk score, which 99.5% correlated with the old one and is derived for all ptids, including baseline pos
-dat_risk_score = read.csv("/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/inputFile_with_riskscore.csv")
-dat_stage1_adata$risk_score              = dat_risk_score$risk_score             [match(dat_stage1_adata$Ptid, dat_risk_score$Ptid)]
-dat_stage1_adata$Riskscorecohortflag     = dat_risk_score$Riskscorecohortflag    [match(dat_stage1_adata$Ptid, dat_risk_score$Ptid)]
-dat_stage1_adata$standardized_risk_score = dat_risk_score$standardized_risk_score[match(dat_stage1_adata$Ptid, dat_risk_score$Ptid)]
 
 
 #
@@ -54,11 +62,14 @@ subset(dat_stage1_mapped, Ptid=="US3002290")
 # dat_stage2 keeps all rows from dat_stage1_adata
 dat_stage2 = merge(dat_stage2_mapped, dat_stage1_adata, by="Ptid", all=T, suffixes=c("",".y"))
 #setdiff(names(dat_stage2_mapped), names(dat_stage1_adata))
+
 # for the duplicated columns, take from stage2 mapped data because stage 1 analysis ready data misses a few ptids, e.g. US3632155, for reasons that are impossible to track down
 # this has the consequence that the subjects in stage 1 but not stage 2 would have NA for the duplicated columns
 dat_stage2 = dat_stage2[,!endsWith(names(dat_stage2),".y")]
+
 # subset(dat_stage2_mapped, Ptid=="US3632155")
 # subset(dat_stage1_adata, Ptid=="US3632155")
+
 # redefine Senior because some ptids are missing in stage 1 and Senior was not defined in stage 2 mappe data
 dat_stage2$Senior = ifelse(dat_stage2$Age>=65, 1, 0)
 
@@ -195,13 +206,16 @@ stopifnot(0==sum(is.na(imp)))
 # }
 
 #stopifnot(all(!is.na(dat_stage2[,"risk_score"]))) # there are some NA in risk score in the whole dataset, probably due to missing data covariates
-#stopifnot(all(!is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])))
+stopifnot(all(!is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])))
 
-if (any(is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"]))) {
-  print("impute risk score")
-  dat_stage2[is.na(dat_stage2$risk_score), "risk_score"]=mean(dat_stage2$risk_score, na.rm=T)
-  dat_stage2[is.na(dat_stage2$standardized_risk_score), "standardized_risk_score"]=mean(dat_stage2$standardized_risk_score, na.rm=T)
-}
+nrow(subset(dat_stage2, ph1.BD29 & is.na(risk_score)))
+
+## a transient solution to missing risk score
+# if (any(is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"]))) {
+#   print("impute risk score")
+#   dat_stage2[is.na(dat_stage2$risk_score), "risk_score"]=mean(dat_stage2$risk_score, na.rm=T)
+#   dat_stage2[is.na(dat_stage2$standardized_risk_score), "standardized_risk_score"]=mean(dat_stage2$standardized_risk_score, na.rm=T)
+# }
 
 
 # need to impute regression covariates?
@@ -450,7 +464,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "6bfe543dba030a1f83621542eff2d01c",
+               moderna_boost = "0dcac00df8d42ad58edf1c07dbca05a3",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }
