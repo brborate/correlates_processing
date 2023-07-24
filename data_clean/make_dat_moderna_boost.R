@@ -54,6 +54,8 @@ subset(dat_stage2_mapped, Ptid=="US3002290", Perprotocol)
 subset(dat_stage1_adata, Ptid=="US3002290")
 subset(dat_stage1_mapped, Ptid=="US3002290")
 
+subset(dat_stage1_mapped, Ptid=="US3602054")
+subset(dat_stage2_mapped, Ptid=="US3602054")
 
 
 
@@ -74,13 +76,22 @@ dat_stage2 = dat_stage2[,!endsWith(names(dat_stage2),".y")]
 dat_stage2$Senior = ifelse(dat_stage2$Age>=65, 1, 0)
 
 sum(subset(dat_stage2, T, Stage2SamplingInd), na.rm=T)
+subset(dat_stage2, Ptid=="US3602054")
 
 
 ###############################################################################
 # define ph1.BD29
 
 # remove cases that are EventIndOmicronBD29 but not EventIndPrimaryOmicronBD29
+# there are 7 ptids that are 0 in EventIndPrimaryOmicronBD29 but NA in EventIndOmicronBD29
+# these 7 are removed here, if they are not, they will also be removed by EventTimeOmicronBD29 >= 7 since they have EventTimeOmicronBD29=0
 dat_stage2 = subset(dat_stage2, !(EventIndOmicronBD29==1 & EventIndPrimaryOmicronBD29==0))
+
+
+subset(dat_stage2, EventIndOmicronBD29==1 & EventIndPrimaryOmicronBD29==0,
+       c(EventIndOmicronBD29,EventIndPrimaryOmicronBD29, BD29pseudoneutid50))
+
+subset(dat_stage2, is.na(EventIndOmicronBD29) & !is.na(EventIndPrimaryOmicronBD29), c(BD29pseudoneutid50,naive))
 
 
 dat_stage2$ph1.BD29=T
@@ -164,14 +175,14 @@ sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
 # with(subset(dat_stage2, ph1.BD29 & EventIndPrimaryOmicronBD29 & !is.na(BD29bindSpike)), table(Trt, naive))
 # with(subset(dat_stage2, ph1.BD29 & is.na(URMforsubcohortsampling) & EventIndPrimaryOmicronBD29), cbind(Trt, naive, MinorityInd))
 
-# there are two subjects, "US3252458" "US3702017", who have NA as URMforsubcohortsampling in stage 1 data, but not in stage 2 data, from Moderna
-# the two ptids are white with unknown hispanic ethnicity. since by convention these are assigned MinorityInd 0, we assign their URMforsubcohortsampling 0 as well
-dat_stage1_adata[dat_stage1_adata$Ptid %in% c("US3252458", "US3702017"),c("URMforsubcohortsampling","demo.stratum")]
-dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),c("URMforsubcohortsampling","demo.stratum")]
-
-# since we use stage 2 data for duplicate columns, we just need to fix the demo.stratum in the merged dataset
-tmp = dat_stage2$Ptid %in% c("US3252458", "US3702017")
-dat_stage2[tmp,"demo.stratum"]=3+ifelse(dat_stage2[tmp,"Senior"], 1, ifelse(dat_stage2[tmp,"HighRiskInd"] == 1, 2, 3))
+# # there are two subjects, "US3252458" "US3702017", who have NA as URMforsubcohortsampling in stage 1 data, but not in stage 2 data, from Moderna
+# # the two ptids are white with unknown hispanic ethnicity. since by convention these are assigned MinorityInd 0, we assign their URMforsubcohortsampling 0 as well
+# dat_stage1_adata[dat_stage1_adata$Ptid %in% c("US3252458", "US3702017"),c("URMforsubcohortsampling","demo.stratum")]
+# dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),c("URMforsubcohortsampling","demo.stratum")]
+# 
+# # since we use stage 2 data for duplicate columns, we just need to fix the demo.stratum in the merged dataset
+# tmp = dat_stage2$Ptid %in% c("US3252458", "US3702017")
+# dat_stage2[tmp,"demo.stratum"]=3+ifelse(dat_stage2[tmp,"Senior"], 1, ifelse(dat_stage2[tmp,"HighRiskInd"] == 1, 2, 3))
 
 # impute demo variables if there are missingness
 imp.markers = demo.var # imp.markers may be a superset of demo.var to improve imputation performance
@@ -205,6 +216,12 @@ stopifnot(0==sum(is.na(imp)))
 #   )
 # }
 
+# demo.stratum defined in stage 1 does not cover additional ptids from stage 2 mapped data
+dat_stage2$demo.stratum.new = with(dat_stage2, ifelse (URMforsubcohortsampling==1, ifelse(Senior, 1, ifelse(HighRiskInd == 1, 2, 3)), 3+ifelse(Senior, 1, ifelse(HighRiskInd == 1, 2, 3))))
+# demo.stratum.new has no NAs
+with(dat_stage2, table(demo.stratum.new, demo.stratum, useNA = "ifany"))
+dat_stage2$demo.stratum = dat_stage2$demo.stratum.new
+
 #stopifnot(all(!is.na(dat_stage2[,"risk_score"]))) # there are some NA in risk score in the whole dataset, probably due to missing data covariates
 stopifnot(all(!is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])))
 
@@ -219,7 +236,7 @@ nrow(subset(dat_stage2, ph1.BD29 & is.na(risk_score)))
 
 
 # need to impute regression covariates?
-if(any(is.na(subset(dat_stage2, ph1.BD29, select=c(MinorityInd, HighRiskInd))))) {
+if(any(is.na(subset(dat_stage2, ph1.BD29, select=c(MinorityInd, HighRiskInd, Senior))))) {
   stop("need to immpute missing regression covariates")
 }
 
@@ -246,7 +263,6 @@ must_have_assays <- c("pseudoneutid50")
 #                                     BD1bindRBD, BD29bindRBD, BD1pseudoneutid50, BD29pseudoneutid50)))
 
 dat_stage2$ph2.BD29 = with(dat_stage2, ph1.BD29 & (!is.na(BD1pseudoneutid50) | !is.na(BD29pseudoneutid50)) )
-dat_stage2$ph2.BD29 = with(dat_stage2, ph1.BD29 & (!is.na(BD29pseudoneutid50) & !is.na(BD29bindSpike)) )
 with(subset(dat_stage2, ph2.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 with(subset(dat_stage2, ph2.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
 nrow(subset(dat_stage2, ph2.BD29))
@@ -281,9 +297,9 @@ dat_stage2$sampling_bucket = with(dat_stage2,
 dat_stage2$Wstratum = with(dat_stage2, demo.stratum + sampling_bucket * n.demo)
 
 
-# there should not be na in demo.
-# stopifnot (0 == sum(with(dat_stage2, ph1.BD29 & is.na(Wstratum))))
-dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 & !is.na(dat_stage2$Wstratum)
+# there should not be na in demo
+stopifnot (0 == sum(with(dat_stage2, ph1.BD29 & is.na(Wstratum))))
+
 
 
 ###############################################################################
@@ -304,7 +320,6 @@ dat.ph1.tmp$ph2 = dat.ph1.tmp$ph2.BD29
 
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29))
 with(subset(dat_stage2, ph1.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
-
 
 # adjust Wstratum
 dat.ph1.tmp2 = cove.boost.collapse.strata (dat.ph1.tmp, n.demo)
@@ -464,7 +479,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "0dcac00df8d42ad58edf1c07dbca05a3",
+               moderna_boost = "97c44cf83fac274a462a712d70f14c27",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }
@@ -473,5 +488,5 @@ if(Sys.getenv ("NOCHECK")=="") {
 
 
 # save
-data_name = paste0(attr(config, "config"), "_data_processed.csv")
+data_name = paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv")
 write.csv(dat_stage2, file = here("data_clean", data_name), row.names=F)
