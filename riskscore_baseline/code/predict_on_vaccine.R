@@ -112,59 +112,6 @@ if(study_name == "COVE"){
            standardized_risk_score = scale(risk_score,
                                            center = mean(risk_score, na.rm = T),
                                            scale = sd(risk_score, na.rm = T))) 
-  
-  # Predict on the 6 extra placebo arm + 9 extra vaccine arm subjects in COVEboost (Moderna Stage 2 trial)!
-  cove <- read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv")
-  coveboost <- read.csv("/trials/covpn/p3001/analysis/mapping_immune_correlates/Part_C_Unblinded_Phase_Data/adata/COVID_Moderna_stage2_20230710.csv") %>%
-    rename(Ptid = Subjectid)
-  
-  # First, predict on the 6 extra placebo arm subjects in COVEboost trial!
-  coveboost_6extra_plac <- coveboost %>% filter(!Ptid %in% cove$Ptid) %>% filter(Trt == 0) 
-  coveboost_6extra_plac_riskvars <- coveboost_6extra_plac %>% select(all_of(risk_vars))
-  # Scale based off mean and sd for X_covars2adjust_scaled_plac
-  scaled_coveboost_6extra_plac_riskvars <- scale(coveboost_6extra_plac_riskvars, 
-                                                 center = attr(X_covars2adjust_scaled_plac, "scaled:center"), 
-                                                 scale = attr(X_covars2adjust_scaled_plac, "scaled:scale"))
-  attr(scaled_coveboost_6extra_plac_riskvars, "scaled:center") <- NULL
-  attr(scaled_coveboost_6extra_plac_riskvars, "scaled:scale") <- NULL
-  
-  # Predict!
-  pred_on_scaled_coveboost_6extra_plac_riskvars <- predict(sl_riskscore_slfits, 
-                                                           newdata = data.frame(scaled_coveboost_6extra_plac_riskvars),
-                                                           onlySL = TRUE)$pred %>%
-    as.data.frame()
-  
-  plac_coveboost_6extra <- bind_cols(coveboost_6extra_plac %>% select(Ptid), pred_on_scaled_coveboost_6extra_plac_riskvars) %>%
-    rename(pred = V1) %>%
-    mutate(risk_score = log(pred / (1 - pred)),
-           standardized_risk_score = scale(risk_score,
-                                           center = mean(risk_score, na.rm = T),
-                                           scale = sd(risk_score, na.rm = T))) 
-  
-  # Second, predict on the 9 extra vaccine arm subjects in COVEboost trial!
-  coveboost_9extra_vacc <- coveboost %>% filter(!Ptid %in% cove$Ptid) %>% filter(Trt == 1)
-  coveboost_9extra_vacc_riskvars <- coveboost_9extra_vacc %>% select(all_of(risk_vars))
-  # Scale based off mean and sd for X_covars2adjust_scaled_plac
-  scaled_coveboost_9extra_vacc_riskvars <- scale(coveboost_9extra_vacc_riskvars, 
-                                                 center = attr(X_covars2adjust_scaled_vacc, "scaled:center"), 
-                                                 scale = attr(X_covars2adjust_scaled_vacc, "scaled:scale"))
-  
-  attr(scaled_coveboost_9extra_vacc_riskvars, "scaled:center") <- NULL
-  attr(scaled_coveboost_9extra_vacc_riskvars, "scaled:scale") <- NULL
-  
-  # Predict!
-  pred_on_scaled_coveboost_9extra_vacc_riskvars <- predict(sl_riskscore_slfits, 
-                                                           newdata = data.frame(scaled_coveboost_9extra_vacc_riskvars),
-                                                           onlySL = TRUE)$pred %>%
-    as.data.frame()
-  
-  vacc_coveboost_9extra <- bind_cols(coveboost_9extra_vacc %>% select(Ptid), pred_on_scaled_coveboost_9extra_vacc_riskvars) %>%
-    rename(pred = V1) %>%
-    mutate(risk_score = log(pred / (1 - pred)),
-           standardized_risk_score = scale(risk_score,
-                                           center = mean(risk_score, na.rm = T),
-                                           scale = sd(risk_score, na.rm = T))) 
-  
 }
 
 
