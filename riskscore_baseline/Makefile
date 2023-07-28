@@ -11,7 +11,7 @@ ifeq ($(TRIAL), $(filter $(TRIAL), vat08m vat08b))
 	Rscript code/get_riskscores.R bseroneg
 	Rscript code/get_riskscores.R bseropos
 	Rscript code/stack_bseroneg_bseropos.R
-ifeq ($(TRIAL), $(filter $(TRIAL), moderna_boost))
+else ifeq ($(TRIAL), $(filter $(TRIAL), moderna_boost))
 	Rscript code/get_riskscores_for_COVEBoost.R
 else
 	Rscript code/get_riskscores.R 
