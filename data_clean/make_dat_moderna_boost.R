@@ -71,27 +71,26 @@ dat_stage2$demo.stratum = tmp
 sum(subset(dat_stage2, T, Stage2SamplingInd), na.rm=T)
 
 
-# remove cases that are EventIndOmicronBD29 but not EventIndPrimaryOmicronBD29
-# to focus on primary cases and not include the cases based on the more relaxed criterion
-# if we want to study EventIndOmicronBD29, then comment this line out and make a new dataset
-# missingness: there are 7 ptids that are 0 in EventIndPrimaryOmicronBD29 but NA in EventIndOmicronBD29
-# these 7 are removed in this step, if they are not, they will also be removed by EventTimeOmicronBD29 >= 7 since they have EventTimeOmicronBD29=0
-dat_stage2 = subset(dat_stage2, !(EventIndOmicronBD29==1 & EventIndPrimaryOmicronBD29==0))
-
-
 
 ###############################################################################
 # define ph1.BD29
 
-dat_stage2$ph1.BD29=T
+# remove cases that are not EventIndPrimaryOmicronBD29 but are EventIndOmicronBD29
+#   to focus on primary cases and not include the cases based on the more relaxed criterion
+# if we want to study EventIndOmicronBD29, then comment this line out, uncomment the next line, and make a new dataset
+# missingness: there are 7 ptids that are 0 in EventIndPrimaryOmicronBD29 but NA in EventIndOmicronBD29
+# these 7 are removed in this step, if they are not, they will also be removed by EventTimeOmicronBD29 >= 7 since they have EventTimeOmicronBD29=0
+dat_stage2$ph1.BD29 = with(dat_stage2, !(EventIndOmicronBD29==1 & EventIndPrimaryOmicronBD29==0))
+# dat_stage2$ph1.BD29 = T
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29, useNA="ifany"))
 with(subset(dat_stage2, ph1.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
-# 
 with(dat_stage2, table(is.na(EventIndOmicronBD29), is.na(EventTimeOmicronBD29)))
 sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
 
-# not NA in the three bucket variables: Trt, naive and time period
-# EventTimeOmicronBD29 missingness and NumberdaysBD1toBD29 missingness are concordant and they are participants who missed the BD29 visit.
+
+# not missing in the three bucket variables: Trt, naive and time period
+# EventTimeOmicronBD29 missingness and NumberdaysBD1toBD29 missingness are concordant 
+#   and they are participants who missed the BD29 visit
 # lose 1 ph2 due to na in EventTimeOmicronBD29
 dat_stage2$ph1.BD29 = with(dat_stage2,
                              !is.na(naive) & !is.na(Trt) &
@@ -487,7 +486,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "3d93b383a0f8c745fd2942bd8141b26a",
+               moderna_boost = "db7b8d7ca9dc94a6fd058518dc58146e",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }
