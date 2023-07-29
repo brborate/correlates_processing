@@ -7,7 +7,7 @@
 # This code is run from riskscore_baseline directory using the following command: 
 # Rscript code/get_riskscores_for_COVEBoost.R
 
-Sys.setenv(TRIAL = "moderna_boost")
+#Sys.setenv(TRIAL = "moderna_boost")
 
 renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
@@ -143,3 +143,4 @@ save(inputFile_with_riskscore,
      file = here("output", Sys.getenv("TRIAL"), "inputFile_with_riskscore.rda"))
 
 print("Risk scores created for moderna_boost TRIAL ===========================================")
+
