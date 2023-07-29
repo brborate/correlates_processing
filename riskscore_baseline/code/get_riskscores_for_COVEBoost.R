@@ -98,7 +98,8 @@ plac <- bind_cols(dat.ph1.plac, pred_on_plac) %>%
 
 # For ptids used in training SL model in Stage 1, use the risk scores based off CV-predictions in stage 1
 load(file = here("output", "moderna_real", "risk_placebo_ptids.rda"))
-cove_plac_SL_training <- read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv") %>%
+
+cove_plac_SL_training <- read.csv(mapped_data) %>%
   select(Ptid, risk_score) %>%
   filter(Ptid %in% risk_placebo_ptids$Ptid) %>%
   rename(risk_score_SLtrain = risk_score)
@@ -139,6 +140,8 @@ vacc <- bind_cols(dat.ph1.vacc, pred_on_vacc) %>%
 inputFile_with_riskscore <- inputFile %>% 
   left_join(bind_rows(plac, vacc) %>% select(Ptid, risk_score), by = "Ptid") 
   
+save(inputFile,
+     file = here("output", Sys.getenv("TRIAL"), "inputFile.rda"))
 save(inputFile_with_riskscore,
      file = here("output", Sys.getenv("TRIAL"), "inputFile_with_riskscore.rda"))
 
