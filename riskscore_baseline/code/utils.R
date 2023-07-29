@@ -439,6 +439,9 @@ impute_missing_values <- function(X, riskVars) {
       paste("Missing values were imputed for the following variables:", paste(as.character(covars), collapse = ", ")) %>%
         write.table(file = here("output", Sys.getenv("TRIAL"), "bseroneg", "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
     }else{
+      if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
+        dir.create(paste0("output/", Sys.getenv("TRIAL")))
+      }
       paste("Missing values were imputed for the following variables:", paste(as.character(covars), collapse = ", ")) %>%
         write.table(file = here("output", Sys.getenv("TRIAL"), "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
     }
