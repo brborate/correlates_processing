@@ -18,31 +18,16 @@ deploy_processed_dataset:
 data_processed: check_raw_data risk_analysis make_clean_data check_clean_data 
 
 check_raw_data:
-ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
-else 
 	Rscript data_clean/make_raw_dat_check.R
-endif
 
 risk_analysis:  
-ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
-	# moderna_real needs to run first
-	#Rscript riskscore_baseline/code/get_riskscores_for_COVEBoost.R
-else 
 	$(MAKE) -k -C riskscore_baseline all
-endif
 
 make_clean_data: 
-ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
-	Rscript data_clean/make_dat_moderna_boost.R
-else 
 	Rscript data_clean/make_dat_proc.R
-endif
 
 check_clean_data: 
-ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
-else 
 	Rscript data_clean/make_clean_dat_check.R
-endif	
 
 
 
