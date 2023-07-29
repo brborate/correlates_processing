@@ -30,16 +30,14 @@ if(study_name %in% c("VAT08m", "VAT08b")){
 # merge risk score with cleaned data by IDs, then save updated data file
 if(study_name == "COVE"){
   plac_bseropos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), "plac_bseropos_ptids_with_riskscores.csv"))
-  plac_coveboost_6extra <- read.csv(here("output", Sys.getenv("TRIAL"), "plac_coveboost_6extra_ptids_with_riskscores.csv"))
-  vacc_coveboost_9extra <- read.csv(here("output", Sys.getenv("TRIAL"), "vacc_coveboost_9extra_ptids_with_riskscores.csv"))
   
-  risk_scores_plac <- bind_rows(placebos_risk, plac_bseropos_risk, plac_coveboost_6extra) %>%
+  risk_scores_plac <- bind_rows(placebos_risk, plac_bseropos_risk) %>%
     select(Ptid, risk_score) %>%
     mutate(standardized_risk_score = scale(risk_score,
                                            center = mean(risk_score, na.rm = T),
                                            scale = sd(risk_score, na.rm = T)))
   
-  risk_scores_vacc <- bind_rows(vaccinees_risk, vacc_coveboost_9extra) %>%
+  risk_scores_vacc <- bind_rows(vaccinees_risk) %>%
     select(Ptid, risk_score) %>%
     mutate(standardized_risk_score = scale(risk_score,
                                            center = mean(risk_score, na.rm = T),
