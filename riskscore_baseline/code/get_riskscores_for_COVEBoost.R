@@ -140,8 +140,14 @@ vacc <- bind_cols(dat.ph1.vacc, pred_on_vacc) %>%
 inputFile_with_riskscore <- inputFile %>% 
   left_join(bind_rows(plac, vacc) %>% select(Ptid, risk_score), by = "Ptid") 
   
+
+if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
+  dir.create(paste0("output/", Sys.getenv("TRIAL")))
+}
+
 save(inputFile,
      file = here("output", Sys.getenv("TRIAL"), "inputFile.rda"))
+
 save(inputFile_with_riskscore,
      file = here("output", Sys.getenv("TRIAL"), "inputFile_with_riskscore.rda"))
 
