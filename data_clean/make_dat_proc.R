@@ -752,7 +752,7 @@ if(attr(config, "config") == "moderna_real") {
     dat_proc.tmp=dat_proc.tmp[,sort(names(dat_proc.tmp))]
     
     # For the baseline seropos population, impute lvmn data by calling the following script
-    dat_proc=subset(dat_proc, Bserostatus==1)
+    dat_proc=subset(dat_proc, Bserostatus==1, select=-c(risk_score_old, standardized_risk_score_old))
     source(here::here("data_clean", "add_lvmn_to_cove_analysisreadydataset.R"))
     # sort columns to combine with dat_proc.tmp
     dat_proc=dat_proc[,sort(names(dat_proc))]
@@ -819,7 +819,7 @@ library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(attr(config, "config"),
          moderna_mock = "34e297fd1a736f9320573ff1d2944904",
-         moderna_real = "093233430fdfb688595a206d8473333f",
+         moderna_real = "d3c6ba603acb12e3fb4c9ea08554284a",
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
          janssen_pooled_EUA = "c38fb43e2c87cf2d392757840af68bba",
          azd1222 = "f573e684800003485094c18120361663",
