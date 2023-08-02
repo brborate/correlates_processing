@@ -14,28 +14,17 @@ config <- config::get(config = TRIAL)
 ###############################################################################
 # combine stage1 analysis-ready dataset and stage 2 mapped dataset
 
-# read stage 2 mapped data 
-dat_stage2_mapped = read.csv(config$mapped_data)
-if (colnames(dat_stage2_mapped)[1]=="Subjectid")  colnames(dat_stage2_mapped)[1] <- "Ptid" else stop("the first column is unexpectedly not Subjectid")
+# read stage 2 mapped data with risk score made from make riskscore_analysis
+load('riskscore_baseline/output/moderna_boost/inputFile_with_riskscore.rda')
+dat_stage2_mapped = inputFile_with_riskscore
 dat_stage2_mapped$naive = 1-dat_stage2_mapped$nnaive
-
-# read stage 2 risk score 
-#load('riskscore_baseline/output/moderna_real/inputFile_with_riskscore.rda')
-load("/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/inputFile_with_riskscore.rda")
-dat_risk_score = inputFile_with_riskscore
-
-# read stage1 mapped data
-dat_stage1_mapped=read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv")
+# write to a csv file for Dean
+mywrite.csv(dat_stage2_mapped, file=paste0("/trials/covpn/p3001/analysis/mapping_immune_correlates/Part_C_Unblinded_Phase_Data/adata/COVID_Moderna_stage2_", format(Sys.Date(), "%Y%m%d"), "_withRiskScores"))
 
 # read stage1 analysis ready data
 dat_stage1_adata = read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/moderna_real_data_processed_with_riskscore.csv")
-
-
-# add risk score to stage 2 data
-dat_stage2_mapped$risk_score              = dat_risk_score$risk_score             [match(dat_stage2_mapped$Ptid, dat_risk_score$Ptid)]
-dat_stage2_mapped$Riskscorecohortflag     = dat_risk_score$Riskscorecohortflag    [match(dat_stage2_mapped$Ptid, dat_risk_score$Ptid)]
-dat_stage2_mapped$standardized_risk_score = dat_risk_score$standardized_risk_score[match(dat_stage2_mapped$Ptid, dat_risk_score$Ptid)]
-
+# remove two risk-related columns that are from stage 1 since we are only need one risk-related column from stage 2
+dat_stage1_adata= subset(dat_stage1_adata, select=-c(Riskscorecohortflag,standardized_risk_score))
 
 # dat_stage2_mapped has about 14K rows while dat_stage1_adata has about 29K rows
 # there are 15 ptids in stage 2 mapped data that are not in stage 1 mapped data
@@ -43,13 +32,18 @@ dat_stage2_mapped$standardized_risk_score = dat_risk_score$standardized_risk_sco
 # the exact reasons are impossible to track down
 ptids2mapped=dat_stage2_mapped$Ptid
 ptids1adata=dat_stage1_adata$Ptid
-ptids1mapped=dat_stage1_mapped$Ptid
 ptids.2minus1 =    sort(ptids2mapped[!ptids2mapped %in% ptids1adata])
+summary(ptids.2minus1)
+
+
+# read stage1 mapped data
+dat_stage1_mapped=read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv")
+ptids1mapped=dat_stage1_mapped$Ptid
 ptids.2minus1raw = sort(ptids2mapped[!ptids2mapped %in% ptids1mapped])
 ptids.stage1.rawonly=setdiff(ptids.2minus1, ptids.2minus1raw)
-summary(ptids.2minus1)
 summary(ptids.2minus1raw)
 summary(ptids.stage1.rawonly)
+
 
 # merge stage2 mapped data and stage1 adata to create stage 2 adata
 # keep all rows
@@ -452,7 +446,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "db7b8d7ca9dc94a6fd058518dc58146e",
+               moderna_boost = "7a731af74b8b1f48c16603c9b6d8d4da",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }
