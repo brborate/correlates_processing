@@ -76,7 +76,7 @@ sum(subset(dat_stage2, T, Stage2SamplingInd), na.rm=T)
 # missingness: there are 7 ptids that are 0 in EventIndPrimaryOmicronBD29 but NA in EventIndOmicronBD29
 # these 7 are removed in this step, if they are not, they will also be removed by EventTimeOmicronBD29 >= 7 since they have EventTimeOmicronBD29=0
 dat_stage2$ph1.BD29 = with(dat_stage2, !(EventIndOmicronBD29==1 & EventIndPrimaryOmicronBD29==0))
-# dat_stage2$ph1.BD29 = T
+dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 | is.na(dat_stage2$ph1.BD29) # otherwise we have NA in this variable
 
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29, useNA="ifany"))
 with(subset(dat_stage2, ph1.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
@@ -96,7 +96,7 @@ sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
 # dat_stage1_adata[dat_stage1_adata$Ptid %in% c("US3252458", "US3702017"),c("URMforsubcohortsampling","demo.stratum")]
 # dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),c("URMforsubcohortsampling","demo.stratum")]
 
-dat_stage2$ph1.BD29 = with(dat_stage2,
+dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & 
                              !is.na(naive) & !is.na(Trt) &
                              !is.na(Perprotocol) & !is.na(BDPerprotocol) &
                              !is.na(NumberdaysBD1toBD29) &
@@ -187,6 +187,8 @@ nrow(subset(dat_stage2, ph1.BD29))
 
 # don't allow NA in ph1 riskscore, but there may be NA in the whole dataset, probably due to missing data covariates
 stopifnot(all(!is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])))
+subset(dat_stage2, ph1.BD29 & is.na(risk_score))
+summary(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])
 
 ## a transient solution to missing risk score
 # if (any(is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"]))) {
@@ -447,7 +449,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "bb2f964025ec347ec3f7970682542484",
+               moderna_boost = "69b9fbb09f35e640f3ac0fc19529d589",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }
