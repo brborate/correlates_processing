@@ -70,13 +70,22 @@ sum(subset(dat_stage2, T, Stage2SamplingInd), na.rm=T)
 ###############################################################################
 # define ph1.BD29
 
-# remove cases that are not EventIndPrimaryOmicronBD29 but are EventIndOmicronBD29
-#   to focus on primary cases and not include the cases based on the more relaxed criterion
-# if we want to study EventIndOmicronBD29, then comment this line out, uncomment the next line, and make a new dataset
-# missingness: there are 7 ptids that are 0 in EventIndPrimaryOmicronBD29 but NA in EventIndOmicronBD29
-# these 7 are removed in this step, if they are not, they will also be removed by EventTimeOmicronBD29 >= 7 since they have EventTimeOmicronBD29=0
-dat_stage2$ph1.BD29 = with(dat_stage2, !(EventIndOmicronBD29==1 & EventIndPrimaryOmicronBD29==0))
-dat_stage2$ph1.BD29 = dat_stage2$ph1.BD29 | is.na(dat_stage2$ph1.BD29) # otherwise we have NA in this variable
+dat_stage2$ph1.BD29 = TRUE
+
+# to focus on primary cases and not include the cases based on the more relaxed criterion
+# if we want to study EventIndOmicronBD29, then do something different here
+
+# exclude ptids that EventIndOmicronBD29==1 but EventIndPrimaryOmicronBD29==0 
+dat_stage2$ph1.BD29[with(dat_stage2, EventIndOmicronBD29==1 & EventIndPrimaryOmicronBD29==0)] = FALSE 
+
+# there are 3 ptids that are EventIndOmicronBD29 is not NA (1) and EventIndPrimaryOmicronBD29 is NA
+#   excluded
+dat_stage2$ph1.BD29[with(dat_stage2, !is.na(EventIndOmicronBD29) & is.na(EventIndPrimaryOmicronBD29))] = FALSE 
+
+# there are 7 ptids that EventIndOmicronBD29 is NA and EventIndPrimaryOmicronBD29 is not NA (0)
+#   excluded. They may also be excluded by EventTimeOmicronBD29 >= 7 since they have EventTimeOmicronBD29=0
+dat_stage2$ph1.BD29[with(dat_stage2, is.na(EventIndOmicronBD29) & !is.na(EventIndPrimaryOmicronBD29))] = FALSE 
+
 
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29, useNA="ifany"))
 with(subset(dat_stage2, ph1.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
@@ -449,7 +458,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "69b9fbb09f35e640f3ac0fc19529d589",
+               moderna_boost = "aaf91e2aefcceba55ffd48cb21c8d332",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }
