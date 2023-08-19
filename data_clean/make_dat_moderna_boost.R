@@ -19,7 +19,7 @@ load('riskscore_baseline/output/moderna_boost/inputFile_with_riskscore.rda')
 dat_stage2_mapped = inputFile_with_riskscore
 dat_stage2_mapped$naive = 1-dat_stage2_mapped$nnaive
 # write to a csv file for Dean
-mywrite.csv(dat_stage2_mapped, file=paste0("/trials/covpn/p3001/analysis/mapping_immune_correlates/Part_C_Unblinded_Phase_Data/adata/COVID_Moderna_stage2_", format(Sys.Date(), "%Y%m%d"), "_withRiskScores"))
+mywrite.csv(dat_stage2_mapped, file=paste0("/trials/covpn/p3001/analysis/mapping_immune_correlates/Part_C_Unblinded_Phase_Data/adata/COVID_Moderna_stage2_mapped_", format(Sys.Date(), "%Y%m%d"), "_withRiskScores"))
 print(paste0("write /trials/covpn/p3001/analysis/mapping_immune_correlates/Part_C_Unblinded_Phase_Data/adata/COVID_Moderna_stage2_", format(Sys.Date(), "%Y%m%d"), "_withRiskScores"))
 
 # read stage1 analysis ready data
@@ -74,6 +74,9 @@ dat_stage2$ph1.BD29 = TRUE
 
 # to focus on primary cases and not include the cases based on the more relaxed criterion
 # if we want to study EventIndOmicronBD29, then do something different here
+
+with(dat_stage2, table(is.na(EventIndPrimaryOmicronBD29), is.na(EventIndOmicronBD29), naive))
+with(dat_stage2, table(EventIndPrimaryOmicronBD29, EventIndOmicronBD29, naive))
 
 # exclude ptids that EventIndOmicronBD29==1 but EventIndPrimaryOmicronBD29==0 
 dat_stage2$ph1.BD29[with(dat_stage2, EventIndOmicronBD29==1 & EventIndPrimaryOmicronBD29==0)] = FALSE 
@@ -405,6 +408,7 @@ assertthat::assert_that(
 
 
 ###############################################################################
+# no need to convert, the mapped data has both unconverted and converted ID50 variables
 # using the same conversion factor for stage 1 analyses to make variables comparable to stage 1 analyses
 # units will still be labeled as AU/ml
 ###############################################################################
@@ -414,16 +418,16 @@ assertthat::assert_that(
 
 # ID50 in the mapped data have not been converted
 
-for (a in assay_metadata$assay) {
-  for (t in c("BD1","BD29","DD1") ) {
-    convf = ifelse(
-      # ID50 assays:
-      startsWith(a,"pseudoneutid50"), 0.242/1.04, 
-      # other assays:
-      1) 
-    dat_stage2[[t %.% a]] <- dat_stage2[[t %.% a]] + log10(convf)
-  }
-}
+# for (a in assay_metadata$assay) {
+#   for (t in c("BD1","BD29","DD1") ) {
+#     convf = ifelse(
+#       # ID50 assays:
+#       startsWith(a,"pseudoneutid50"), 0.242/1.04, 
+#       # other assays:
+#       1) 
+#     dat_stage2[[t %.% a]] <- dat_stage2[[t %.% a]] + log10(convf)
+#   }
+# }
 
 
 ###############################################################################
@@ -458,7 +462,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "aaf91e2aefcceba55ffd48cb21c8d332",
+               moderna_boost = "6e1cf72a97ec6610655ed87e532984fb",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }

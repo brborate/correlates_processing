@@ -1,6 +1,6 @@
 # Note that for moderna_boost, use make_dat_moderna_boost.R
 #Sys.setenv(TRIAL = "moderna_real")
-#Sys.setenv(TRIAL = "janssen_pooled_partA")
+#Sys.setenv(TRIAL = "janssen_partA_VL")
 
 renv::activate(here::here())
 
@@ -20,8 +20,16 @@ library(glue)
 if (make_riskscore) {
     # inputFile_with_riskscore.Rdata is made from riskscore_analysis, which calls preprocess and makes risk scores
     # for janssen_pooled_partA_VL, use risk score from janssen_pooled_partA
-    load(file = glue('riskscore_baseline/output/{sub("_VL", "" , Sys.getenv("TRIAL"))}/inputFile_with_riskscore.RData'))
-    dat_proc <- inputFile_with_riskscore    
+    if (TRIAL=="janssen_partA_VL") {
+      load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
+      dat_raw=read.csv(mapped_data)
+      dat_proc = preprocess(dat_raw, study_name)   
+      stopifnot(dat_proc$Ptid==inputFile_with_riskscore$Ptid)
+      dat_proc$risk_score = inputFile_with_riskscore$risk_score
+    } else {
+      load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
+      dat_proc <- inputFile_with_riskscore    
+    }
 } else {
     dat_raw=read.csv(mapped_data)
     dat_proc = preprocess(dat_raw, study_name)   
@@ -29,10 +37,11 @@ if (make_riskscore) {
 
 
 
-########################################################################################################
+colnames(dat_proc)[1] <- "Ptid" 
+
 
 # define new endpoint variables for ENSEMBLE. this is required for weights
-if(attr(config, "config") %in% c("janssen_pooled_partA_VL", "janssen_na_partA_VL", "janssen_la_partA_VL", "janssen_sa_partA_VL")) {
+if(TRIAL == "janssen_partA_VL") {
   # add Spike physics-chemical weighted Hamming distance pertaining to the sequence that was obtained from the first chronological sample
   dat.tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_sieve_cases_firstseq_v10a.csv")
   dat_proc$seq1.spike.weighted.hamming = dat.tmp$seq1.hdist.zspace.spike[match(dat_proc$Ptid, dat.tmp$USUBJID)]
@@ -50,11 +59,28 @@ if(attr(config, "config") %in% c("janssen_pooled_partA_VL", "janssen_na_partA_VL
     dat_proc[["seq1.spike.weighted.hamming.hotdeck"%.%i]] = dat.tmp[["seq1.spike.weighted.hamming.hotdeck"%.%i]][match(dat_proc$Ptid, dat.tmp$Ptid)]
     dat_proc[["seq1.variant.hotdeck"%.%i]] = dat.tmp[["seq1.variant.hotdeck"%.%i]][match(dat_proc$Ptid, dat.tmp$Ptid)]
   }
-  
 }
 
 
-colnames(dat_proc)[1] <- "Ptid" 
+
+# marker missingness pattern
+
+# RSA
+with(subset(dat_proc,Trt==1 & Region==2), table(!is.na(Day29pseudoneutid50), !is.na(Day29pseudoneutid50_Beta), EventIndPrimaryHasVLD29 & seq1.variant=="Beta"))
+
+# LatAm
+with(subset(dat_proc,Trt==1 & Region==1), table(!is.na(Day29pseudoneutid50), !is.na(Day29pseudoneutid50_Gamma), EventIndPrimaryHasVLD29 & seq1.variant=="Gamma"))
+with(subset(dat_proc,Trt==1 & Region==1), table(!is.na(Day29pseudoneutid50), !is.na(Day29pseudoneutid50_Lambda), EventIndPrimaryHasVLD29 & seq1.variant=="Lambda"))
+with(subset(dat_proc,Trt==1 & Region==1), table(!is.na(Day29pseudoneutid50), !is.na(Day29pseudoneutid50_Mu), EventIndPrimaryHasVLD29 & seq1.variant=="Mu"))
+with(subset(dat_proc,Trt==1 & Region==1), table(!is.na(Day29pseudoneutid50), !is.na(Day29pseudoneutid50_Zeta), EventIndPrimaryHasVLD29 & seq1.variant=="Zeta"))
+
+
+
+
+
+
+
+
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
 dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08m=60, PROFISCOV=NA, stop("unknown study_name 1")))
   

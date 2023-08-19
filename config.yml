@@ -28,7 +28,7 @@ moderna_real: &moderna_real
   study_name: COVE
 
 moderna_boost: &moderna_boost
-  mapped_data: /trials/covpn/p3001/analysis/mapping_immune_correlates/Part_C_Unblinded_Phase_Data/adata/COVID_Moderna_stage2_20230802.csv
+  mapped_data: /trials/covpn/p3001/analysis/mapping_immune_correlates/Part_C_Unblinded_Phase_Data/adata/COVID_Moderna_stage2_mapped_20230818.csv
   assay_metadata: ../correlates_reporting3/assay_metadata/moderna_boost_assay_metadata.csv
   study_name: COVEBoost
 
@@ -149,26 +149,29 @@ janssen_sa_partA:
 
 ## ENSMEMBLE part A datasets for variants analysis
 ## endpoints without VL are censored
+## Analysis will be repeated for variants so no region-specific datasets are needed
 
-janssen_pooled_partA_VL: 
-  <<: *janssen_trial_partA
+janssen_partA_VL: 
+  inherits: janssen_trial_partA
+  mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_realdata_PartAComplete_20230809_variant.csv 
   subset_variable: None
   subset_value: All
+  assay_metadata: ../correlates_reporting2/assay_metadata/janssen_partA_VL_assay_metadata.csv
 
-janssen_na_partA_VL: 
-  <<: *janssen_trial_partA
-  subset_variable: Region
-  subset_value: 0
-
-janssen_la_partA_VL: 
-  <<: *janssen_trial_partA
-  subset_variable: Region
-  subset_value: 1
-
-janssen_sa_partA_VL: 
-  <<: *janssen_trial_partA
-  subset_variable: Region
-  subset_value: 2
+# janssen_na_partA_VL: 
+#   <<: *janssen_trial_partA
+#   subset_variable: Region
+#   subset_value: 0
+# 
+# janssen_la_partA_VL: 
+#   <<: *janssen_trial_partA
+#   subset_variable: Region
+#   subset_value: 1
+# 
+# janssen_sa_partA_VL: 
+#   <<: *janssen_trial_partA
+#   subset_variable: Region
+#   subset_value: 2
 
 
 # ENSMEMBLE EUA datasets

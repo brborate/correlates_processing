@@ -5,7 +5,10 @@ library(digest)
 set.seed(98109)
  
 
-config <- config::get(config = Sys.getenv("TRIAL"))
+if(Sys.getenv("TRIAL")=="") stop("Environmental variable TRIAL not defined!!!!!!!!!!!!!!")
+TRIAL=Sys.getenv("TRIAL")
+
+config <- config::get(config = TRIAL)
 for(opt in names(config)){
   eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
 }
@@ -38,7 +41,7 @@ include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08m")
 # all values on BAU or IU
 # LOQ can not be NA, it is needed for computing delta
 
-if (study_name %in% c("vat08b")) {
+if (TRIAL %in% c("vat08b", "janssen_pooled_partA_VL")) {
   # switch to csv metadata file for assay
   assay_metadata = read.csv(paste0(dirname(attr(config,"file")),"/",config$assay_metadata))
   assays=assay_metadata$assay
