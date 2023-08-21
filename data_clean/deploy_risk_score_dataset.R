@@ -7,14 +7,23 @@ renv::activate(project = here::here())
 
 config <- config::get(config = Sys.getenv("TRIAL"))
 
+library(stringr)
+
 if (attr(config, "config")=="moderna_boost") {
-  library(stringr)
   data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d")))
   # Request reason for adata update from deployer!
   cat("Enter reason for updating adata without quotes (this text will be added to adata/README change log): ")
   args <- readLines(con = "stdin", n = 1)
   update_reason <- paste0(Sys.Date(), " ", args[[1]]) 
   deploy_path =      "/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/"
+  
+} else if (attr(config, "config")=="janssen_partA_VL") {
+  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d")))
+  # Request reason for adata update from deployer!
+  cat("Enter reason for updating adata without quotes (this text will be added to adata/README change log): ")
+  args <- readLines(con = "stdin", n = 1)
+  update_reason <- paste0(Sys.Date(), " ", args[[1]]) 
+  deploy_path =      "/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/"
   
 } else {
   # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:

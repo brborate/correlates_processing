@@ -1,10 +1,11 @@
-# Note that for moderna_boost, use make_dat_moderna_boost.R
 #Sys.setenv(TRIAL = "moderna_real")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
 
 renv::activate(here::here())
 
 source(here::here("_common.R"))
+
+if (TRIAL=="moderna_real") stop("For moderna_boost, run make_dat_moderna_boost.R") 
 
 library(tidyverse)
 library(Hmisc) # wtd.quantile, cut2
@@ -18,9 +19,9 @@ library(glue)
 # read mapped data with risk score added
 
 if (make_riskscore) {
-    # inputFile_with_riskscore.Rdata is made from riskscore_analysis, which calls preprocess and makes risk scores
-    # for janssen_pooled_partA_VL, use risk score from janssen_pooled_partA
+    # load inputFile_with_riskscore.Rdata, a product of make riskscore_analysis, which calls preprocess and makes risk scores
     if (TRIAL=="janssen_partA_VL") {
+      # for janssen_partA_VL, use risk score from janssen_pooled_partA
       load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
       dat_raw=read.csv(mapped_data)
       dat_proc = preprocess(dat_raw, study_name)   
@@ -36,9 +37,7 @@ if (make_riskscore) {
 }
 
 
-
 colnames(dat_proc)[1] <- "Ptid" 
-
 
 # define new endpoint variables for ENSEMBLE. this is required for weights
 if(TRIAL == "janssen_partA_VL") {
@@ -60,25 +59,6 @@ if(TRIAL == "janssen_partA_VL") {
     dat_proc[["seq1.variant.hotdeck"%.%i]] = dat.tmp[["seq1.variant.hotdeck"%.%i]][match(dat_proc$Ptid, dat.tmp$Ptid)]
   }
 }
-
-
-
-# marker missingness pattern
-
-# RSA
-with(subset(dat_proc,Trt==1 & Region==2), table(!is.na(Day29pseudoneutid50), !is.na(Day29pseudoneutid50_Beta), EventIndPrimaryHasVLD29 & seq1.variant=="Beta"))
-
-# LatAm
-with(subset(dat_proc,Trt==1 & Region==1), table(!is.na(Day29pseudoneutid50), !is.na(Day29pseudoneutid50_Gamma), EventIndPrimaryHasVLD29 & seq1.variant=="Gamma"))
-with(subset(dat_proc,Trt==1 & Region==1), table(!is.na(Day29pseudoneutid50), !is.na(Day29pseudoneutid50_Lambda), EventIndPrimaryHasVLD29 & seq1.variant=="Lambda"))
-with(subset(dat_proc,Trt==1 & Region==1), table(!is.na(Day29pseudoneutid50), !is.na(Day29pseudoneutid50_Mu), EventIndPrimaryHasVLD29 & seq1.variant=="Mu"))
-with(subset(dat_proc,Trt==1 & Region==1), table(!is.na(Day29pseudoneutid50), !is.na(Day29pseudoneutid50_Zeta), EventIndPrimaryHasVLD29 & seq1.variant=="Zeta"))
-
-
-
-
-
-
 
 
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
@@ -314,8 +294,8 @@ dat_proc <- dat_proc %>%
 max.tps=max(dat_proc$tps.stratum,na.rm=T)
 dat_proc$Wstratum = dat_proc$tps.stratum
 tps.cnt=max.tps+1
-if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA",
-                                 "janssen_pooled_partA_VL", "janssen_na_partA_VL", "janssen_la_partA_VL", "janssen_sa_partA_VL")) {
+if(TRIAL %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA",
+                                 "janssen_partA_VL")) {
   # cases sampling weights are also conditional on region and age group
   dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0 & Region==0 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
   dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0 & Region==0 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
@@ -391,7 +371,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
     must_have_assays <- c("bindSpike", "bindRBD")
     
 } else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")) {
-    if (endsWith(attr(config, "config"),"ADCP")) {
+    if (endsWith(TRIAL,"ADCP")) {
         must_have_assays <- c("ADCP")    
     } else {
         must_have_assays <- c("bindSpike", "bindRBD")
@@ -401,19 +381,19 @@ if (study_name %in% c("COVE", "MockCOVE")) {
     must_have_assays <- c("bindSpike")
     
 } else if (study_name %in% c("AZD1222")) {
-    if (attr(config, "config")=="azd1222") {
+    if (TRIAL=="azd1222") {
         must_have_assays <- c("pseudoneutid50")
         
-    } else if (attr(config, "config")=="azd1222_bAb") {
+    } else if (TRIAL=="azd1222_bAb") {
         must_have_assays <- c("bindSpike")
         
     } else stop("need to define must_have_assays")
     
 } else if (study_name %in% c("PROFISCOV")) {
-    if (attr(config, "config")=="profiscov") {
+    if (TRIAL=="profiscov") {
         must_have_assays <- c("bindSpike")
         
-    } else if (attr(config, "config")=="profiscov_lvmn") {
+    } else if (TRIAL=="profiscov_lvmn") {
         must_have_assays <- c("liveneutmn50")
         
     } else stop("need to define must_have_assays")
@@ -457,16 +437,26 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19", "VAT08m")
     }
         
 } else if (study_name=="ENSEMBLE") {
-    if (contain(attr(config, "config"), "EUA")) {
+    if (contain(TRIAL, "EUA")) {
         # require baseline
         dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
             with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
             complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
-    } else if (contain(attr(config, "config"), "partA")) {
+    } else if (contain(TRIAL, "partA")) {
         # does not require baseline
         dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
             with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
             complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)])
+        
+        # define a second TwophasesampInd variable for variant-specific marker data
+        # ph2 means having ancestral in US, beta in RSA, and G/L/M/Z in LatAm
+        if (TRIAL=="janssen_partA_VL"){
+          dat_proc[["TwophasesampIndD29variant"]] = 
+            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+            with(dat_proc, Region==0 & !is.na(Day29pseudoneutid50) | 
+                   Region==2 & !is.na(Day29pseudoneutid50_Beta) | 
+                   Region==1 & (!is.na(Day29pseudoneutid50_Gamma) | !is.na(Day29pseudoneutid50_Lambda) | !is.na(Day29pseudoneutid50_Mu) | !is.na(Day29pseudoneutid50_Zeta)) )
+        }  
     }
     
 } else stop("unknown study_name 8")
@@ -489,8 +479,48 @@ for (tp in rev(timepoints)) { # rev is just so that digest passes
         msg = "missing wt.D for D analyses ph1 subjects")
 }
 
-# special code for adding ph1.D91 for profiscov_lvmn
+## additional weights
 
+## define weights by TwophasesampIndD29variant
+if (TRIAL=="janssen_partA_VL") {
+  # define a new Wstratum.variant variable that depends on the variant type
+  variant.labels=unique(dat_proc$seq1.variant)[-1] # "Ancestral.Lineage", "Epsilon" ...
+  # add x000 to case Wstratum.variant using seq1.variant.hotdeck1
+  dat_proc$Wstratum.variant = dat_proc$Wstratum + 1000 * match(dat_proc$seq1.variant.hotdeck1, variant.labels)
+  # set controls Wstratum.variant to Wstratum
+  dat_proc$Wstratum.variant = ifelse(is.na(dat_proc$Wstratum.variant), dat_proc$Wstratum, dat_proc$Wstratum.variant)
+  
+  tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
+  wts_table <- with(dat_proc[tmp,], table(Wstratum.variant, TwophasesampIndD29variant))
+  wts_norm <- rowSums(wts_table) / wts_table[, 2]
+  dat_proc[["wt.D29variant"]] <- wts_norm[dat_proc$Wstratum.variant %.% ""]
+  # the step above assigns weights for some subjects outside ph1. the next step makes them NA
+  dat_proc[["wt.D29variant"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.D29variant"]], NA) 
+  #no need to define ph1.D29variant since it is identical to ph1.D29
+  dat_proc[["ph2.D29variant"]] = dat_proc[["ph1.D29"]] & dat_proc$TwophasesampIndD29variant
+  
+  assertthat::assert_that(
+    all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum.variant))[["wt.D29variant"]])),
+    msg = "missing wt.D for D analyses ph1 subjects")
+
+  # there is no need to impute markers for ph2.D29variant because of the following
+  
+  # RSA
+  # non-cases
+  # everyone who has Beta also has ancestral
+  with(subset(dat_proc,Trt==1 & ph1.D29 & Region==2 & !EventIndPrimaryHasVLD29), table(!is.na(Day29pseudoneutid50), !is.na(Day29pseudoneutid50_Beta)))
+  
+  # LatAm
+  # non-cases
+  # everyone who has Gamma also has ancestral
+  with(subset(dat_proc,Trt==1 & ph1.D29 & Region==1 & !EventIndPrimaryHasVLD29), table(!is.na(Day29pseudoneutid50), !is.na(Day29pseudoneutid50_Gamma)))
+  # same set of ptids have Gamma etc
+  with(subset(dat_proc,Trt==1 & ph1.D29 & Region==1 & !EventIndPrimaryHasVLD29), table(!is.na(Day29pseudoneutid50_Gamma), !is.na(Day29pseudoneutid50_Mu)))
+  with(subset(dat_proc,Trt==1 & ph1.D29 & Region==1 & !EventIndPrimaryHasVLD29), table(!is.na(Day29pseudoneutid50_Gamma), !is.na(Day29pseudoneutid50_Zeta)))
+  with(subset(dat_proc,Trt==1 & ph1.D29 & Region==1 & !EventIndPrimaryHasVLD29), table(!is.na(Day29pseudoneutid50_Gamma), !is.na(Day29pseudoneutid50_Lambda)))
+  # cases
+  with(subset(dat_proc,Trt==1 & ph1.D29 & Region==1), table(!is.na(Day29pseudoneutid50_Gamma), !is.na(Day29pseudoneutid50_Mu), EventIndPrimaryHasVLD29, useNA="ifany"))
+}
 
 # Starting at 1 day post D29 visit
 if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")) {
@@ -574,7 +604,7 @@ assertthat::assert_that(
 
 
 ###############################################################################
-# impute missing neut biomarkers in ph2
+# impute missing biomarkers in ph2 (assay imputation)
 #     impute vaccine and placebo, baseline pos and neg, separately
 #     use all assays (not bindN)
 #     use baseline, each time point, but not Delta
@@ -587,10 +617,15 @@ for (tp in rev(timepoints)) {
     n.imp <- 1
     dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD"%.%tp) == 1)
     
-    if(two_marker_timepoints) {
-        imp.markers=c(outer(c("B", if(tp==timepoints[2]) "Day"%.%timepoints else "Day"%.%tp), assays, "%.%"))
+    if (TRIAL=="janssen_partA_VL") {
+      # assays include many more assays than what are needed here
+      imp.markers=c(outer(c("B", "Day"%.%tp), c("bindSpike", "bindRBD", "pseudoneutid50"), "%.%"))
     } else {
+      if(two_marker_timepoints) {
+        imp.markers=c(outer(c("B", if(tp==timepoints[2]) "Day"%.%timepoints else "Day"%.%tp), assays, "%.%"))
+      } else {
         imp.markers=c(outer(c("B", "Day"%.%tp), assays, "%.%"))
+      }
     }
         
     for (trt in unique(dat_proc$Trt)) {
@@ -628,16 +663,24 @@ for (tp in rev(timepoints)) {
 
 
 # some trials have N some don't
-includeN = switch(study_name, COVE=1, MockCOVE=1, ENSEMBLE=1, MockENSEMBLE=1, PREVENT19=0, AZD1222=0, VAT08m=0, PROFISCOV=1, stop("unknown study_name 9"))
-assays.includeN=c(assays, if(includeN==1) "bindN")
-
+if (is.null(config$assay_metadata)) {
+  includeN = switch(study_name, COVE=1, MockCOVE=1, ENSEMBLE=1, MockENSEMBLE=1, PREVENT19=0, AZD1222=0, VAT08m=0, PROFISCOV=1, stop("unknown study_name 9"))
+  assays.includeN=c(assays, if(includeN==1) "bindN")
+} else {
+  if (TRIAL=="janssen_partA_VL") {
+    assays.includeN = c("bindSpike", "bindRBD", "pseudoneutid50", "bindN")
+  } else {
+    assays.includeN = assays
+  }
+}
+  
 
 ###############################################################################
 # converting binding variables from AU to IU for binding assays
+# COVE only 
 # moderna_real immune.csv file is not on international scale and other mapped data files are
 ###############################################################################
 
-# COVE only 
 if(study_name=="COVE"){
     # conversion is only done for COVE for backward compatibility
     convf=c(bindSpike=0.0090, bindRBD=0.0272, bindN=0.0024, pseudoneutid50=0.242, pseudoneutid80=1.502)    
@@ -651,10 +694,10 @@ if(study_name=="COVE"){
 
 ###############################################################################
 # censoring values below LLOD
+# COVE and mock only
 # after COVE, the mapped data comes censored
 ###############################################################################
 
-# COVE and mock only
 
 if(study_name %in% c("COVE", "MockCOVE")){
     for (a in assays.includeN) {
@@ -701,10 +744,10 @@ if(two_marker_timepoints) {
 # add two synthetic ID50 markers by region for ensemble
 ###############################################################################
 
-if(attr(config, "config") %in% c("janssen_pooled_EUA", "janssen_na_EUA", "janssen_la_EUA", "janssen_sa_EUA")) {
+if(TRIAL %in% c("janssen_pooled_EUA", "janssen_na_EUA", "janssen_la_EUA", "janssen_sa_EUA")) {
     dat_proc$Day29pseudoneutid50la = ifelse(dat_proc$Day29pseudoneutid50-0.124 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.124 )
     dat_proc$Day29pseudoneutid50sa = ifelse(dat_proc$Day29pseudoneutid50-0.556 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.556 )
-} else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
+} else if(TRIAL %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
     dat_proc$Day29pseudoneutid50la = ifelse(dat_proc$Day29pseudoneutid50-0.255 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.255 )
     dat_proc$Day29pseudoneutid50sa = ifelse(dat_proc$Day29pseudoneutid50-0.458 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.458 )
 }
@@ -727,7 +770,7 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 # impute covariates if necessary
 # do this last so as not to change earlier values
     
-if (attr(config, "config") %in% c("profiscov", "profiscov_lvmn")) {
+if (TRIAL %in% c("profiscov", "profiscov_lvmn")) {
     # no risk score for profiscov, but some have missing BMI
     n.imp <- 1
     dat.tmp.impute <- dat_proc
@@ -764,7 +807,7 @@ if (attr(config, "config") %in% c("profiscov", "profiscov_lvmn")) {
 # special handling 
 ###############################################################################
 
-if(attr(config, "config") == "moderna_real") {
+if(TRIAL == "moderna_real") {
     # modernal is a special case because how the code and manuscripts co-evolve 
     # special handling is required to preserve the imputed values used for manuscripts
     # the following steps treat seroneg and seropos populations separately and combine them to form one dataset
@@ -789,18 +832,18 @@ if(attr(config, "config") == "moderna_real") {
     stopifnot(all(dat_proc$Bserostatus == 1))
     dat_proc=rbind(dat_proc, dat_proc.tmp)
     
-} else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA",
-                                        "janssen_pooled_partA_VL", "janssen_na_partA_VL", "janssen_la_partA_VL", "janssen_sa_partA_VL")) {
+} else if(TRIAL %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA",
+                                        "janssen_partA_VL")) {
 
     # add bin numbers associated with the biweekly calendar period of each endpoint 
     dat.eventtime.bin = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_time_to_event_v6a.csv")
-    if (attr(config, "config") %in% c("janssen_pooled_partA", "janssen_pooled_partA_VL")) {
+    if (TRIAL %in% c("janssen_pooled_partA", "janssen_partA_VL")) {
         v.name="endpointDate.Bin.Pooled"
-    } else if (attr(config, "config") %in% c("janssen_na_partA", "janssen_na_partA_VL")) {
+    } else if (TRIAL %in% c("janssen_na_partA")) {
         v.name="endpointDate.Bin.usa"
-    } else if (attr(config, "config") %in% c("janssen_la_partA", "janssen_la_partA_VL")) {
+    } else if (TRIAL %in% c("janssen_la_partA")) {
         v.name="endpointDate.Bin.latin.america"
-    } else if (attr(config, "config") %in% c("janssen_sa_partA", "janssen_sa_partA_VL")) {
+    } else if (TRIAL %in% c("janssen_sa_partA")) {
         v.name="endpointDate.Bin.rsa"
     } 
     dat_proc$endpointDate.Bin = dat.eventtime.bin[[v.name]][match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
@@ -824,12 +867,12 @@ if(attr(config, "config") == "moderna_real") {
     # dat_proc$sieve.status = dat.eventtime.bin$status[match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
     
     
-} else if(attr(config, "config") == "prevent19") {
+} else if(TRIAL == "prevent19") {
     # first round submission lacks RBD
     # for revision, RBD is added. To reproduce results from the first revision, we add RBD to the analysis-ready dataset, instead of reprocessing all three markers together, which will lead to changes in imputed values in the first two markers
     source(here::here("data_clean", "add_rbd_to_prevent19_analysisreadydataset.R"))
     
-} else if(attr(config, "config") == "azd1222") {
+} else if(TRIAL == "azd1222") {
     # add bindSpike data for multivariable modles
     source(here::here("data_clean", "add_bindSpike_to_azd1222ID50_analysisreadydataset.R"))
     
@@ -843,7 +886,7 @@ if(attr(config, "config") == "moderna_real") {
 
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
-    tmp = switch(attr(config, "config"),
+    tmp = switch(TRIAL,
          moderna_mock = "34e297fd1a736f9320573ff1d2944904",
          moderna_real = "d3c6ba603acb12e3fb4c9ea08554284a",
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
@@ -852,17 +895,18 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
+         janssen_partA_VL = "822f1ed4829ad5c56ffaf75b1f1d3103",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
 
 
-
-write_csv(dat_proc, file = here("data_clean", paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")))
+data_name = paste0(TRIAL, "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv")
+write_csv(dat_proc, file = here("data_clean", data_name))
 
 
 # split into Senior and non-Senior for ENSEMBLE partA
-if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
-    write_csv(subset(dat_proc, Age>=60), file = here("data_clean", paste0(attr(config, "config"), "senior_data_processed_with_riskscore.csv")))
-    write_csv(subset(dat_proc, Age< 60),  file = here("data_clean", paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore.csv")))
+if(TRIAL %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
+    write_csv(subset(dat_proc, Age>=60), file = here("data_clean", paste0(TRIAL, "senior_data_processed_with_riskscore.csv")))
+    write_csv(subset(dat_proc, Age< 60),  file = here("data_clean", paste0(TRIAL, "nonsenior_data_processed_with_riskscore.csv")))
 }

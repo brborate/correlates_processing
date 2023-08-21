@@ -41,18 +41,17 @@ include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08m")
 # all values on BAU or IU
 # LOQ can not be NA, it is needed for computing delta
 
-if (TRIAL %in% c("vat08b", "janssen_pooled_partA_VL")) {
-  # switch to csv metadata file for assay
+if (!is.null(config$assay_metadata)) {
+  # use metadata file for assay when exists
   assay_metadata = read.csv(paste0(dirname(attr(config,"file")),"/",config$assay_metadata))
   assays=assay_metadata$assay
-  # created named lists for assay metadata to easier access, e.g. assay_labels_short["bindSpike"]
+  
+  # created named lists for assay metadata for easier access, e.g. assay_labels_short["bindSpike"]
   assay_labels=assay_metadata$assay_label; names(assay_labels)=assays
   assay_labels_short=assay_metadata$assay_label_short; names(assay_labels_short)=assays
-  llox_labels=assay_metadata$llox_label; names(llox_labels)=assays
+  uloqs=assay_metadata$uloq; names(uloqs)=assays
   lloqs=assay_metadata$lloq; names(lloqs)=assays
-  lods=assay_metadata$lod; names(lods)=assays
-  lloxs=ifelse(llox_labels=="lloq", lloqs, lods)
-  
+  llods=assay_metadata$lod; names(llods)=assays
   
 } else {
   names(assays)=assays # add names so that lapply results will have names
