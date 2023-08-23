@@ -59,7 +59,6 @@ if (attr(config, "config")=="moderna_boost") {
   
 }
 
-
   
 # Copy current deployed copy of risk score dataset in adata to archive 
 # Remove current deployed copy of risk score dataset from adata
@@ -86,6 +85,7 @@ for(j in 1:length(data_name_amended)){
     file.copy(from = paste0("data_clean/", data_name_amended[j], ".csv"),
               to = paste0(deploy_path, data_name_amended[j], ".csv"),
               copy.date = TRUE)
+    cat(paste0("Deployed to: ", deploy_path, data_name_amended[j], ".csv\n"))
     
     # Add reason for adata update to README file!
     write(update_reason, file = paste0(deploy_path, "readme.txt"), append=TRUE)

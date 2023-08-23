@@ -47,7 +47,8 @@ if(TRIAL == "janssen_partA_VL") {
   dat_proc$seq1.log10vl = dat.tmp$seq1.log10vl[match(dat_proc$Ptid, dat.tmp$USUBJID)]
   dat_proc$seq1.variant = dat.tmp$seq1.who.label[match(dat_proc$Ptid, dat.tmp$USUBJID)]
   
-  # create a new event indicator variable that censors cases without VL, which also include all non-molec confirmed cases
+  # create a new event indicator variable that censors cases without VL, 
+  # which also include all non-molec confirmed cases
   dat_proc$EventIndPrimaryHasVLD29 = dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
   dat_proc$EventIndPrimaryHasVLD29[is.na(dat_proc$seq1.log10vl)] = 0
   dat_proc$EventIndPrimaryD29 = dat_proc$EventIndPrimaryHasVLD29
@@ -481,7 +482,8 @@ for (tp in rev(timepoints)) { # rev is just so that digest passes
 
 ## additional weights
 
-## define weights by TwophasesampIndD29variant
+## define weights by TwophasesampIndD29variant, to be used for competing risk weights
+
 if (TRIAL=="janssen_partA_VL") {
   # define a new Wstratum.variant variable that depends on the variant type
   variant.labels=unique(dat_proc$seq1.variant)[-1] # "Ancestral.Lineage", "Epsilon" ...
@@ -654,13 +656,63 @@ for (tp in rev(timepoints)) {
     dat_proc[dat_proc[["TwophasesampIndD"%.%tp]]==1, imp.markers] <-
       dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD"%.%tp]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
     
-    # imputed values of missing markers merged properly for all individuals in the two phase sample?
     assertthat::assert_that(
       all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD"%.%tp]] == 1, imp.markers])),
       msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
     )
 }
 
+
+# for janssen_partA_VL, make 10 copies of ID50 variant markers
+if (TRIAL=="janssen_partA_VL") {
+  
+  n.imp <- 10
+  
+  # RSA, impute Beta for non-Beta cases
+  select = with(dat_proc, Trt==1 & Bserostatus==0 & Region==2 & TwophasesampIndD29==1)
+  imp.markers = c("Day29bindSpike", "Day29bindRBD", "Day29pseudoneutid50", "Day29pseudoneutid50_Beta")
+  imp <- dat_proc[select, ] %>% select(all_of(imp.markers)) %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+  # add 10 new columns for each of the variants to the dataset
+  for (i in 1:10) {
+    dat_proc[["Day29pseudoneutid50_Beta"%.%i]] = NA
+    dat_proc[select, "Day29pseudoneutid50_Beta"%.%i] = mice::complete(imp, action=i)[,4]
+  } 
+  assertthat::assert_that(
+    all(complete.cases(dat_proc[select, "Day29pseudoneutid50_Beta"%.%1:10])),
+    msg = "janssen_partA_VL: imputed values of missing markers merged properly for all individuals in the two phase sample?"
+  )
+  
+  # LatAm, impute four variants
+  select = with(dat_proc, Trt==1 & Bserostatus==0 & Region==1 & TwophasesampIndD29==1)
+  imp.markers = c("Day29bindSpike", "Day29bindRBD", "Day29pseudoneutid50", "Day29pseudoneutid50_Gamma", "Day29pseudoneutid50_Lambda", "Day29pseudoneutid50_Mu", "Day29pseudoneutid50_Zeta")
+  imp <- dat_proc[select, ] %>% select(all_of(imp.markers)) %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+  # add 10 new columns for each of the variants to the dataset
+  for (i in 1:10) {
+    dat_proc[["Day29pseudoneutid50_Gamma"%.%i]] = NA
+    dat_proc[select, "Day29pseudoneutid50_Gamma"%.%i] = mice::complete(imp, action=i)[,4]
+    dat_proc[["Day29pseudoneutid50_Lambda"%.%i]] = NA
+    dat_proc[select, "Day29pseudoneutid50_Lambda"%.%i] = mice::complete(imp, action=i)[,5]
+    dat_proc[["Day29pseudoneutid50_Mu"%.%i]] = NA
+    dat_proc[select, "Day29pseudoneutid50_Mu"%.%i]    = mice::complete(imp, action=i)[,6]
+    dat_proc[["Day29pseudoneutid50_Zeta"%.%i]] = NA
+    dat_proc[select, "Day29pseudoneutid50_Zeta"%.%i]  = mice::complete(imp, action=i)[,7]
+  } 
+
+  assertthat::assert_that(
+    all(complete.cases(dat_proc[select, c("Day29pseudoneutid50_Gamma"%.%1:10, "Day29pseudoneutid50_Lambda"%.%1:10, "Day29pseudoneutid50_Mu"%.%1:10, "Day29pseudoneutid50_Zeta"%.%1:10)])),
+    msg = "janssen_partA_VL: imputed values of missing markers merged properly for all individuals in the two phase sample?"
+  )
+}  
+  
+  
+###############################################################################
+# transformation of the markers
+###############################################################################
+
+
+# converting binding variables from AU to IU for binding assays
+# COVE only 
+# moderna_real immune.csv file is not on international scale and other mapped data files are
 
 # some trials have N some don't
 if (is.null(config$assay_metadata)) {
@@ -673,13 +725,7 @@ if (is.null(config$assay_metadata)) {
     assays.includeN = assays
   }
 }
-  
 
-###############################################################################
-# converting binding variables from AU to IU for binding assays
-# COVE only 
-# moderna_real immune.csv file is not on international scale and other mapped data files are
-###############################################################################
 
 if(study_name=="COVE"){
     # conversion is only done for COVE for backward compatibility
@@ -692,12 +738,9 @@ if(study_name=="COVE"){
 }
 
 
-###############################################################################
 # censoring values below LLOD
 # COVE and mock only
 # after COVE, the mapped data comes censored
-###############################################################################
-
 
 if(study_name %in% c("COVE", "MockCOVE")){
     for (a in assays.includeN) {
@@ -715,10 +758,7 @@ if(study_name %in% c("COVE", "MockCOVE")){
 
 
 
-###############################################################################
 # define delta for dat_proc
-###############################################################################
-
 # assuming data has been censored at the lower limit
 # thus no need to do, say, lloq censoring
 # but there is a need to do uloq censoring before computing delta
@@ -740,9 +780,7 @@ if(two_marker_timepoints) {
 
 
 
-###############################################################################
 # add two synthetic ID50 markers by region for ensemble
-###############################################################################
 
 if(TRIAL %in% c("janssen_pooled_EUA", "janssen_na_EUA", "janssen_la_EUA", "janssen_sa_EUA")) {
     dat_proc$Day29pseudoneutid50la = ifelse(dat_proc$Day29pseudoneutid50-0.124 < log10(lloqs["pseudoneutid50"]), log10(lloqs["pseudoneutid50"]/2), dat_proc$Day29pseudoneutid50-0.124 )
@@ -769,7 +807,8 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 ###############################################################################
 # impute covariates if necessary
 # do this last so as not to change earlier values
-    
+###############################################################################
+
 if (TRIAL %in% c("profiscov", "profiscov_lvmn")) {
     # no risk score for profiscov, but some have missing BMI
     n.imp <- 1
@@ -895,7 +934,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
-         janssen_partA_VL = "822f1ed4829ad5c56ffaf75b1f1d3103",
+         janssen_partA_VL = "638e96c6ee6b8566ff491f828aab081c",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
