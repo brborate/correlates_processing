@@ -449,15 +449,16 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19", "VAT08m")
             with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
             complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)])
         
-        # define a second TwophasesampInd variable for variant-specific marker data
-        # ph2 means having ancestral in US, beta in RSA, and G/L/M/Z in LatAm
-        if (TRIAL=="janssen_partA_VL"){
-          dat_proc[["TwophasesampIndD29variant"]] = 
-            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-            with(dat_proc, Region==0 & !is.na(Day29pseudoneutid50) | 
-                   Region==2 & !is.na(Day29pseudoneutid50_Beta) | 
-                   Region==1 & (!is.na(Day29pseudoneutid50_Gamma) | !is.na(Day29pseudoneutid50_Lambda) | !is.na(Day29pseudoneutid50_Mu) | !is.na(Day29pseudoneutid50_Zeta)) )
-        }  
+        # no need for this anymore b/c we impute Beta ID50 for non-Beta COVID in RSA, for example
+        # # define a second TwophasesampInd variable for variant-specific marker data
+        # # ph2 means having ancestral in US, beta in RSA, and G/L/M/Z in LatAm
+        # if (TRIAL=="janssen_partA_VL"){
+        #   dat_proc[["TwophasesampIndD29variant"]] = 
+        #     with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+        #     with(dat_proc, Region==0 & !is.na(Day29pseudoneutid50) | 
+        #            Region==2 & !is.na(Day29pseudoneutid50_Beta) | 
+        #            Region==1 & (!is.na(Day29pseudoneutid50_Gamma) | !is.na(Day29pseudoneutid50_Lambda) | !is.na(Day29pseudoneutid50_Mu) | !is.na(Day29pseudoneutid50_Zeta)) )
+        # }  
     }
     
 } else stop("unknown study_name 8")
@@ -482,8 +483,6 @@ for (tp in rev(timepoints)) { # rev is just so that digest passes
 
 ## additional weights
 
-## define weights by TwophasesampIndD29variant, to be used for competing risk weights
-
 if (TRIAL=="janssen_partA_VL") {
   # define a new Wstratum.variant variable that depends on the variant type
   variant.labels=unique(dat_proc$seq1.variant)[-1] # "Ancestral.Lineage", "Epsilon" ...
@@ -493,13 +492,13 @@ if (TRIAL=="janssen_partA_VL") {
   dat_proc$Wstratum.variant = ifelse(is.na(dat_proc$Wstratum.variant), dat_proc$Wstratum, dat_proc$Wstratum.variant)
   
   tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
-  wts_table <- with(dat_proc[tmp,], table(Wstratum.variant, TwophasesampIndD29variant))
+  wts_table <- with(dat_proc[tmp,], table(Wstratum.variant, TwophasesampIndD29))
   wts_norm <- rowSums(wts_table) / wts_table[, 2]
   dat_proc[["wt.D29variant"]] <- wts_norm[dat_proc$Wstratum.variant %.% ""]
   # the step above assigns weights for some subjects outside ph1. the next step makes them NA
   dat_proc[["wt.D29variant"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.D29variant"]], NA) 
   #no need to define ph1.D29variant since it is identical to ph1.D29
-  dat_proc[["ph2.D29variant"]] = dat_proc[["ph1.D29"]] & dat_proc$TwophasesampIndD29variant
+  dat_proc[["ph2.D29variant"]] = dat_proc[["ph1.D29"]] & dat_proc$TwophasesampIndD29
   
   assertthat::assert_that(
     all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum.variant))[["wt.D29variant"]])),
@@ -934,7 +933,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
-         janssen_partA_VL = "638e96c6ee6b8566ff491f828aab081c",
+         # janssen_partA_VL = "638e96c6ee6b8566ff491f828aab081c",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
