@@ -619,19 +619,6 @@ ggsave_custom <- function(filename = default_name(plot),
 }
 
 
-# x is the marker values
-# assay is one of assays, e.g. pseudoneutid80
-report.assay.values=function(x, assay){
-    lars.quantiles=seq(0,1,length.out=30) [round(seq.int(1, 30, length.out = 10))]
-    sens.quantiles=c(0.15, 0.85)
-    # cannot have different lengths for different assays, otherwise downstream code may break
-    fixed.values = log10(c("500"=500, "1000"=1000))#, "llod/2"=unname(llods[assay]/2))) # llod/2 may not be in the observed values
-    out=sort(c(quantile(x, c(lars.quantiles,sens.quantiles), na.rm=TRUE), fixed.values))    
-    out
-    #out[!duplicated(out)] # unique strips away the names. But don't take out duplicates because 15% may be needed and because we may want the same number of values for each assay
-}
-#report.assay.values (dat.vac.seroneg[["Daytp1pseudoneutid80"]], "pseudoneutid80")
-
 
 preprocess=function(dat_raw, study_name) {
     dat_proc=dat_raw

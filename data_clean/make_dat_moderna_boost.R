@@ -462,7 +462,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "6e1cf72a97ec6610655ed87e532984fb",
+               moderna_boost = "99eb7b371a3fdd82ff086bce7b600bad",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }

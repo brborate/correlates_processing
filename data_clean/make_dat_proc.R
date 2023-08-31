@@ -43,18 +43,27 @@ colnames(dat_proc)[1] <- "Ptid"
 if(TRIAL == "janssen_partA_VL") {
   # add Spike physics-chemical weighted Hamming distance pertaining to the sequence that was obtained from the first chronological sample
   dat.tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_sieve_cases_firstseq_v10a.csv")
+  
   dat_proc$seq1.spike.weighted.hamming = dat.tmp$seq1.hdist.zspace.spike[match(dat_proc$Ptid, dat.tmp$USUBJID)]
   dat_proc$seq1.log10vl = dat.tmp$seq1.log10vl[match(dat_proc$Ptid, dat.tmp$USUBJID)]
   dat_proc$seq1.variant = dat.tmp$seq1.who.label[match(dat_proc$Ptid, dat.tmp$USUBJID)]
   
+  for (a in c("seq1.variant", "seq1.spike.weighted.hamming", "seq1.rbd.weighted.hamming", "seq1.ntd.weighted.hamming", "seq1.s1.weighted.hamming",
+              "dms.seq1.RBD_antibody_escape_score", 'dms.seq1.RBD_antibody_escape_score_cluster2', 'dms.seq1.RBD_antibody_escape_score_cluster6', 
+              'dms.seq1.RBD_antibody_escape_score_cluster7', 'dms.seq1.RBD_antibody_escape_score_cluster8', 'pdb.seq1.mhrp.ab.dist.RBD4',
+              'pdb.seq1.mhrp.ab.dist.RBD7', 'pdb.seq1.mhrp.ab.dist.RBD8', 'pdb.seq1.mhrp.ab.dist.NTD13')) {
+    print(a %in% names(dat.tmp))
+  }
+  
+  
   # create a new event indicator variable that censors cases without VL, 
   # which also include all non-molec confirmed cases
   dat_proc$EventIndPrimaryHasVLD29 = dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
-  dat_proc$EventIndPrimaryHasVLD29[is.na(dat_proc$seq1.log10vl)] = 0
+  dat_proc$EventIndPrimaryHasVLD29[is.na(dat_proc$seq1.log10vl) & !is.na(dat_proc$EventIndPrimaryHasVLD29)] = 0 # if EventIndPrimaryHasVLD29 is NA, this will remain NA
   dat_proc$EventIndPrimaryD29 = dat_proc$EventIndPrimaryHasVLD29
   
   # add hotdeck imputed hamming and variant info
-  dat.tmp = read.csv("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/janssen_pooled_partA_seq1_variant_hamming_hotdeck.csv")
+  dat.tmp = read.csv("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/janssen_pooled_partA_seq1_variant_hamming_hotdeckv5.csv")
   for(i in 1:10){
     dat_proc[["seq1.spike.weighted.hamming.hotdeck"%.%i]] = dat.tmp[["seq1.spike.weighted.hamming.hotdeck"%.%i]][match(dat_proc$Ptid, dat.tmp$Ptid)]
     dat_proc[["seq1.variant.hotdeck"%.%i]] = dat.tmp[["seq1.variant.hotdeck"%.%i]][match(dat_proc$Ptid, dat.tmp$Ptid)]
@@ -904,6 +913,12 @@ if(TRIAL == "moderna_real") {
     # dat_proc$sieve.time = dat.eventtime.bin$time[match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
     # dat_proc$sieve.status = dat.eventtime.bin$status[match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
     
+    # run hotdeck imputation from Peter
+    if (TRIAL=="janssen_partA_VL") {
+      source(here::here("data_clean/RunhotdeckMI_janssen_partA_VL.R"))
+    }
+    
+    
     
 } else if(TRIAL == "prevent19") {
     # first round submission lacks RBD
@@ -933,7 +948,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
-         # janssen_partA_VL = "638e96c6ee6b8566ff491f828aab081c",
+         janssen_partA_VL = "54e46712613b04ac01e2b902cc86302e",
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
