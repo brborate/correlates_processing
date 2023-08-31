@@ -1,4 +1,5 @@
 library(kyotil)
+library(copcor)
 library(methods)
 library(dplyr)
 library(digest)
