@@ -146,7 +146,7 @@ anspooledPDB13dists <- hotdeckMI(X,Delta,Z1discrete,Z1scalar,Z2,epsilonz,V,epsil
 #####
 # Write out the data set:
 
-dat <- read.csv("T:/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/janssen_la_partA_data_processed_with_riskscore_v3.csv")
+dat <- dat_proc
 # Youyi, this is the line where the columns with hotdeck variables need to be deleted.
 kp <- dat[,"Bserostatus"]==0 & dat[,"Perprotocol"]==1 & dat[,"ph1.D29"]
 newdat <- cbind(dat,matrix(rep(NA,nrow(dat)*140),ncol=140))
