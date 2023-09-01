@@ -23,16 +23,27 @@ begin=Sys.time()
 if (make_riskscore) {
     # load inputFile_with_riskscore.Rdata, a product of make riskscore_analysis, which calls preprocess and makes risk scores
     if (TRIAL=="janssen_partA_VL") {
-      # for janssen_partA_VL, use risk score from janssen_pooled_partA
-      load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
-      dat_raw=read.csv(mapped_data)
+      # for janssen_partA_VL, borrow risk score from janssen_pooled_partA
+      # read hot deck data
+      tmp = sub(".csv","_hotdeck.csv",mapped_data)
+      if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("file not exists: "%.%tmp)
       dat_proc = preprocess(dat_raw, study_name)   
+      load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
       stopifnot(dat_proc$Ptid==inputFile_with_riskscore$Ptid)
       dat_proc$risk_score = inputFile_with_riskscore$risk_score
+      
+      # create a new event indicator variable that censors cases without VL, which also include all non-molec confirmed cases
+      # required for defining weights
+      dat_proc$EventIndPrimaryHasVLD29 = dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
+      dat_proc$EventIndPrimaryHasVLD29[is.na(dat_proc$seq1.log10vl) & !is.na(dat_proc$EventIndPrimaryHasVLD29)] = 0 # if EventIndPrimaryHasVLD29 is NA, this will remain NA
+      dat_proc$EventIndPrimaryD29 = dat_proc$EventIndPrimaryHasVLD29
+      
     } else {
       load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
       dat_proc <- inputFile_with_riskscore    
+      
     }
+  
 } else {
     dat_raw=read.csv(mapped_data)
     dat_proc = preprocess(dat_raw, study_name)   
@@ -40,43 +51,6 @@ if (make_riskscore) {
 
 
 colnames(dat_proc)[1] <- "Ptid" 
-
-# define new endpoint variables for ENSEMBLE. this is required for weights
-if(TRIAL == "janssen_partA_VL") {
-  # add Spike physics-chemical weighted Hamming distance pertaining to the sequence that was obtained from the first chronological sample
-  dat.tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_sieve_cases_firstseq_v10a.csv")
-  
-  # dat_proc$seq1.spike.weighted.hamming = dat.tmp$seq1.hdist.zspace.spike[match(dat_proc$Ptid, dat.tmp$USUBJID)]
-  dat_proc$seq1.log10vl = dat.tmp$seq1.log10vl[match(dat_proc$Ptid, dat.tmp$USUBJID)]
-  dat_proc$seq1.variant = dat.tmp$seq1.who.label[match(dat_proc$Ptid, dat.tmp$USUBJID)]
-  
-  new.names = c("seq1.spike.weighted.hamming", "seq1.s1.weighted.hamming", "seq1.rbd.weighted.hamming", "seq1.ntd.weighted.hamming",
-                "dms.seq1.RBD_antibody_escape_score", 'dms.seq1.RBD_antibody_escape_score_cluster2', 'dms.seq1.RBD_antibody_escape_score_cluster6', 'dms.seq1.RBD_antibody_escape_score_cluster7', 'dms.seq1.RBD_antibody_escape_score_cluster8', 
-                'pdb.seq1.mhrp.ab.dist.RBD4', 'pdb.seq1.mhrp.ab.dist.RBD7', 'pdb.seq1.mhrp.ab.dist.RBD8', 
-                'pdb.seq1.mhrp.ab.dist.NTD13')
-  old.names = c('seq1.hdist.zspace.spike', 'seq1.hdist.zspace.s1', 'seq1.hdist.zspace.rbd', 'seq1.hdist.zspace.ntd', 
-                'seq1.RBD_antibody_escape_score', 'seq1.RBD_antibody_escape_score_cluster2', 'seq1.RBD_antibody_escape_score_cluster6', 'seq1.RBD_antibody_escape_score_cluster7', 'seq1.RBD_antibody_escape_score_cluster8',
-                'seq1.mhrp.ab.dist.RBD4', 'seq1.mhrp.ab.dist.RBD7', 'seq1.mhrp.ab.dist.RBD8',
-                'seq1.mhrp.ab.dist.NTD13' )
-  for (i in 1:length(new.names)) {
-    dat_proc[[new.names[i]]] = dat.tmp[[old.names[i]]][match(dat_proc$Ptid, dat.tmp$USUBJID)]
-  }
-  
-  
-  # create a new event indicator variable that censors cases without VL, 
-  # which also include all non-molec confirmed cases
-  dat_proc$EventIndPrimaryHasVLD29 = dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
-  dat_proc$EventIndPrimaryHasVLD29[is.na(dat_proc$seq1.log10vl) & !is.na(dat_proc$EventIndPrimaryHasVLD29)] = 0 # if EventIndPrimaryHasVLD29 is NA, this will remain NA
-  dat_proc$EventIndPrimaryD29 = dat_proc$EventIndPrimaryHasVLD29
-  
-  # add hotdeck imputed hamming and variant info
-  dat.tmp = read.csv("/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/janssen_pooled_partA_seq1_variant_hamming_hotdeckv5.csv")
-  for(i in 1:10){
-    dat_proc[["seq1.spike.weighted.hamming.hotdeck"%.%i]] = dat.tmp[["seq1.spike.weighted.hamming.hotdeck"%.%i]][match(dat_proc$Ptid, dat.tmp$Ptid)]
-    dat_proc[["seq1.variant.hotdeck"%.%i]] = dat.tmp[["seq1.variant.hotdeck"%.%i]][match(dat_proc$Ptid, dat.tmp$Ptid)]
-  }
-}
-
 
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
 dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08m=60, PROFISCOV=NA, stop("unknown study_name 1")))
@@ -504,30 +478,31 @@ for (tp in rev(timepoints)) { # rev is just so that digest passes
 ## additional weights
 
 if (TRIAL=="janssen_partA_VL") {
-  # define a new Wstratum.variant variable that depends on the variant type
-  variant.labels=unique(dat_proc$seq1.variant)[-1] # "Ancestral.Lineage", "Epsilon" ...
   
-  dat_proc$seq1.variant.for.wt = dat_proc$seq1.variant
-  with(dat_proc, table(seq1.variant.for.wt,EventIndPrimaryD29)) # 172 cases has no seq
-  dat_proc$seq1.variant.for.wt[is.na(dat_proc$seq1.variant.for.wt) & dat_proc$EventIndPrimaryD29==1] = "Ancestral.Lineage"
-  
-  # add x000 to case Wstratum.variant 
-  dat_proc$Wstratum.variant = dat_proc$Wstratum + 1000 * match(dat_proc[["seq1.variant.for.wt"]], variant.labels)
-  # set non-cases Wstratum.variant to Wstratum
-  dat_proc$Wstratum.variant = ifelse(dat_proc$EventIndPrimaryD29==1, dat_proc$Wstratum.variant, dat_proc$Wstratum)
-  with(subset(dat_proc, ph1.D29), table(Wstratum.variant, EventIndPrimaryD29))
+  # # define a new Wstratum.variant variable that depends on the variant type
+  # variant.labels=unique(dat_proc$seq1.variant)[-1] # "Ancestral.Lineage", "Epsilon" ...
+  # 
+  # dat_proc$seq1.variant.for.wt = dat_proc$seq1.variant
+  # with(dat_proc, table(seq1.variant.for.wt,EventIndPrimaryD29)) # 172 cases has no seq
+  # dat_proc$seq1.variant.for.wt[is.na(dat_proc$seq1.variant.for.wt) & dat_proc$EventIndPrimaryD29==1] = "Ancestral.Lineage"
+  # 
+  # # add x000 to case Wstratum.variant 
+  # dat_proc$Wstratum.variant = dat_proc$Wstratum + 1000 * match(dat_proc[["seq1.variant.for.wt"]], variant.labels)
+  # # set non-cases Wstratum.variant to Wstratum
+  # dat_proc$Wstratum.variant = ifelse(dat_proc$EventIndPrimaryD29==1, dat_proc$Wstratum.variant, dat_proc$Wstratum)
+  # with(subset(dat_proc, ph1.D29), table(Wstratum.variant, EventIndPrimaryD29))
 
   tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
-  wts_table <- with(dat_proc[tmp,], table(Wstratum.variant, TwophasesampIndD29variant))
+  wts_table <- with(dat_proc[tmp,], table(Wstratum, TwophasesampIndD29variant))
   wts_norm <- rowSums(wts_table) / wts_table[, 2]
-  dat_proc[["wt.D29variant"]] <- wts_norm[dat_proc$Wstratum.variant %.% ""]
+  dat_proc[["wt.D29variant"]] <- wts_norm[dat_proc$Wstratum %.% ""]
   # the step above assigns weights for some subjects outside ph1. the next step makes them NA
   dat_proc[["wt.D29variant"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.D29variant"]], NA) 
   #no need to define ph1.D29variant since it is identical to ph1.D29
   dat_proc[["ph2.D29variant"]] = dat_proc[["ph1.D29"]] & dat_proc$TwophasesampIndD29
   
   assertthat::assert_that(
-    all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum.variant))[["wt.D29variant"]])),
+    all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D29variant"]])),
     msg = "missing wt.D for D analyses ph1 subjects")
   
   # there is no need to impute markers for ph2.D29variant as shown below:

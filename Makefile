@@ -29,6 +29,9 @@ risk_analysis:
 make_clean_data: 
 ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
 	Rscript data_clean/make_dat_moderna_boost.R
+else ifeq ($(TRIAL),$(filter $(TRIAL), janssen_partA_VL))
+	Rscript data_clean/RunhotdeckMI_janssen_partA_VL.R
+	Rscript data_clean/make_dat_proc.R
 else 
 	Rscript data_clean/make_dat_proc.R
 endif

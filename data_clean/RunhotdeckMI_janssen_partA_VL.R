@@ -29,15 +29,45 @@
 #pdb.seq1.mhrp.ab.dist.RBD8
 #pdb.seq1.mhrp.ab.dist.NTD13
 
-# source('T:/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/code/HotdeckMultipleImputationRfunction_v5.R')
+
+################################################################################
+
+renv::activate(here::here())
+
+source(here::here("_common.R")) # config
+
+library(copcor) # hotdeckMI
 
 # dat <- read.csv("T:/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/janssen_pooled_partA_data_processed_with_riskscore.csv")
-# Youyi: this should be the data file with all of the genotype marks in it and none of the hotdeck variables in it, although the code
-# still works with hotdeck variables in it
+# this should be the data file with all of the genotype marks in it and none of the hotdeck variables in it
 
-dat = dat_proc
+dat=read.csv(mapped_data)
 
-kp <- dat[,"Bserostatus"]==0 & dat[,"Perprotocol"]==1 & dat[,"ph1.D29"]
+# add Spike physics-chemical weighted Hamming distance pertaining to the sequence that was obtained from the first chronological sample
+dat.tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_sieve_cases_firstseq_v10a.csv")
+
+dat$seq1.log10vl = dat.tmp$seq1.log10vl[match(dat$Subjectid, dat.tmp$USUBJID)]
+dat$seq1.variant = dat.tmp$seq1.who.label[match(dat$Subjectid, dat.tmp$USUBJID)]
+
+new.names = c("seq1.spike.weighted.hamming", "seq1.s1.weighted.hamming", "seq1.rbd.weighted.hamming", "seq1.ntd.weighted.hamming",
+              "dms.seq1.RBD_antibody_escape_score", 'dms.seq1.RBD_antibody_escape_score_cluster2', 'dms.seq1.RBD_antibody_escape_score_cluster6', 'dms.seq1.RBD_antibody_escape_score_cluster7', 'dms.seq1.RBD_antibody_escape_score_cluster8', 
+              'pdb.seq1.mhrp.ab.dist.RBD4', 'pdb.seq1.mhrp.ab.dist.RBD7', 'pdb.seq1.mhrp.ab.dist.RBD8', 
+              'pdb.seq1.mhrp.ab.dist.NTD13')
+old.names = c('seq1.hdist.zspace.spike', 'seq1.hdist.zspace.s1', 'seq1.hdist.zspace.rbd', 'seq1.hdist.zspace.ntd', 
+              'seq1.RBD_antibody_escape_score', 'seq1.RBD_antibody_escape_score_cluster2', 'seq1.RBD_antibody_escape_score_cluster6', 'seq1.RBD_antibody_escape_score_cluster7', 'seq1.RBD_antibody_escape_score_cluster8',
+              'seq1.mhrp.ab.dist.RBD4', 'seq1.mhrp.ab.dist.RBD7', 'seq1.mhrp.ab.dist.RBD8',
+              'seq1.mhrp.ab.dist.NTD13' )
+for (i in 1:length(new.names)) {
+  dat[[new.names[i]]] = dat.tmp[[old.names[i]]][match(dat$Subjectid, dat.tmp$USUBJID)]
+}
+
+
+
+################################################################################
+
+# this kp is used at the end as well, so don't redefine it
+kp <- dat[,"Bserostatus"]==0 & dat[,"Perprotocol"]==1 & !is.na(dat[,"EventIndPrimaryIncludeNotMolecConfirmedD29"])
+
 dat <- dat[kp,]
 X <- rep(1,nrow(dat))
 Delta <- ifelse(dat[,"EventIndPrimaryIncludeNotMolecConfirmedD29"]==1 & !is.na(dat[,"seq1.log10vl"]),1,0)
@@ -55,7 +85,7 @@ Z1discrete <- as.matrix(cbind(dat[,"Trt"],courseregion))
 # Turn off the effect of Z1scalar on the nearest neighbors, as Avscalar is much more relevant and should carry the weight
 Z1scalar <- matrix(rep(1,nrow(dat)),ncol=1)
 Z2 <- dat[,"Day29pseudoneutid50"]
-epsilonz <- ifelse(dat[,"TwophasesampIndD29"],1,0)
+epsilonz <- ifelse(!is.na(Z2),1,0) 
 epsilonz[dat[,"Trt"]==0] <- 0
 Z2[epsilonz==0] <- NA
 
@@ -147,17 +177,17 @@ anspooledPDB13dists <- hotdeckMI(X,Delta,Z1discrete,Z1scalar,Z2,epsilonz,V,epsil
 # Write out the data set:
 
 dat <- dat_proc
-# Youyi, this is the line where the columns with hotdeck variables need to be deleted.
-kp <- dat[,"Bserostatus"]==0 & dat[,"Perprotocol"]==1 & dat[,"ph1.D29"]
+# use the same kp defined at the beginning
 newdat <- cbind(dat,matrix(rep(NA,nrow(dat)*140),ncol=140))
 j <- 0
+# add new columns 
 for (i in 1:nrow(newdat)) {
-if (kp[i]) {
-j <- j+1
-newdat[i,(ncol(dat)+1):(ncol(dat)+140)] <- c(anspooledspikedists[[1]][j,],anspooledS1dists[[1]][j,],anspooledRBDdists[[1]][j,],
-anspooledNTDdists[[1]][j,],anspooledvariant[[1]][j,],anspooledDMSdists[[1]][j,],anspooledDMS2dists[[1]][j,],anspooledDMS6dists[[1]][j,],
-anspooledDMS7dists[[1]][j,],anspooledDMS8dists[[1]][j,],anspooledPDB4dists[[1]][j,],anspooledPDB7dists[[1]][j,],anspooledPDB8dists[[1]][j,],
-anspooledPDB13dists[[1]][j,]) }}
+  if (kp[i]) {
+    j <- j+1
+    newdat[i,(ncol(dat)+1):(ncol(dat)+140)] <- c(anspooledspikedists[[1]][j,],anspooledS1dists[[1]][j,],anspooledRBDdists[[1]][j,],
+                                                 anspooledNTDdists[[1]][j,],anspooledvariant[[1]][j,],anspooledDMSdists[[1]][j,],anspooledDMS2dists[[1]][j,],anspooledDMS6dists[[1]][j,],
+                                                 anspooledDMS7dists[[1]][j,],anspooledDMS8dists[[1]][j,],anspooledPDB4dists[[1]][j,],anspooledPDB7dists[[1]][j,],anspooledPDB8dists[[1]][j,],
+                                                 anspooledPDB13dists[[1]][j,]) }}
 
 
 newcolnames <- c("seq1.spike.weighted.hamming.hotdeck1","seq1.spike.weighted.hamming.hotdeck2","seq1.spike.weighted.hamming.hotdeck3",
@@ -226,9 +256,8 @@ newcolnames <- c("seq1.spike.weighted.hamming.hotdeck1","seq1.spike.weighted.ham
                  "pdb.seq1.mhrp.ab.dist..NTD13.hotdeck9","pdb.seq1.mhrp.ab.dist..NTD13.hotdeck10")
 
 colnames(newdat) <- c(colnames(dat),newcolnames)
-# write.csv(newdat, file="T:/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/janssen_pooled_partA_seq1_variant_hamming_hotdeckv7.csv")
+write.csv(newdat, file=sub(".csv","_hotdeck.csv",mapped_data))
 
-dat_proc = newdat
 
 # # Data checks:
 # 
@@ -242,4 +271,4 @@ dat_proc = newdat
 # # a handful have "" imputed!
 # sum(table(mt[kp,"seq1.variant.hotdeck10"]))
 # # Same story
-# subset(mt, Ptid=="VAC31518COV3001-3009010")
+# subset(mt, Subjectid=="VAC31518COV3001-3009010")
