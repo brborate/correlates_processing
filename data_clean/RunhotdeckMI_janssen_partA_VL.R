@@ -30,14 +30,17 @@
 #pdb.seq1.mhrp.ab.dist.NTD13
 
 
-################################################################################
-
 begin=Sys.time()
 print(begin)
 
+
+################################################################################
+# get mapped_data through config
+# alternatively, mapped_data = '/trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_PartAComplete_variant_mapped_20230809.csv'
+
 renv::activate(here::here()) # this manages the R packages
 
-source(here::here("_common.R")) # this loads mapped_data through config, which takes values like /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_PartAComplete_variant_mapped_20230809.csv 
+source(here::here("_common.R")) # manages config
 
 # quit if the output file already exists
 outputfile_name = sub(".csv","_hotdeck.csv",mapped_data)
@@ -45,9 +48,9 @@ if (file.exists(outputfile_name)) quit()
 
 
 ################################################################################
+# run hotdeck imputation
 
-
-library(copcor) # hotdeckMI
+library(copcor) # needed for hotdeckMI, can be installed from github CoVPN/copcor
 
 dat_mapped=read.csv(mapped_data)
 
