@@ -36,6 +36,10 @@ renv::activate(here::here())
 
 source(here::here("_common.R")) # config
 
+# quit if the output file already exists
+if (file.exists(sub(".csv","_hotdeck.csv",mapped_data))) quit()
+
+
 library(copcor) # hotdeckMI
 
 # dat <- read.csv("T:/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/janssen_pooled_partA_data_processed_with_riskscore.csv")
