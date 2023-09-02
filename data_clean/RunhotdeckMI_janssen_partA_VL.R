@@ -35,19 +35,19 @@
 begin=Sys.time()
 print(begin)
 
-renv::activate(here::here())
+renv::activate(here::here()) # this manages the R packages
 
-source(here::here("_common.R")) # config
+source(here::here("_common.R")) # this loads mapped_data through config, which takes values like /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_PartAComplete_variant_mapped_20230809.csv 
 
 # quit if the output file already exists
 outputfile_name = sub(".csv","_hotdeck.csv",mapped_data)
 if (file.exists(outputfile_name)) quit()
 
 
-library(copcor) # hotdeckMI
+################################################################################
 
-# dat_mapped <- read.csv("T:/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/janssen_pooled_partA_data_processed_with_riskscore.csv")
-# this should be the data file with all of the genotype marks in it and none of the hotdeck variables in it
+
+library(copcor) # hotdeckMI
 
 dat_mapped=read.csv(mapped_data)
 
