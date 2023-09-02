@@ -37,7 +37,8 @@ renv::activate(here::here())
 source(here::here("_common.R")) # config
 
 # quit if the output file already exists
-if (file.exists(sub(".csv","_hotdeck.csv",mapped_data))) quit()
+outputfile_name = sub(".csv","_hotdeck.csv",mapped_data)
+if (file.exists(outputfile_name)) quit()
 
 
 library(copcor) # hotdeckMI
@@ -260,7 +261,7 @@ newcolnames <- c("seq1.spike.weighted.hamming.hotdeck1","seq1.spike.weighted.ham
                  "pdb.seq1.mhrp.ab.dist..NTD13.hotdeck9","pdb.seq1.mhrp.ab.dist..NTD13.hotdeck10")
 
 colnames(newdat) <- c(colnames(dat),newcolnames)
-write.csv(newdat, file=sub(".csv","_hotdeck.csv",mapped_data))
+write.csv(newdat, file=outputfile_name)
 
 
 # # Data checks:
