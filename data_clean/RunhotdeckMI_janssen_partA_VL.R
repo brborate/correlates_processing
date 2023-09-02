@@ -35,15 +35,16 @@ print(begin)
 
 
 ################################################################################
-# get mapped_data through config
-# alternatively, mapped_data = '/trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_PartAComplete_variant_mapped_20230809.csv'
 
-renv::activate(here::here()) # this manages the R packages
+renv::activate(here::here()) # manages the R packages, optional
 
-source(here::here("_common.R")) # manages config
+# get mapped_data through config. 
+source(here::here("_common.R")) 
+# Alternatively, 
+# mapped_data = '/trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_PartAComplete_variant_mapped_20230809.csv'
 
 # quit if the output file already exists
-outputfile_name = sub(".csv","_hotdeck.csv",mapped_data)
+outputfile_name = sub(".csv", "_hotdeck.csv", mapped_data)
 if (file.exists(outputfile_name)) quit()
 
 
