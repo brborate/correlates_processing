@@ -48,9 +48,7 @@ if (file.exists(outputfile_name)) quit()
 
 
 ################################################################################
-# run hotdeck imputation
-
-library(copcor) # needed for hotdeckMI, can be installed from github CoVPN/copcor
+# read mapped data, adds sieve data
 
 dat_mapped=read.csv(mapped_data)
 
@@ -75,6 +73,9 @@ for (i in 1:length(new.names)) {
 
 
 ################################################################################
+# run hotdeck imputation
+
+library(copcor) # installed from github CoVPN/copcor, needed for hotdeckMI
 
 # this kp is used at the end as well, so don't redefine it
 kp <- dat_mapped[,"Bserostatus"]==0 & dat_mapped[,"Perprotocol"]==1 & !is.na(dat_mapped[,"EventIndPrimaryIncludeNotMolecConfirmedD29"])
