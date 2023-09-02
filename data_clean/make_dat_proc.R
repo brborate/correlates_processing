@@ -1,7 +1,7 @@
 #Sys.setenv(TRIAL = "moderna_real")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
 
-renv::activate(here::here())
+#renv::activate(here::here()) # no need b/c .Rprofile exists
 
 source(here::here("_common.R"))
 
@@ -21,15 +21,15 @@ begin=Sys.time()
 # read mapped data with risk score added
 
 if (make_riskscore) {
-    # load inputFile_with_riskscore.Rdata, a product of make riskscore_analysis, which calls preprocess and makes risk scores
     if (TRIAL=="janssen_partA_VL") {
-      # for janssen_partA_VL, borrow risk score from janssen_pooled_partA
       # read hot deck data
       tmp = sub(".csv","_hotdeck.csv",mapped_data)
-      if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("file not exists: "%.%tmp)
+      if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
       dat_proc = preprocess(dat_raw, study_name)   
+      colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
+      # borrow risk score from janssen_pooled_partA
       load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
-      stopifnot(dat_proc$Ptid==inputFile_with_riskscore$Ptid)
+      stopifnot(all(dat_proc$Ptid==inputFile_with_riskscore$Ptid))
       dat_proc$risk_score = inputFile_with_riskscore$risk_score
       
       # create a new event indicator variable that censors cases without VL, which also include all non-molec confirmed cases
@@ -37,32 +37,31 @@ if (make_riskscore) {
       dat_proc$EventIndPrimaryHasVLD29 = dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
       dat_proc$EventIndPrimaryHasVLD29[is.na(dat_proc$seq1.log10vl) & !is.na(dat_proc$EventIndPrimaryHasVLD29)] = 0 # if EventIndPrimaryHasVLD29 is NA, this will remain NA
       dat_proc$EventIndPrimaryD29 = dat_proc$EventIndPrimaryHasVLD29
+      # EventTimePrimaryD29 is set to EventIndPrimaryIncludeNotMolecConfirmedD29 in preprocess()
       
     } else {
+      # load inputFile_with_riskscore.Rdata, a product of make riskscore_analysis, which calls preprocess and makes risk scores
       load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
       dat_proc <- inputFile_with_riskscore    
-      
     }
   
 } else {
     dat_raw=read.csv(mapped_data)
     dat_proc = preprocess(dat_raw, study_name)   
+    colnames(dat_proc)[1] <- "Ptid" 
 }
 
-
-colnames(dat_proc)[1] <- "Ptid" 
-
+# define new variables
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
 dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08m=60, PROFISCOV=NA, stop("unknown study_name 1")))
   
-# hardcode AnyinfectionD1 for the mock datasets
+# for the mock datasets, hardcode AnyinfectionD1 
 if (study_name %in% c("MockENSEMBLE", "MockCOVE")) dat_proc$AnyinfectionD1=0
 
 # ethnicity labeling
 dat_proc$ethnicity <- ifelse(dat_proc$EthnicityHispanic == 1, labels.ethnicity[1], labels.ethnicity[2])
 dat_proc$ethnicity[dat_proc$EthnicityNotreported == 1 | dat_proc$EthnicityUnknown == 1] <- labels.ethnicity[3]
 dat_proc$ethnicity <- factor(dat_proc$ethnicity, levels = labels.ethnicity)
-
 
 # race labeling
 if (study_name %in% c("COVE", "MockCOVE")) {
@@ -433,13 +432,14 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19", "VAT08m")
         dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
             with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
             complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
+        
     } else if (contain(TRIAL, "partA")) {
         # does not require baseline
         dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
             with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
             complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)])
         
-        # define a second TwophasesampInd variable for variant-specific marker data
+        # define TwophasesampIndD29variant, which is same as TwophasesampIndD29 except that for the non-cases, it is limited to a subset with variant ID50
         # need this anymore b/c even though we impute, for example, Beta ID50 for non-Beta cases in RSA, not all non-cases have variant ID50s
         if (TRIAL=="janssen_partA_VL"){
           # an indicator for non-cases in the cohort
@@ -449,10 +449,10 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19", "VAT08m")
                 with(dat_proc, Region==0 & !is.na(Day29pseudoneutid50) |
                                Region==2 & !is.na(Day29pseudoneutid50_Beta) |
                                Region==1 & (!is.na(Day29pseudoneutid50_Gamma) | !is.na(Day29pseudoneutid50_Lambda) | !is.na(Day29pseudoneutid50_Mu) | !is.na(Day29pseudoneutid50_Zeta)) )
-          # TwophasesampIndD29variant is same as TwophasesampIndD29 except that for the non-cases, it is limited to a subset with variant ID50
           dat_proc$TwophasesampIndD29variant = dat_proc$TwophasesampIndD29 
           dat_proc$TwophasesampIndD29variant[select] = tmp [select]
         }
+        
     }
     
 } else stop("unknown study_name 8")
@@ -477,35 +477,21 @@ for (tp in rev(timepoints)) { # rev is just so that digest passes
 
 ## additional weights
 
-if (TRIAL=="janssen_partA_VL") {
+if (TRIAL=="janssen_partA_VL"){
+  # weights that depend on TwophasesampIndD29variant and Wstratum
   
-  # # define a new Wstratum.variant variable that depends on the variant type
-  # variant.labels=unique(dat_proc$seq1.variant)[-1] # "Ancestral.Lineage", "Epsilon" ...
-  # 
-  # dat_proc$seq1.variant.for.wt = dat_proc$seq1.variant
-  # with(dat_proc, table(seq1.variant.for.wt,EventIndPrimaryD29)) # 172 cases has no seq
-  # dat_proc$seq1.variant.for.wt[is.na(dat_proc$seq1.variant.for.wt) & dat_proc$EventIndPrimaryD29==1] = "Ancestral.Lineage"
-  # 
-  # # add x000 to case Wstratum.variant 
-  # dat_proc$Wstratum.variant = dat_proc$Wstratum + 1000 * match(dat_proc[["seq1.variant.for.wt"]], variant.labels)
-  # # set non-cases Wstratum.variant to Wstratum
-  # dat_proc$Wstratum.variant = ifelse(dat_proc$EventIndPrimaryD29==1, dat_proc$Wstratum.variant, dat_proc$Wstratum)
-  # with(subset(dat_proc, ph1.D29), table(Wstratum.variant, EventIndPrimaryD29))
-
-  tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
+  tmp = with(dat_proc, get("EarlyendpointD29")==0 & Perprotocol==1 & get("EventTimePrimaryD29") >= 7)
   wts_table <- with(dat_proc[tmp,], table(Wstratum, TwophasesampIndD29variant))
   wts_norm <- rowSums(wts_table) / wts_table[, 2]
   dat_proc[["wt.D29variant"]] <- wts_norm[dat_proc$Wstratum %.% ""]
   # the step above assigns weights for some subjects outside ph1. the next step makes them NA
-  dat_proc[["wt.D29variant"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.D29variant"]], NA) 
+  dat_proc[["wt.D29variant"]] = ifelse(with(dat_proc, get("EarlyendpointD29")==0 & Perprotocol==1 & get("EventTimePrimaryD29")>=7), dat_proc[["wt.D29variant"]], NA) 
   #no need to define ph1.D29variant since it is identical to ph1.D29
-  dat_proc[["ph2.D29variant"]] = dat_proc[["ph1.D29"]] & dat_proc$TwophasesampIndD29
+  dat_proc[["ph2.D29variant"]] = dat_proc[["ph1.D29"]] & dat_proc$TwophasesampIndD29variant
   
   assertthat::assert_that(
     all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D29variant"]])),
     msg = "missing wt.D for D analyses ph1 subjects")
-  
-  # there is no need to impute markers for ph2.D29variant as shown below:
   
   # RSA
   # non-cases
@@ -664,13 +650,13 @@ for (tp in rev(timepoints)) {
 }
 
 
-# for janssen_partA_VL, make 10 copies of ID50 variant markers
+# for janssen_partA_VL, impute 10 copies of ID50 variant markers
 if (TRIAL=="janssen_partA_VL") {
   
   n.imp <- 10
   
   # RSA, impute Beta for non-Beta cases
-  select = with(dat_proc, ph1.D29 & Region==2 & TwophasesampIndD29variant==1, drop=T)
+  select = with(dat_proc, Trt == 1 & Bserostatus==0 & Region==2 & TwophasesampIndD29variant==1, drop=T)
   imp.markers = c("Day29bindSpike", "Day29bindRBD", "Day29pseudoneutid50", "Day29pseudoneutid50_Beta")
   imp <- dat_proc[select,] %>% select(all_of(imp.markers)) %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
   # add 10 new columns for each of the variants to the dataset
@@ -684,25 +670,25 @@ if (TRIAL=="janssen_partA_VL") {
   )
   
   # LatAm, impute four variants
-  select = with(dat_proc, ph1.D29 & Region==1 & TwophasesampIndD29variant==1, drop=T)
+  select = with(dat_proc, Trt == 1 & Bserostatus==0 & Region==1 & TwophasesampIndD29variant==1, drop=T)
   imp.markers = c("Day29bindSpike", "Day29bindRBD", "Day29pseudoneutid50", "Day29pseudoneutid50_Gamma", "Day29pseudoneutid50_Lambda", "Day29pseudoneutid50_Mu", "Day29pseudoneutid50_Zeta")
   imp <- dat_proc[select, ] %>% select(all_of(imp.markers)) %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
   # add 10 new columns for each of the variants to the dataset
   for (i in 1:10) {
-    dat_proc[["Day29pseudoneutid50_Gamma"%.%i]] = NA
-    dat_proc[select, "Day29pseudoneutid50_Gamma"%.%i] = mice::complete(imp, action=i)[,4]
+    dat_proc[["Day29pseudoneutid50_Gamma"%.%i]]  = NA
     dat_proc[["Day29pseudoneutid50_Lambda"%.%i]] = NA
+    dat_proc[["Day29pseudoneutid50_Mu"%.%i]]     = NA
+    dat_proc[["Day29pseudoneutid50_Zeta"%.%i]]   = NA
+    dat_proc[select, "Day29pseudoneutid50_Gamma"%.%i]  = mice::complete(imp, action=i)[,4]
     dat_proc[select, "Day29pseudoneutid50_Lambda"%.%i] = mice::complete(imp, action=i)[,5]
-    dat_proc[["Day29pseudoneutid50_Mu"%.%i]] = NA
-    dat_proc[select, "Day29pseudoneutid50_Mu"%.%i]    = mice::complete(imp, action=i)[,6]
-    dat_proc[["Day29pseudoneutid50_Zeta"%.%i]] = NA
-    dat_proc[select, "Day29pseudoneutid50_Zeta"%.%i]  = mice::complete(imp, action=i)[,7]
+    dat_proc[select, "Day29pseudoneutid50_Mu"%.%i]     = mice::complete(imp, action=i)[,6]
+    dat_proc[select, "Day29pseudoneutid50_Zeta"%.%i]   = mice::complete(imp, action=i)[,7]
   } 
-
   assertthat::assert_that(
     all(complete.cases(dat_proc[select, c("Day29pseudoneutid50_Gamma"%.%1:10, "Day29pseudoneutid50_Lambda"%.%1:10, "Day29pseudoneutid50_Mu"%.%1:10, "Day29pseudoneutid50_Zeta"%.%1:10)])),
     msg = "janssen_partA_VL: imputed values of missing markers merged properly for all individuals in the two phase sample?"
   )
+  
 }  
   
   
@@ -906,10 +892,7 @@ if(TRIAL == "moderna_real") {
     # dat_proc$sieve.time = dat.eventtime.bin$time[match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
     # dat_proc$sieve.status = dat.eventtime.bin$status[match(dat_proc$Ptid, dat.eventtime.bin$USUBJID)]
     
-    # run hotdeck imputation from Peter
-    if (TRIAL=="janssen_partA_VL") source(here::here("data_clean/RunhotdeckMI_janssen_partA_VL.R"))
-      
-    
+
 } else if(TRIAL == "prevent19") {
     # first round submission lacks RBD
     # for revision, RBD is added. To reproduce results from the first revision, we add RBD to the analysis-ready dataset, instead of reprocessing all three markers together, which will lead to changes in imputed values in the first two markers
@@ -938,11 +921,10 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
-         janssen_partA_VL = "54e46712613b04ac01e2b902cc86302e", 
+         janssen_partA_VL = "8d4fcc9e08943161f63c7db87cd7227a", 
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
-
 
 data_name = paste0(TRIAL, "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv")
 write_csv(dat_proc, file = here("data_clean", data_name))

@@ -32,6 +32,9 @@
 
 ################################################################################
 
+begin=Sys.time()
+print(begin)
+
 renv::activate(here::here())
 
 source(here::here("_common.R")) # config
@@ -43,16 +46,16 @@ if (file.exists(outputfile_name)) quit()
 
 library(copcor) # hotdeckMI
 
-# dat <- read.csv("T:/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/janssen_pooled_partA_data_processed_with_riskscore.csv")
+# dat_mapped <- read.csv("T:/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/janssen_pooled_partA_data_processed_with_riskscore.csv")
 # this should be the data file with all of the genotype marks in it and none of the hotdeck variables in it
 
-dat=read.csv(mapped_data)
+dat_mapped=read.csv(mapped_data)
 
 # add Spike physics-chemical weighted Hamming distance pertaining to the sequence that was obtained from the first chronological sample
-dat.tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_sieve_cases_firstseq_v10a.csv")
+dat_tmp = read.csv("/trials/covpn/p3003/analysis/post_covid/sieve/Part_A_Blinded_Phase_Data/adata/omnibus/cpn3003_sieve_cases_firstseq_v10a.csv")
 
-dat$seq1.log10vl = dat.tmp$seq1.log10vl[match(dat$Subjectid, dat.tmp$USUBJID)]
-dat$seq1.variant = dat.tmp$seq1.who.label[match(dat$Subjectid, dat.tmp$USUBJID)]
+dat_mapped$seq1.log10vl = dat_tmp$seq1.log10vl[match(dat_mapped$Subjectid, dat_tmp$USUBJID)]
+dat_mapped$seq1.variant = dat_tmp$seq1.who.label[match(dat_mapped$Subjectid, dat_tmp$USUBJID)]
 
 new.names = c("seq1.spike.weighted.hamming", "seq1.s1.weighted.hamming", "seq1.rbd.weighted.hamming", "seq1.ntd.weighted.hamming",
               "dms.seq1.RBD_antibody_escape_score", 'dms.seq1.RBD_antibody_escape_score_cluster2', 'dms.seq1.RBD_antibody_escape_score_cluster6', 'dms.seq1.RBD_antibody_escape_score_cluster7', 'dms.seq1.RBD_antibody_escape_score_cluster8', 
@@ -63,7 +66,7 @@ old.names = c('seq1.hdist.zspace.spike', 'seq1.hdist.zspace.s1', 'seq1.hdist.zsp
               'seq1.mhrp.ab.dist.RBD4', 'seq1.mhrp.ab.dist.RBD7', 'seq1.mhrp.ab.dist.RBD8',
               'seq1.mhrp.ab.dist.NTD13' )
 for (i in 1:length(new.names)) {
-  dat[[new.names[i]]] = dat.tmp[[old.names[i]]][match(dat$Subjectid, dat.tmp$USUBJID)]
+  dat_mapped[[new.names[i]]] = dat_tmp[[old.names[i]]][match(dat_mapped$Subjectid, dat_tmp$USUBJID)]
 }
 
 
@@ -71,9 +74,9 @@ for (i in 1:length(new.names)) {
 ################################################################################
 
 # this kp is used at the end as well, so don't redefine it
-kp <- dat[,"Bserostatus"]==0 & dat[,"Perprotocol"]==1 & !is.na(dat[,"EventIndPrimaryIncludeNotMolecConfirmedD29"])
+kp <- dat_mapped[,"Bserostatus"]==0 & dat_mapped[,"Perprotocol"]==1 & !is.na(dat_mapped[,"EventIndPrimaryIncludeNotMolecConfirmedD29"])
+dat <- dat_mapped[kp,]
 
-dat <- dat[kp,]
 X <- rep(1,nrow(dat))
 Delta <- ifelse(dat[,"EventIndPrimaryIncludeNotMolecConfirmedD29"]==1 & !is.na(dat[,"seq1.log10vl"]),1,0)
 
@@ -178,18 +181,19 @@ epsilonv <- rep(1,length(V))
 epsilonv[is.na(dat[,"pdb.seq1.mhrp.ab.dist.NTD13"])] <- 0
 anspooledPDB13dists <- hotdeckMI(X,Delta,Z1discrete,Z1scalar,Z2,epsilonz,V,epsilonv,Avdiscrete,Avscalar,epsilona,M,L)
 
-#####
-# Write out the data set:
 
-dat <- dat_proc
+
+################################################################################
+# Appends new columns to dat_mapped to make a new dataset
+
 # use the same kp defined at the beginning
-newdat <- cbind(dat,matrix(rep(NA,nrow(dat)*140),ncol=140))
+newdat <- cbind(dat_mapped,matrix(rep(NA,nrow(dat_mapped)*140),ncol=140))
 j <- 0
 # add new columns 
 for (i in 1:nrow(newdat)) {
   if (kp[i]) {
     j <- j+1
-    newdat[i,(ncol(dat)+1):(ncol(dat)+140)] <- c(anspooledspikedists[[1]][j,],anspooledS1dists[[1]][j,],anspooledRBDdists[[1]][j,],
+    newdat[i,(ncol(dat_mapped)+1):(ncol(dat_mapped)+140)] <- c(anspooledspikedists[[1]][j,],anspooledS1dists[[1]][j,],anspooledRBDdists[[1]][j,],
                                                  anspooledNTDdists[[1]][j,],anspooledvariant[[1]][j,],anspooledDMSdists[[1]][j,],anspooledDMS2dists[[1]][j,],anspooledDMS6dists[[1]][j,],
                                                  anspooledDMS7dists[[1]][j,],anspooledDMS8dists[[1]][j,],anspooledPDB4dists[[1]][j,],anspooledPDB7dists[[1]][j,],anspooledPDB8dists[[1]][j,],
                                                  anspooledPDB13dists[[1]][j,]) }}
@@ -254,14 +258,16 @@ newcolnames <- c("seq1.spike.weighted.hamming.hotdeck1","seq1.spike.weighted.ham
                  "pdb.seq1.mhrp.ab.dist.RBD8.hotdeck5","pdb.seq1.mhrp.ab.dist.RBD8.hotdeck6",
                  "pdb.seq1.mhrp.ab.dist.RBD8.hotdeck7","pdb.seq1.mhrp.ab.dist.RBD8.hotdeck8",
                  "pdb.seq1.mhrp.ab.dist.RBD8.hotdeck9","pdb.seq1.mhrp.ab.dist.RBD8.hotdeck10",
-                 "pdb.seq1.mhrp.ab.dist..NTD13.hotdeck1","pdb.seq1.mhrp.ab.dist..NTD13.hotdeck2",
-                 "pdb.seq1.mhrp.ab.dist..NTD13.hotdeck3","pdb.seq1.mhrp.ab.dist..NTD13.hotdeck4",
-                 "pdb.seq1.mhrp.ab.dist..NTD13.hotdeck5","pdb.seq1.mhrp.ab.dist..NTD13.hotdeck6",
-                 "pdb.seq1.mhrp.ab.dist..NTD13.hotdeck7","pdb.seq1.mhrp.ab.dist..NTD13.hotdeck8",
-                 "pdb.seq1.mhrp.ab.dist..NTD13.hotdeck9","pdb.seq1.mhrp.ab.dist..NTD13.hotdeck10")
+                 "pdb.seq1.mhrp.ab.dist.NTD13.hotdeck1","pdb.seq1.mhrp.ab.dist.NTD13.hotdeck2",
+                 "pdb.seq1.mhrp.ab.dist.NTD13.hotdeck3","pdb.seq1.mhrp.ab.dist.NTD13.hotdeck4",
+                 "pdb.seq1.mhrp.ab.dist.NTD13.hotdeck5","pdb.seq1.mhrp.ab.dist.NTD13.hotdeck6",
+                 "pdb.seq1.mhrp.ab.dist.NTD13.hotdeck7","pdb.seq1.mhrp.ab.dist.NTD13.hotdeck8",
+                 "pdb.seq1.mhrp.ab.dist.NTD13.hotdeck9","pdb.seq1.mhrp.ab.dist.NTD13.hotdeck10")
 
-colnames(newdat) <- c(colnames(dat),newcolnames)
-write.csv(newdat, file=outputfile_name)
+colnames(newdat) <- c(colnames(dat_mapped),newcolnames)
+write.csv(newdat, file=outputfile_name, row.names = F)
+
+print("run time: "%.%format(Sys.time()-begin, digits=1))
 
 
 # # Data checks:
@@ -277,3 +283,4 @@ write.csv(newdat, file=outputfile_name)
 # sum(table(mt[kp,"seq1.variant.hotdeck10"]))
 # # Same story
 # subset(mt, Subjectid=="VAC31518COV3001-3009010")
+
