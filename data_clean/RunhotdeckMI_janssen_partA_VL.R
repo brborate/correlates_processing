@@ -40,7 +40,7 @@ renv::activate(here::here()) # manages the R packages, optional
 
 # get mapped_data through config. 
 source(here::here("_common.R")) 
-# Alternatively, 
+# Alternatively, e.g.
 # mapped_data = '/trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_PartAComplete_variant_mapped_20230809.csv'
 
 # quit if the output file already exists

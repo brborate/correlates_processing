@@ -1,7 +1,7 @@
 #Sys.setenv(TRIAL = "moderna_real")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
 
-#renv::activate(here::here()) # no need b/c .Rprofile exists
+# no need to run renv::activate(here::here()) b/c .Rprofile exists
 
 source(here::here("_common.R"))
 
@@ -31,6 +31,7 @@ if (make_riskscore) {
       load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
       stopifnot(all(dat_proc$Ptid==inputFile_with_riskscore$Ptid))
       dat_proc$risk_score = inputFile_with_riskscore$risk_score
+      dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
       
       # create a new event indicator variable that censors cases without VL, which also include all non-molec confirmed cases
       # required for defining weights
@@ -921,7 +922,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "0884dd59a9e9101fbe28e26e70080691",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
-         janssen_partA_VL = "8d4fcc9e08943161f63c7db87cd7227a", 
+         janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
