@@ -923,7 +923,7 @@ library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
          moderna_mock = "34e297fd1a736f9320573ff1d2944904",
-         moderna_real = "d3c6ba603acb12e3fb4c9ea08554284a",
+         moderna_real = "684004027985464d02c4e157a86667e8",
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
          janssen_pooled_EUA = "c38fb43e2c87cf2d392757840af68bba",
          azd1222 = "f573e684800003485094c18120361663",

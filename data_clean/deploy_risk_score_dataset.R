@@ -7,57 +7,45 @@ renv::activate(project = here::here())
 
 config <- config::get(config = Sys.getenv("TRIAL"))
 
-library(stringr)
+source(here::here("_common.R"))
 
-if (attr(config, "config")=="moderna_boost") {
+library(stringr)
+library(here)
+library(tidyverse)
+
+
+# set deployment path for each study
+deploy_path <- switch(study_name,
+                      COVE =      "/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      COVEBoost =      "/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/",
+                      AZD1222 =   "/trials/covpn/p3002/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      ENSEMBLE =  "/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      PREVENT19 = "/trials/covpn/p3004/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      VAT08m =    "/trials/covpn/p3005/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
+                      PROFISCOV = "/networks/cavd/Objective 4/GH-VAP/ID127-Gast/correlates/adata/",
+                      stop("study_name not supported 1"))  
+
+
+
+if (attr(config, "config") %in% c("moderna_real", "moderna_boost", "janssen_partA_VL")) {
   data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d")))
-  # Request reason for adata update from deployer!
-  cat("Enter reason for updating adata without quotes (this text will be added to adata/README change log): ")
-  args <- readLines(con = "stdin", n = 1)
-  update_reason <- paste0(Sys.Date(), " ", args[[1]]) 
-  deploy_path =      "/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/"
   
-} else if (attr(config, "config")=="janssen_partA_VL") {
-  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d")))
-  # Request reason for adata update from deployer!
-  cat("Enter reason for updating adata without quotes (this text will be added to adata/README change log): ")
-  args <- readLines(con = "stdin", n = 1)
-  update_reason <- paste0(Sys.Date(), " ", args[[1]]) 
-  deploy_path =      "/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/"
-  
+} else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
+  data_name_amended <- c( paste0(attr(config, "config"), "_data_processed_with_riskscore"), 
+                          paste0(attr(config, "config"), "senior_data_processed_with_riskscore"),
+                          paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore"))
 } else {
-  # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
-  if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
-  source(here::here("_common.R"))
   
-  # load required libraries, cleaned data, and risk score estimates
-  library(here)
-  library(tidyverse)
-  if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
-    data_name_amended <- c( paste0(attr(config, "config"), "_data_processed_with_riskscore"), 
-                            paste0(attr(config, "config"), "senior_data_processed_with_riskscore"),
-                            paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore"))
-  } else {
-    data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
-  }
-  
-  cat("Enter reason for updating adata without quotes (this text will be added to adata/README change log): ")
-  args <- readLines(con = "stdin", n = 1)
-  
-  # Request reason for adata update from deployer!
-  update_reason <- paste0(Sys.Date(), " ", args[[1]]) 
-  
-  # set deployment path for each study
-  deploy_path <- switch(study_name,
-                        COVE =      "/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
-                        AZD1222 =   "/trials/covpn/p3002/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
-                        ENSEMBLE =  "/trials/covpn/p3003/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
-                        PREVENT19 = "/trials/covpn/p3004/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
-                        VAT08m =    "/trials/covpn/p3005/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
-                        PROFISCOV = "/networks/cavd/Objective 4/GH-VAP/ID127-Gast/correlates/adata/",
-                        stop("study_name not supported 1"))  
-  
+  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
 }
+
+cat("Enter reason for updating adata without quotes (this text will be added to adata/README change log): ")
+args <- readLines(con = "stdin", n = 1)
+
+
+# Request reason for adata update from deployer!
+update_reason <- paste0(Sys.Date(), " ", args[[1]]) 
+
 
   
 # Copy current deployed copy of risk score dataset in adata to archive 
