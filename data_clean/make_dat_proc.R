@@ -859,6 +859,14 @@ if(TRIAL == "moderna_real") {
     stopifnot(all(dat_proc$Bserostatus == 1))
     dat_proc=rbind(dat_proc, dat_proc.tmp)
     
+    # calendar time variable
+    adsl_partc <- read.csv("/trials/covpn/p3001/analysis/mapping_immune_correlates/Part_C_Unblinded_Phase_Data/qdata/20230515/adsl.csv", stringsAsFactors = F)
+    adsl_partc$CalendarDateEnrollment <- as.Date(adsl_partc$TRTSDT) - min(as.Date(adsl_partc$TRTSDT), na.rm=T)
+    dat_proc=dat_proc %>% left_join(adsl_partc %>% 
+                  dplyr::mutate(Ptid = gsub("mRNA-1273-P301-|-", "", USUBJID)) %>% 
+                  dplyr::select(Ptid, CalendarDateEnrollment),
+                by = c("Ptid"))
+    
 } else if(TRIAL %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA",
                                         "janssen_partA_VL")) {
 
