@@ -5,7 +5,7 @@
 
 source(here::here("_common.R"))
 
-if (TRIAL=="moderna_real") stop("For moderna_boost, run make_dat_moderna_boost.R") 
+if (TRIAL=="moderna_boost") stop("For moderna_boost, run make_dat_moderna_boost.R") 
 
 library(tidyverse)
 library(Hmisc) # wtd.quantile, cut2
