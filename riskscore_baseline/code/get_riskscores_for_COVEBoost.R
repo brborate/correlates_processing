@@ -79,17 +79,17 @@ X_covars2adjust_plac <- dat.ph1.plac %>%
 print("Make sure data is clean before conducting imputations!")
 X_covars2adjust_plac <- impute_missing_values(X_covars2adjust_plac, risk_vars)
 
-# Scale X_covars2adjust_plac according to scale parameters derived from Stage 1 placebo data
-X_covars2adjust_plac_scaled <- scale(X_covars2adjust_plac,
+# Scale X_covars2adjust_plac according to scale parameters derived from Stage 1 placebo data (stored in X_covars2adjust_scaled_plac)
+X_covars2adjust_plac_scaledVersion <- scale(X_covars2adjust_plac,
                                      center = attr(X_covars2adjust_scaled_plac, "scaled:center"), 
                                      scale = attr(X_covars2adjust_scaled_plac, "scaled:scale"))
 
-attr(X_covars2adjust_plac_scaled, "scaled:center") <- NULL
-attr(X_covars2adjust_plac_scaled, "scaled:scale") <- NULL
+attr(X_covars2adjust_plac_scaledVersion, "scaled:center") <- NULL
+attr(X_covars2adjust_plac_scaledVersion, "scaled:scale") <- NULL
 
-X_covars2adjust_plac_scaled <- data.frame(X_covars2adjust_plac_scaled)
+X_covars2adjust_plac_scaledVersion <- data.frame(X_covars2adjust_plac_scaledVersion)
 
-pred_on_plac <- predict(sl_riskscore_slfits, newdata = X_covars2adjust_plac_scaled, onlySL = TRUE)$pred %>%
+pred_on_plac <- predict(sl_riskscore_slfits, newdata = X_covars2adjust_plac_scaledVersion, onlySL = TRUE)$pred %>%
   as.data.frame()
 
 plac <- bind_cols(dat.ph1.plac, pred_on_plac) %>%
@@ -119,17 +119,17 @@ X_covars2adjust_vacc <- dat.ph1.vacc %>%
 print("Make sure data is clean before conducting imputations!")
 X_covars2adjust_vacc <- impute_missing_values(X_covars2adjust_vacc, risk_vars)
 
-# Scale X_covars2adjust_vacc according to scale parameters derived from Stage 1 vaccebo data
-X_covars2adjust_vacc_scaled <- scale(X_covars2adjust_vacc,
+# Scale X_covars2adjust_vacc according to scale parameters derived from Stage 1 vaccinee data (stored in X_covars2adjust_scaled_vacc)
+X_covars2adjust_vacc_scaledVersion <- scale(X_covars2adjust_vacc,
                                      center = attr(X_covars2adjust_scaled_vacc, "scaled:center"), 
                                      scale = attr(X_covars2adjust_scaled_vacc, "scaled:scale"))
 
-attr(X_covars2adjust_vacc_scaled, "scaled:center") <- NULL
-attr(X_covars2adjust_vacc_scaled, "scaled:scale") <- NULL
+attr(X_covars2adjust_vacc_scaledVersion, "scaled:center") <- NULL
+attr(X_covars2adjust_vacc_scaledVersion, "scaled:scale") <- NULL
 
-X_covars2adjust_vacc_scaled <- data.frame(X_covars2adjust_vacc_scaled)
+X_covars2adjust_vacc_scaledVersion <- data.frame(X_covars2adjust_vacc_scaledVersion)
 
-pred_on_vacc <- predict(sl_riskscore_slfits, newdata = X_covars2adjust_vacc_scaled, onlySL = TRUE)$pred %>%
+pred_on_vacc <- predict(sl_riskscore_slfits, newdata = X_covars2adjust_vacc_scaledVersion, onlySL = TRUE)$pred %>%
   as.data.frame()
 
 vacc <- bind_cols(dat.ph1.vacc, pred_on_vacc) %>%
