@@ -8,6 +8,7 @@
 .DS_Store
 *.reg
 *.log
+nohup.out
 _book
 _bookdown_files
 packages.bib

@@ -7,6 +7,7 @@ library(here)
 library(dplyr)
 library(kyotil)
 library(mice)
+library(copcor)
 
 config <- config::get(config = TRIAL)
 
@@ -14,28 +15,18 @@ config <- config::get(config = TRIAL)
 ###############################################################################
 # combine stage1 analysis-ready dataset and stage 2 mapped dataset
 
-# read stage 2 mapped data 
-dat_stage2_mapped = read.csv(config$mapped_data)
-if (colnames(dat_stage2_mapped)[1]=="Subjectid")  colnames(dat_stage2_mapped)[1] <- "Ptid" else stop("the first column is unexpectedly not Subjectid")
+# read stage 2 mapped data with risk score made from make riskscore_analysis
+load('riskscore_baseline/output/moderna_boost/inputFile_with_riskscore.rda')
+dat_stage2_mapped = inputFile_with_riskscore
 dat_stage2_mapped$naive = 1-dat_stage2_mapped$nnaive
-
-# read stage 2 risk score 
-#load('riskscore_baseline/output/moderna_real/inputFile_with_riskscore.rda')
-load("/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/inputFile_with_riskscore.rda")
-dat_risk_score = inputFile_with_riskscore
-
-# read stage1 mapped data
-dat_stage1_mapped=read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv")
+# write to a csv file for Dean
+mywrite.csv(dat_stage2_mapped, file=paste0("/trials/covpn/p3001/analysis/mapping_immune_correlates/Part_C_Unblinded_Phase_Data/adata/COVID_Moderna_stage2_mapped_", format(Sys.Date(), "%Y%m%d"), "_withRiskScores"))
+print(paste0("write /trials/covpn/p3001/analysis/mapping_immune_correlates/Part_C_Unblinded_Phase_Data/adata/COVID_Moderna_stage2_", format(Sys.Date(), "%Y%m%d"), "_withRiskScores"))
 
 # read stage1 analysis ready data
 dat_stage1_adata = read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/moderna_real_data_processed_with_riskscore.csv")
-
-
-# add risk score to stage 2 data
-dat_stage2_mapped$risk_score              = dat_risk_score$risk_score             [match(dat_stage2_mapped$Ptid, dat_risk_score$Ptid)]
-dat_stage2_mapped$Riskscorecohortflag     = dat_risk_score$Riskscorecohortflag    [match(dat_stage2_mapped$Ptid, dat_risk_score$Ptid)]
-dat_stage2_mapped$standardized_risk_score = dat_risk_score$standardized_risk_score[match(dat_stage2_mapped$Ptid, dat_risk_score$Ptid)]
-
+# remove two risk-related columns that are from stage 1 since we are only need one risk-related column from stage 2
+dat_stage1_adata= subset(dat_stage1_adata, select=-c(Riskscorecohortflag,standardized_risk_score))
 
 # dat_stage2_mapped has about 14K rows while dat_stage1_adata has about 29K rows
 # there are 15 ptids in stage 2 mapped data that are not in stage 1 mapped data
@@ -43,13 +34,18 @@ dat_stage2_mapped$standardized_risk_score = dat_risk_score$standardized_risk_sco
 # the exact reasons are impossible to track down
 ptids2mapped=dat_stage2_mapped$Ptid
 ptids1adata=dat_stage1_adata$Ptid
-ptids1mapped=dat_stage1_mapped$Ptid
 ptids.2minus1 =    sort(ptids2mapped[!ptids2mapped %in% ptids1adata])
+summary(ptids.2minus1)
+
+
+# read stage1 mapped data
+dat_stage1_mapped=read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/P3001ModernaCOVEimmunemarkerdata_correlates_originaldatafromModerna_v1.0_Oct28_2021.csv")
+ptids1mapped=dat_stage1_mapped$Ptid
 ptids.2minus1raw = sort(ptids2mapped[!ptids2mapped %in% ptids1mapped])
 ptids.stage1.rawonly=setdiff(ptids.2minus1, ptids.2minus1raw)
-summary(ptids.2minus1)
 summary(ptids.2minus1raw)
 summary(ptids.stage1.rawonly)
+
 
 # merge stage2 mapped data and stage1 adata to create stage 2 adata
 # keep all rows
@@ -75,13 +71,25 @@ sum(subset(dat_stage2, T, Stage2SamplingInd), na.rm=T)
 ###############################################################################
 # define ph1.BD29
 
-# remove cases that are not EventIndPrimaryOmicronBD29 but are EventIndOmicronBD29
-#   to focus on primary cases and not include the cases based on the more relaxed criterion
-# if we want to study EventIndOmicronBD29, then comment this line out, uncomment the next line, and make a new dataset
-# missingness: there are 7 ptids that are 0 in EventIndPrimaryOmicronBD29 but NA in EventIndOmicronBD29
-# these 7 are removed in this step, if they are not, they will also be removed by EventTimeOmicronBD29 >= 7 since they have EventTimeOmicronBD29=0
-dat_stage2$ph1.BD29 = with(dat_stage2, !(EventIndOmicronBD29==1 & EventIndPrimaryOmicronBD29==0))
-# dat_stage2$ph1.BD29 = T
+dat_stage2$ph1.BD29 = TRUE
+
+# to focus on primary cases and not include the cases based on the more relaxed criterion
+# if we want to study EventIndOmicronBD29, then do something different here
+
+with(dat_stage2, table(is.na(EventIndPrimaryOmicronBD29), is.na(EventIndOmicronBD29), naive))
+with(dat_stage2, table(EventIndPrimaryOmicronBD29, EventIndOmicronBD29, naive))
+
+# exclude ptids that EventIndOmicronBD29==1 but EventIndPrimaryOmicronBD29==0 
+dat_stage2$ph1.BD29[with(dat_stage2, EventIndOmicronBD29==1 & EventIndPrimaryOmicronBD29==0)] = FALSE 
+
+# there are 3 ptids that are EventIndOmicronBD29 is not NA (1) and EventIndPrimaryOmicronBD29 is NA
+#   excluded
+dat_stage2$ph1.BD29[with(dat_stage2, !is.na(EventIndOmicronBD29) & is.na(EventIndPrimaryOmicronBD29))] = FALSE 
+
+# there are 7 ptids that EventIndOmicronBD29 is NA and EventIndPrimaryOmicronBD29 is not NA (0)
+#   excluded. They may also be excluded by EventTimeOmicronBD29 >= 7 since they have EventTimeOmicronBD29=0
+dat_stage2$ph1.BD29[with(dat_stage2, is.na(EventIndOmicronBD29) & !is.na(EventIndPrimaryOmicronBD29))] = FALSE 
+
 
 with(subset(dat_stage2, ph1.BD29 & naive==0), table(Trt, EventIndOmicronBD29, useNA="ifany"))
 with(subset(dat_stage2, ph1.BD29 & naive==1), table(Trt, EventIndOmicronBD29))
@@ -101,7 +109,7 @@ sum(subset(dat_stage2, ph1.BD29, Stage2SamplingInd), na.rm=T)
 # dat_stage1_adata[dat_stage1_adata$Ptid %in% c("US3252458", "US3702017"),c("URMforsubcohortsampling","demo.stratum")]
 # dat_stage2[dat_stage2$Ptid %in% c("US3252458", "US3702017"),c("URMforsubcohortsampling","demo.stratum")]
 
-dat_stage2$ph1.BD29 = with(dat_stage2,
+dat_stage2$ph1.BD29 = with(dat_stage2, ph1.BD29 & 
                              !is.na(naive) & !is.na(Trt) &
                              !is.na(Perprotocol) & !is.na(BDPerprotocol) &
                              !is.na(NumberdaysBD1toBD29) &
@@ -192,6 +200,8 @@ nrow(subset(dat_stage2, ph1.BD29))
 
 # don't allow NA in ph1 riskscore, but there may be NA in the whole dataset, probably due to missing data covariates
 stopifnot(all(!is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])))
+subset(dat_stage2, ph1.BD29 & is.na(risk_score))
+summary(dat_stage2[dat_stage2$ph1.BD29,"risk_score"])
 
 ## a transient solution to missing risk score
 # if (any(is.na(dat_stage2[dat_stage2$ph1.BD29,"risk_score"]))) {
@@ -399,6 +409,7 @@ assertthat::assert_that(
 
 
 ###############################################################################
+# no need to convert, the mapped data has both unconverted and converted ID50 variables
 # using the same conversion factor for stage 1 analyses to make variables comparable to stage 1 analyses
 # units will still be labeled as AU/ml
 ###############################################################################
@@ -408,16 +419,16 @@ assertthat::assert_that(
 
 # ID50 in the mapped data have not been converted
 
-for (a in assay_metadata$assay) {
-  for (t in c("BD1","BD29","DD1") ) {
-    convf = ifelse(
-      # ID50 assays:
-      startsWith(a,"pseudoneutid50"), 0.242/1.04, 
-      # other assays:
-      1) 
-    dat_stage2[[t %.% a]] <- dat_stage2[[t %.% a]] + log10(convf)
-  }
-}
+# for (a in assay_metadata$assay) {
+#   for (t in c("BD1","BD29","DD1") ) {
+#     convf = ifelse(
+#       # ID50 assays:
+#       startsWith(a,"pseudoneutid50"), 0.242/1.04, 
+#       # other assays:
+#       1) 
+#     dat_stage2[[t %.% a]] <- dat_stage2[[t %.% a]] + log10(convf)
+#   }
+# }
 
 
 ###############################################################################
@@ -452,7 +463,7 @@ for (tp in 29) {
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
   tmp = switch(attr(config, "config"),
-               moderna_boost = "db7b8d7ca9dc94a6fd058518dc58146e",
+               moderna_boost = "dd836a8bca2291f733e74561608b1f11",
                NA)    
   if (!is.na(tmp)) assertthat::assert_that(digest(dat_stage2[order(names(dat_stage2))])==tmp, msg = "failed make_dat_stage2 digest check. new digest "%.%digest(dat_stage2[order(names(dat_stage2))]))    
 }
