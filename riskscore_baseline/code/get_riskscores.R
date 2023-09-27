@@ -147,8 +147,12 @@ if(study_name == "PREVENT19"){
   riskscore_timepoint <- 1
   vaccAUC_timepoint <- 35
   studyName_for_report <- "PREVENT19"
-  inputMod <- inputFile %>%
-    filter(Country == 0) # Analysis based off only US subjects 
+  if(args[1] == "onlyUSsubjects"){
+    inputMod <- inputFile %>% filter(Country == 0) # Risk score in prevent19 was derived twice. 
+                                                   # First risk score (risk_score) was derived only for US subjects (SL model was trained using only US subjects).  
+  } else if (args[1] == "allsubjects"){
+    inputMod <- inputFile # Second risk score (risk_score2) was derived for all subjects (SL model was trained using both US and Mexican subjects). 
+  }
 }
 
 if(study_name == "AZD1222"){
@@ -271,6 +275,20 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
     if(args[1] == "bseroneg"){
       save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
     }else if(args[1] == "bseropos"){
+      save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
+    }
+  }else if(study_name == "PREVENT19"){
+    if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
+      dir.create(paste0("output/", Sys.getenv("TRIAL")))
+      dir.create(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))
+    }
+    if(!dir.exists(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))){
+      dir.create(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))
+    }
+    save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
+    if(args[1] == "onlyUSsubjects"){
+      save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
+    }else if(args[1] == "allsubjects"){
       save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
     }
   }else{

@@ -296,7 +296,7 @@ drop_riskVars_with_fewer_0s_or_1s <- function(dat, risk_vars, np) {
 
   if(!study_name %in% c("COVE")){
       # delete the file drop_riskVars_with_fewer_0s_or_1s.csv
-      if(study_name %in% c("VAT08m", "VAT08b")){
+      if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
         unlink(here("output", Sys.getenv("TRIAL"), args[1], "drop_riskVars_with_fewer_0s_or_1s.csv"))
       } else {
         unlink(here("output", Sys.getenv("TRIAL"), "drop_riskVars_with_fewer_0s_or_1s.csv"))
@@ -310,7 +310,7 @@ drop_riskVars_with_fewer_0s_or_1s <- function(dat, risk_vars, np) {
             dat <- dat %>% select(-starts_with(risk_vars[i]))
             print(paste0(risk_vars[i], " dropped from risk score analysis as the number of cases in the variable = 1 or 0 subgroup is <= 3."))
             # Also print to file
-            if(study_name %in% c("VAT08m", "VAT08b")){
+            if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
               paste0(risk_vars[i], " dropped from risk score analysis as the number of cases in the variable = 1 or 0 subgroup is <= 3.") %>%
                 write.table(file = here("output", Sys.getenv("TRIAL"), args[1], "drop_riskVars_with_fewer_0s_or_1s.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
             } else {
@@ -324,7 +324,7 @@ drop_riskVars_with_fewer_0s_or_1s <- function(dat, risk_vars, np) {
   }
   
   if(!study_name %in% c("COVE")){
-    if(study_name %in% c("VAT08m", "VAT08b")){
+    if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
       if(!file.exists(here("output", Sys.getenv("TRIAL"), args[1], "drop_riskVars_with_fewer_0s_or_1s.csv"))){
         paste0("No binary input variable had number of cases in the variable = 1 or 0 subgroup <= 3") %>%
           write.table(file = here("output", Sys.getenv("TRIAL"), args[1], "drop_riskVars_with_fewer_0s_or_1s.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
@@ -349,7 +349,7 @@ drop_riskVars_with_fewer_0s_or_1s <- function(dat, risk_vars, np) {
 drop_riskVars_with_high_total_missing_values <- function(X, riskVars) {
   
   # delete the file drop_riskVars_with_high_total_missing_values.csv
-  if(study_name %in% c("VAT08m", "VAT08b")){
+  if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
     unlink(here("output", Sys.getenv("TRIAL"), args[1], "drop_riskVars_with_high_total_missing_values.csv"))
   }else{
     unlink(here("output", Sys.getenv("TRIAL"), "drop_riskVars_with_high_total_missing_values.csv"))
@@ -363,7 +363,7 @@ drop_riskVars_with_high_total_missing_values <- function(X, riskVars) {
     if (percent_NAs > 0.05) {
       print(paste0("WARNING: ", riskVars[i], " variable has more than 5% values missing! This variable will be dropped from SuperLearner analysis."))
       # Also print to file
-      if(study_name %in% c("VAT08m", "VAT08b")){
+      if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
         paste0(riskVars[i], " variable has more than 5% values missing and was dropped from risk score analysis.") %>%
           write.table(file = here("output", Sys.getenv("TRIAL"), args[1], "drop_riskVars_with_high_total_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
       }else{
@@ -375,7 +375,7 @@ drop_riskVars_with_high_total_missing_values <- function(X, riskVars) {
   }
   
   if(!file.exists(here("output", Sys.getenv("TRIAL"), "drop_riskVars_with_high_total_missing_values.csv"))){
-    if(study_name %in% c("VAT08m", "VAT08b")){
+    if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
       paste0("No variables had more than 5% values missing.") %>%
         write.table(file = here("output", Sys.getenv("TRIAL"), args[1], "drop_riskVars_with_high_total_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
     }else{
@@ -399,6 +399,8 @@ impute_missing_values <- function(X, riskVars) {
   # delete the file impute_missing_values.csv
   if(study_name %in% c("VAT08m", "VAT08b")){
     unlink(here("output", Sys.getenv("TRIAL"), "bseroneg", "impute_missing_values.csv"))
+  }else if(study_name == "PREVENT19"){
+    unlink(here("output", Sys.getenv("TRIAL"), args[1], "impute_missing_values.csv"))
   }else{
     unlink(here("output", Sys.getenv("TRIAL"), "impute_missing_values.csv"))
   }
@@ -428,6 +430,9 @@ impute_missing_values <- function(X, riskVars) {
     if(study_name %in% c("VAT08m", "VAT08b")){
       paste("Imputing missing values in following variables: None") %>%
         write.table(file = here("output", Sys.getenv("TRIAL"), "bseroneg", "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
+    }else if(study_name == "PREVENT19"){
+      paste("Imputing missing values in following variables: None") %>%
+        write.table(file = here("output", Sys.getenv("TRIAL"), args[1], "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
     }else{
       paste("Imputing missing values in following variables: None") %>%
         write.table(file = here("output", Sys.getenv("TRIAL"), "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
@@ -438,6 +443,9 @@ impute_missing_values <- function(X, riskVars) {
     if(study_name %in% c("VAT08m", "VAT08b")){
       paste("Missing values were imputed for the following variables:", paste(as.character(covars), collapse = ", ")) %>%
         write.table(file = here("output", Sys.getenv("TRIAL"), "bseroneg", "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
+    }else if(study_name == "PREVENT19"){
+      paste("Missing values were imputed for the following variables:", paste(as.character(covars), collapse = ", ")) %>%
+        write.table(file = here("output", Sys.getenv("TRIAL"), args[1], "impute_missing_values.csv"), sep=",", append = TRUE, row.names = F, col.names = F)
     }else{
       if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
         dir.create(paste0("output/", Sys.getenv("TRIAL")))

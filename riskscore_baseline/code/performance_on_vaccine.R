@@ -27,7 +27,7 @@ library(xgboost)
 conflict_prefer("filter", "dplyr")
 conflict_prefer("select", "dplyr")
 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/objects_for_running_SL.rda"))
 }else{
   load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
@@ -38,7 +38,7 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name)))
   endpoint <- paste0(sub("1rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc"))
 
 if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
-  if(study_name %in% c("VAT08m", "VAT08b")){
+  if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
     vacc <- read.csv(here("output", Sys.getenv("TRIAL"), args[1], "vaccine_ptids_with_riskscores.csv")) %>%
       filter(RiskscoreAUCflag == 1) 
   }else{
@@ -54,7 +54,7 @@ pred.obj <- ROCR::prediction(vacc$pred, vacc %>% pull(endpoint))
 perf.obj <- ROCR::performance(pred.obj, "tpr", "fpr")
 
 options(bitmapType = "cairo")
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   png(file = here("output", Sys.getenv("TRIAL"), args[1], "ROCcurve_riskscore_vacc_onlySL.png"),
       width = 1000, height = 1000)
 }else{
@@ -86,7 +86,7 @@ dev.off()
 
 # plot pred prob plot on vaccinees
 options(bitmapType = "cairo")
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   png(file = here("output", Sys.getenv("TRIAL"), args[1], "predProb_riskscore_vacc_onlySL.png"),
       width = 1100, height = 700)
 }else{
@@ -142,7 +142,7 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
 
 
 # Create table of case/controls in vaccine cohort used for calculating AUC in risk score report (this cohort changes for TRIALS beyond COVE or janssen!)
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   table(vacc %>% pull(endpoint)) %>%
     write.csv(file = here("output", Sys.getenv("TRIAL"), args[1], "vacc.cases.AUC.calc_post_riskScoreAnalysis.csv"))
 }else{
