@@ -928,7 +928,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          janssen_pooled_EUA = "c38fb43e2c87cf2d392757840af68bba",
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
-         prevent19 = "0884dd59a9e9101fbe28e26e70080691",
+         prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
          NA)    
