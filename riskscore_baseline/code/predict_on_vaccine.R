@@ -122,7 +122,7 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
 
 vacc <- vacc %>% mutate(AUCchar = AUCvacc$AUCchar) 
 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   write.csv(vacc, here("output", Sys.getenv("TRIAL"), args[1], "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
 }else{
   write.csv(vacc, here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
@@ -130,4 +130,5 @@ if(study_name %in% c("VAT08m", "VAT08b")){
 
 if(study_name == "COVE"){
   write.csv(plac_bseropos, here("output", Sys.getenv("TRIAL"), "plac_bseropos_ptids_with_riskscores.csv"), row.names = FALSE)
+  save(X_covars2adjust_scaled_vacc, file = here("output", Sys.getenv("TRIAL"), "X_covars2adjust_scaled_vacc.rda"))
 }
