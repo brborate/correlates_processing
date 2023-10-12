@@ -15,7 +15,7 @@ conflict_prefer("summarise", "dplyr")
 
 print("APPEND_RISK_SCORE_TO_DATA.R")
 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/objects_for_running_SL.rda"))
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
   placebos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), args[1], "placebo_ptids_with_riskscores.csv"))
@@ -31,18 +31,34 @@ if(study_name %in% c("VAT08m", "VAT08b")){
 if(study_name == "COVE"){
   plac_bseropos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), "plac_bseropos_ptids_with_riskscores.csv"))
   
-  risk_scores <- bind_rows(placebos_risk, vaccinees_risk, plac_bseropos_risk) %>%
-    select(Ptid, risk_score, standardized_risk_score) 
+  risk_scores_plac <- bind_rows(placebos_risk, plac_bseropos_risk) %>%
+    select(Ptid, risk_score) %>%
+    mutate(standardized_risk_score = scale(risk_score,
+                                           center = mean(risk_score, na.rm = T),
+                                           scale = sd(risk_score, na.rm = T)))
+  
+  risk_scores_vacc <- bind_rows(vaccinees_risk) %>%
+    select(Ptid, risk_score) %>%
+    mutate(standardized_risk_score = scale(risk_score,
+                                           center = mean(risk_score, na.rm = T),
+                                           scale = sd(risk_score, na.rm = T)))
+  
+  risk_scores <- bind_rows(risk_scores_plac, risk_scores_vacc) 
   
   inputFile <- inputFile %>%
     rename(risk_score_old = risk_score,
            standardized_risk_score_old = standardized_risk_score)
+  
+  inputFile_with_riskscore <- full_join(inputFile, risk_scores, by = "Ptid") 
+  
 } else {
   risk_scores <- bind_rows(placebos_risk, vaccinees_risk) %>%
     select(Ptid, risk_score, standardized_risk_score) 
+  
+  inputFile_with_riskscore <- left_join(inputFile, risk_scores, by = "Ptid") 
 }
 
-inputFile_with_riskscore <- left_join(inputFile, risk_scores, by = "Ptid") 
+
 
 
 # For some studies, impute the missing risk scores and standardize them separately for placebo and vaccine groups 
@@ -76,7 +92,7 @@ if(study_name == "PREVENT19"){
   
 
 # Save inputFile 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile_with_riskscore.RData"))
   save(risk_scores, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/risk_scores.RData"))
 }else{
@@ -102,7 +118,7 @@ tab <- tab %>%
 if(study_name == "PREVENT19")
   tab <- tab %>% filter(Country == 0)
 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   table(tab$Trt, tab %>% pull(endpoint)) %>%
     write.csv(file = here("output", Sys.getenv("TRIAL"), args[1], "cases_post_riskScoreAnalysis.csv"))
 }else{

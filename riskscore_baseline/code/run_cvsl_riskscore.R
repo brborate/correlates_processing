@@ -15,7 +15,7 @@ if(study_name %in% c("VAT08m", "VAT08b")){
     drop_na(Ptid, Trt, all_of(endpoint)) %>%
     mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
   
-  if(study_name %in% c("VAT08m", "VAT08b")){
+  if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
     table(tab$Trt, tab %>% pull(endpoint)) %>%
       write.csv(file = here("output", Sys.getenv("TRIAL"), args[1], "cases_prior_to_applying_Riskscorecohortflag.csv"))
   }else{
@@ -48,7 +48,7 @@ if(study_name %in% c("VAT08m", "VAT08b")){
     drop_na(Ptid, Trt, all_of(endpoint)) %>%
     mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
   
-  if(study_name %in% c("VAT08m", "VAT08b")){
+  if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
     table(tab$Trt, tab %>% pull(endpoint)) %>%
       write.csv(file = here("output", Sys.getenv("TRIAL"), args[1], "cases_prior_riskScoreAnalysis.csv"))
   }else{
@@ -112,17 +112,22 @@ if(study_name %in% c("VAT08m", "VAT08b")){
   # sapply(X_covars2adjust, function(x) sum(is.na(x)))
   
   # Scale X_covars2adjust to have mean 0, sd 1 for all vars
-  for (a in colnames(X_covars2adjust)) {
-    X_covars2adjust[[a]] <- scale(X_covars2adjust[[a]],
-                                  center = mean(X_covars2adjust[[a]], na.rm = T),
-                                  scale = sd(X_covars2adjust[[a]], na.rm = T)
-    )
-  }
+  X_covars2adjust_scaled_plac <- get_scaleParams_scaledData(X_covars2adjust)
+  X_covars2adjust_scaled_plac_noattr <- X_covars2adjust_scaled_plac
+  attr(X_covars2adjust_scaled_plac_noattr, "scaled:center") <- NULL
+  attr(X_covars2adjust_scaled_plac_noattr, "scaled:scale") <- NULL
+ 
+  # # Scale X_covars2adjust to have mean 0, sd 1 for all vars
+  # for (a in colnames(X_covars2adjust)) {
+  #   X_covars2adjust[[a]] <- scale(X_covars2adjust[[a]],
+  #                                 center = mean(X_covars2adjust[[a]], na.rm = T),
+  #                                 scale = sd(X_covars2adjust[[a]], na.rm = T))
+  # }
   
   if(study_name == "COVE"){
     # Drop Bserostatus == 1 subjects here
-    plac_bseropos <- bind_cols(X_covars2adjust, dat.ph1 %>% select(Ptid, Bserostatus, Trt, all_of(endpoint))) %>% filter(Bserostatus == 1) 
-    plac_bseroneg <- bind_cols(X_covars2adjust, dat.ph1 %>% select(Ptid, Bserostatus, Trt, all_of(endpoint))) %>% filter(Bserostatus == 0) 
+    plac_bseropos <- bind_cols(data.frame(X_covars2adjust_scaled_plac_noattr), dat.ph1 %>% select(Ptid, Bserostatus, Trt, all_of(endpoint))) %>% filter(Bserostatus == 1) 
+    plac_bseroneg <- bind_cols(data.frame(X_covars2adjust_scaled_plac_noattr), dat.ph1 %>% select(Ptid, Bserostatus, Trt, all_of(endpoint))) %>% filter(Bserostatus == 0) 
     X_riskVars <- plac_bseroneg %>% select(-c(Ptid, Bserostatus, Trt, all_of(endpoint)))
     Y <- dat.ph1 %>% filter(Bserostatus == 0) %>% pull(endpoint) 
   } else {
@@ -192,7 +197,7 @@ if(study_name %in% c("VAT08m", "VAT08b")){
     cvsl_args = cvsl_args %>% mutate(Value = ifelse(Argument == "V_inner", V_inner_quote, Value))
   }
 
-  if(study_name %in% c("VAT08m", "VAT08b")){
+  if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
     cvsl_args %>% write.csv(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/", "cvsl_args.csv"))
   }else{
     cvsl_args %>% write.csv(paste0("output/", Sys.getenv("TRIAL"), "/", "cvsl_args.csv"))
@@ -218,7 +223,7 @@ if(study_name %in% c("VAT08m", "VAT08b")){
   cvfits[[1]] <- fits$cvfits
   
   
-  if(study_name %in% c("VAT08m", "VAT08b")){
+  if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
     saveRDS(cvaucs, here("output", Sys.getenv("TRIAL"), args[1], "cvsl_riskscore_cvaucs.rds"))
     save(cvfits, file = here("output", Sys.getenv("TRIAL"), args[1], "cvsl_riskscore_cvfits.rda"))
     save(risk_placebo_ptids, file = here("output", Sys.getenv("TRIAL"), args[1], "risk_placebo_ptids.rda"))
@@ -235,9 +240,9 @@ if(study_name %in% c("VAT08m", "VAT08b")){
     save(run_prod, Y, X_riskVars, weights, inputMod, risk_vars, all_risk_vars, endpoint, maxVar,
          V_outer, V_inner, familyVar, methodVar, scaleVar, studyName_for_report, 
          risk_timepoint, 
-         cvControlVar, inputfileName, mapped_data, plac_bseropos, plac_bseroneg,
+         cvControlVar, inputfileName, mapped_data, plac_bseropos, plac_bseroneg, X_covars2adjust_scaled_plac,
          file = here("output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
-  } else if (study_name %in% c("VAT08m", "VAT08b")){
+  } else if (study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
     save(run_prod, Y, X_riskVars, weights, inputMod, risk_vars, all_risk_vars, endpoint, maxVar,
          V_outer, V_inner, familyVar, methodVar, scaleVar, studyName_for_report, 
          riskscore_timepoint, vaccAUC_timepoint,

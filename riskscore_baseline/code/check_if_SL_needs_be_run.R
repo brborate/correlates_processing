@@ -16,20 +16,23 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
      (startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "EUA")      & file.exists(paste0("output/janssen_pooled_EUA/inputFile_with_riskscore.RData"))) |
      (startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "partA")    & file.exists(paste0("output/janssen_pooled_partA/inputFile_with_riskscore.RData"))) | 
      (startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "partA_VL") & file.exists(paste0("output/janssen_pooled_partA/inputFile_with_riskscore.RData")))) |
-     (study_name %in% c("VAT08m", "VAT08b") & (file.exists(paste0("output/vat08m/inputFile_with_riskscore.RData"))))
-  ){
+     (study_name %in% c("VAT08m", "VAT08b") & (file.exists(paste0("output/vat08m/inputFile_with_riskscore.RData")))) |
+     (study_name == "PREVENT19" & (file.exists(here("output", "prevent19", args[1], "inputFile_with_riskscore.RData")))) 
+     ){
     
-    if(startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "EUA") & file.exists(paste0("output/janssen_pooled_EUA/inputFile_with_riskscore.RData"))){
-      load("output/janssen_pooled_EUA/inputFile_with_riskscore.RData")
-    } else if(startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "partA") & file.exists(paste0("output/janssen_pooled_partA/inputFile_with_riskscore.RData"))){
-      load("output/janssen_pooled_partA/inputFile_with_riskscore.RData")
-    } else if(startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "partA_VL") & file.exists(paste0("output/janssen_pooled_partA/inputFile_with_riskscore.RData"))){
-      load("output/janssen_pooled_partA/inputFile_with_riskscore.RData")
-    }else if(study_name %in% c("VAT08m", "VAT08b")){
-      load("output/vat08m/inputFile_with_riskscore.RData")
-    }else{
-      load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
-    } 
+      if(startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "EUA") & file.exists(paste0("output/janssen_pooled_EUA/inputFile_with_riskscore.RData"))){
+        load("output/janssen_pooled_EUA/inputFile_with_riskscore.RData")
+      } else if(startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "partA") & file.exists(paste0("output/janssen_pooled_partA/inputFile_with_riskscore.RData"))){
+        load("output/janssen_pooled_partA/inputFile_with_riskscore.RData")
+      } else if(startsWith(Sys.getenv("TRIAL"), "janssen") & endsWith(Sys.getenv("TRIAL"), "partA_VL") & file.exists(paste0("output/janssen_pooled_partA/inputFile_with_riskscore.RData"))){
+        load("output/janssen_pooled_partA/inputFile_with_riskscore.RData")
+      }else if(study_name %in% c("VAT08m", "VAT08b")){
+        load("output/vat08m/inputFile_with_riskscore.RData")
+      }else if(study_name == "PREVENT19"){
+        load(here("output", "prevent19", args[1], "inputFile_with_riskscore.RData"))
+      }else{
+        load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
+      } 
     
     old_processed <- inputFile_with_riskscore %>%
       select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars), risk_score, standardized_risk_score)
@@ -42,10 +45,15 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
       inputFile_with_riskscore <- left_join(inputFile,
                                             old_processed %>%
                                               select(Ptid, risk_score, standardized_risk_score), by = "Ptid")
+      if(study_name == "PREVENT19"){
+        save(inputFile_with_riskscore, file = here("output", Sys.getenv("TRIAL"), args[1], "inputFile_with_riskscore.RData"))
+      } else {
+        save(inputFile_with_riskscore, file = here("output", Sys.getenv("TRIAL"), "inputFile_with_riskscore.RData"))
+      }
       
-      save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
       if(study_name %in% c("VAT08m", "VAT08b"))
         args[1] = "SLnotrun"
+      
     }else{
       message("Variables related to risk score generation in input data have changed! Superlearner needs to be run and new risk scores generated!")
       generate_new_riskscores()
@@ -55,14 +63,20 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
     generate_new_riskscores()
   }
 }else if(study_name == "COVE"){
-  inputFile_with_riskscore <- inputFile
-  # Check 
-  all.equal(names(inputFile_with_riskscore %>% select(Ptid, risk_score, standardized_risk_score)), c("Ptid", "risk_score", "standardized_risk_score"))
-  print("Risk scores for Moderna real dataset were generated at Moderna's end using CoVPN Stats/SCHARP code and are already present in input file. Superlearner will not be run!")
-  if(!file.exists(paste0("output/", Sys.getenv("TRIAL")))){
-    dir.create(paste0("output/", Sys.getenv("TRIAL")))
+  if(file.exists(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))){
+    load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
+    # Check 
+    all.equal(names(inputFile_with_riskscore %>% select(Ptid, risk_score, standardized_risk_score)), c("Ptid", "risk_score", "standardized_risk_score"))
+    print("Risk scores for Moderna real dataset were generated at Moderna's end using CoVPN Stats/SCHARP code and are already present in input file.")
+    print("To suit the Stage 2 COVEBoost trial, risk scores were generated for baseline seropositives and also 15 extra subjects that were in Stage 2 but not in Stage 1 trial.")
+    print("Superlearner will not be run!")
+    # if(!file.exists(paste0("output/", Sys.getenv("TRIAL")))){
+    #   dir.create(paste0("output/", Sys.getenv("TRIAL")))
+    # }
+  }else{
+    message(paste0("riskscore_baseline/", paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"), " does not exist. Superlearner needs to be run and new risk scores generated!"))
+    generate_new_riskscores()
   }
-  save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
 }else if(study_name == "PROFISCOV"){
   inputFile_with_riskscore <- inputFile %>% mutate(risk_score = 1,
                                                    standardized_risk_score = NA)

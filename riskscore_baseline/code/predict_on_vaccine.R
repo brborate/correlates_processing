@@ -3,6 +3,7 @@ renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
 source(here::here("..", "_common.R"))
+source(here::here("code", "utils.R"))
 #-----------------------------------------------
 
 # load required libraries and functions
@@ -28,7 +29,7 @@ conflict_prefer("select", "dplyr")
 print("PREDICT_ON_VACCINE.R")
 
 # conflict_prefer("omp_set_num_threads", "RhpcBLASctl")
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/objects_for_running_SL.rda"))
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/sl_riskscore_slfits.rda"))
 }else{
@@ -65,15 +66,21 @@ X_covars2adjust_vacc <- dat.ph1.vacc %>%
 print("Make sure data is clean before conducting imputations!")
 X_covars2adjust_vacc <- impute_missing_values(X_covars2adjust_vacc, risk_vars)
 
-# Scale X_covars2adjust_vacc to have mean 0, sd 1 for all vars
-for (a in colnames(X_covars2adjust_vacc)) {
-  X_covars2adjust_vacc[[a]] <- scale(X_covars2adjust_vacc[[a]],
-    center = mean(X_covars2adjust_vacc[[a]], na.rm = T),
-    scale = sd(X_covars2adjust_vacc[[a]], na.rm = T)
-  )
-}
+# Scale X_covars2adjust to have mean 0, sd 1 for all vars
+X_covars2adjust_scaled_vacc <- get_scaleParams_scaledData(X_covars2adjust_vacc)
+X_covars2adjust_scaled_vacc_noattr <- X_covars2adjust_scaled_vacc
+attr(X_covars2adjust_scaled_vacc_noattr, "scaled:center") <- NULL
+attr(X_covars2adjust_scaled_vacc_noattr, "scaled:scale") <- NULL
 
-X_riskVars_vacc <- X_covars2adjust_vacc
+# # Scale X_covars2adjust_vacc to have mean 0, sd 1 for all vars
+# for (a in colnames(X_covars2adjust_vacc)) {
+#   X_covars2adjust_vacc[[a]] <- scale(X_covars2adjust_vacc[[a]],
+#     center = mean(X_covars2adjust_vacc[[a]], na.rm = T),
+#     scale = sd(X_covars2adjust_vacc[[a]], na.rm = T)
+#   )
+# }
+
+X_riskVars_vacc <- data.frame(X_covars2adjust_scaled_vacc_noattr)
 
 pred_on_vaccine <- predict(sl_riskscore_slfits, newdata = X_riskVars_vacc, onlySL = TRUE)$pred %>%
   as.data.frame()
@@ -93,6 +100,7 @@ vacc <- bind_cols(vacc, pred_on_vaccine) %>%
 
 
 if(study_name == "COVE"){
+  # Predict on baseline seropositives!
   pred_on_plac_bseropos <- predict(sl_riskscore_slfits, 
                                    newdata = plac_bseropos %>% select(names(X_riskVars_vacc)), 
                                    onlySL = TRUE)$pred %>%

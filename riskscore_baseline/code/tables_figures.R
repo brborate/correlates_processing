@@ -25,7 +25,7 @@ ggplot2::theme_set(theme_cowplot())
 
 print("TABLES_FIGURES.R")
 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   load(file = here("output", Sys.getenv("TRIAL"), args[1], "objects_for_running_SL.rda"))
 }else{
   load(file = here("output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
@@ -33,7 +33,7 @@ if(study_name %in% c("VAT08m", "VAT08b")){
 
 rm(Y, X_riskVars, weights, maxVar)
 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   load(file = here("output", Sys.getenv("TRIAL"), args[1], "cvsl_risk_placebo_cvaucs.rda"))
 }else{
   load(file = here("output", Sys.getenv("TRIAL"), "cvsl_risk_placebo_cvaucs.rda"))
@@ -56,7 +56,7 @@ risk_vars <- dat %>%
   rename(`Total missing values` = V1) %>%
   select(`Variable Name`, Definition, `Total missing values`, Comments) 
 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   risk_vars %>% write.csv(here("output", Sys.getenv("TRIAL"), args[1], "risk_vars.csv"))
 }else{
   risk_vars %>% write.csv(here("output", Sys.getenv("TRIAL"), "risk_vars.csv"))
@@ -103,7 +103,7 @@ if (run_prod) {
     rename("Screen*" = Screen)
 }
 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   tab %>% write.csv(here("output", Sys.getenv("TRIAL"), args[1], "learner-screens.csv"))
 }else{
   tab %>% write.csv(here("output", Sys.getenv("TRIAL"), "learner-screens.csv"))
@@ -121,7 +121,7 @@ sl.perf <- risk_placebo_cvaucs %>%
   mutate(AUCstr = ifelse(AUC %in% tail(sort(AUC), 1), paste0(AUCstr, "*"), AUCstr)) %>%
   select(Learner, Screen, AUCstr)
 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   sl.perf %>% write.csv(here("output", Sys.getenv("TRIAL"), args[1], "SLperformance-plac.csv"))
 }else{
   sl.perf %>% write.csv(here("output", Sys.getenv("TRIAL"), "SLperformance-plac.csv")) 
@@ -130,7 +130,7 @@ if(study_name %in% c("VAT08m", "VAT08b")){
 ################################################################################
 # Forest plots for risk_placebo model, yd57 endpoint
 options(bitmapType = "cairo")
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   if (run_prod) {
     png(file = here("output", Sys.getenv("TRIAL"), args[1], "risk_placebo_cvaucs.png"),
         width = 2000, height = 1100)
@@ -175,7 +175,7 @@ top2_plac <- bind_rows(
                                        paste0(Learner, "_", Screen_fromRun))))
 
 # Get cvsl fit and extract cv predictions
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   load(file = here("output", Sys.getenv("TRIAL"), args[1], "cvsl_riskscore_cvfits.rda"))
 }else{
   load(file = here("output", Sys.getenv("TRIAL"), "cvsl_riskscore_cvfits.rda"))
@@ -185,7 +185,7 @@ pred <- get_cv_predictions(cv_fit = cvfits[[1]], cvaucDAT = top2_plac)
 
 # plot ROC curve
 options(bitmapType = "cairo")
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   png(file = here("output", Sys.getenv("TRIAL"), args[1], "ROCcurve_riskscore_plac.png"),
       width = 1000, height = 1000)
 }else{
@@ -199,7 +199,7 @@ dev.off()
 
 # plot pred prob plot
 options(bitmapType = "cairo")
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   png(file = here("output", Sys.getenv("TRIAL"), args[1], "predProb_riskscore_plac.png"),
       width = 1100, height = 1400)
 }else{
@@ -216,7 +216,7 @@ print(p2)
 dev.off()
 
 # Use SuperLearner to generate risk scores!
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   load(file = here("output", Sys.getenv("TRIAL"), args[1], "risk_placebo_ptids.rda"))
 }else{
   load(file = here("output", Sys.getenv("TRIAL"), "risk_placebo_ptids.rda"))
@@ -231,7 +231,7 @@ plac <- bind_cols(
                                          center = mean(risk_score, na.rm = T),
                                          scale = sd(risk_score, na.rm = T)))
 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
   write.csv(plac, here("output", Sys.getenv("TRIAL"), args[1], "placebo_ptids_with_riskscores.csv"),
             row.names = FALSE)
   

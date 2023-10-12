@@ -1,11 +1,15 @@
 library(kyotil)
+library(copcor)
 library(methods)
 library(dplyr)
 library(digest)
 set.seed(98109)
  
 
-config <- config::get(config = Sys.getenv("TRIAL"))
+if(Sys.getenv("TRIAL")=="") stop("Environmental variable TRIAL not defined!!!!!!!!!!!!!!")
+TRIAL=Sys.getenv("TRIAL")
+
+config <- config::get(config = TRIAL)
 for(opt in names(config)){
   eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
 }
@@ -38,18 +42,17 @@ include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08m")
 # all values on BAU or IU
 # LOQ can not be NA, it is needed for computing delta
 
-if (study_name %in% c("vat08b")) {
-  # switch to csv metadata file for assay
+if (!is.null(config$assay_metadata)) {
+  # use metadata file for assay when exists
   assay_metadata = read.csv(paste0(dirname(attr(config,"file")),"/",config$assay_metadata))
   assays=assay_metadata$assay
-  # created named lists for assay metadata to easier access, e.g. assay_labels_short["bindSpike"]
+  
+  # created named lists for assay metadata for easier access, e.g. assay_labels_short["bindSpike"]
   assay_labels=assay_metadata$assay_label; names(assay_labels)=assays
   assay_labels_short=assay_metadata$assay_label_short; names(assay_labels_short)=assays
-  llox_labels=assay_metadata$llox_label; names(llox_labels)=assays
+  uloqs=assay_metadata$uloq; names(uloqs)=assays
   lloqs=assay_metadata$lloq; names(lloqs)=assays
-  lods=assay_metadata$lod; names(lods)=assays
-  lloxs=ifelse(llox_labels=="lloq", lloqs, lods)
-  
+  llods=assay_metadata$lod; names(llods)=assays
   
 } else {
   names(assays)=assays # add names so that lapply results will have names
@@ -286,6 +289,9 @@ if (study_name %in% c("vat08b")) {
     uloqs["liveneutmn50"]=20157.44 
     pos.cutoffs["liveneutmn50"]=llods["liveneutmn50"] 
     
+  } else if(study_name=="COVEBoost") { 
+    # nothing to do, but this is needed so that _common.R can be called for making risk score
+    
   } else stop("unknown study_name 1")
   
 }
@@ -409,6 +415,9 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
 } else if (study_name=="HVTN705") {
     # do nothing
     
+} else if(study_name=="COVEBoost") { 
+  # nothing to do, but this is needed so that _common.R can be called for making risk score
+  
 } else stop("unknown study_name 2")
 
 
@@ -497,6 +506,9 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
 } else if (study_name=="HVTN705") {
     # do nothing
 
+} else if(study_name=="COVEBoost") { 
+  # nothing to do, but this is needed so that _common.R can be called for making risk score
+  
 } else stop("unknown study_name 3")
 
 
@@ -607,19 +619,6 @@ ggsave_custom <- function(filename = default_name(plot),
   ggsave(filename = filename, height = height, width = width, ...)
 }
 
-
-# x is the marker values
-# assay is one of assays, e.g. pseudoneutid80
-report.assay.values=function(x, assay){
-    lars.quantiles=seq(0,1,length.out=30) [round(seq.int(1, 30, length.out = 10))]
-    sens.quantiles=c(0.15, 0.85)
-    # cannot have different lengths for different assays, otherwise downstream code may break
-    fixed.values = log10(c("500"=500, "1000"=1000))#, "llod/2"=unname(llods[assay]/2))) # llod/2 may not be in the observed values
-    out=sort(c(quantile(x, c(lars.quantiles,sens.quantiles), na.rm=TRUE), fixed.values))    
-    out
-    #out[!duplicated(out)] # unique strips away the names. But don't take out duplicates because 15% may be needed and because we may want the same number of values for each assay
-}
-#report.assay.values (dat.vac.seroneg[["Daytp1pseudoneutid80"]], "pseudoneutid80")
 
 
 preprocess=function(dat_raw, study_name) {
