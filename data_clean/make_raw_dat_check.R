@@ -18,6 +18,9 @@ print(path_to_data)
 if (!file.exists(path_to_data)) stop ("make raw dat check: dataset not available ===========================================")
 dat_proc <- read.csv(path_to_data)
 
+
+dat_proc = preprocess(dat_proc, "VAT08") 
+  
 # load data and rename first column (ID)
 colnames(dat_proc)[1] <- "Ptid"
 
