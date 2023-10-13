@@ -634,6 +634,13 @@ preprocess=function(dat_raw, study_name) {
         dat_proc$EventIndPrimaryD29 =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
         dat_proc$EventTimePrimaryD1 =dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD1
         dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
+    } else if (startsWith(study_name,"VAT08")) {
+      dat_proc$EventTimePrimaryD43=dat_proc$EventTimeOmicronD43
+      dat_proc$EventIndPrimaryD43 =dat_proc$EventIndOmicronD43
+      dat_proc$EventTimePrimaryD22=dat_proc$EventTimeOmicronD22
+      dat_proc$EventIndPrimaryD22 =dat_proc$EventIndOmicronD22
+      dat_proc$EventTimePrimaryD1 =dat_proc$EventTimeOmicronD1
+      dat_proc$EventIndPrimaryD1  =dat_proc$EventIndOmicronD1
     }
         
     for(tp in timepoints) dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]

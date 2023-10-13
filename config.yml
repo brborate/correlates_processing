@@ -41,23 +41,23 @@ moderna_mock: &moderna_mock
 # for risk score
 vat08m: &vat08m
   <<: *ows_trial
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/stage1/adata/COVID_Sanofi_stage1_20230929.csv
+  assay_metadata: ../correlates_reporting3/assay_metadata/vat08b_assay_metadata.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]
   times: [B, Day22, Day43, Delta22overB, Delta43overB, Delta43over22]
   time_labels: [Day 1, Day 22, Day 43, D22 fold-rise over D1, D43 fold-rise over D1, D43 fold-rise over D22]
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/stage1/adata/COVID_Sanofi_stage1_20230929.csv
-  assay_metadata: ../correlates_reporting3/assay_metadata/vat08b_assay_metadata.csv
   study_name: VAT08m
   
 # for risk score
 vat08b: &vat08b
   <<: *ows_trial
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/stage2/adata/COVID_Sanofi_stage2_20230929.csv
+  assay_metadata: ../correlates_reporting3/assay_metadata/vat08b_assay_metadata.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]
   times: [B, Day22, Day43, Delta22overB, Delta43overB, Delta43over22]
   time_labels: [Day 1, Day 22, Day 43, D22 fold-rise over D1, D43 fold-rise over D1, D43 fold-rise over D22]
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/stage2/adata/COVID_Sanofi_stage2_20230929.csv
-  assay_metadata: ../correlates_reporting3/assay_metadata/vat08b_assay_metadata.csv
   study_name: VAT08b
   
 # for data_processing, which combines vat08a and vat008b
@@ -68,6 +68,7 @@ vat08_combined: &vat08_combined
   timepoints: [22, 43]
   times: [B, Day22, Day43, Delta22overB, Delta43overB, Delta43over22]
   time_labels: [Day 1, Day 22, Day 43, D22 fold-rise over D1, D43 fold-rise over D1, D43 fold-rise over D22]
+  study_name: VAT08
 
 
 
