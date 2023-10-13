@@ -635,6 +635,7 @@ preprocess=function(dat_raw, study_name) {
         dat_proc$EventTimePrimaryD1 =dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD1
         dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
     } else if (startsWith(study_name,"VAT08")) {
+      # sanofi trial variable names evolved. this patch is needed for the processing repo. the reporting2 repo is more flexible and doesn't need this
       dat_proc$EventTimePrimaryD43=dat_proc$EventTimeOmicronD43
       dat_proc$EventIndPrimaryD43 =dat_proc$EventIndOmicronD43
       dat_proc$EventTimePrimaryD22=dat_proc$EventTimeOmicronD22
