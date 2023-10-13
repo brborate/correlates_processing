@@ -30,7 +30,7 @@ verbose=Sys.getenv("VERBOSE")=="1"
 
 # if this flag is true, then the N IgG binding antibody is reported 
 # in the immuno report (but is not analyzed in the cor or cop reports).
-include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08m")
+include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08m","VAT08b","VAT08")
 
 
 
@@ -207,19 +207,6 @@ if (!is.null(config$assay_metadata)) {
     pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
     
     # bindN info missing in SAP
-    
-  } else if(study_name=="VAT08m") { # Sanofi
-    
-    # data less than lod is set to lod/2
-    llods["pseudoneutid50"]=2.612  
-    lloqs["pseudoneutid50"]=95*0.0653 # 3.6568
-    uloqs["pseudoneutid50"]=191429*0.0653 # 3121.732
-    pos.cutoffs["pseudoneutid50"]=llods["pseudoneutid50"]
-    
-    llods["bindN"]=0.093744
-    lloqs["bindN"]=4.4897
-    uloqs["bindN"]=574.6783
-    pos.cutoffs["bindN"]=23.4711
     
   } else if(study_name=="HVTN705") {
     
@@ -401,7 +388,7 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "Age < 65"
     )
 
-} else if (study_name %in% c("VAT08m")) {
+} else if (study_name %in% c("VAT08m","VAT08b","VAT08")) {
     Bstratum.labels <- c(
       "Age >= 60",
       "Age < 60"
@@ -477,7 +464,7 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "Non-US, Age >= 65"
     )
 
-} else if (study_name=="VAT08m") {
+} else if (study_name %in% c("VAT08m","VAT08b","VAT08")) {
 #    demo.stratum.labels <- c(
 #      "Not HND, Age 18-59",
 #      "Not HND, Age >= 60",
@@ -624,7 +611,7 @@ ggsave_custom <- function(filename = default_name(plot),
 preprocess=function(dat_raw, study_name) {
     dat_proc=dat_raw
 
-    if(is_ows_trial & !study_name %in% c("VAT08m", "VAT08b")){
+    if(is_ows_trial & !study_name %in% c("VAT08m", "VAT08b", "VAT08")){
         dat_proc=subset(dat_proc, !is.na(Bserostatus))
     }
     

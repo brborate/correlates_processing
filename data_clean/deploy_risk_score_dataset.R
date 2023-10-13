@@ -34,8 +34,8 @@ if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", 
   data_name_amended <- c( paste0(attr(config, "config"), "_data_processed_with_riskscore"), 
                           paste0(attr(config, "config"), "senior_data_processed_with_riskscore"),
                           paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore"))
-} else {
   
+} else {
   data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
 }
 
