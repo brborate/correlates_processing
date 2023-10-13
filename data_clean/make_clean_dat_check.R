@@ -7,8 +7,21 @@ source(here::here("_common.R"))
 #-----------------------------------------------
 library(here)
 
+# same as deploy script
+if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08b","vat08m","vat08")) {
+  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d")))
+  
+} else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
+  data_name_amended <- c( paste0(attr(config, "config"), "_data_processed_with_riskscore"), 
+                          paste0(attr(config, "config"), "senior_data_processed_with_riskscore"),
+                          paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore"))
+  
+} else {
+  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
+}
+
 # load data and rename first column (ID)
-dat_clean <- read.csv(here("data_clean", paste0(attr(config, "config"), "_data_processed_with_riskscore.csv"))) 
+dat_clean <- read.csv(here("data_clean", data_name_amended)) 
 
 #with(subset(dat_clean, Bserostatus==0 & Perprotocol==1 & ph1.immuno), hist(Day29bindN))
 #    (subset(dat_clean, Bserostatus==0 & Perprotocol==1 & ph1.immuno & Day29bindN>2))
