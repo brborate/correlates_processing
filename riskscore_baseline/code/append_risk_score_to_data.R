@@ -15,7 +15,7 @@ conflict_prefer("summarise", "dplyr")
 
 print("APPEND_RISK_SCORE_TO_DATA.R")
 
-if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/objects_for_running_SL.rda"))
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
   placebos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), args[1], "placebo_ptids_with_riskscores.csv"))
@@ -92,7 +92,7 @@ if(study_name == "PREVENT19"){
   
 
 # Save inputFile 
-if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   save(inputFile_with_riskscore, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile_with_riskscore.RData"))
   save(risk_scores, file = paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/risk_scores.RData"))
 }else{
@@ -118,7 +118,7 @@ tab <- tab %>%
 if(study_name == "PREVENT19")
   tab <- tab %>% filter(Country == 0)
 
-if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   table(tab$Trt, tab %>% pull(endpoint)) %>%
     write.csv(file = here("output", Sys.getenv("TRIAL"), args[1], "cases_post_riskScoreAnalysis.csv"))
 }else{

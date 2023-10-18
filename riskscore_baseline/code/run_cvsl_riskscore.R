@@ -3,7 +3,7 @@ print("RUN_CVSL_RISKSCORE.R")
 inputMod <- inputMod %>%
   drop_na(all_of(endpoint)) 
 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08m", "VAT08")){
   if(args[1] == "bseroneg")
     inputMod <- inputMod %>% filter(Bserostatus == 0)
   else if(args[1] == "bseropos")
@@ -15,7 +15,7 @@ if(study_name %in% c("VAT08m", "VAT08b")){
     drop_na(Ptid, Trt, all_of(endpoint)) %>%
     mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
   
-  if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+  if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
     table(tab$Trt, tab %>% pull(endpoint)) %>%
       write.csv(file = here("output", Sys.getenv("TRIAL"), args[1], "cases_prior_to_applying_Riskscorecohortflag.csv"))
   }else{
@@ -48,7 +48,7 @@ if(study_name %in% c("VAT08m", "VAT08b")){
     drop_na(Ptid, Trt, all_of(endpoint)) %>%
     mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
   
-  if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+  if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
     table(tab$Trt, tab %>% pull(endpoint)) %>%
       write.csv(file = here("output", Sys.getenv("TRIAL"), args[1], "cases_prior_riskScoreAnalysis.csv"))
   }else{
@@ -197,7 +197,7 @@ if(study_name %in% c("VAT08m", "VAT08b")){
     cvsl_args = cvsl_args %>% mutate(Value = ifelse(Argument == "V_inner", V_inner_quote, Value))
   }
 
-  if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+  if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
     cvsl_args %>% write.csv(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/", "cvsl_args.csv"))
   }else{
     cvsl_args %>% write.csv(paste0("output/", Sys.getenv("TRIAL"), "/", "cvsl_args.csv"))
@@ -223,7 +223,7 @@ if(study_name %in% c("VAT08m", "VAT08b")){
   cvfits[[1]] <- fits$cvfits
   
   
-  if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+  if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
     saveRDS(cvaucs, here("output", Sys.getenv("TRIAL"), args[1], "cvsl_riskscore_cvaucs.rds"))
     save(cvfits, file = here("output", Sys.getenv("TRIAL"), args[1], "cvsl_riskscore_cvfits.rda"))
     save(risk_placebo_ptids, file = here("output", Sys.getenv("TRIAL"), args[1], "risk_placebo_ptids.rda"))
@@ -242,7 +242,7 @@ if(study_name %in% c("VAT08m", "VAT08b")){
          risk_timepoint, 
          cvControlVar, inputfileName, mapped_data, plac_bseropos, plac_bseroneg, X_covars2adjust_scaled_plac,
          file = here("output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
-  } else if (study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+  } else if (study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
     save(run_prod, Y, X_riskVars, weights, inputMod, risk_vars, all_risk_vars, endpoint, maxVar,
          V_outer, V_inner, familyVar, methodVar, scaleVar, studyName_for_report, 
          riskscore_timepoint, vaccAUC_timepoint,

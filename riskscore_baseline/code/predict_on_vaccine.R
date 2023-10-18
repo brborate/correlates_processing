@@ -29,7 +29,7 @@ conflict_prefer("select", "dplyr")
 print("PREDICT_ON_VACCINE.R")
 
 # conflict_prefer("omp_set_num_threads", "RhpcBLASctl")
-if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/objects_for_running_SL.rda"))
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/sl_riskscore_slfits.rda"))
 }else{
@@ -130,7 +130,7 @@ if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
 
 vacc <- vacc %>% mutate(AUCchar = AUCvacc$AUCchar) 
 
-if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   write.csv(vacc, here("output", Sys.getenv("TRIAL"), args[1], "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
 }else{
   write.csv(vacc, here("output", Sys.getenv("TRIAL"), "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)

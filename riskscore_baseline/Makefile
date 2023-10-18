@@ -7,7 +7,7 @@ clean:
 
 ## get_riskscores : append previous risk scores if input data has not changed OR generate new risk scores!
 get_riskscores:  
-ifeq ($(TRIAL), $(filter $(TRIAL), vat08m vat08b))
+ifeq ($(TRIAL), $(filter $(TRIAL), vat08m vat08_combined))
 	Rscript code/get_riskscores.R bseroneg
 	Rscript code/get_riskscores.R bseropos
 	Rscript code/stack_bseroneg_bseropos.R

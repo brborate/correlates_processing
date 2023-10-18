@@ -86,7 +86,7 @@ readin_SLobjects_fromFolder <- function(data_file, trt) {
 
 
 # Read CV.SL object and save AUCs
-if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   data_file <- here("output", Sys.getenv("TRIAL"), args[1], "cvsl_riskscore_cvaucs.rds")
   risk_placebo_cvaucs <- readin_SLobjects_fromFolder(data_file, trt = "placebo")
   save(risk_placebo_cvaucs, file = here("output", Sys.getenv("TRIAL"), args[1], "cvsl_risk_placebo_cvaucs.rda"))

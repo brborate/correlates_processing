@@ -1,10 +1,10 @@
 library(digest)
 
-if(attr(config, "config") == "vat08m"){
+if(attr(config, "config") == "vat08_combined"){
   tmp <- switch(args[1],
-                bseroneg = "b6044e6b8ca8ddfadf0708e89550dfb9", #"b6044e6b8ca8ddfadf0708e89550dfb9",
-                bseropos = "66b6a2e3c7dc48dcfbfa8f2990a39b5f", #"66b6a2e3c7dc48dcfbfa8f2990a39b5f",
-                SLnotrun = "33c79bfcc914d18e5efb59c75f0effff",
+                bseroneg = "95d865388d3e7dfa35900d2c170b1671", #"b6044e6b8ca8ddfadf0708e89550dfb9",
+                bseropos = "99c40506a225b1144f0218493947a44f", #"66b6a2e3c7dc48dcfbfa8f2990a39b5f",
+                SLnotrun = "c4482f985c4ad6d50b2c07ad5c03999a",
                 NA) 
 } else if(attr(config, "config") == "prevent19"){
   tmp <- switch(args[1],

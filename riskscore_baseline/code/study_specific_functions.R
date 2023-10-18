@@ -121,7 +121,7 @@ get_defs_comments_riskVars <- function(data){
       Comments = "")
   }
   
-  if(study_name == "VAT08m"){
+  if(study_name %in% c("VAT08m", "VAT08")){
     data <- data %>%
       mutate(Definition = case_when(
         `Variable Name` == "Age" ~ "Age at enrollment in years",

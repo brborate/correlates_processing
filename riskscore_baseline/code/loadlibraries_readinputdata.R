@@ -74,7 +74,7 @@ if (study_name == "MockCOVE") {
     inputFile <- inputFile %>%
       mutate(Riskscorecohortflag = ifelse(Bserostatus==0 & Perprotocol==1, 1, 0),
              RiskscoreAUCflag = ifelse(Trt==1 & Bserostatus==0 & Perprotocol==1 & EarlyendpointD57==0 & EventTimePrimaryD57>=7, 1, 0))
-} else if (study_name %in% c("VAT08m", "VAT08b")) { # Sanofi
+} else if (study_name %in% c("VAT08", "VAT08m", "VAT08b")) { # Sanofi
     inputFile <- inputFile %>%
       mutate(Riskscorecohortflag = ifelse(Perprotocol==1, 1, 0),
              RiskscoreAUCflag = ifelse(Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7, 1, 0))
