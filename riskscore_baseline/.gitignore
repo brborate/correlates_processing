@@ -19,6 +19,9 @@ output/prevent19/*
 output/butantan/*
 output/vat08m/bseroneg/*
 output/vat08m/bseropos/*
+output/vat08_combined/bseroneg/*
+output/vat08_combined/bseropos/*
+output/vat08_combined/*
 *.Rout
 nohup.out
 .nfs*

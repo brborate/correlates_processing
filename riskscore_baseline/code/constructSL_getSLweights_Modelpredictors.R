@@ -29,7 +29,7 @@ conflict_prefer("omp_set_num_threads", "RhpcBLASctl")
 
 print("CONSTRUCTSL_GETSLWEIGHTS_MODELPREDICTORS.R")
 
-if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/objects_for_running_SL.rda"))
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/plac_top2learners_SL_discreteSL.rda"))
 }else{
@@ -54,7 +54,7 @@ sl_riskscore_slfits <- SuperLearner(
   cvControl = cvControlVar, verbose = FALSE
 )
 
-if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   save(sl_riskscore_slfits, file = here("output", Sys.getenv("TRIAL"), args[1], "sl_riskscore_slfits.rda"))
 }else{
   save(sl_riskscore_slfits, file = here("output", Sys.getenv("TRIAL"), "sl_riskscore_slfits.rda"))
@@ -77,7 +77,7 @@ sl_weights_csv <- sl_weights %>%
   select(Learner, Screen, Weight) 
 
 
-if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   sl_weights_csv %>% write.csv(here("output", Sys.getenv("TRIAL"), args[1], "SL_weights.csv"))
 }else{
   sl_weights_csv %>% write.csv(here("output", Sys.getenv("TRIAL"), "SL_weights.csv"))
@@ -181,7 +181,7 @@ if(run_prod){
     select(Learner, Screen, Weight, Predictors, Coefficient, `Odds Ratio`) 
 }
 
-if(study_name %in% c("VAT08m", "VAT08b", "PREVENT19")){
+if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   SL_all_models_with_predictors %>% 
     write.csv(here("output", Sys.getenv("TRIAL"), args[1], "SL_all_models_with_predictors.csv"))
 }else{

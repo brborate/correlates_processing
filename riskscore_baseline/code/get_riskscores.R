@@ -4,7 +4,7 @@
 # Sys.setenv(TRIAL = "azd1222") # Astra-Zeneca
 # Sys.setenv(TRIAL = "prevent19") # Novavax
 # Sys.setenv(TRIAL = "vat08m") # Sanofi
-# Sys.setenv(TRIAL = "vat08b") # Sanofi
+# Sys.setenv(TRIAL = "vat08_combined") # Sanofi
 # Sys.setenv(TRIAL = "janssen_pooled_partA") 
 # Sys.setenv(TRIAL = "butantan")
 # Sys.setenv(TRIAL = "moderna_boost")
@@ -23,7 +23,7 @@ args = commandArgs(trailingOnly=TRUE)
 
 source("code/loadlibraries_readinputdata.R")
 
-if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m", "VAT08b", "PROFISCOV")){
+if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m", "VAT08", "PROFISCOV")){
   inputFile <- inputFile %>%
     rename(Ptid = Subjectid)
 }else if(study_name == "MockCOVE"){
@@ -193,32 +193,47 @@ if(study_name == "AZD1222"){
   names(inputMod)<-gsub("\\_",".",names(inputMod))
 }
 
-if(study_name %in% c("VAT08m", "VAT08b")){
+if(study_name %in% c("VAT08", "VAT08m", "VAT08")){
   inputFile <- inputFile %>%
     mutate(EventIndPrimaryD1rscore = EventIndPrimaryD1,
            EventIndPrimaryD43rauc = ifelse(RiskscoreAUCflag == 1, EventIndPrimaryD43, NA),
-           pooled.age.grp = ifelse(Age >= 60, 1, 0),
-           # # Pool countries (Japan, Kenya and Nepal) that have sparse endpoints EventIndPrimaryD43)
-           # Country.pooled = ifelse(Country %in% c(5, 6, 7), 567, Country)
-           
-           # Pool countries (Japan, Kenya and Nepal) that have sparse endpoints EventIndPrimaryD43)
-           # Assign geographic region: Honduras, not Honduras for the Stage 1 trial; India, Mexico, Other/Else for the Stage 2 trial)
-           Country.ind = case_when(vacc_trial == "mono" & Country == 3 ~ "Honduras",
-                                      vacc_trial == "mono" & Country != 3 ~ "NotHonduras",
-                                      vacc_trial == "bi" & Country == 3 ~ "India",
-                                      vacc_trial == "bi" & Country == 5 ~ "Mexico",
-                                      TRUE ~ "Other")
-           )
+           pooled.age.grp = ifelse(Age >= 60, 1, 0))
   
-  risk_vars <- c(
-    "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
-    "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
-    "URMforsubcohortsampling", "HighRiskInd", "HIVinfection",
-    "Sex", "Age", "pooled.age.grp", "BMI", #"BMI.group", "Height", "Weight", 
-    "Country.ind.India", "Country.ind.Mexico", "Country.ind.NotHonduras", "Country.ind.Other", 
-    #"USAInd",  
-    "CalDtEnrollIND.X1", "CalDtEnrollIND.X2", "CalDtEnrollIND.X3", "CalDtEnrollIND.X4", "CalDtEnrollIND.X5"
-  )
+  # Assign geographic region: Honduras, not Honduras for the Stage 1 trial
+  # Assign geographic region: India, Mexico, Other for the Stage 2 trial
+  inputFile <- inputFile %>%
+    filter(Stage == 1) %>%
+    mutate(Country.ind = case_when(Country == 3 ~ "Honduras",
+                                   Country != 3 ~ "NotHonduras",
+                                   TRUE ~ "Other")) %>%
+    bind_rows(inputFile %>%
+                filter(Stage == 2) %>%
+                mutate(Country.ind = case_when(Country == 4 ~ "India",
+                                               Country == 9 ~ "Mexico",
+                                               TRUE ~ "Other")))
+  
+  if(study_name == "VAT08m"){
+    risk_vars <- c(
+      "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
+      "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
+      "URMforsubcohortsampling", "HighRiskInd", "HIVinfection",
+      "Sex", "Age", "pooled.age.grp", "BMI", #"BMI.group", "Height", "Weight", 
+      "Country.ind.NotHonduras", #"Country.ind.India", "Country.ind.Mexico", "Country.ind.Other", 
+      #"USAInd",  
+      "CalDtEnrollIND.X1", "CalDtEnrollIND.X2", "CalDtEnrollIND.X3", "CalDtEnrollIND.X4", "CalDtEnrollIND.X5"
+    )
+  } else if(study_name == "VAT08"){
+    risk_vars <- c(
+      "EthnicityHispanic", "EthnicityNotreported", "EthnicityUnknown",
+      "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
+      "URMforsubcohortsampling", "HighRiskInd", "HIVinfection",
+      "Sex", "Age", "pooled.age.grp", "BMI", #"BMI.group", "Height", "Weight", 
+      "Country.ind.India", "Country.ind.Mexico", "Country.ind.NotHonduras", "Country.ind.Other", 
+      #"USAInd",  
+      "CalDtEnrollIND.X1", "CalDtEnrollIND.X2", "CalDtEnrollIND.X3", "CalDtEnrollIND.X4", "CalDtEnrollIND.X5"
+    )
+  }
+
   
   # Store original original risk variables as well to check in check_if_SL_needs_be_run.R!
   original_risk_vars <- c(
@@ -244,8 +259,8 @@ if(study_name %in% c("VAT08m", "VAT08b")){
                                       CalendarDateEnrollment >= 56 & CalendarDateEnrollment < 84 ~ 2,
                                       CalendarDateEnrollment >= 84 & CalendarDateEnrollment < 112 ~ 3,
                                       CalendarDateEnrollment >= 112 & CalendarDateEnrollment < 140 ~ 4,
-                                      CalendarDateEnrollment >= 140 & CalendarDateEnrollment < 168 ~ 5,   
-           CalendarDateEnrollment >= 168 & CalendarDateEnrollment < 196 ~ 6),
+                                      CalendarDateEnrollment >= 140 & CalendarDateEnrollment < 168 ~ 5, 
+                                      CalendarDateEnrollment >= 168 & CalendarDateEnrollment < 196 ~ 6),
            CalDtEnrollIND = as.factor(CalDtEnrollIND)) 
   
   rec <- recipe(~ Country.ind + CalDtEnrollIND, data = inputMod)
@@ -263,7 +278,7 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
   )
   
   # Save inputFile 
-  if(study_name %in% c("VAT08m", "VAT08b")){
+  if(study_name %in% c("VAT08m", "VAT08")){
     if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
       dir.create(paste0("output/", Sys.getenv("TRIAL")))
       dir.create(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))
