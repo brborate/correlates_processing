@@ -193,7 +193,7 @@ if(study_name == "AZD1222"){
   names(inputMod)<-gsub("\\_",".",names(inputMod))
 }
 
-if(study_name %in% c("VAT08", "VAT08m", "VAT08")){
+if(study_name %in% c("VAT08", "VAT08m")){
   inputFile <- inputFile %>%
     mutate(EventIndPrimaryD1rscore = EventIndPrimaryD1,
            EventIndPrimaryD43rauc = ifelse(RiskscoreAUCflag == 1, EventIndPrimaryD43, NA),
