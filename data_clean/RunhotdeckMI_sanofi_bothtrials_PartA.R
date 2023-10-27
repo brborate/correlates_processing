@@ -28,8 +28,9 @@ source(here::here("_common.R"))
 # library(copcor) # installed from github CoVPN/copcor, needed for hotdeckMI
 
 
-# quit if the output file already exists
 outputfile_name = sub(".csv", "_hotdeck.csv", mapped_data)
+
+# quit if the output file already exists
 if (file.exists(outputfile_name)) quit()
 
 # For Sanofi the viral load variable is not used in neighborhoods for hotdeck multiple imputation

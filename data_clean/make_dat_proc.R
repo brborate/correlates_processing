@@ -25,25 +25,55 @@ begin=Sys.time()
 # read mapped data with risk score added
 
 if (make_riskscore) {
-    if (TRIAL=="janssen_partA_VL") {
+  if (TRIAL=="janssen_partA_VL") {
+    # read hot deck data
+    tmp = sub(".csv","_hotdeck.csv",mapped_data)
+    if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
+    dat_proc = preprocess(dat_raw, study_name)   
+    colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
+    # borrow risk score from janssen_pooled_partA
+    load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
+    stopifnot(all(dat_proc$Ptid==inputFile_with_riskscore$Ptid))
+    dat_proc$risk_score = inputFile_with_riskscore$risk_score
+    dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
+    
+    # create a new event indicator variable that censors cases without VL, which also include all non-molec confirmed cases
+    # required for defining weights
+    dat_proc$EventIndPrimaryHasVLD29 = dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
+    dat_proc$EventIndPrimaryHasVLD29[is.na(dat_proc$seq1.log10vl) & !is.na(dat_proc$EventIndPrimaryHasVLD29)] = 0 # if EventIndPrimaryHasVLD29 is NA, this will remain NA
+    dat_proc$EventIndPrimaryD29 = dat_proc$EventIndPrimaryHasVLD29
+    # EventTimePrimaryD29 is set to EventIndPrimaryIncludeNotMolecConfirmedD29 in preprocess()
+    
+   } else if (TRIAL=="vat08_combined") {
       # read hot deck data
       tmp = sub(".csv","_hotdeck.csv",mapped_data)
       if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
+      
       dat_proc = preprocess(dat_raw, study_name)   
       colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
-      # borrow risk score from janssen_pooled_partA
-      load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
+      
+      # load risk score
+      load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
       stopifnot(all(dat_proc$Ptid==inputFile_with_riskscore$Ptid))
       dat_proc$risk_score = inputFile_with_riskscore$risk_score
       dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
       
-      # create a new event indicator variable that censors cases without VL, which also include all non-molec confirmed cases
-      # required for defining weights
-      dat_proc$EventIndPrimaryHasVLD29 = dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
-      dat_proc$EventIndPrimaryHasVLD29[is.na(dat_proc$seq1.log10vl) & !is.na(dat_proc$EventIndPrimaryHasVLD29)] = 0 # if EventIndPrimaryHasVLD29 is NA, this will remain NA
-      dat_proc$EventIndPrimaryD29 = dat_proc$EventIndPrimaryHasVLD29
-      # EventTimePrimaryD29 is set to EventIndPrimaryIncludeNotMolecConfirmedD29 in preprocess()
+      # filter out ptids with missing Bserostatus
+      dat_proc = subset(dat_proc, !is.na(Bserostatus))
       
+      # create new event indicator and event time variables
+      for (t in c(1,22,43)) {
+      for (i in 1:10) {
+        dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] = 
+          ifelse(!is.na(dat_proc[["seq1.variant.hotdeck"%.%i]]) & dat_proc[["seq1.variant.hotdeck"%.%i]]=="Omicron" & !is.na(dat_proc[["EventIndPrimaryD"%.%t]]),
+                 1,
+                 0)
+        dat_proc[[paste0("EventTimeOmicronD",t,"hotdeck",i)]] = ifelse(dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] ==1, 
+                                                           min(dat_proc[["EventTimeKnownLineageOmicronD"%.%t]],    dat_proc[["EventTimeMissingLineageD"%.%t]]),
+                                                           max(dat_proc[["EventTimeKnownLineageNonOmicronD"%.%t]], dat_proc[["EventTimeMissingLineageD"%.%t]]))
+      }
+      }
+
     } else {
       # load inputFile_with_riskscore.Rdata, a product of make riskscore_analysis, which calls preprocess and makes risk scores
       load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
@@ -252,8 +282,8 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 #    Stage 2, Not senior
 #    Stage 2, senior
   dat_proc$demo.stratum = with(dat_proc, Bstratum)
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Stage==1 & Country==3, demo.stratum+2, demo.stratum)) # Stage 1, HND
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Stage==2, demo.stratum+4, demo.stratum)) # Stage 2
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Trialstage==1 & Country==3, demo.stratum+2, demo.stratum)) # Stage 1, HND
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Trialstage==2, demo.stratum+4, demo.stratum)) # Stage 2
     
 } else if (study_name=="PROFISCOV" ) {
     dat_proc$demo.stratum = 1 # # there are no demographics stratum for subcohort sampling

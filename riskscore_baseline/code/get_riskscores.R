@@ -202,12 +202,12 @@ if(study_name %in% c("VAT08", "VAT08m", "VAT08")){
   # Assign geographic region: Honduras, not Honduras for the Stage 1 trial
   # Assign geographic region: India, Mexico, Other for the Stage 2 trial
   inputFile <- inputFile %>%
-    filter(Stage == 1) %>%
+    filter(Trialstage == 1) %>%
     mutate(Country.ind = case_when(Country == 3 ~ "Honduras",
                                    Country != 3 ~ "NotHonduras",
                                    TRUE ~ "Other")) %>%
     bind_rows(inputFile %>%
-                filter(Stage == 2) %>%
+                filter(Trialstage == 2) %>%
                 mutate(Country.ind = case_when(Country == 4 ~ "India",
                                                Country == 9 ~ "Mexico",
                                                TRUE ~ "Other")))
