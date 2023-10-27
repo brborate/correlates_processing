@@ -1,7 +1,11 @@
 #Sys.setenv(TRIAL = "moderna_real")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
+#Sys.setenv(TRIAL = "vat08_combined")
 
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
+
+
+# vat08_combined: Stage is incorporated into demo.stratum
 
 source(here::here("_common.R"))
 
@@ -21,25 +25,55 @@ begin=Sys.time()
 # read mapped data with risk score added
 
 if (make_riskscore) {
-    if (TRIAL=="janssen_partA_VL") {
+  if (TRIAL=="janssen_partA_VL") {
+    # read hot deck data
+    tmp = sub(".csv","_hotdeck.csv",mapped_data)
+    if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
+    dat_proc = preprocess(dat_raw, study_name)   
+    colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
+    # borrow risk score from janssen_pooled_partA
+    load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
+    stopifnot(all(dat_proc$Ptid==inputFile_with_riskscore$Ptid))
+    dat_proc$risk_score = inputFile_with_riskscore$risk_score
+    dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
+    
+    # create a new event indicator variable that censors cases without VL, which also include all non-molec confirmed cases
+    # required for defining weights
+    dat_proc$EventIndPrimaryHasVLD29 = dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
+    dat_proc$EventIndPrimaryHasVLD29[is.na(dat_proc$seq1.log10vl) & !is.na(dat_proc$EventIndPrimaryHasVLD29)] = 0 # if EventIndPrimaryHasVLD29 is NA, this will remain NA
+    dat_proc$EventIndPrimaryD29 = dat_proc$EventIndPrimaryHasVLD29
+    # EventTimePrimaryD29 is set to EventIndPrimaryIncludeNotMolecConfirmedD29 in preprocess()
+    
+   } else if (TRIAL=="vat08_combined") {
       # read hot deck data
       tmp = sub(".csv","_hotdeck.csv",mapped_data)
       if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
+      
       dat_proc = preprocess(dat_raw, study_name)   
       colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
-      # borrow risk score from janssen_pooled_partA
-      load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
+      
+      # load risk score
+      load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
       stopifnot(all(dat_proc$Ptid==inputFile_with_riskscore$Ptid))
       dat_proc$risk_score = inputFile_with_riskscore$risk_score
       dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
       
-      # create a new event indicator variable that censors cases without VL, which also include all non-molec confirmed cases
-      # required for defining weights
-      dat_proc$EventIndPrimaryHasVLD29 = dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
-      dat_proc$EventIndPrimaryHasVLD29[is.na(dat_proc$seq1.log10vl) & !is.na(dat_proc$EventIndPrimaryHasVLD29)] = 0 # if EventIndPrimaryHasVLD29 is NA, this will remain NA
-      dat_proc$EventIndPrimaryD29 = dat_proc$EventIndPrimaryHasVLD29
-      # EventTimePrimaryD29 is set to EventIndPrimaryIncludeNotMolecConfirmedD29 in preprocess()
+      # filter out ptids with missing Bserostatus
+      dat_proc = subset(dat_proc, !is.na(Bserostatus))
       
+      # create new event indicator and event time variables
+      for (t in c(1,22,43)) {
+      for (i in 1:10) {
+        dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] = 
+          ifelse(!is.na(dat_proc[["seq1.variant.hotdeck"%.%i]]) & dat_proc[["seq1.variant.hotdeck"%.%i]]=="Omicron" & !is.na(dat_proc[["EventIndPrimaryD"%.%t]]),
+                 1,
+                 0)
+        dat_proc[[paste0("EventTimeOmicronD",t,"hotdeck",i)]] = ifelse(dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] ==1, 
+                                                           min(dat_proc[["EventTimeKnownLineageOmicronD"%.%t]],    dat_proc[["EventTimeMissingLineageD"%.%t]]),
+                                                           max(dat_proc[["EventTimeKnownLineageNonOmicronD"%.%t]], dat_proc[["EventTimeMissingLineageD"%.%t]]))
+      }
+      }
+
     } else {
       # load inputFile_with_riskscore.Rdata, a product of make riskscore_analysis, which calls preprocess and makes risk scores
       load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
@@ -54,7 +88,7 @@ if (make_riskscore) {
 
 # define new variables
 dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
-dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08m=60, PROFISCOV=NA, stop("unknown study_name 1")))
+dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08=60, PROFISCOV=NA, stop("unknown study_name 1")))
   
 # for the mock datasets, hardcode AnyinfectionD1 
 if (study_name %in% c("MockENSEMBLE", "MockCOVE")) dat_proc$AnyinfectionD1=0
@@ -82,7 +116,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
         race = factor(race, levels = labels.race)
       )
       
-} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m")) {
+} else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222")) {
     # remove the Other category
     dat_proc <- dat_proc %>%
       mutate(
@@ -99,7 +133,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
         race = factor(race, levels = labels.race)
       )
       
-} else if (study_name %in% c("PROFISCOV")) {
+} else if (study_name %in% c("PROFISCOV", "VAT08")) {
     dat_proc$race = 0 # not applicable, but has to define a value so that the next chunk of code can run
     
 } else stop("unknown study_name 2")
@@ -123,7 +157,7 @@ dat_proc$WhiteNonHispanic[is.na(dat_proc$WhiteNonHispanic)] = 0
 dat_proc$MinorityInd[is.na(dat_proc$MinorityInd)] = 0
 
 # set MinorityInd to 0 for latin america and south africa
-if (study_name %in% c("COVE", "MockCOVE", "PROFISCOV")) {
+if (study_name %in% c("COVE", "MockCOVE", "PROFISCOV", "VAT08")) {
     # nothing to do
     # COVE only has US data
     
@@ -135,9 +169,6 @@ if (study_name %in% c("COVE", "MockCOVE", "PROFISCOV")) {
     
 } else if (study_name=="AZD1222") {
     dat_proc$MinorityInd[dat_proc$Country!=2] = 0 # 2 is US
-    
-} else if (study_name=="VAT08m") {
-    dat_proc$MinorityInd[dat_proc$Country!=8] = 0 # 8 is US
     
 } else stop("unknown study_name 3")
 
@@ -197,7 +228,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 } else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     dat_proc$Bstratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
     
-} else if (study_name %in% c("PREVENT19", "AZD1222", "VAT08m")) {
+} else if (study_name %in% c("PREVENT19", "AZD1222", "VAT08")) {
     dat_proc$Bstratum = with(dat_proc, ifelse(Senior, 2, 1))
     
 } else if (study_name %in% c("PROFISCOV")) {
@@ -243,24 +274,17 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior), base = 2)) + 1
     dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(!Senior, 5, 6))) # 2 is US
         
-} else if (study_name=="VAT08m" ) {
-#    Not HND, US or JPN, Not senior
-#    Not HND, US or JPN, senior
-#    HND, Not senior
-#    HND, senior
-#    USA, Not senior
-#    USA, senior
-#    JPN, Not senior
-#    JPN, senior
-    dat_proc$demo.stratum = with(dat_proc, strtoi(Senior, base = 2)) + 1
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==3, demo.stratum+2, demo.stratum)) # HND
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==8, demo.stratum+4, demo.stratum)) # USA
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==5, demo.stratum+6, demo.stratum)) # JPN
+} else if (study_name=="VAT08" ) {
+#    Stage 1, Not HND, Not senior
+#    Stage 1, Not HND, senior
+#    Stage 1, HND, Not senior
+#    Stage 1, HND, senior
+#    Stage 2, Not senior
+#    Stage 2, senior
+  dat_proc$demo.stratum = with(dat_proc, Bstratum)
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Trialstage==1 & Country==3, demo.stratum+2, demo.stratum)) # Stage 1, HND
+    dat_proc$demo.stratum = with(dat_proc, ifelse(Trialstage==2, demo.stratum+4, demo.stratum)) # Stage 2
     
-    # in this partial dataset, we need to collapse "Not HND, US or JPN, senior" and "HND, senior" due to sparsity
-    dat_proc$demo.stratum = with(dat_proc, ifelse(demo.stratum==4, 2, demo.stratum)) 
-    dat_proc$demo.stratum = with(dat_proc, ifelse(demo.stratum>4, demo.stratum-1, demo.stratum)) 
-        
 } else if (study_name=="PROFISCOV" ) {
     dat_proc$demo.stratum = 1 # # there are no demographics stratum for subcohort sampling
     
@@ -328,7 +352,7 @@ if(TRIAL %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", 
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
     
-} else if (study_name == "VAT08m") {
+} else if (study_name == "VAT08") {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0)]=max.tps+1
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1)]=max.tps+2
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0)]=max.tps+3
@@ -385,18 +409,30 @@ if (study_name %in% c("COVE", "MockCOVE")) {
         must_have_assays <- c("bindSpike")
         
     } else if (TRIAL=="profiscov_lvmn") {
-        must_have_assays <- c("liveneutmn50")
+        must_have_assays <- c("bindSpike")
         
     } else stop("need to define must_have_assays")
     
-} else if (study_name %in% c("VAT08m")) {
-    must_have_assays <- c("pseudoneutid50")
+} else if (study_name %in% c("VAT08")) {
+    must_have_assays <- c("bindSpike")
         
 } else stop("unknown study_name 7")
 
 
+# examine missingness
+# # sanofi 
+# with(subset(dat_proc, Trt==1), table(!is.na(BbindSpike)))
+# with(subset(dat_proc, Trt==1), table(!is.na(Day22bindSpike)))
+# with(subset(dat_proc, Trt==1), table(!is.na(Day43bindSpike)))
+# with(subset(dat_proc, Trt==1), table(!is.na(BbindSpike) & !is.na(Day22bindSpike) & !is.na(Day43bindSpike)))
+# with(subset(dat_proc, Trt==1), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike), !is.na(BbindSpike) ))
+# with(subset(dat_proc, Trt==1 & EventIndPrimaryD22), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike), !is.na(BbindSpike) ))
+# with(subset(dat_proc, Trt==1 & EventIndPrimaryD22), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike), Stage ))
+
+
+
 # TwophasesampInd: be in the subcohort or a case after time point 1  &  have the necessary markers
-if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19", "VAT08m")) {
+if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
     if (two_marker_timepoints) {
     # require baseline and timpoint 1
         dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
@@ -405,9 +441,19 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19", "VAT08m")
     }
     # require baseline
     dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
-        with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-        complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
-    
+            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+            complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
+        
+} else if (study_name %in% c("VAT08")) {
+  # require baseline but not time point 1
+  dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
+    with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+    complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[2]%.%must_have_assays)])      
+
+  # same as tp2
+  dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]]]
+
+  
 } else if (study_name %in% c("AZD1222", "PROFISCOV")) {
     if (two_marker_timepoints) {
         # does not require baseline or time point 1
@@ -562,29 +608,6 @@ assertthat::assert_that(
         
 
 
-## another set of weights for Omicron cases
-#if (attr(config,"config")=="vat08m"){
-#    # weights for intercurrent cases
-#    tp=timepoints[1]
-#    tmp = with(dat_proc, 
-#          get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 
-#        & get("EventIndOmicronD"%.%tp)==1 
-#        & get("EventTimeOmicronD"%.%tp) >= 7 
-#        & get("EventTimeOmicronD"%.%tp) <= 6 + get("NumberdaysD1toD"%.%timepoints[2]) - get("NumberdaysD1toD"%.%tp))
-#    wts_table2 <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
-#    wts_norm2 <- rowSums(wts_table2) / wts_table2[, 2]
-#    dat_proc$wt.intercurrent.cases.omi <- wts_norm2[dat_proc$Wstratum %.% ""]
-#    dat_proc$wt.intercurrent.cases.omi = ifelse(tmp, 
-#                                            dat_proc$wt.intercurrent.cases.omi, 
-#                                            NA)
-#    dat_proc$ph1.intercurrent.cases.omi=!is.na(dat_proc$wt.intercurrent.cases.omi)
-#    dat_proc$ph2.intercurrent.cases.omi=with(dat_proc, ph1.intercurrent.cases.omi & get("TwophasesampIndD"%.%tp))    
-#    
-#    assertthat::assert_that(
-#        all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum), select=wt.intercurrent.cases.omi, drop=T))),
-#        msg = "missing wt.intercurrent.cases.omi for intercurrent analyses ph1 subjects")
-#}
-
 ## check missing risk score 
 #with(subset(dat_proc, ph1.D35 & Trt==1 & Bserostatus==0), table(is.na(risk_score), Riskscorecohortflag, ph2.D35, EventIndPrimaryD35))
 #with(subset(dat_proc, Country==0 & Bserostatus==0 & Trt==1 & ph1.D35 & !is.na(BbindSpike) & !is.na(Day35bindSpike)), table(is.na(Day35pseudoneutid50), EventIndPrimaryD35))
@@ -704,7 +727,7 @@ if (TRIAL=="janssen_partA_VL") {
 
 # some trials have N some don't
 if (is.null(config$assay_metadata)) {
-  includeN = switch(study_name, COVE=1, MockCOVE=1, ENSEMBLE=1, MockENSEMBLE=1, PREVENT19=0, AZD1222=0, VAT08m=0, PROFISCOV=1, stop("unknown study_name 9"))
+  includeN = switch(study_name, COVE=1, MockCOVE=1, ENSEMBLE=1, MockENSEMBLE=1, PREVENT19=0, AZD1222=0, VAT08=0, PROFISCOV=1, stop("unknown study_name 9"))
   assays.includeN=c(assays, if(includeN==1) "bindN")
 } else {
   if (TRIAL=="janssen_partA_VL") {
