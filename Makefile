@@ -10,9 +10,13 @@ risk_report_clean: risk_clean data_processed
 risk_clean: 
 	rm -rf riskscore_baseline/output/$(TRIAL)/*
 	
+
+
 ## deploy risk score processed dataset : Deploy risk score dataset after checking
 deploy_processed_dataset: 
 	Rscript data_clean/deploy_risk_score_dataset.R
+
+
 
 ## data_processed         : create processed data from raw data
 data_processed: check_raw_data risk_analysis make_clean_data check_clean_data 

@@ -58,9 +58,8 @@ if (make_riskscore) {
       dat_proc$risk_score = inputFile_with_riskscore$risk_score
       dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
       
-      # filter out ptids with missing Bserostatus
-      dat_proc = subset(dat_proc, !is.na(Bserostatus))
-      
+      # ptids with missing Bserostatus already filtered out in preprocess
+
       # create new event indicator and event time variables
       for (t in c(1,22,43)) {
       for (i in 1:10) {

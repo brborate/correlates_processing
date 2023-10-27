@@ -611,7 +611,7 @@ ggsave_custom <- function(filename = default_name(plot),
 preprocess=function(dat_raw, study_name) {
     dat_proc=dat_raw
 
-    if(is_ows_trial & !study_name %in% c("VAT08m", "VAT08b", "VAT08")){
+    if(is_ows_trial){
         dat_proc=subset(dat_proc, !is.na(Bserostatus))
     }
     
