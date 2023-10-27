@@ -31,6 +31,7 @@ if (make_riskscore) {
     if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
     dat_proc = preprocess(dat_raw, study_name)   
     colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
+    
     # borrow risk score from janssen_pooled_partA
     load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
     stopifnot(all(dat_proc$Ptid==inputFile_with_riskscore$Ptid))
@@ -45,33 +46,35 @@ if (make_riskscore) {
     # EventTimePrimaryD29 is set to EventIndPrimaryIncludeNotMolecConfirmedD29 in preprocess()
     
    } else if (TRIAL=="vat08_combined") {
-      # read hot deck data
-      tmp = sub(".csv","_hotdeck.csv",mapped_data)
-      if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
-      
-      dat_proc = preprocess(dat_raw, study_name)   
-      colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
-      
-      # load risk score
-      load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
-      stopifnot(all(dat_proc$Ptid==inputFile_with_riskscore$Ptid))
-      dat_proc$risk_score = inputFile_with_riskscore$risk_score
-      dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
-      
-      # ptids with missing Bserostatus already filtered out in preprocess
-
-      # create new event indicator and event time variables
-      for (t in c(1,22,43)) {
-      for (i in 1:10) {
-        dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] = 
-          ifelse(!is.na(dat_proc[["seq1.variant.hotdeck"%.%i]]) & dat_proc[["seq1.variant.hotdeck"%.%i]]=="Omicron" & !is.na(dat_proc[["EventIndPrimaryD"%.%t]]),
-                 1,
-                 0)
-        dat_proc[[paste0("EventTimeOmicronD",t,"hotdeck",i)]] = ifelse(dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] ==1, 
-                                                           min(dat_proc[["EventTimeKnownLineageOmicronD"%.%t]],    dat_proc[["EventTimeMissingLineageD"%.%t]]),
-                                                           max(dat_proc[["EventTimeKnownLineageNonOmicronD"%.%t]], dat_proc[["EventTimeMissingLineageD"%.%t]]))
-      }
-      }
+     # read hot deck data
+     tmp = sub(".csv","_hotdeck.csv",mapped_data)
+     if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
+     
+     dat_proc = preprocess(dat_raw, study_name)   
+     colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
+     
+     # add risk score
+     load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
+     stopifnot(all(inputFile_with_riskscore$Ptid==dat_proc$Ptid))
+     dat_proc$risk_score = inputFile_with_riskscore$risk_score
+     dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
+     
+     # ptids with missing Bserostatus already filtered out in preprocess
+     
+     # create new event indicator and event time variables
+     for (t in c(1,22,43)) {
+       for (i in 1:10) {
+         dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] = 
+           ifelse(!is.na(dat_proc[["seq1.variant.hotdeck"%.%i]]) & dat_proc[["seq1.variant.hotdeck"%.%i]]=="Omicron" & !is.na(dat_proc[["EventIndPrimaryD"%.%t]]),
+                  1,
+                  0)
+         dat_proc[[paste0("EventTimeOmicronD",t,"hotdeck",i)]] = ifelse(dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] ==1, 
+                                                                        min(dat_proc[["EventTimeKnownLineageOmicronD"%.%t]],    dat_proc[["EventTimeMissingLineageD"%.%t]]),
+                                                                        max(dat_proc[["EventTimeKnownLineageNonOmicronD"%.%t]], dat_proc[["EventTimeMissingLineageD"%.%t]]))
+       }
+     }
+     
+     
 
     } else {
       # load inputFile_with_riskscore.Rdata, a product of make riskscore_analysis, which calls preprocess and makes risk scores
