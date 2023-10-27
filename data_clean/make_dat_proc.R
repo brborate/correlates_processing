@@ -53,11 +53,11 @@ if (make_riskscore) {
      dat_proc = preprocess(dat_raw, study_name)   
      colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
      
-     # add risk score
-     load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
-     stopifnot(all(inputFile_with_riskscore$Ptid==dat_proc$Ptid))
-     dat_proc$risk_score = inputFile_with_riskscore$risk_score
-     dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
+     # # add risk score
+     # load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
+     # stopifnot(all(inputFile_with_riskscore$Ptid==dat_proc$Ptid))
+     # dat_proc$risk_score = inputFile_with_riskscore$risk_score
+     # dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
      
      # ptids with missing Bserostatus already filtered out in preprocess
      

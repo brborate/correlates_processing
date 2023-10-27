@@ -115,7 +115,7 @@ L <- 5
 
 ansvariant <- hotdeckMI(X,Delta,Z1discrete,Z1scalar,Z2,epsilonz,V,epsilonv,Avdiscrete,Avscalar,epsilona,M,L)
 
-################################################################################
+
 # Appends new columns to dat_mapped to make a new dataset
 
 # use the same kp defined at the beginning
@@ -186,7 +186,7 @@ kp2 <- EventIndOmicronD22hotdeck1==0 & newdat[,"EventIndPrimaryD22"]==1  # Non-O
 kp <- kp1 | kp2
 grp <- ifelse(kp1[kp],1,0)
 
-boxplot(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint[kp] ~ grp,
+boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
         col = 'steelblue',
         main = 'Hotdeck imputation 1',
         xlab = 'Non-Omicron vs. Omicron',
@@ -199,7 +199,7 @@ kp2 <- EventIndOmicronD22hotdeck10==0 & newdat[,"EventIndPrimaryD22"]==1  # Non-
 kp <- kp1 | kp2
 grp <- ifelse(kp1[kp],1,0)
 
-boxplot(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint[kp] ~ grp,
+boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
         col = 'steelblue',
         main = 'Hotdeck imputation 10',
         xlab = 'Non-Omicron vs. Omicron',
@@ -238,7 +238,7 @@ kp2 <- EventIndOmicronD43hotdeck1==0 & newdat[,"EventIndPrimaryD43"]==1  # Non-O
 kp <- kp1 | kp2
 grp <- ifelse(kp1[kp],1,0)
 
-boxplot(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint[kp] ~ grp,
+boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
         col = 'steelblue',
         main = 'Hotdeck imputation 1',
         xlab = 'Non-Omicron vs. Omicron',
@@ -251,7 +251,7 @@ kp2 <- EventIndOmicronD43hotdeck10==0 & newdat[,"EventIndPrimaryD43"]==1  # Non-
 kp <- kp1 | kp2
 grp <- ifelse(kp1[kp],1,0)
 
-boxplot(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint[kp] ~ grp,
+boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
         col = 'steelblue',
         main = 'Hotdeck imputation 10',
         xlab = 'Non-Omicron vs. Omicron',

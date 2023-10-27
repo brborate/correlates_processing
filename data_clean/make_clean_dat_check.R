@@ -1,15 +1,11 @@
 #Sys.setenv(TRIAL = "janssen_pooled_realADCP")
-#-----------------------------------------------
-renv::activate(here::here())    
-# There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
-if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
+
 source(here::here("_common.R"))
-#-----------------------------------------------
-library(here)
+
 
 # same as deploy script
-if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08b","vat08m","vat08")) {
-  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d")))
+if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08_combined")) {
+  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv"))
   
 } else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
   data_name_amended <- c( paste0(attr(config, "config"), "_data_processed_with_riskscore"), 
@@ -21,7 +17,7 @@ if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", 
 }
 
 # load data and rename first column (ID)
-dat_clean <- read.csv(here("data_clean", data_name_amended)) 
+dat_clean <- read.csv(here::here("data_clean", data_name_amended)) 
 
 #with(subset(dat_clean, Bserostatus==0 & Perprotocol==1 & ph1.immuno), hist(Day29bindN))
 #    (subset(dat_clean, Bserostatus==0 & Perprotocol==1 & ph1.immuno & Day29bindN>2))
@@ -102,3 +98,4 @@ for(variable in variables_with_no_missing){
 if(length(failed_variables_missing) > 0){
     stop(paste0("Unexpected missingness in: ", paste(failed_variables_missing, collapse = ", ")))   
 }
+
