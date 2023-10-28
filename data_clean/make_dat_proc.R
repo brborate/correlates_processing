@@ -283,7 +283,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 #    Stage 1, HND, senior
 #    Stage 2, Not senior
 #    Stage 2, senior
-  dat_proc$demo.stratum = with(dat_proc, Bstratum)
+    dat_proc$demo.stratum = dat_proc$Bstratum
     dat_proc$demo.stratum = with(dat_proc, ifelse(Trialstage==1 & Country==3, demo.stratum+2, demo.stratum)) # Stage 1, HND
     dat_proc$demo.stratum = with(dat_proc, ifelse(Trialstage==2, demo.stratum+4, demo.stratum)) # Stage 2
     
@@ -944,6 +944,11 @@ if(TRIAL == "moderna_real") {
   dat_proc$Region[dat_proc$Country==3] = "Honduras"
   dat_proc$Region[dat_proc$Country==4] = "India"
   dat_proc$Region[dat_proc$Country==9] = "Mexicao"
+  
+  # remove these event time variables, which were only used by risk score and hotdeck imputation
+  dat_proc = subset(dat_proc, select=-c(EventTimePrimaryD43, EventIndPrimaryD43, 
+                                        EventTimePrimaryD22, EventIndPrimaryD22,
+                                        EventTimePrimaryD1,  EventIndPrimaryD1))
 }
 
 
@@ -964,7 +969,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
-         vat08_combined = "d74631fa052e890f164cde76ddd5677b", 
+         vat08_combined = "8b768dd0b3008198ee1c99a69b4ea88a", 
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
