@@ -622,8 +622,17 @@ preprocess=function(dat_raw, study_name) {
         dat_proc$EventTimePrimaryD1 =dat_proc$EventTimePrimaryIncludeNotMolecConfirmedD1
         dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
         
+    } else if (startsWith(study_name,"VAT08")) {
+      # needed for risk score as mapped data does not have these variables defined
+      dat_proc$EventTimePrimaryD43=dat_proc$EventTimeFirstInfectionD43
+      dat_proc$EventIndPrimaryD43 =dat_proc$EventIndFirstInfectionD43
+      dat_proc$EventTimePrimaryD22=dat_proc$EventTimeFirstInfectionD22
+      dat_proc$EventIndPrimaryD22 =dat_proc$EventIndFirstInfectionD22
+      dat_proc$EventTimePrimaryD1 =dat_proc$EventTimeFirstInfectionD1
+      dat_proc$EventIndPrimaryD1  =dat_proc$EventIndFirstInfectionD1
     }
-        
+    
+    
     for(tp in timepoints) dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
     
     
