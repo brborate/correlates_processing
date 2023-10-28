@@ -933,9 +933,17 @@ if(TRIAL == "moderna_real") {
     source(here::here("data_clean", "add_rbd_to_prevent19_analysisreadydataset.R"))
     
 } else if(TRIAL == "azd1222") {
-    # add bindSpike data for multivariable modles
-    source(here::here("data_clean", "add_bindSpike_to_azd1222ID50_analysisreadydataset.R"))
-    
+  # add bindSpike data for multivariable modles
+  source(here::here("data_clean", "add_bindSpike_to_azd1222ID50_analysisreadydataset.R"))
+  
+} else if(TRIAL == "vat08_combined") {
+  # add region variable for regression
+  # Honduras, not Honduras for the Stage 1 trial 
+  # India, Mexico, Other/Else country for the Stage 2 trial.
+  dat_proc$Region = ifelse(dat_proc$Trialstage==1, "Others_stage1", "Others_stage2")
+  dat_proc$Region[dat_proc$Country==3] = "Honduras"
+  dat_proc$Region[dat_proc$Country==4] = "India"
+  dat_proc$Region[dat_proc$Country==9] = "Mexicao"
 }
 
 
@@ -956,7 +964,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
-         vat08_combined = "68a55798e2172ff258c4beb2bddcee0e", 
+         vat08_combined = "d74631fa052e890f164cde76ddd5677b", 
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
