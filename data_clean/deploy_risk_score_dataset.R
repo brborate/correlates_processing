@@ -50,9 +50,9 @@ update_reason <- paste0(Sys.Date(), " ", args[[1]])
   
 # Copy current deployed copy of risk score dataset in adata to archive 
 # Remove current deployed copy of risk score dataset from adata
-# Copy new copy of risk score dataset from data_clean to adata
+# Copy new copy of risk score dataset from data_clean/csv to adata
 for(j in 1:length(data_name_amended)){
-  if(file.exists(paste0("data_clean/", data_name_amended[j], ".csv"))){
+  if(file.exists(paste0("data_clean/csv/", data_name_amended[j], ".csv"))){
         if(file.exists(paste0(deploy_path, data_name_amended[j], ".csv"))){
         
               if(!file.exists(paste0(deploy_path, "archive"))){
@@ -70,7 +70,7 @@ for(j in 1:length(data_name_amended)){
               file.remove(from = paste0(deploy_path, data_name_amended[j], ".csv"))
         } 
     
-    file.copy(from = paste0("data_clean/", data_name_amended[j], ".csv"),
+    file.copy(from = paste0("data_clean/csv/", data_name_amended[j], ".csv"),
               to = paste0(deploy_path, data_name_amended[j], ".csv"),
               copy.date = TRUE)
     cat(paste0("Deployed to: ", deploy_path, data_name_amended[j], ".csv\n"))
@@ -79,6 +79,6 @@ for(j in 1:length(data_name_amended)){
     write(update_reason, file = paste0(deploy_path, "readme.txt"), append=TRUE)
     
   }else{
-    print(paste0("data_clean/", data_name_amended[j], ".csv not found!"))
+    print(paste0("data_clean/csv/", data_name_amended[j], ".csv not found!"))
   }
 }

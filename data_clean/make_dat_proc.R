@@ -962,7 +962,10 @@ if(Sys.getenv ("NOCHECK")=="") {
 }
 
 data_name = paste0(TRIAL, "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv")
-write_csv(dat_proc, file = here("data_clean", data_name))
+
+if (!dir.exists("data_clean/csv")) dir.create("data_clean/csv")
+
+write_csv(dat_proc, file = here("data_clean", "csv", data_name))
 
 
 # split into Senior and non-Senior for ENSEMBLE partA
