@@ -104,9 +104,9 @@ epsilonv <- rep(1,length(V))
 epsilonv[is.na(dat[,"seq1.variant"])] <- 0
 epsilonv[!is.na(dat[,"seq1.variant"]) & dat[,"seq1.variant"]=="MissingLineage"] <- 0
 Avdiscrete <- matrix(rep(NA,length(epsilonv)),ncol=1)
-# Note "EventTimePrimaryDate" is the date of the COVID-19 primary endpoint ignoring lineage information;
+# Note "EventTimeFirstInfectionDate" is the date of the COVID-19 primary endpoint ignoring lineage information;
 # the primary endpoint of the study
-Numberdaysfromfirstpersonenrolleduntilprimaryendpoint <- as.Date(dat[,"EventTimePrimaryDate"]) - as.Date(dat[,"FirstEnrollmentDate"])
+Numberdaysfromfirstpersonenrolleduntilprimaryendpoint <- as.Date(dat[,"EventTimeFirstInfectionDate"]) - as.Date(dat[,"FirstEnrollmentDate"])
 Avscalar <- matrix(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint,ncol=1)  
 epsilona <- Delta
 epsilona[is.na(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)] <- 0
@@ -154,6 +154,15 @@ print("run time: "%.%format(Sys.time()-begin, digits=1))
 # Checks on the data set 
 # Note that in make_dat_proc.R, we define EventIndOmicronD##hotdeck## and EventTimeOmicronD##hotdeck## variables
 # EventIndOmicronD22hotdeck1 and EventIndOmicronD22hotdeck10 defined below match the two variables defined in make_dat_proc.R perfectly
+
+
+newdat$EventTimePrimaryD43=newdat$EventTimeFirstInfectionD43
+newdat$EventIndPrimaryD43 =newdat$EventIndFirstInfectionD43
+newdat$EventTimePrimaryD22=newdat$EventTimeFirstInfectionD22
+newdat$EventIndPrimaryD22 =newdat$EventIndFirstInfectionD22
+newdat$EventTimePrimaryD1 =newdat$EventTimeFirstInfectionD1
+newdat$EventIndPrimaryD1  =newdat$EventIndFirstInfectionD1
+
 
 EventIndOmicronD22hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) 
                                      & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
