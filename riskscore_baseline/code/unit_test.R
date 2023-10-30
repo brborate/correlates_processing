@@ -1,10 +1,11 @@
 library(digest)
 
 if(attr(config, "config") == "vat08_combined"){
+  print(args[1])
   tmp <- switch(args[1],
                 bseroneg = "aa894cc045426014202293c5ac7da4e1",
                 bseropos = "c3dba271f211a97f90005ab8d6ff1422", 
-                SLnotrun = "8baa0b7080c1dac718e58d31327e47ab",
+                SLnotrun = "b2df0a2545c76bf3f25502e97f9dc7ed",
                 NA) 
 } else if(attr(config, "config") == "prevent19"){
   tmp <- switch(args[1],
