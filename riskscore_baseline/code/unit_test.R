@@ -2,9 +2,9 @@ library(digest)
 
 if(attr(config, "config") == "vat08_combined"){
   tmp <- switch(args[1],
-                bseroneg = "f8a532f9d53a6815b15d38f8e906f3e7", #"b6044e6b8ca8ddfadf0708e89550dfb9",
-                bseropos = "f8a532f9d53a6815b15d38f8e906f3e7", #"66b6a2e3c7dc48dcfbfa8f2990a39b5f",
-                SLnotrun = "f8a532f9d53a6815b15d38f8e906f3e7",
+                bseroneg = "f8a532f9d53a6815b15d38f8e906f3e7", 
+                bseropos = "1640fc96414a3af75bc6cf098d49113c", 
+                SLnotrun = "8a6896b15935b9ee207f369416dd3fc0",
                 NA) 
 } else if(attr(config, "config") == "prevent19"){
   tmp <- switch(args[1],
@@ -26,8 +26,9 @@ if(attr(config, "config") == "vat08_combined"){
 if (Sys.getenv("NOCHECK") == "" &
     all.equal(names(inputFile_with_riskscore %>% select(Ptid, risk_score, standardized_risk_score)), c("Ptid", "risk_score", "standardized_risk_score"))) {
   
-  if (!is.na(tmp)) assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == tmp, 
-                                           msg = "failed risk_score digest check. new digest "%.%digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))])) 
+  if (!is.na(tmp)) 
+    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == tmp, 
+                            msg = paste0("failed risk_score digest check. Old digest ", tmp, ". New digest ", digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))) 
   
   print("======================= Passed risk_score digest check =======================")    
 }
