@@ -279,8 +279,8 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 } else if (study_name=="VAT08" ) {
 #    Stage 1, Not HND, Not senior
 #    Stage 1, Not HND, senior
-#    Stage 1, HND, Not senior
-#    Stage 1, HND, senior
+#    Stage 1, HND,     Not senior
+#    Stage 1, HND,     senior
 #    Stage 2, Not senior
 #    Stage 2, senior
     dat_proc$demo.stratum = dat_proc$Bstratum
@@ -359,6 +359,10 @@ if(TRIAL %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", 
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1)]=max.tps+2
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+    
+    # collapse Senior and non-Senior in the naive for both trial stage 1 and 2
+    dat_proc$Wstratum[dat_proc$Wstratum %in% c(17,18)]=17
+    dat_proc$Wstratum[dat_proc$Wstratum %in% c(21,22)]=21
     
 } else if (study_name == "PROFISCOV") {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD43==1 & Trt==0 & Bserostatus==0)]=max.tps+1
