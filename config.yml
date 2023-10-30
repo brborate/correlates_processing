@@ -41,7 +41,7 @@ moderna_mock: &moderna_mock
 # for data_processing, which combines vat08a and vat008b
 vat08_combined: &vat08_combined
   <<: *ows_trial
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20231027.csv
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20231030.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/vat08_combined_assay_metadata.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]

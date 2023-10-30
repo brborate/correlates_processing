@@ -156,14 +156,6 @@ print("run time: "%.%format(Sys.time()-begin, digits=1))
 # EventIndOmicronD22hotdeck1 and EventIndOmicronD22hotdeck10 defined below match the two variables defined in make_dat_proc.R perfectly
 
 
-newdat$EventTimePrimaryD43=newdat$EventTimeFirstInfectionD43
-newdat$EventIndPrimaryD43 =newdat$EventIndFirstInfectionD43
-newdat$EventTimePrimaryD22=newdat$EventTimeFirstInfectionD22
-newdat$EventIndPrimaryD22 =newdat$EventIndFirstInfectionD22
-newdat$EventTimePrimaryD1 =newdat$EventTimeFirstInfectionD1
-newdat$EventIndPrimaryD1  =newdat$EventIndFirstInfectionD1
-
-
 EventIndOmicronD22hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) 
                                      & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
                                      & !is.na(newdat[,"EventIndPrimaryD22"]),1,0)

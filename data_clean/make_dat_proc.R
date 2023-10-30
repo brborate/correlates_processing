@@ -61,11 +61,11 @@ if (make_riskscore) {
      
      # ptids with missing Bserostatus already filtered out in preprocess
      
-     # create new event indicator and event time variables
+     # define event indicator and event time variables based on seq1.variant.hotdeck1 etc
      for (t in c(1,22,43)) {
        for (i in 1:10) {
          dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] = 
-           ifelse(!is.na(dat_proc[["seq1.variant.hotdeck"%.%i]]) & dat_proc[["seq1.variant.hotdeck"%.%i]]=="Omicron" & !is.na(dat_proc[["EventIndPrimaryD"%.%t]]),
+           ifelse(!is.na(dat_proc[["seq1.variant.hotdeck"%.%i]]) & dat_proc[["seq1.variant.hotdeck"%.%i]]=="Omicron" & !is.na(dat_proc[["EventIndFirstInfectionD"%.%t]]),
                   1,
                   0)
          dat_proc[[paste0("EventTimeOmicronD",t,"hotdeck",i)]] = ifelse(dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] ==1, 
@@ -279,8 +279,8 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 } else if (study_name=="VAT08" ) {
 #    Stage 1, Not HND, Not senior
 #    Stage 1, Not HND, senior
-#    Stage 1, HND, Not senior
-#    Stage 1, HND, senior
+#    Stage 1, HND,     Not senior
+#    Stage 1, HND,     senior
 #    Stage 2, Not senior
 #    Stage 2, senior
     dat_proc$demo.stratum = dat_proc$Bstratum
@@ -292,14 +292,14 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     
 } else stop("unknown study_name 5")  
   
-names(demo.stratum.labels) <- demo.stratum.labels
+# names(demo.stratum.labels) <- demo.stratum.labels
 
 with(dat_proc, table(demo.stratum))
 
 # tps stratum, 1 ~ 4*max(demo.stratum), used in tps regression
 dat_proc <- dat_proc %>%
   mutate(
-    tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * max(demo.stratum,na.rm=T) # the change from length(demo.stratum.labels) to max(demo.stratum) is so that we can skip numbers in demo.stratum
+    tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * max(demo.stratum,na.rm=T)
   )
 
 # Wstratum, 1 ~ max(tps.stratum), max(tps.stratum)+1, ..., max(tps.stratum)+4. 
@@ -359,6 +359,12 @@ if(TRIAL %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", 
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1)]=max.tps+2
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+    
+    # collapse Senior and non-Senior in the naive for both trial stage 1 and 2 due to empty cells in senior in 
+    # Stage 2, naive
+    # Stage 1, nnaive, Honduras
+    dat_proc$Wstratum[dat_proc$Wstratum %in% c(17,18)]=17
+    dat_proc$Wstratum[dat_proc$Wstratum %in% c(21,22)]=21
     
 } else if (study_name == "PROFISCOV") {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD43==1 & Trt==0 & Bserostatus==0)]=max.tps+1
@@ -945,10 +951,6 @@ if(TRIAL == "moderna_real") {
   dat_proc$Region[dat_proc$Country==4] = "India"
   dat_proc$Region[dat_proc$Country==9] = "Mexicao"
   
-  # remove these event time variables, which were only used by risk score and hotdeck imputation
-  dat_proc = subset(dat_proc, select=-c(EventTimePrimaryD43, EventIndPrimaryD43, 
-                                        EventTimePrimaryD22, EventIndPrimaryD22,
-                                        EventTimePrimaryD1,  EventIndPrimaryD1))
 }
 
 
@@ -969,7 +971,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
-         vat08_combined = "8b768dd0b3008198ee1c99a69b4ea88a", 
+         vat08_combined = "e3ff3763604182c0b27e1ed7d1a35d08", 
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
