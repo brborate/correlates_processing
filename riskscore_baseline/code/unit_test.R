@@ -2,9 +2,9 @@ library(digest)
 
 if(attr(config, "config") == "vat08_combined"){
   tmp <- switch(args[1],
-                bseroneg = "f8a532f9d53a6815b15d38f8e906f3e7", 
-                bseropos = "1640fc96414a3af75bc6cf098d49113c", 
-                SLnotrun = "8a6896b15935b9ee207f369416dd3fc0",
+                bseroneg = "aa894cc045426014202293c5ac7da4e1",
+                bseropos = "c3dba271f211a97f90005ab8d6ff1422", 
+                SLnotrun = "8baa0b7080c1dac718e58d31327e47ab",
                 NA) 
 } else if(attr(config, "config") == "prevent19"){
   tmp <- switch(args[1],

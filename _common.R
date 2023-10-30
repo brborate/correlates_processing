@@ -407,96 +407,96 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
   
 } else stop("unknown study_name 2")
 
-
-
-# baseline stratum labeling
-if (study_name=="COVE" | study_name=="MockCOVE") {
-    demo.stratum.labels <- c(
-      "Age >= 65, URM",
-      "Age < 65, At risk, URM",
-      "Age < 65, Not at risk, URM",
-      "Age >= 65, White non-Hisp",
-      "Age < 65, At risk, White non-Hisp",
-      "Age < 65, Not at risk, White non-Hisp"
-    )
-    
-} else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
-    demo.stratum.labels <- c(
-      "US URM, Age 18-59, Not at risk",
-      "US URM, Age 18-59, At risk",
-      "US URM, Age >= 60, Not at risk",
-      "US URM, Age >= 60, At risk",
-      "US White non-Hisp, Age 18-59, Not at risk",
-      "US White non-Hisp, Age 18-59, At risk",
-      "US White non-Hisp, Age >= 60, Not at risk",
-      "US White non-Hisp, Age >= 60, At risk",
-      "Latin America, Age 18-59, Not at risk",
-      "Latin America, Age 18-59, At risk",
-      "Latin America, Age >= 60, Not at risk",
-      "Latin America, Age >= 60, At risk",
-      "South Africa, Age 18-59, Not at risk",
-      "South Africa, Age 18-59, At risk",
-      "South Africa, Age >= 60, Not at risk",
-      "South Africa, Age >= 60, At risk"
-    )
-    
-} else if (study_name=="PREVENT19") {
-    demo.stratum.labels <- c(
-      "US White non-Hisp, Age 18-64, Not at risk",
-      "US White non-Hisp, Age 18-64, At risk",
-      "US White non-Hisp, Age >= 65, Not at risk",
-      "US White non-Hisp, Age >= 65, At risk",
-      "US URM, Age 18-64, Not at risk",
-      "US URM, Age 18-64, At risk",
-      "US URM, Age >= 65, Not at risk",
-      "US URM, Age >= 65, At risk",
-      "Mexico, Age 18-64",
-      "Mexico, Age >= 65"
-    )
-
-} else if (study_name=="AZD1222") {
-    demo.stratum.labels <- c(
-      "US White non-Hisp, Age 18-64",
-      "US White non-Hisp, Age >= 65",
-      "US URM, Age 18-64",
-      "US URM, Age >= 65",
-      "Non-US, Age 18-64",
-      "Non-US, Age >= 65"
-    )
-
-} else if (study_name %in% c("VAT08m","VAT08b","VAT08")) {
-#    demo.stratum.labels <- c(
-#      "Not HND, Age 18-59",
-#      "Not HND, Age >= 60",
-#      "HND, Age 18-59",
-#      "HND, Age >= 60",
-#      "USA, Age 18-59",
-#      "USA, Age >= 60",
-#      "JPN, Age 18-59",
-#      "JPN, Age >= 60"
-#    )
-
-    # in this partial dataset, we need to collapse "Not HND, US or JPN, senior" and "HND, senior" due to sparsity
-    demo.stratum.labels <- c(
-      "Not HND, Age 18-59",
-      "Not USA or JPN, Age >= 60",
-      "HND, Age 18-59",
-      "USA, Age 18-59",
-      "USA, Age >= 60",
-      "JPN, Age 18-59",
-      "JPN, Age >= 60"
-    )
-    
-} else if (study_name %in% c("PROFISCOV")) {
-    demo.stratum.labels <- c("All")
-  
-} else if (study_name=="HVTN705") {
-    # do nothing
-
-} else if(study_name=="COVEBoost") { 
-  # nothing to do, but this is needed so that _common.R can be called for making risk score
-  
-} else stop("unknown study_name 3")
+# 
+# 
+# # baseline stratum labeling
+# if (study_name=="COVE" | study_name=="MockCOVE") {
+#     demo.stratum.labels <- c(
+#       "Age >= 65, URM",
+#       "Age < 65, At risk, URM",
+#       "Age < 65, Not at risk, URM",
+#       "Age >= 65, White non-Hisp",
+#       "Age < 65, At risk, White non-Hisp",
+#       "Age < 65, Not at risk, White non-Hisp"
+#     )
+#     
+# } else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE") {
+#     demo.stratum.labels <- c(
+#       "US URM, Age 18-59, Not at risk",
+#       "US URM, Age 18-59, At risk",
+#       "US URM, Age >= 60, Not at risk",
+#       "US URM, Age >= 60, At risk",
+#       "US White non-Hisp, Age 18-59, Not at risk",
+#       "US White non-Hisp, Age 18-59, At risk",
+#       "US White non-Hisp, Age >= 60, Not at risk",
+#       "US White non-Hisp, Age >= 60, At risk",
+#       "Latin America, Age 18-59, Not at risk",
+#       "Latin America, Age 18-59, At risk",
+#       "Latin America, Age >= 60, Not at risk",
+#       "Latin America, Age >= 60, At risk",
+#       "South Africa, Age 18-59, Not at risk",
+#       "South Africa, Age 18-59, At risk",
+#       "South Africa, Age >= 60, Not at risk",
+#       "South Africa, Age >= 60, At risk"
+#     )
+#     
+# } else if (study_name=="PREVENT19") {
+#     demo.stratum.labels <- c(
+#       "US White non-Hisp, Age 18-64, Not at risk",
+#       "US White non-Hisp, Age 18-64, At risk",
+#       "US White non-Hisp, Age >= 65, Not at risk",
+#       "US White non-Hisp, Age >= 65, At risk",
+#       "US URM, Age 18-64, Not at risk",
+#       "US URM, Age 18-64, At risk",
+#       "US URM, Age >= 65, Not at risk",
+#       "US URM, Age >= 65, At risk",
+#       "Mexico, Age 18-64",
+#       "Mexico, Age >= 65"
+#     )
+# 
+# } else if (study_name=="AZD1222") {
+#     demo.stratum.labels <- c(
+#       "US White non-Hisp, Age 18-64",
+#       "US White non-Hisp, Age >= 65",
+#       "US URM, Age 18-64",
+#       "US URM, Age >= 65",
+#       "Non-US, Age 18-64",
+#       "Non-US, Age >= 65"
+#     )
+# 
+# } else if (study_name %in% c("VAT08")) {
+# #    demo.stratum.labels <- c(
+# #      "Not HND, Age 18-59",
+# #      "Not HND, Age >= 60",
+# #      "HND, Age 18-59",
+# #      "HND, Age >= 60",
+# #      "USA, Age 18-59",
+# #      "USA, Age >= 60",
+# #      "JPN, Age 18-59",
+# #      "JPN, Age >= 60"
+# #    )
+# 
+#     # in this partial dataset, we need to collapse "Not HND, US or JPN, senior" and "HND, senior" due to sparsity
+#     demo.stratum.labels <- c(
+#       "Not HND, Age 18-59",
+#       "Not USA or JPN, Age >= 60",
+#       "HND, Age 18-59",
+#       "USA, Age 18-59",
+#       "USA, Age >= 60",
+#       "JPN, Age 18-59",
+#       "JPN, Age >= 60"
+#     )
+#     
+# } else if (study_name %in% c("PROFISCOV")) {
+#     demo.stratum.labels <- c("All")
+#   
+# } else if (study_name=="HVTN705") {
+#     # do nothing
+# 
+# } else if(study_name=="COVEBoost") { 
+#   # nothing to do, but this is needed so that _common.R can be called for making risk score
+#   
+# } else stop("unknown study_name 3")
 
 
 labels.regions.ENSEMBLE =c("0"="Northern America", "1"="Latin America", "2"="Southern Africa")
@@ -611,7 +611,7 @@ ggsave_custom <- function(filename = default_name(plot),
 preprocess=function(dat_raw, study_name) {
     dat_proc=dat_raw
 
-    if(is_ows_trial & !study_name %in% c("VAT08m", "VAT08b", "VAT08")){
+    if(is_ows_trial){
         dat_proc=subset(dat_proc, !is.na(Bserostatus))
     }
     
@@ -623,15 +623,16 @@ preprocess=function(dat_raw, study_name) {
         dat_proc$EventIndPrimaryD1  =dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD1
         
     } else if (startsWith(study_name,"VAT08")) {
-      # sanofi trial variable names evolved. this patch is needed for the processing repo. the reporting2 repo is more flexible and doesn't need this
-      # dat_proc$EventTimePrimaryD43=dat_proc$EventTimeOmicronD43
-      # dat_proc$EventIndPrimaryD43 =dat_proc$EventIndOmicronD43
-      # dat_proc$EventTimePrimaryD22=dat_proc$EventTimeOmicronD22
-      # dat_proc$EventIndPrimaryD22 =dat_proc$EventIndOmicronD22
-      # dat_proc$EventTimePrimaryD1 =dat_proc$EventTimeOmicronD1
-      # dat_proc$EventIndPrimaryD1  =dat_proc$EventIndOmicronD1
+      # needed for risk score as mapped data does not have these variables defined
+      dat_proc$EventTimePrimaryD43=dat_proc$EventTimeFirstInfectionD43
+      dat_proc$EventIndPrimaryD43 =dat_proc$EventIndFirstInfectionD43
+      dat_proc$EventTimePrimaryD22=dat_proc$EventTimeFirstInfectionD22
+      dat_proc$EventIndPrimaryD22 =dat_proc$EventIndFirstInfectionD22
+      dat_proc$EventTimePrimaryD1 =dat_proc$EventTimeFirstInfectionD1
+      dat_proc$EventIndPrimaryD1  =dat_proc$EventIndFirstInfectionD1
     }
-        
+    
+    
     for(tp in timepoints) dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
     
     

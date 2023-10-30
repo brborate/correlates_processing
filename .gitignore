@@ -12,17 +12,7 @@ nohup.out
 _book
 _bookdown_files
 packages.bib
-cor_threshold/figs/simultaneous_CI/*.rds
-cor_threshold/figs/pointwise_CI/*.rds
-# ignore build directories
-_report_immuno/*.pdf
-_report_immuno/*.html
-_report_riskscore/*.pdf
-_report_riskscore/*.html
-_report_cor/*.pdf
-_report_cor/*.html
-_report_cop/*.pdf
-_report_cop/*.html
+data_clean/csv/*
 data_clean/verification/dat_clean_specifications.aux
 data_clean/verification/dat_clean_specifications.knit.md
 data_clean/verification/dat_clean_specifications.out

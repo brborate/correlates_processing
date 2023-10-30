@@ -1,15 +1,11 @@
-#Sys.setenv(TRIAL = "janssen_pooled_realADCP")
-#-----------------------------------------------
-renv::activate(here::here())    
-# There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
-if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
+#Sys.setenv(TRIAL = "vat08_combined")
+
 source(here::here("_common.R"))
-#-----------------------------------------------
-library(here)
+
 
 # same as deploy script
-if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08b","vat08m","vat08")) {
-  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d")))
+if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08_combined")) {
+  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv"))
   
 } else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
   data_name_amended <- c( paste0(attr(config, "config"), "_data_processed_with_riskscore"), 
@@ -21,41 +17,7 @@ if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", 
 }
 
 # load data and rename first column (ID)
-dat_clean <- read.csv(here("data_clean", data_name_amended)) 
-
-#with(subset(dat_clean, Bserostatus==0 & Perprotocol==1 & ph1.immuno), hist(Day29bindN))
-#    (subset(dat_clean, Bserostatus==0 & Perprotocol==1 & ph1.immuno & Day29bindN>2))
-#subset(dat_clean, Ptid=="VAC31518COV3001-7245536")
-#sort(subset(dat_clean, Bserostatus==0 & Perprotocol==1 & ph1.immuno & !is.na(Day29bindN), Day29bindN, drop=T))
-#with(subset(dat_clean, Trt==1 & Bserostatus==0 & Perprotocol==1 & EventIndPrimaryD1==1), table(ph1.D29))
-#with(subset(dat_clean, Trt==1 & Bserostatus==0 & Perprotocol==1 & EventIndPrimaryD1==1), table(EventTimePrimaryD29>1))
-#with(dat_clean, table(URMforsubcohortsampling, WhiteNonHispanic, useNA="ifany"))
-#with(dat_clean, table(1-MinorityInd, WhiteNonHispanic, useNA="ifany"))
-#sort(subset(dat_clean, Bserostatus==0 & Perprotocol==1 & EventIndPrimaryD1==1 & Trt==1, EventTimePrimaryD1, drop=T))
-#sort(subset(dat_clean, Bserostatus==0 & Perprotocol==1 & EventIndPrimaryD29==1 & Trt==1, EventTimePrimaryD29, drop=T))
-#summary(subset(dat_clean, EventIndPrimaryD29==1 & Trt==1, EventTimePrimaryD29, drop=T))
-#summary(subset(dat_clean, EventIndPrimaryD29==1 & Trt==1 & ph1.D29, EventTimePrimaryD29, drop=T))
-
-#sort(subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD1==1, EventTimePrimaryD1, drop=T))
-#sort(subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD29==1, EventTimePrimaryD29, drop=T))
-#sort(subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryIncludeNotMolecConfirmedD29==1, EventTimePrimaryIncludeNotMolecConfirmedD29, drop=T))
-#sort(subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryIncludeNotMolecConfirmedD29==1 & EventTimePrimaryIncludeNotMolecConfirmedD29>=7, EventTimePrimaryIncludeNotMolecConfirmedD29, drop=T))
-
-#subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryIncludeNotMolecConfirmedD29==1 & EventIndPrimaryD29==0 & EventTimePrimaryIncludeNotMolecConfirmedD29>=7)
-
-#tmp=subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD29==1 & EventTimePrimaryD29<7)
-#table(!is.na(tmp$Day29bindSpike))
-#
-#tmp=subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & EventIndPrimaryD29==1)
-#with(tmp, table(EventTimePrimaryD29<7, !is.na(Day29bindSpike)))
-#
-#
-#with(subset(dat_clean, Bserostatus==0 & Trt==1 & Perprotocol==1 & ph2.D29), table(Wstratum))
-#with(subset(dat_clean, Bserostatus==0 & Trt==0 & Perprotocol==1 & ph2.D29), table(Wstratum))
-#with(subset(dat_clean, Bserostatus==1 & Trt==1 & Perprotocol==1 & ph2.D29), table(Wstratum))
-#with(subset(dat_clean, Bserostatus==1 & Trt==0 & Perprotocol==1 & ph2.D29), table(Wstratum))
-#with(subset(dat_clean, Bserostatus==1 & Trt==0 & Perprotocol==1 & ph1.D29), table(Wstratum))
-
+dat_clean <- read.csv(here::here("data_clean/csv", data_name_amended)) 
 
 
 # leave comments below for checks implemented in make_dat_proc.R
@@ -101,4 +63,32 @@ for(variable in variables_with_no_missing){
 
 if(length(failed_variables_missing) > 0){
     stop(paste0("Unexpected missingness in: ", paste(failed_variables_missing, collapse = ", ")))   
+}
+
+
+if (TRIAL=="vat08_combined") {
+  # verify event indicator and time variables for Omicron using first and second event variables
+  
+  # For the 7 participants with first event a known-lineage Omicron case, this first event is counted as an endpoint and the second event is ignored;
+  # For the 2 participants with first event a missing-lineage case in 2021 and second event known-lineage Omicron, the first event is ignored and the second event is counted as an endpoint; and
+  # For the 9 participants with first event a missing-lineage case in 2022 and second event known-lineage Omicron, the first event is counted as an endpoint (with hotdeck imputation employed as is generally done) and the second event is ignored.
+  
+  with(dat_clean, table(EventTypeFirstInfection, EventTypeSecondInfection, useNA = "ifany"))
+
+  with(subset(dat_clean, !is.na(EventIndFirstInfectionD22)), table(EventTypeFirstInfection, EventTypeSecondInfection, useNA = "ifany"))
+  with(subset(dat_clean, !is.na(EventIndFirstInfectionD43)), table(EventTypeFirstInfection, EventTypeSecondInfection, useNA = "ifany"))
+  
+  # EventTypeFirstInfection and seq1.variant have the same info
+  with(dat_clean, table(EventTypeFirstInfection, seq1.variant, useNA = "ifany"))
+  
+  with(dat_clean, table(seq1.variant.hotdeck1, seq1.variant, useNA = "ifany"))
+  
+  with(dat_clean, table(EventIndKnownLineageOmicronD22, EventIndOmicronD22hotdeck1, useNA = "ifany"))
+  
+  with(dat_clean, table(EventIndKnownLineageOmicronD22, EventTypeFirstInfection, useNA = "ifany"))
+  
+  with(dat_clean, table(EventIndKnownLineageOmicronD1, EventTypeFirstInfection, useNA = "ifany"))
+  
+  with(dat_clean, table(EventIndFirstInfectionD22, EventIndFirstInfectionD1, useNA = "ifany"))
+  with(dat_clean, table(EventIndFirstInfectionD22, EventIndFirstInfectionD43, useNA = "ifany"))
 }

@@ -31,6 +31,7 @@ if (make_riskscore) {
     if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
     dat_proc = preprocess(dat_raw, study_name)   
     colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
+    
     # borrow risk score from janssen_pooled_partA
     load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
     stopifnot(all(dat_proc$Ptid==inputFile_with_riskscore$Ptid))
@@ -45,34 +46,35 @@ if (make_riskscore) {
     # EventTimePrimaryD29 is set to EventIndPrimaryIncludeNotMolecConfirmedD29 in preprocess()
     
    } else if (TRIAL=="vat08_combined") {
-      # read hot deck data
-      tmp = sub(".csv","_hotdeck.csv",mapped_data)
-      if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
-      
-      dat_proc = preprocess(dat_raw, study_name)   
-      colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
-      
-      # load risk score
-      load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
-      stopifnot(all(dat_proc$Ptid==inputFile_with_riskscore$Ptid))
-      dat_proc$risk_score = inputFile_with_riskscore$risk_score
-      dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
-      
-      # filter out ptids with missing Bserostatus
-      dat_proc = subset(dat_proc, !is.na(Bserostatus))
-      
-      # create new event indicator and event time variables
-      for (t in c(1,22,43)) {
-      for (i in 1:10) {
-        dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] = 
-          ifelse(!is.na(dat_proc[["seq1.variant.hotdeck"%.%i]]) & dat_proc[["seq1.variant.hotdeck"%.%i]]=="Omicron" & !is.na(dat_proc[["EventIndPrimaryD"%.%t]]),
-                 1,
-                 0)
-        dat_proc[[paste0("EventTimeOmicronD",t,"hotdeck",i)]] = ifelse(dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] ==1, 
-                                                           min(dat_proc[["EventTimeKnownLineageOmicronD"%.%t]],    dat_proc[["EventTimeMissingLineageD"%.%t]]),
-                                                           max(dat_proc[["EventTimeKnownLineageNonOmicronD"%.%t]], dat_proc[["EventTimeMissingLineageD"%.%t]]))
-      }
-      }
+     # read hot deck data
+     tmp = sub(".csv","_hotdeck.csv",mapped_data)
+     if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
+     
+     dat_proc = preprocess(dat_raw, study_name)   
+     colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
+     
+     # add risk score
+     load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
+     stopifnot(all(inputFile_with_riskscore$Ptid==dat_proc$Ptid))
+     dat_proc$risk_score = inputFile_with_riskscore$risk_score
+     dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
+     
+     # ptids with missing Bserostatus already filtered out in preprocess
+     
+     # create new event indicator and event time variables
+     for (t in c(1,22,43)) {
+       for (i in 1:10) {
+         dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] = 
+           ifelse(!is.na(dat_proc[["seq1.variant.hotdeck"%.%i]]) & dat_proc[["seq1.variant.hotdeck"%.%i]]=="Omicron" & !is.na(dat_proc[["EventIndPrimaryD"%.%t]]),
+                  1,
+                  0)
+         dat_proc[[paste0("EventTimeOmicronD",t,"hotdeck",i)]] = ifelse(dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] ==1, 
+                                                                        min(dat_proc[["EventTimeKnownLineageOmicronD"%.%t]],    dat_proc[["EventTimeMissingLineageD"%.%t]]),
+                                                                        max(dat_proc[["EventTimeKnownLineageNonOmicronD"%.%t]], dat_proc[["EventTimeMissingLineageD"%.%t]]))
+       }
+     }
+     
+     
 
     } else {
       # load inputFile_with_riskscore.Rdata, a product of make riskscore_analysis, which calls preprocess and makes risk scores
@@ -281,7 +283,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 #    Stage 1, HND, senior
 #    Stage 2, Not senior
 #    Stage 2, senior
-  dat_proc$demo.stratum = with(dat_proc, Bstratum)
+    dat_proc$demo.stratum = dat_proc$Bstratum
     dat_proc$demo.stratum = with(dat_proc, ifelse(Trialstage==1 & Country==3, demo.stratum+2, demo.stratum)) # Stage 1, HND
     dat_proc$demo.stratum = with(dat_proc, ifelse(Trialstage==2, demo.stratum+4, demo.stratum)) # Stage 2
     
@@ -931,9 +933,22 @@ if(TRIAL == "moderna_real") {
     source(here::here("data_clean", "add_rbd_to_prevent19_analysisreadydataset.R"))
     
 } else if(TRIAL == "azd1222") {
-    # add bindSpike data for multivariable modles
-    source(here::here("data_clean", "add_bindSpike_to_azd1222ID50_analysisreadydataset.R"))
-    
+  # add bindSpike data for multivariable modles
+  source(here::here("data_clean", "add_bindSpike_to_azd1222ID50_analysisreadydataset.R"))
+  
+} else if(TRIAL == "vat08_combined") {
+  # add region variable for regression
+  # Honduras, not Honduras for the Stage 1 trial 
+  # India, Mexico, Other/Else country for the Stage 2 trial.
+  dat_proc$Region = ifelse(dat_proc$Trialstage==1, "Others_stage1", "Others_stage2")
+  dat_proc$Region[dat_proc$Country==3] = "Honduras"
+  dat_proc$Region[dat_proc$Country==4] = "India"
+  dat_proc$Region[dat_proc$Country==9] = "Mexicao"
+  
+  # remove these event time variables, which were only used by risk score and hotdeck imputation
+  dat_proc = subset(dat_proc, select=-c(EventTimePrimaryD43, EventIndPrimaryD43, 
+                                        EventTimePrimaryD22, EventIndPrimaryD22,
+                                        EventTimePrimaryD1,  EventIndPrimaryD1))
 }
 
 
@@ -954,12 +969,16 @@ if(Sys.getenv ("NOCHECK")=="") {
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
+         vat08_combined = "8b768dd0b3008198ee1c99a69b4ea88a", 
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
 
 data_name = paste0(TRIAL, "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv")
-write_csv(dat_proc, file = here("data_clean", data_name))
+
+if (!dir.exists("data_clean/csv")) dir.create("data_clean/csv")
+
+write_csv(dat_proc, file = here("data_clean", "csv", data_name))
 
 
 # split into Senior and non-Senior for ENSEMBLE partA

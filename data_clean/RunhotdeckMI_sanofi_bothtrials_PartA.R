@@ -104,9 +104,9 @@ epsilonv <- rep(1,length(V))
 epsilonv[is.na(dat[,"seq1.variant"])] <- 0
 epsilonv[!is.na(dat[,"seq1.variant"]) & dat[,"seq1.variant"]=="MissingLineage"] <- 0
 Avdiscrete <- matrix(rep(NA,length(epsilonv)),ncol=1)
-# Note "EventTimePrimaryDate" is the date of the COVID-19 primary endpoint ignoring lineage information;
+# Note "EventTimeFirstInfectionDate" is the date of the COVID-19 primary endpoint ignoring lineage information;
 # the primary endpoint of the study
-Numberdaysfromfirstpersonenrolleduntilprimaryendpoint <- as.Date(dat[,"EventTimePrimaryDate"]) - as.Date(dat[,"FirstEnrollmentDate"])
+Numberdaysfromfirstpersonenrolleduntilprimaryendpoint <- as.Date(dat[,"EventTimeFirstInfectionDate"]) - as.Date(dat[,"FirstEnrollmentDate"])
 Avscalar <- matrix(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint,ncol=1)  
 epsilona <- Delta
 epsilona[is.na(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)] <- 0
@@ -115,7 +115,7 @@ L <- 5
 
 ansvariant <- hotdeckMI(X,Delta,Z1discrete,Z1scalar,Z2,epsilonz,V,epsilonv,Avdiscrete,Avscalar,epsilona,M,L)
 
-################################################################################
+
 # Appends new columns to dat_mapped to make a new dataset
 
 # use the same kp defined at the beginning
@@ -147,44 +147,30 @@ print("run time: "%.%format(Sys.time()-begin, digits=1))
 
 # Similarly for D43 marker correlates analyses (replace D22 with D43)
 
+
+
+
 #######################################################################################
-# Checks on the data set and defining survival variables for data analysis
+# Checks on the data set 
+# Note that in make_dat_proc.R, we define EventIndOmicronD##hotdeck## and EventTimeOmicronD##hotdeck## variables
+# EventIndOmicronD22hotdeck1 and EventIndOmicronD22hotdeck10 defined below match the two variables defined in make_dat_proc.R perfectly
+
+
+newdat$EventTimePrimaryD43=newdat$EventTimeFirstInfectionD43
+newdat$EventIndPrimaryD43 =newdat$EventIndFirstInfectionD43
+newdat$EventTimePrimaryD22=newdat$EventTimeFirstInfectionD22
+newdat$EventIndPrimaryD22 =newdat$EventIndFirstInfectionD22
+newdat$EventTimePrimaryD1 =newdat$EventTimeFirstInfectionD1
+newdat$EventIndPrimaryD1  =newdat$EventIndFirstInfectionD1
+
 
 EventIndOmicronD22hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) 
-& newdat[,"seq1.variant.hotdeck1"]=="Omicron"
-& !is.na(newdat[,"EventIndPrimaryD22"]),1,0)
-
-EventTimeOmicronD22hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
-& !is.na(newdat[,"EventIndPrimaryD22"]),min(newdat[,"EventTimeKnownLineageOmicronD22"],
-newdat[,"EventTimeMissingLineageD22"]),
-max(newdat[,"EventTimeKnownLineageNonOmicronD22"],newdat[,"EventTimeMissingLineageD22"]))
-
-# For defining EventTimeOmicronD22hotdeck1, consider special cases with 2 COVID-19 endpoints
-# 1. For the 7 participants with first event a known-lineage Omicron case, 
-#    this first event is counted as an endpoint and the second event is ignored.
-#    The above code works b/c the first event is known Omicron
-# 2. For the 2 participants with first event a missing-lineage case in 2021 and 
-#    second event known-lineage Omicron, the first event is ignored and the second 
-#    event is counted as an endpoint.
-#    The above code fails b/c the missing lineage event time would be used.
-
-kp2 <- (PENDING, this flag is TRUE if one of the 2 participants and FALSE otherwise)
-EventTimeOmicronD22hotdeck1[kp2] <- newdat[,"EventTimeKnownLineageOmicronD22"]
-
-# 3. For the 9 participants with first event a missing-lineage case in 2022 and second 
-#    event known-lineage Omicron, the first event is counted as an endpoint 
-#    (with hotdeck imputation employed as is generally done) and the second event is ignored.
-#    The above code works b/c EventTimeMissingLineageD22 corresponds to the first event.
-
+                                     & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
+                                     & !is.na(newdat[,"EventIndPrimaryD22"]),1,0)
 
 EventIndOmicronD22hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) 
-& newdat[,"seq1.variant.hotdeck10"]=="Omicron"
-& !is.na(newdat[,"EventIndPrimaryD22"]),1,0)
-
-EventTimeOmicronD22hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
-& !is.na(newdat[,"EventIndPrimaryD22"]),min(newdat[,"EventTimeKnownLineageOmicronD22"],
-newdat[,"EventTimeMissingLineageD22"]),
-max(newdat[,"EventTimeKnownLineageNonOmicronD22"],newdat[,"EventTimeMissingLineageD22"]))
+                                      & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
+                                      & !is.na(newdat[,"EventIndPrimaryD22"]),1,0)
 
 # Need to also define for hotdeck 2, ..., 9
 
@@ -209,7 +195,7 @@ kp2 <- EventIndOmicronD22hotdeck1==0 & newdat[,"EventIndPrimaryD22"]==1  # Non-O
 kp <- kp1 | kp2
 grp <- ifelse(kp1[kp],1,0)
 
-boxplot(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint[kp] ~ grp,
+boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
         col = 'steelblue',
         main = 'Hotdeck imputation 1',
         xlab = 'Non-Omicron vs. Omicron',
@@ -222,7 +208,7 @@ kp2 <- EventIndOmicronD22hotdeck10==0 & newdat[,"EventIndPrimaryD22"]==1  # Non-
 kp <- kp1 | kp2
 grp <- ifelse(kp1[kp],1,0)
 
-boxplot(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint[kp] ~ grp,
+boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
         col = 'steelblue',
         main = 'Hotdeck imputation 10',
         xlab = 'Non-Omicron vs. Omicron',
@@ -232,22 +218,12 @@ boxplot(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint[kp] ~ grp,
 
 # Checks for D43 correlates (repeat the above)
 EventIndOmicronD43hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) 
-& newdat[,"seq1.variant.hotdeck1"]=="Omicron"
-& !is.na(newdat[,"EventIndPrimaryD43"]),1,0)
-
-EventTimeOmicronD43hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
-& !is.na(newdat[,"EventIndPrimaryD43"]),min(newdat[,"EventTimeKnownLineageOmicronD43"],
-newdat[,"EventTimeMissingLineageD43"]),
-max(newdat[,"EventTimeKnownLineageNonOmicronD43"],newdat[,"EventTimeMissingLineageD43"]))
+                                     & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
+                                     & !is.na(newdat[,"EventIndPrimaryD43"]),1,0)
 
 EventIndOmicronD43hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) 
-& newdat[,"seq1.variant.hotdeck10"]=="Omicron"
-& !is.na(newdat[,"EventIndPrimaryD43"]),1,0)
-
-EventTimeOmicronD43hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
-& !is.na(newdat[,"EventIndPrimaryD43"]),min(newdat[,"EventTimeKnownLineageOmicronD43"],
-newdat[,"EventTimeMissingLineageD43"]),
-max(newdat[,"EventTimeKnownLineageNonOmicronD43"],newdat[,"EventTimeMissingLineageD43"]))
+                                      & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
+                                      & !is.na(newdat[,"EventIndPrimaryD43"]),1,0)
 
 # Need to also define for hotdeck 2, ..., 9
 
@@ -271,7 +247,7 @@ kp2 <- EventIndOmicronD43hotdeck1==0 & newdat[,"EventIndPrimaryD43"]==1  # Non-O
 kp <- kp1 | kp2
 grp <- ifelse(kp1[kp],1,0)
 
-boxplot(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint[kp] ~ grp,
+boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
         col = 'steelblue',
         main = 'Hotdeck imputation 1',
         xlab = 'Non-Omicron vs. Omicron',
@@ -284,7 +260,7 @@ kp2 <- EventIndOmicronD43hotdeck10==0 & newdat[,"EventIndPrimaryD43"]==1  # Non-
 kp <- kp1 | kp2
 grp <- ifelse(kp1[kp],1,0)
 
-boxplot(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint[kp] ~ grp,
+boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
         col = 'steelblue',
         main = 'Hotdeck imputation 10',
         xlab = 'Non-Omicron vs. Omicron',
@@ -302,19 +278,17 @@ table(newdat[,"EventIndKnownLineageOmicronD43"],newdat[,"EventIndKnownLineageOmi
 table(newdat[,"EventIndKnownLineageNonOmicronD43"],newdat[,"EventIndKnownLineageNonOmicronD22"],useNA="ifany")
 table(newdat[,"EventIndMissingLineageD43"],newdat[,"EventIndMissingLineageD22"],useNA="ifany")
 
-
-
 EventInd1 <- ifelse(dat_mapped[,"EventIndKnownLineageOmicronD1"]==1 | 
-dat_mapped[,"EventIndMissingLineageD1"]==1 | 
-dat_mapped[,"EventIndKnownLineageNonOmicronD1"]==1 ,1,0)
+                      dat_mapped[,"EventIndMissingLineageD1"]==1 | 
+                      dat_mapped[,"EventIndKnownLineageNonOmicronD1"]==1 ,1,0)
 
 EventInd22 <- ifelse(dat_mapped[,"EventIndKnownLineageOmicronD22"]==1 | 
-dat_mapped[,"EventIndMissingLineageD22"]==1 | 
-dat_mapped[,"EventIndKnownLineageNonOmicronD22"]==1 ,1,0)
+                       dat_mapped[,"EventIndMissingLineageD22"]==1 | 
+                       dat_mapped[,"EventIndKnownLineageNonOmicronD22"]==1 ,1,0)
 
 EventInd43 <- ifelse(dat_mapped[,"EventIndKnownLineageOmicronD43"]==1 | 
-dat_mapped[,"EventIndMissingLineageD43"]==1 | 
-dat_mapped[,"EventIndKnownLineageNonOmicronD43"]==1 ,1,0)
+                       dat_mapped[,"EventIndMissingLineageD43"]==1 | 
+                       dat_mapped[,"EventIndKnownLineageNonOmicronD43"]==1 ,1,0)
 
 table(EventInd1,EventInd22,EventInd43,useNA="ifany")
 
@@ -322,21 +296,82 @@ table(EventInd1,newdat[,"EventIndPrimaryD1"],useNA="ifany")
 table(EventInd22,newdat[,"EventIndPrimaryD22"],useNA="ifany")
 table(EventInd43,newdat[,"EventIndPrimaryD43"],useNA="ifany")
 
-# For completeness, compute the survival variables for the D1 markers
-EventIndOmicronD1hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) 
-& newdat[,"seq1.variant.hotdeck1"]=="Omicron"
-& !is.na(newdat[,"EventIndPrimaryD1"]),1,0)
 
-EventTimeOmicronD1hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
-& !is.na(newdat[,"EventIndPrimaryD1"]),min(newdat[,"EventTimeKnownLineageOmicronD1"],
-newdat[,"EventTimeMissingLineageD1"]),
-max(newdat[,"EventTimeKnownLineageNonOmicronD1"],newdat[,"EventTimeMissingLineageD1"]))
 
-EventIndOmicronD1hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) 
-& newdat[,"seq1.variant.hotdeck10"]=="Omicron"
-& !is.na(newdat[,"EventIndPrimaryD1"]),1,0)
-
-EventTimeOmicronD1hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
-& !is.na(newdat[,"EventIndPrimaryD1"]),min(newdat[,"EventTimeKnownLineageOmicronD1"],
-newdat[,"EventTimeMissingLineageD1"]),
-max(newdat[,"EventTimeKnownLineageNonOmicronD1"],newdat[,"EventTimeMissingLineageD1"]))
+# #################################################################################
+# # Move the rest of the material to data processing outside of this hotdeck data 
+# # set construction file
+# 
+# EventIndOmicronD22hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) 
+#                                      & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
+#                                      & !is.na(newdat[,"EventIndPrimaryD22"]),1,0)
+# 
+# EventTimeOmicronD22hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
+#                                       & !is.na(newdat[,"EventIndPrimaryD22"]),min(newdat[,"EventTimeKnownLineageOmicronD22"],
+#                                                                                   newdat[,"EventTimeMissingLineageD22"]),
+#                                       max(newdat[,"EventTimeKnownLineageNonOmicronD22"],newdat[,"EventTimeMissingLineageD22"]))
+# 
+# # For defining EventTimeOmicronD22hotdeck1, consider special cases with 2 COVID-19 endpoints
+# # 1. For the 7 participants with first event a known-lineage Omicron case, 
+# #    this first event is counted as an endpoint and the second event is ignored.
+# #    The above code works b/c the first event is known Omicron
+# # 2. For the 2 participants with first event a missing-lineage case in 2021 and 
+# #    second event known-lineage Omicron, the first event is ignored and the second 
+# #    event is counted as an endpoint.
+# #    The above code fails b/c the missing lineage event time would be used.
+# 
+# kp2 <- (PENDING, this flag is TRUE if one of the 2 participants and FALSE otherwise)
+# EventTimeOmicronD22hotdeck1[kp2] <- newdat[,"EventTimeKnownLineageOmicronD22"]
+# 
+# # 3. For the 9 participants with first event a missing-lineage case in 2022 and second 
+# #    event known-lineage Omicron, the first event is counted as an endpoint 
+# #    (with hotdeck imputation employed as is generally done) and the second event is ignored.
+# #    The above code works b/c EventTimeMissingLineageD22 corresponds to the first event.
+# 
+# 
+# EventIndOmicronD22hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) 
+#                                       & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
+#                                       & !is.na(newdat[,"EventIndPrimaryD22"]),1,0)
+# 
+# EventTimeOmicronD22hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
+#                                        & !is.na(newdat[,"EventIndPrimaryD22"]),min(newdat[,"EventTimeKnownLineageOmicronD22"],
+#                                                                                    newdat[,"EventTimeMissingLineageD22"]),
+#                                        max(newdat[,"EventTimeKnownLineageNonOmicronD22"],newdat[,"EventTimeMissingLineageD22"]))
+# 
+# # Checks for D43 correlates (repeat the above)
+# EventIndOmicronD43hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) 
+#                                      & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
+#                                      & !is.na(newdat[,"EventIndPrimaryD43"]),1,0)
+# 
+# EventTimeOmicronD43hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
+#                                       & !is.na(newdat[,"EventIndPrimaryD43"]),min(newdat[,"EventTimeKnownLineageOmicronD43"],
+#                                                                                   newdat[,"EventTimeMissingLineageD43"]),
+#                                       max(newdat[,"EventTimeKnownLineageNonOmicronD43"],newdat[,"EventTimeMissingLineageD43"]))
+# 
+# EventIndOmicronD43hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) 
+#                                       & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
+#                                       & !is.na(newdat[,"EventIndPrimaryD43"]),1,0)
+# 
+# EventTimeOmicronD43hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
+#                                        & !is.na(newdat[,"EventIndPrimaryD43"]),min(newdat[,"EventTimeKnownLineageOmicronD43"],
+#                                                                                    newdat[,"EventTimeMissingLineageD43"]),
+#                                        max(newdat[,"EventTimeKnownLineageNonOmicronD43"],newdat[,"EventTimeMissingLineageD43"]))
+# 
+# # For completeness, compute the survival variables for the D1 markers
+# EventIndOmicronD1hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) 
+#                                     & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
+#                                     & !is.na(newdat[,"EventIndPrimaryD1"]),1,0)
+# 
+# EventTimeOmicronD1hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
+#                                      & !is.na(newdat[,"EventIndPrimaryD1"]),min(newdat[,"EventTimeKnownLineageOmicronD1"],
+#                                                                                 newdat[,"EventTimeMissingLineageD1"]),
+#                                      max(newdat[,"EventTimeKnownLineageNonOmicronD1"],newdat[,"EventTimeMissingLineageD1"]))
+# 
+# EventIndOmicronD1hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) 
+#                                      & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
+#                                      & !is.na(newdat[,"EventIndPrimaryD1"]),1,0)
+# 
+# EventTimeOmicronD1hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
+#                                       & !is.na(newdat[,"EventIndPrimaryD1"]),min(newdat[,"EventTimeKnownLineageOmicronD1"],
+#                                                                                  newdat[,"EventTimeMissingLineageD1"]),
+#                                       max(newdat[,"EventTimeKnownLineageNonOmicronD1"],newdat[,"EventTimeMissingLineageD1"]))
