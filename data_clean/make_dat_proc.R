@@ -828,12 +828,16 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 # do this last so as not to change earlier values
 ###############################################################################
 
-if (TRIAL %in% c("profiscov", "profiscov_lvmn")) {
+if (TRIAL %in% c("profiscov", "profiscov_lvmn", "vat08_combined")) {
     # no risk score for profiscov, but some have missing BMI
     n.imp <- 1
     dat.tmp.impute <- dat_proc
     
-    imp.markers=c("HighRiskInd", "Sex", "Age", "BMI")
+    if (TRIAL %in% c("profiscov", "profiscov_lvmn")) {
+      imp.markers=c("HighRiskInd", "Sex", "Age", "BMI")
+    } else if (TRIAL %in% c("vat08_combined")) {     
+      imp.markers=c("FOI", "risk_score")
+    }
         
     imp <- dat.tmp.impute %>%  select(all_of(imp.markers))         
     if(any(is.na(imp))) {
@@ -858,7 +862,6 @@ if (TRIAL %in% c("profiscov", "profiscov_lvmn")) {
       msg = "imputed values of missing covariates merged properly for all individuals?"
     )
 } 
-
 
 
 ###############################################################################
@@ -946,10 +949,10 @@ if(TRIAL == "moderna_real") {
   # add region variable for regression
   # Honduras, not Honduras for the Stage 1 trial 
   # India, Mexico, Other/Else country for the Stage 2 trial.
-  dat_proc$Region = ifelse(dat_proc$Trialstage==1, "Others_stage1", "Others_stage2")
-  dat_proc$Region[dat_proc$Country==3] = "Honduras"
-  dat_proc$Region[dat_proc$Country==4] = "India"
-  dat_proc$Region[dat_proc$Country==9] = "Mexicao"
+  dat_proc$Region = ifelse(dat_proc$Trialstage==1, "Not Honduras", "Other countries")
+  dat_proc$Region[dat_proc$Country==3 & dat_proc$Trialstage==1] = "Honduras"
+  dat_proc$Region[dat_proc$Country==4 & dat_proc$Trialstage==2] = "India"
+  dat_proc$Region[dat_proc$Country==9 & dat_proc$Trialstage==2] = "Mexico"
   
 }
 
@@ -971,7 +974,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
-         vat08_combined = "e3ff3763604182c0b27e1ed7d1a35d08", 
+         vat08_combined = "d7a8ba834cd4f4d2ab0267743e8d9f85", 
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
