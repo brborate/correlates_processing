@@ -37,7 +37,7 @@ if (endsWith(attr(config, "config"), "mock")) {
     path_to_data <- mapped_data
 }
 print(path_to_data)
-if (!file.exists(path_to_data)) stop ("make dat proc: dataset not available ===========================================")
+if (!file.exists(path_to_data)) stop ("while running risk score code (loadlibraries_readinputdata.R): mapped_data not available ===========================================")
 inputfileName <- gsub("^.*/", "", mapped_data)
 # Define code version to run
 # the demo version is simpler and runs faster!

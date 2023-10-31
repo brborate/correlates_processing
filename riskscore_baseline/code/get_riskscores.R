@@ -20,6 +20,7 @@ print("GET_RISKSCORES.R")
 
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
+print(args)
 
 source("code/loadlibraries_readinputdata.R")
 
@@ -195,7 +196,7 @@ if(study_name == "AZD1222"){
 
 if(study_name %in% c("VAT08", "VAT08m")){
   inputFile <- inputFile %>%
-    mutate(EventIndPrimaryD1rscore = EventIndPrimaryD1,
+    mutate(EventIndPrimaryD22rscore = EventIndPrimaryD22,
            EventIndPrimaryD43rauc = ifelse(RiskscoreAUCflag == 1, EventIndPrimaryD43, NA),
            pooled.age.grp = ifelse(Age >= 60, 1, 0))
   
@@ -246,7 +247,7 @@ if(study_name %in% c("VAT08", "VAT08m")){
     "CalendarDateEnrollment"
   )
   
-  endpoint <- "EventIndPrimaryD1rscore"
+  endpoint <- "EventIndPrimaryD22rscore"
   riskscore_timepoint <- 1
   vaccAUC_timepoint <- 43
   studyName_for_report <- "VAT08m_VAT08b_combined"
@@ -281,9 +282,10 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
   if(study_name %in% c("VAT08m", "VAT08")){
     if(!dir.exists(paste0("output/", Sys.getenv("TRIAL")))){
       dir.create(paste0("output/", Sys.getenv("TRIAL")))
-      dir.create(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))
+      if(args[1] %in% c("bseroneg", "bseropos"))
+        dir.create(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))
     }
-    if(!dir.exists(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))){
+    if((args[1] %in% c("bseroneg", "bseropos"))  &  (!dir.exists(paste0("output/", Sys.getenv("TRIAL"), "/", args[1])))){
       dir.create(paste0("output/", Sys.getenv("TRIAL"), "/", args[1]))
     }
     save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
@@ -317,5 +319,9 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
 if(study_name == "COVE"){
   save(inputFile, file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
 }
+
+# if(study_name == "VAT08" & args[1] == "stackonly"){
+#   source("code/stack_bseroneg_bseropos.R")
+# }
 
 source(here("code", "check_if_SL_needs_be_run.R"))

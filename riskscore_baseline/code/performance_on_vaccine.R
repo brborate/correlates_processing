@@ -34,8 +34,10 @@ if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
 }
 
 
-if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name)))
+if(!any(sapply(c("COVE", "ENSEMBLE", "VAT08"), grepl, study_name)))
   endpoint <- paste0(sub("1rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc"))
+if(study_name == "VAT08")
+  endpoint <- paste0(sub("22rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc"))
 
 if(!any(sapply(c("COVE", "ENSEMBLE"), grepl, study_name))){
   if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
