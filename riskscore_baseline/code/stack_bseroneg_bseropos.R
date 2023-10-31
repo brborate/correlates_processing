@@ -41,3 +41,5 @@ if(!identical(dneg_inputFile, dpos_inputFile)){
   
 save(inputFile_with_riskscore,
      file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData")) 
+
+source("code/get_riskscores.R")

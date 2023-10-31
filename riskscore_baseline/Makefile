@@ -10,7 +10,7 @@ get_riskscores:
 ifeq ($(TRIAL), $(filter $(TRIAL), vat08m vat08_combined))
 	Rscript code/get_riskscores.R bseroneg
 	Rscript code/get_riskscores.R bseropos
-	Rscript code/stack_bseroneg_bseropos.R
+	Rscript code/stack_bseroneg_bseropos.R stackonly
 else ifeq ($(TRIAL), $(filter $(TRIAL), prevent19))
 	Rscript code/get_riskscores.R onlyUSsubjects
 	Rscript code/get_riskscores.R allsubjects

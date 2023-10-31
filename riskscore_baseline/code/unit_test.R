@@ -13,7 +13,7 @@ if(attr(config, "config") == "prevent19"){
                 janssen_pooled_mock = "f7a8225eb5fa8cc9a5426211988b9d95",
                 janssen_pooled_real = "c38fb43e2c87cf2d392757840af68bba",
                 azd1222 = "23cee1e1ba96ef85326dadceb34b3c6f",
-                vat08_combined = "b2df0a2545c76bf3f25502e97f9dc7ed",
+                vat08_combined = "e6cb5d601d6bd45e26401d991affba15",
                 NA)   
 }
 
