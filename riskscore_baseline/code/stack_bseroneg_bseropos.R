@@ -42,4 +42,11 @@ if(!identical(dneg_inputFile, dpos_inputFile)){
 save(inputFile_with_riskscore,
      file = paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData")) 
 
+args = commandArgs(trailingOnly=TRUE)
+if (length(args)>=1) {
+  if(args[1] == "stackonly") {
+    q()
+  }
+}
+
 source("code/get_riskscores.R")
