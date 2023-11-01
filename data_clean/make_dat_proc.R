@@ -952,17 +952,17 @@ if(TRIAL == "moderna_real") {
   # India (4), Mexico (9), Other/Else country for the Stage 2 trial nnaive
   dat_proc$Region = NA
   
-  dat_proc$Region[dat_proc$Trialstage==1 & dat_proc$naive==1] = "Stage1naive"
+  dat_proc$Region[dat_proc$Trialstage==1 & dat_proc$Bserostatus==0] = "Stage1naive"
   
-  dat_proc$Region[dat_proc$Trialstage==1 & dat_proc$naive==0 & dat_proc$Country==3] = "HON_Stage1Nnaive"
-  dat_proc$Region[dat_proc$Trialstage==1 & dat_proc$naive==0 & dat_proc$Country!=3] = "NotHON_Stage1Nnaive"
+  dat_proc$Region[dat_proc$Trialstage==1 & dat_proc$Bserostatus==1 & dat_proc$Country==3] = "HON_Stage1Nnaive"
+  dat_proc$Region[dat_proc$Trialstage==1 & dat_proc$Bserostatus==1 & dat_proc$Country!=3] = "NotHON_Stage1Nnaive"
   
-  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$naive==1 & dat_proc$Country==9] = "MEX_Stage2naive"
-  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$naive==1 & dat_proc$Country!=9] = "NotMEX_Stage2naive"
+  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==0 & dat_proc$Country==9] = "MEX_Stage2naive"
+  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==0 & dat_proc$Country!=9] = "NotMEX_Stage2naive"
   
-  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$naive==0 & dat_proc$Country==9] = "MEX_Stage2Nnaive"
-  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$naive==0 & dat_proc$Country==4] = "IND_Stage2Nnaive"
-  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$naive==0 & dat_proc$Country!=9 & dat_proc$Country!=4] = "NotMEXIND_Stage2Nnaive"
+  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Country==9] = "MEX_Stage2Nnaive"
+  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Country==4] = "IND_Stage2Nnaive"
+  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Country!=9 & dat_proc$Country!=4] = "NotMEXIND_Stage2Nnaive"
   
 }
 
@@ -984,7 +984,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
-         vat08_combined = "c9a55fda4ef4f981f10dac659a6ff043", 
+         vat08_combined = "35ee249defa3a2670916e9f009385b39", 
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
