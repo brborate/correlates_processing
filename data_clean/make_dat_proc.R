@@ -16,7 +16,7 @@ library(Hmisc) # wtd.quantile, cut2
 library(mice)
 library(dplyr)
 library(here)
-library(glue)
+library(mdw)
 
 begin=Sys.time()
 
@@ -33,7 +33,7 @@ if (make_riskscore) {
     colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
     
     # borrow risk score from janssen_pooled_partA
-    load(file = glue('riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData'))
+    load(file = 'riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData')
     stopifnot(all(dat_proc$Ptid==inputFile_with_riskscore$Ptid))
     dat_proc$risk_score = inputFile_with_riskscore$risk_score
     dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
@@ -54,7 +54,7 @@ if (make_riskscore) {
      colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
      
      # add risk score
-     load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
+     load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
      stopifnot(all(inputFile_with_riskscore$Ptid==dat_proc$Ptid))
      dat_proc$risk_score = inputFile_with_riskscore$risk_score
      dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
@@ -78,7 +78,7 @@ if (make_riskscore) {
 
     } else {
       # load inputFile_with_riskscore.Rdata, a product of make riskscore_analysis, which calls preprocess and makes risk scores
-      load(file = glue('riskscore_baseline/output/{TRIAL}/inputFile_with_riskscore.RData'))
+      load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
       dat_proc <- inputFile_with_riskscore    
     }
   
@@ -641,12 +641,15 @@ for (tp in rev(timepoints)) {
     if (TRIAL=="janssen_partA_VL") {
       # assays include many more assays than what are needed here
       imp.markers=c(outer(c("B", "Day"%.%tp), c("bindSpike", "bindRBD", "pseudoneutid50"), "%.%"))
+      
     } else {
       if(two_marker_timepoints) {
         imp.markers=c(outer(c("B", if(tp==timepoints[2]) "Day"%.%timepoints else "Day"%.%tp), assays, "%.%"))
       } else {
         imp.markers=c(outer(c("B", "Day"%.%tp), assays, "%.%"))
       }
+      # mdw markers are not imputed
+      imp.markers=imp.markers[!endsWith(imp.markers, "_mdw")]
     }
         
     for (trt in unique(dat_proc$Trt)) {
@@ -782,8 +785,11 @@ if(study_name %in% c("COVE", "MockCOVE")){
 # thus no need to do, say, lloq censoring
 # but there is a need to do uloq censoring before computing delta
 
+# mdw scores delta are computed as weighted aveage of delta, not as delta of mdw
+assays1 = assays.includeN[!endsWith(assays.includeN, "_mdw")]
+
 tmp=list()
-for (a in assays.includeN) {
+for (a in assays1) {
   for (t in c("B", paste0("Day", config$timepoints)) ) {
     tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] > log10(uloqs[a]), log10(uloqs[a]), dat_proc[[t %.% a]])
   }
@@ -791,12 +797,41 @@ for (a in assays.includeN) {
 tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
 
 for (tp in rev(timepoints)) {
-    dat_proc["Delta"%.%tp%.%"overB" %.% assays.includeN] <- tmp["Day"%.%tp %.% assays.includeN] - tmp["B" %.% assays.includeN]
+    dat_proc["Delta"%.%tp%.%"overB" %.% assays1] <- tmp["Day"%.%tp %.% assays1] - tmp["B" %.% assays1]
 }   
 if(two_marker_timepoints) {
-    dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays.includeN] <- tmp["Day"%.% timepoints[2]%.% assays.includeN] - tmp["Day"%.%timepoints[1] %.% assays.includeN]
+    dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays1] <- tmp["Day"%.% timepoints[2]%.% assays1] - tmp["Day"%.%timepoints[1] %.% assays1]
 }
 
+
+
+
+# define mdw scores 
+if(TRIAL == "vat08_combined") {
+  dat_proc$bindSpike_mdw = NA
+  dat_proc$pseudoneutid50_mdw = NA
+  
+  for (iAna in 1:3) {
+    if (iAna==1) kp = dat_proc$Trialstage==1 & dat_proc$Bserostatus==1
+    if (iAna==2) kp = dat_proc$Trialstage==2 & dat_proc$Bserostatus==0
+    if (iAna==3) kp = dat_proc$Trialstage==2 & dat_proc$Bserostatus==1
+    
+    bAb = setdiff(assays[startsWith(assays, "bindSpike")], c('bindSpike_mdw'))
+    nAb = setdiff(assays[startsWith(assays, "pseudoneutid50")], c('pseudoneutid50_mdw'))
+    
+    for (t in c("B", "Day"%.%timepoints, "Delta"%.%timepoints%.%"overB", "Delta43over22")) {
+      # bAb
+      tmp = scale(dat_proc[kp, t%.%bAb])
+      scores = tmp %*% tree.weight(cor(tmp, use='complete.obs'))
+      dat_proc[kp, t%.%'bindSpike_mdw'] = scores
+      
+      # nAb
+      tmp = scale(dat_proc[kp, t%.%nAb])
+      scores = tmp %*% tree.weight(cor(tmp, use='complete.obs'))
+      dat_proc[kp, t%.%'pseudoneutid50_mdw'] = scores
+    }
+  }
+}
 
 
 # add two synthetic ID50 markers by region for ensemble
@@ -963,8 +998,10 @@ if(TRIAL == "moderna_real") {
   dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Country==9] = "MEX_Stage2Nnaive"
   dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Country==4] = "IND_Stage2Nnaive"
   dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Country!=9 & dat_proc$Country!=4] = "NotMEXIND_Stage2Nnaive"
-  
+
+
 }
+
 
 
 
@@ -984,7 +1021,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
-         vat08_combined = "35ee249defa3a2670916e9f009385b39", 
+         vat08_combined = "63064abe45b1ac045b8c0e60cec813a7", 
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
