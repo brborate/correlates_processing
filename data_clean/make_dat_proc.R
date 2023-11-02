@@ -808,27 +808,46 @@ if(two_marker_timepoints) {
 
 # define mdw scores 
 if(TRIAL == "vat08_combined") {
-  dat_proc$bindSpike_mdw = NA
-  dat_proc$pseudoneutid50_mdw = NA
-  
-  for (iAna in 1:3) {
+
+  for (iAna in 1:4) {
     if (iAna==1) kp = dat_proc$Trialstage==1 & dat_proc$Bserostatus==1
     if (iAna==2) kp = dat_proc$Trialstage==2 & dat_proc$Bserostatus==0
     if (iAna==3) kp = dat_proc$Trialstage==2 & dat_proc$Bserostatus==1
+    if (iAna==4) kp = dat_proc$Trialstage==1 & dat_proc$Bserostatus==0 # not used for correlates, but do it for completeness
     
     bAb = setdiff(assays[startsWith(assays, "bindSpike")], c('bindSpike_mdw'))
     nAb = setdiff(assays[startsWith(assays, "pseudoneutid50")], c('pseudoneutid50_mdw'))
     
     for (t in c("B", "Day"%.%timepoints, "Delta"%.%timepoints%.%"overB", "Delta43over22")) {
       # bAb
-      tmp = scale(dat_proc[kp, t%.%bAb])
-      scores = tmp %*% tree.weight(cor(tmp, use='complete.obs'))
-      dat_proc[kp, t%.%'bindSpike_mdw'] = scores
-      
+      # mdw weights are computed from vaccine arm
+      mdw.weights=tryCatch({
+        tree.weight(cor(dat_proc[kp & dat_proc$Trt==1, t%.%bAb], use='complete.obs'))
+      }, error = function(err) {
+        print(err$message)
+        rep(1/length(bAb), length(bAb))
+      })
+      print(mdw.weights)  
+      # center and scale are computed from vaccine arm
+      centers=attr(scale(dat_proc[kp & dat_proc$Trt==1, t%.%bAb]), "scaled:center")
+      scales=attr(scale(dat_proc[kp & dat_proc$Trt==1, t%.%bAb]), "scaled:scale")
+      # transform both vaccine and placebo
+      dat_proc[kp, t%.%'bindSpike_mdw'] = scale(dat_proc[kp, t%.%bAb], center=centers, scale=scales) %*% mdw.weights
+
       # nAb
-      tmp = scale(dat_proc[kp, t%.%nAb])
-      scores = tmp %*% tree.weight(cor(tmp, use='complete.obs'))
-      dat_proc[kp, t%.%'pseudoneutid50_mdw'] = scores
+      # mdw weights are computed from vaccine arm
+      mdw.weights=tryCatch({
+        tree.weight(cor(dat_proc[kp & dat_proc$Trt==1, t%.%nAb], use='complete.obs'))
+      }, error = function(err) {
+        print(err$message)
+        rep(1/length(nAb), length(nAb))
+      })
+      print(mdw.weights)  
+      # center and scale are computed from vaccine arm
+      centers=attr(scale(dat_proc[kp & dat_proc$Trt==1, t%.%nAb]), "scaled:center")
+      scales =attr(scale(dat_proc[kp & dat_proc$Trt==1, t%.%nAb]), "scaled:scale")
+      # transform both vaccine and placebo
+      dat_proc[kp, t%.%'pseudoneutid50_mdw'] = scale(dat_proc[kp, t%.%nAb], center=centers, scale=scales) %*% mdw.weights
     }
   }
 }
@@ -1021,7 +1040,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
-         vat08_combined = "63064abe45b1ac045b8c0e60cec813a7", 
+         vat08_combined = "b0bc3821af82b4876e0947f9909f0d1d", 
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }
