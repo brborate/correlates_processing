@@ -41,7 +41,7 @@ moderna_mock: &moderna_mock
 # for data_processing, which combines vat08a and vat008b
 vat08_combined: &vat08_combined
   <<: *ows_trial
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20231030.csv
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20231107.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/vat08_combined_assay_metadata.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]
@@ -49,6 +49,15 @@ vat08_combined: &vat08_combined
   time_labels: [Day 1, Day 22, Day 43, D22 fold-rise over D1, D43 fold-rise over D1, D43 fold-rise over D22]
   study_name: VAT08
 
+
+id27hpv: &id27hpv
+  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20231107.csv
+  assay_metadata: ../correlates_reporting2/assay_metadata/id27hpv_assay_metadata.csv
+  two_marker_timepoints: no
+  timepoints: [18]
+  times: [M18]
+  time_labels: [Month 18]
+  study_name: IARC_HPV
 
 
 prevent19: &prevent19 # note that RBD is added as a special step and is not included in the config

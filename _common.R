@@ -10,15 +10,11 @@ if(Sys.getenv("TRIAL")=="") stop("Environmental variable TRIAL not defined!!!!!!
 TRIAL=Sys.getenv("TRIAL")
 
 config <- config::get(config = TRIAL)
-for(opt in names(config)){
-  eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
-}
+for(opt in names(config))eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
  
 data_name = paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")
 
-
 # disabling lower level parallelization in favor of higher level of parallelization
-
 # set parallelization in openBLAS and openMP
 library(RhpcBLASctl)
 blas_get_num_procs()
@@ -30,14 +26,13 @@ verbose=Sys.getenv("VERBOSE")=="1"
 
 # if this flag is true, then the N IgG binding antibody is reported 
 # in the immuno report (but is not analyzed in the cor or cop reports).
-include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08m","VAT08b","VAT08")
+include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08")
 
 
 
-#############
-# the following part should be a copy of the same code from reporting2 repo _common.R
-
-# uloqs etc are hardcoded for ows trials but driven by config for other trials
+################################################################################
+# assay limits
+# hardcoded in the code for some, driven by config for others
 # For bAb, IU and BAU are the same thing
 # all values on BAU or IU
 # LOQ can not be NA, it is needed for computing delta
@@ -55,6 +50,7 @@ if (!is.null(config$assay_metadata)) {
   llods=assay_metadata$lod; names(llods)=assays
   
 } else {
+  # the following part should be a copy of the same code from reporting2 repo _common.R
   names(assays)=assays # add names so that lapply results will have names
   pos.cutoffs<-llods<-lloqs<-uloqs<-c()
   lloxs=NULL
@@ -637,7 +633,8 @@ preprocess=function(dat_raw, study_name) {
     
     
     for(tp in timepoints) {
-        dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
+        dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, 
+          ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
     }
 
     # ENSEMBLE only, since we are not using this variable to define Riskscorecohortflag and we are not doing D29start1 analyses for other trials
