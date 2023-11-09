@@ -428,17 +428,15 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 } else stop("unknown study_name 7")
 
 
-# examine missingness
-# # sanofi 
-# with(subset(dat_proc, Trt==1), table(!is.na(BbindSpike)))
-# with(subset(dat_proc, Trt==1), table(!is.na(Day22bindSpike)))
-# with(subset(dat_proc, Trt==1), table(!is.na(Day43bindSpike)))
-# with(subset(dat_proc, Trt==1), table(!is.na(BbindSpike) & !is.na(Day22bindSpike) & !is.na(Day43bindSpike)))
-# with(subset(dat_proc, Trt==1), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike), !is.na(BbindSpike) ))
-# with(subset(dat_proc, Trt==1 & EventIndPrimaryD22), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike), !is.na(BbindSpike) ))
-# with(subset(dat_proc, Trt==1 & EventIndPrimaryD22), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike), Stage ))
-
-
+# # examine marker data missingness pattern
+# # # sanofi 
+# with(dat_proc, table(!is.na(BbindSpike), !is.na(Bpseudoneutid50)))
+# with(dat_proc, table(!is.na(Day22bindSpike), !is.na(Day22pseudoneutid50)))
+# with(dat_proc, table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
+# 
+# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==1 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
+# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==2 & Bserostatus==0), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
+# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
 
 # TwophasesampInd: be in the subcohort or a case after time point 1  &  have the necessary markers
 if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
@@ -819,6 +817,8 @@ if(TRIAL == "vat08_combined") {
     bAb = setdiff(assays[startsWith(assays, "bindSpike")], c('bindSpike_mdw'))
     nAb = setdiff(assays[startsWith(assays, "pseudoneutid50")], c('pseudoneutid50_mdw'))
     
+    mdw.wt.bAb=data.frame(row.names=bAb)# row.names allows cbind to work
+    mdw.wt.nAb=data.frame(row.names=nAb)
     for (t in c("B", "Day"%.%timepoints, "Delta"%.%timepoints%.%"overB", "Delta43over22")) {
       # bAb
       # mdw weights are computed from vaccine arm
@@ -828,7 +828,8 @@ if(TRIAL == "vat08_combined") {
         print(err$message)
         rep(1/length(bAb), length(bAb))
       })
-      print(mdw.weights)  
+      mdw.wt.bAb=cbind(mdw.wt.bAb, mdw.weights)
+      # print(mdw.weights)  
       # center and scale are computed from vaccine arm
       centers=attr(scale(dat_proc[kp & dat_proc$Trt==1, t%.%bAb]), "scaled:center")
       scales=attr(scale(dat_proc[kp & dat_proc$Trt==1, t%.%bAb]), "scaled:scale")
@@ -843,13 +844,18 @@ if(TRIAL == "vat08_combined") {
         print(err$message)
         rep(1/length(nAb), length(nAb))
       })
-      print(mdw.weights)  
+      mdw.wt.nAb=cbind(mdw.wt.nAb, mdw.weights)
+      # print(mdw.weights)  
       # center and scale are computed from vaccine arm
       centers=attr(scale(dat_proc[kp & dat_proc$Trt==1, t%.%nAb]), "scaled:center")
       scales =attr(scale(dat_proc[kp & dat_proc$Trt==1, t%.%nAb]), "scaled:scale")
       # transform both vaccine and placebo
       dat_proc[kp, t%.%'pseudoneutid50_mdw'] = scale(dat_proc[kp, t%.%nAb], center=centers, scale=scales) %*% mdw.weights
     }
+    colnames(mdw.wt.bAb) = c("B", "Day"%.%timepoints, "Delta"%.%timepoints%.%"overB", "Delta43over22")
+    write.csv(mdw.wt.bAb, file = here("data_clean", "csv", TRIAL%.%"_"%.%iAna%.%"_bAb_mdw_weights.csv"))
+    colnames(mdw.wt.nAb) = c("B", "Day"%.%timepoints, "Delta"%.%timepoints%.%"overB", "Delta43over22")
+    write.csv(mdw.wt.nAb, file = here("data_clean", "csv", TRIAL%.%"_"%.%iAna%.%"_nAb_mdw_weights.csv"))
   }
 }
 

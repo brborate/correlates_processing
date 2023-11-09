@@ -51,7 +51,7 @@ vat08_combined: &vat08_combined
 
 
 id27hpv: &id27hpv
-  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20231107.csv
+  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20231108.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/id27hpv_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [18]
