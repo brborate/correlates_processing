@@ -1,12 +1,8 @@
 #Sys.setenv(TRIAL = "moderna_real")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
 #Sys.setenv(TRIAL = "vat08_combined")
-#Sys.setenv(TRIAL = "id27hpv")
 
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
-
-
-# vat08_combined: Stage is incorporated into demo.stratum
 
 source(here::here("_common.R"))
 
@@ -46,7 +42,8 @@ if (make_riskscore) {
     dat_proc$EventIndPrimaryD29 = dat_proc$EventIndPrimaryHasVLD29
     # EventTimePrimaryD29 is set to EventIndPrimaryIncludeNotMolecConfirmedD29 in preprocess()
     
-   } else if (TRIAL=="vat08_combined") {
+    
+   } else if (study_name=="VAT08") {
      # read hot deck data
      tmp = sub(".csv","_hotdeck.csv",mapped_data)
      if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
@@ -55,7 +52,8 @@ if (make_riskscore) {
      colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
      
      # add risk score
-     load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
+     # hard code vat08_combined here so that we can use the same risk score file for vat08_nAb
+     load(file = paste0('riskscore_baseline/output/vat08_combined/inputFile_with_riskscore.RData'))
      stopifnot(all(inputFile_with_riskscore$Ptid==dat_proc$Ptid))
      dat_proc$risk_score = inputFile_with_riskscore$risk_score
      dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
@@ -65,16 +63,23 @@ if (make_riskscore) {
      # define event indicator and event time variables based on seq1.variant.hotdeck1 etc
      for (t in c(1,22,43)) {
        for (i in 1:10) {
-         dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] = 
+         dat_proc[[paste0("EventIndOmicronD",t,"M12hotdeck",i)]]  = 
            ifelse(!is.na(dat_proc[["seq1.variant.hotdeck"%.%i]]) & dat_proc[["seq1.variant.hotdeck"%.%i]]=="Omicron" & !is.na(dat_proc[["EventIndFirstInfectionD"%.%t]]),
                   1,
                   0)
-         dat_proc[[paste0("EventTimeOmicronD",t,"hotdeck",i)]] = ifelse(dat_proc[[paste0("EventIndOmicronD",t,"hotdeck",i)]] ==1, 
+         dat_proc[[paste0("EventTimeOmicronD",t,"M12hotdeck",i)]] = ifelse(dat_proc[[paste0("EventIndOmicronD",t,"M12hotdeck",i)]] ==1, 
                                                                         min(dat_proc[["EventTimeKnownLineageOmicronD"%.%t]],    dat_proc[["EventTimeMissingLineageD"%.%t]]),
                                                                         max(dat_proc[["EventTimeKnownLineageNonOmicronD"%.%t]], dat_proc[["EventTimeMissingLineageD"%.%t]]))
        }
      }
      
+     # create event time and indicator variables censored on 180 days post dose 2
+     for (t in c(1,22,43)) {
+       for (i in 1:10) {
+         dat_proc[[paste0("EventIndOmicronD",t,"M6hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 0,   dat_proc[[paste0("EventIndOmicronD",t,"M12hotdeck",i)]])
+         dat_proc[[paste0("EventTimeOmicronD",t,"M6hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 180-21, dat_proc[[paste0("EventTimeOmicronD",t,"M12hotdeck",i)]])
+       }
+     }
      
 
     } else {
@@ -392,43 +397,39 @@ with(dat_proc, table(Wstratum))
 
 # define must_have_assays for ph2 definition
 if (study_name %in% c("COVE", "MockCOVE")) {
-    must_have_assays <- c("bindSpike", "bindRBD")
+  must_have_assays <- c("bindSpike", "bindRBD")
     
 } else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")) {
-    if (endsWith(TRIAL,"ADCP")) {
-        must_have_assays <- c("ADCP")    
-    } else {
-        must_have_assays <- c("bindSpike", "bindRBD")
-    }    
+  if (endsWith(TRIAL,"ADCP")) {
+      must_have_assays <- c("ADCP")    
+  } else {
+      must_have_assays <- c("bindSpike", "bindRBD")
+  }    
     
 } else if (study_name %in% c("PREVENT19")) {
-    must_have_assays <- c("bindSpike")
+  must_have_assays <- c("bindSpike")
     
 } else if (study_name %in% c("AZD1222")) {
-    if (TRIAL=="azd1222") {
-        must_have_assays <- c("pseudoneutid50")
-        
-    } else if (TRIAL=="azd1222_bAb") {
-        must_have_assays <- c("bindSpike")
-        
-    } else stop("need to define must_have_assays")
-    
+  if (TRIAL=="azd1222") {
+      must_have_assays <- c("pseudoneutid50")
+  } else if (TRIAL=="azd1222_bAb") {
+      must_have_assays <- c("bindSpike")
+  } else stop("need to define must_have_assays")
+  
 } else if (study_name %in% c("PROFISCOV")) {
-    if (TRIAL=="profiscov") {
-        must_have_assays <- c("bindSpike")
-        
-    } else if (TRIAL=="profiscov_lvmn") {
-        must_have_assays <- c("bindSpike")
-        
-    } else stop("need to define must_have_assays")
+  if (TRIAL=="profiscov") {
+      must_have_assays <- c("bindSpike")
+  } else if (TRIAL=="profiscov_lvmn") {
+      must_have_assays <- c("bindSpike")
+  } else stop("need to define must_have_assays")
     
 } else if (study_name %in% c("VAT08")) {
-    must_have_assays <- c("bindSpike")
-        
+  must_have_assays <- NULL
+
 } else stop("unknown study_name 7")
 
 
-# # examine marker data missingness pattern
+# # examine marker data missingness pattern 
 # # # sanofi 
 # with(dat_proc, table(!is.na(BbindSpike), !is.na(Bpseudoneutid50)))
 # with(dat_proc, table(!is.na(Day22bindSpike), !is.na(Day22pseudoneutid50)))
@@ -437,6 +438,47 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 # with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==1 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
 # with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==2 & Bserostatus==0), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
 # with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
+# 
+# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==0 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==1 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
+# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==0 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==2 & Bserostatus==0), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
+# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==0 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
+# 
+# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD1hotdeck1==1 & min(EventTimeKnownLineageOmicronD22, EventTimeMissingLineageD22)<=180+21 & Trialstage==2 & Bserostatus==1), table(!is.na(Day22pseudoneutid50), !is.na(Day43pseudoneutid50)))
+# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD1hotdeck1==1 & min(EventTimeKnownLineageOmicronD22, EventTimeMissingLineageD22)<=180+21 & Trialstage==2 & Bserostatus==1), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike)))
+# 
+# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
+# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50), SubcohortInd))
+# 
+# 
+# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day22pseudoneutid50), !is.na(Day43pseudoneutid50)))
+# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Bpseudoneutid50), !is.na(Day22pseudoneutid50), !is.na(Day43pseudoneutid50)))
+# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike)))
+# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50), SubcohortInd))
+# 
+# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), mypairs(cbind(Day22pseudoneutid50, Day43pseudoneutid50)))
+# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike)))
+# 
+# par(mfrow=c(2,2))
+# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==1 & Bserostatus==0 & Trt==0), xlim=c(0,4), ylim=c(0,4), main="Placebo, Naive")
+# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==2 & Bserostatus==0 & Trt==0), add=T, col=2)
+# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==1 & Bserostatus==1 & Trt==0), xlim=c(0,4), ylim=c(0,4), main="Placebo, Non-Naive")
+# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==2 & Bserostatus==1 & Trt==0), add=T, col=2)
+# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==1 & Bserostatus==0 & Trt==1), xlim=c(0,4), ylim=c(0,4), main="Vaccine, Naive")
+# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==2 & Bserostatus==0 & Trt==1), add=T, col=2)
+# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==1 & Bserostatus==1 & Trt==1), xlim=c(0,4), ylim=c(0,4), main="Vaccine, Non-Naive")
+# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==2 & Bserostatus==1 & Trt==1), add=T, col=2)
+
+# # correlation among different markers
+# mypairs(subset(dat_proc, Trialstage==2 & Bserostatus==1)[,c("Day43"%.%assays[10:14])])
+# mypairs(subset(dat_proc, Trialstage==2 & Bserostatus==0)[,c("Day43"%.%assays[10:14])])
+# 
+# apply(subset(dat_proc, Trialstage==2 & Bserostatus==1)[,c("Day43"%.%assays[10:14])], 2, sd, na.rm=T)
+# apply(subset(dat_proc, Trialstage==2 & Bserostatus==0)[,c("Day43"%.%assays[10:14])], 2, sd, na.rm=T)
+# 
+# mypairs(subset(dat_proc, Trialstage==2 & Bserostatus==1)[,c("Day43"%.%assays[1:8])])
+# myboxplot(subset(dat_proc, Trialstage==2 & Bserostatus==1)[,c("Day43"%.%assays[1:8])])
+# apply(subset(dat_proc, Trialstage==2 & Bserostatus==1)[,c("Day43"%.%assays[1:8])], 2, sd, na.rm=T)
+
 
 # TwophasesampInd: be in the subcohort or a case after time point 1  &  have the necessary markers
 if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
@@ -451,11 +493,28 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
             with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
             complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
         
+    
 } else if (study_name %in% c("VAT08")) {
+  # not requiring SubcohortInd==1
   # require baseline but not time point 1
-  dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
-    with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-    complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[2]%.%must_have_assays)])      
+  if (TRIAL=='vat08_nAb') {
+    dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
+      with(dat_proc, !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+      complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50'])      
+    
+  } else {
+    dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
+      with(dat_proc, !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+      # for vat08_combined, 
+      (
+        # for non-cases, we use bAb to impute missing nAb since there are too many ptids with nAb but no bAb
+        dat_proc$EventIndFirstInfectionD1==0 & complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike'])
+        |
+        # for cases, we use nAb and bAb to impute each other 
+        dat_proc$EventIndFirstInfectionD1==1 & (complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50'])|
+                                       complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike'])) 
+      )
+  }
 
   # same as tp2
   dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]]]
@@ -653,17 +712,33 @@ for (tp in rev(timepoints)) {
         
     for (trt in unique(dat_proc$Trt)) {
     for (sero in unique(dat_proc$Bserostatus)) {    
-        #summary(subset(dat.tmp.impute, Trt == 1 & Bserostatus==0)[imp.markers])      
-        imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero) %>% select(all_of(imp.markers))         
-        if(any(is.na(imp))) {
+      if (study_name=="VAT08") {
+        # further separate by trial stage
+        for (stage in unique(dat_proc$Trialstage)) {
+          imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero & Trialstage==stage) %>% select(all_of(imp.markers))         
+          if(any(is.na(imp))) {
             # if there is no variability, fill in NA with constant values
             for (a in names(imp)) {
-                if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
+              if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
             }            
             # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
             imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
-            dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero , imp.markers] <- mice::complete(imp, action = 1)
+            dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero & dat.tmp.impute$Trialstage == stage, imp.markers] <- mice::complete(imp, action = 1)
+          } 
+        }
+      } else {
+        #summary(subset(dat.tmp.impute, Trt == 1 & Bserostatus==0)[imp.markers])      
+        imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero) %>% select(all_of(imp.markers))         
+        if(any(is.na(imp))) {
+          # if there is no variability, fill in NA with constant values
+          for (a in names(imp)) {
+            if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
+          }            
+          # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+          imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+          dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero , imp.markers] <- mice::complete(imp, action = 1)
         }                
+      }
     }
     }
     
@@ -806,56 +881,38 @@ if(two_marker_timepoints) {
 
 
 # define mdw scores 
-if(TRIAL == "vat08_combined") {
-
-  for (iAna in 1:4) {
-    if (iAna==1) kp = dat_proc$Trialstage==1 & dat_proc$Bserostatus==1
-    if (iAna==2) kp = dat_proc$Trialstage==2 & dat_proc$Bserostatus==0
-    if (iAna==3) kp = dat_proc$Trialstage==2 & dat_proc$Bserostatus==1
-    if (iAna==4) kp = dat_proc$Trialstage==1 & dat_proc$Bserostatus==0 # not used for correlates, but do it for completeness
-    
-    bAb = setdiff(assays[startsWith(assays, "bindSpike")], c('bindSpike_mdw'))
-    nAb = setdiff(assays[startsWith(assays, "pseudoneutid50")], c('pseudoneutid50_mdw'))
-    
-    mdw.wt.bAb=data.frame(row.names=bAb)# row.names allows cbind to work
-    mdw.wt.nAb=data.frame(row.names=nAb)
-    for (t in c("B", "Day"%.%timepoints, "Delta"%.%timepoints%.%"overB", "Delta43over22")) {
-      # bAb
-      # mdw weights are computed from vaccine arm
-      mdw.weights=tryCatch({
-        tree.weight(cor(dat_proc[kp & dat_proc$Trt==1, t%.%bAb], use='complete.obs'))
-      }, error = function(err) {
-        print(err$message)
-        rep(1/length(bAb), length(bAb))
-      })
-      mdw.wt.bAb=cbind(mdw.wt.bAb, mdw.weights)
-      # print(mdw.weights)  
-      # center and scale are computed from vaccine arm
-      centers=attr(scale(dat_proc[kp & dat_proc$Trt==1, t%.%bAb]), "scaled:center")
-      scales=attr(scale(dat_proc[kp & dat_proc$Trt==1, t%.%bAb]), "scaled:scale")
-      # transform both vaccine and placebo
-      dat_proc[kp, t%.%'bindSpike_mdw'] = scale(dat_proc[kp, t%.%bAb], center=centers, scale=scales) %*% mdw.weights
-
-      # nAb
-      # mdw weights are computed from vaccine arm
-      mdw.weights=tryCatch({
-        tree.weight(cor(dat_proc[kp & dat_proc$Trt==1, t%.%nAb], use='complete.obs'))
-      }, error = function(err) {
-        print(err$message)
-        rep(1/length(nAb), length(nAb))
-      })
-      mdw.wt.nAb=cbind(mdw.wt.nAb, mdw.weights)
-      # print(mdw.weights)  
-      # center and scale are computed from vaccine arm
-      centers=attr(scale(dat_proc[kp & dat_proc$Trt==1, t%.%nAb]), "scaled:center")
-      scales =attr(scale(dat_proc[kp & dat_proc$Trt==1, t%.%nAb]), "scaled:scale")
-      # transform both vaccine and placebo
-      dat_proc[kp, t%.%'pseudoneutid50_mdw'] = scale(dat_proc[kp, t%.%nAb], center=centers, scale=scales) %*% mdw.weights
-    }
-    colnames(mdw.wt.bAb) = c("B", "Day"%.%timepoints, "Delta"%.%timepoints%.%"overB", "Delta43over22")
-    write.csv(mdw.wt.bAb, file = here("data_clean", "csv", TRIAL%.%"_"%.%iAna%.%"_bAb_mdw_weights.csv"))
-    colnames(mdw.wt.nAb) = c("B", "Day"%.%timepoints, "Delta"%.%timepoints%.%"overB", "Delta43over22")
-    write.csv(mdw.wt.nAb, file = here("data_clean", "csv", TRIAL%.%"_"%.%iAna%.%"_nAb_mdw_weights.csv"))
+# should be the same for vat08_combined and vat08_nAb
+if(study_name == "VAT08") {
+  bAb = setdiff(assays[startsWith(assays, "bindSpike")], c('bindSpike_mdw'))
+  nAb = setdiff(assays[startsWith(assays, "pseudoneutid50")], c('pseudoneutid50_mdw'))
+  
+  # use D43, stage 2, nnaive, vaccine to derive weights
+  kp = dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Trt==1
+  
+  # bAb
+  mdw.wt.bAb=tryCatch({
+    tree.weight(cor(dat_proc[kp, "Day43"%.%bAb], use='complete.obs'))
+  }, error = function(err) {
+    print(err$message)
+    rep(1/length(bAb), length(bAb))
+  })
+  write.csv(mdw.wt.bAb, file = here("data_clean", "csv", TRIAL%.%"_bAb_mdw_weights.csv"))
+  # apply to all time points, to both stages, naive/nnaive, vaccine and placebo
+  for (t in c("B", "Day"%.%timepoints, "Delta"%.%timepoints%.%"overB", "Delta43over22")) {
+    dat_proc[, t%.%'bindSpike_mdw'] = as.matrix(dat_proc[, t%.%bAb]) %*% mdw.wt.bAb
+  }
+  
+  # nAb
+  mdw.wt.nAb=tryCatch({
+    tree.weight(cor(dat_proc[kp, "Day43"%.%nAb], use='complete.obs'))
+  }, error = function(err) {
+    print(err$message)
+    rep(1/length(nAb), length(nAb))
+  })
+  write.csv(mdw.wt.nAb, file = here("data_clean", "csv", TRIAL%.%"_nAb_mdw_weights.csv"))
+  # apply to all time points, to both stages, naive/nnaive, vaccine and placebo
+  for (t in c("B", "Day"%.%timepoints, "Delta"%.%timepoints%.%"overB", "Delta43over22")) {
+    dat_proc[, t%.%'pseudoneutid50_mdw'] = as.matrix(dat_proc[, t%.%nAb]) %*% mdw.wt.nAb
   }
 }
 
@@ -889,14 +946,14 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 # do this last so as not to change earlier values
 ###############################################################################
 
-if (TRIAL %in% c("profiscov", "profiscov_lvmn", "vat08_combined")) {
+if (TRIAL %in% c("profiscov", "profiscov_lvmn", "vat08_combined", "vat08_nAb")) {
     # no risk score for profiscov, but some have missing BMI
     n.imp <- 1
     dat.tmp.impute <- dat_proc
     
     if (TRIAL %in% c("profiscov", "profiscov_lvmn")) {
       imp.markers=c("HighRiskInd", "Sex", "Age", "BMI")
-    } else if (TRIAL %in% c("vat08_combined")) {     
+    } else if (TRIAL %in% c("vat08_combined", "vat08_nAb")) {     
       imp.markers=c("FOI", "risk_score")
     }
         
@@ -1006,7 +1063,7 @@ if(TRIAL == "moderna_real") {
   # add bindSpike data for multivariable modles
   source(here::here("data_clean", "add_bindSpike_to_azd1222ID50_analysisreadydataset.R"))
   
-} else if(TRIAL == "vat08_combined") {
+} else if(study_name == "VAT08") {
   # add region variable for regression
   # Honduras (3), not Honduras for the Stage 1 trial nnaive
   # Mexico (9), Other/Else country for the Stage 2 trial naive
@@ -1024,7 +1081,6 @@ if(TRIAL == "moderna_real") {
   dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Country==9] = "MEX_Stage2Nnaive"
   dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Country==4] = "IND_Stage2Nnaive"
   dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Country!=9 & dat_proc$Country!=4] = "NotMEXIND_Stage2Nnaive"
-
 
 }
 
@@ -1047,7 +1103,8 @@ if(Sys.getenv ("NOCHECK")=="") {
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
-         vat08_combined = "00b5e96ee8fcdb89b87b619a1c62da48", 
+         vat08_combined = "497d91f60401d4eef8f791e0abf353d3", 
+         vat08_nAb = "bab8d7ab382d6f0112f8c1d26644a2c4", 
          NA)    
     if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
 }

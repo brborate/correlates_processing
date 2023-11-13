@@ -28,7 +28,11 @@ else
 endif
 
 risk_analysis:  
+ifeq ($(TRIAL),$(filter $(TRIAL), vat08_nAb))
+ # do nothing b/c will use risk score from vat08_combined
+else
 	$(MAKE) -k -C riskscore_baseline all
+endif
 
 make_clean_data: 
 ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
@@ -36,9 +40,14 @@ ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost))
 else ifeq ($(TRIAL),$(filter $(TRIAL), janssen_partA_VL))
 	Rscript data_clean/RunhotdeckMI_janssen_partA_VL.R
 	Rscript data_clean/make_dat_proc.R
+
 else ifeq ($(TRIAL),$(filter $(TRIAL), vat08_combined))
 	Rscript data_clean/RunhotdeckMI_sanofi_bothtrials_PartA.R
 	Rscript data_clean/make_dat_proc.R
+# vat08_nAb has to be run after vat08_combined
+else ifeq ($(TRIAL),$(filter $(TRIAL), vat08_nAb))
+	Rscript data_clean/make_dat_proc.R
+
 else ifeq ($(TRIAL),$(filter $(TRIAL), id27hpv))
 	Rscript data_clean/make_dat_id27hpv.R
 else 

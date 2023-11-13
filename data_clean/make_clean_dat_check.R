@@ -4,7 +4,7 @@ source(here::here("_common.R"))
 
 
 # same as deploy script
-if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08_combined")) {
+if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08_combined", "vat08_nAb")) {
   data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv"))
   
 } else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
@@ -66,7 +66,7 @@ if(length(failed_variables_missing) > 0){
 }
 
 
-if (TRIAL=="vat08_combined") {
+if (study_name=="VAT08") {
   # verify event indicator and time variables for Omicron using first and second event variables
   
   # For the 7 participants with first event a known-lineage Omicron case, this first event is counted as an endpoint and the second event is ignored;
@@ -83,7 +83,7 @@ if (TRIAL=="vat08_combined") {
   
   with(dat_clean, table(seq1.variant.hotdeck1, seq1.variant, useNA = "ifany"))
   
-  with(dat_clean, table(EventIndKnownLineageOmicronD22, EventIndOmicronD22hotdeck1, useNA = "ifany"))
+  with(dat_clean, table(EventIndKnownLineageOmicronD22, EventIndOmicronD22M12hotdeck1, useNA = "ifany"))
   
   with(dat_clean, table(EventIndKnownLineageOmicronD22, EventTypeFirstInfection, useNA = "ifany"))
   

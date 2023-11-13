@@ -40,6 +40,12 @@ include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08")
 if (!is.null(config$assay_metadata)) {
   # use metadata file for assay when exists
   assay_metadata = read.csv(paste0(dirname(attr(config,"file")),"/",config$assay_metadata))
+  
+  if (TRIAL=='vat08_nAb') {
+    # see config file for an explanation
+    assay_metadata = subset(assay_metadata, panel=='id50')
+  }
+    
   assays=assay_metadata$assay
   
   # created named lists for assay metadata for easier access, e.g. assay_labels_short["bindSpike"]
@@ -384,7 +390,7 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "Age < 65"
     )
 
-} else if (study_name %in% c("VAT08m","VAT08b","VAT08")) {
+} else if (study_name %in% c("VAT08")) {
     Bstratum.labels <- c(
       "Age >= 60",
       "Age < 60"
