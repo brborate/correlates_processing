@@ -41,11 +41,6 @@ if (!is.null(config$assay_metadata)) {
   # use metadata file for assay when exists
   assay_metadata = read.csv(paste0(dirname(attr(config,"file")),"/",config$assay_metadata))
   
-  if (TRIAL=='vat08_nAb') {
-    # see config file for an explanation
-    assay_metadata = subset(assay_metadata, panel=='id50')
-  }
-    
   assays=assay_metadata$assay
   
   # created named lists for assay metadata for easier access, e.g. assay_labels_short["bindSpike"]
