@@ -1151,12 +1151,9 @@ if(TRIAL == "moderna_real") {
   dat_proc$Region[dat_proc$Trialstage==1 & dat_proc$Bserostatus==1 & dat_proc$Country==3] = "HON_Stage1Nnaive"
   dat_proc$Region[dat_proc$Trialstage==1 & dat_proc$Bserostatus==1 & dat_proc$Country!=3] = "NotHON_Stage1Nnaive"
   
-  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==0 & dat_proc$Country==9] = "MEX_Stage2naive"
-  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==0 & dat_proc$Country!=9] = "NotMEX_Stage2naive"
-  
-  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Country==9] = "MEX_Stage2Nnaive"
-  # dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Country==4] = "IND_Stage2Nnaive"
-  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Country!=9] = "NotMEX_Stage2Nnaive"
+  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Country==9] = "MEX_Stage2"
+  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Country==4] = "IND_Stage2"
+  dat_proc$Region[dat_proc$Trialstage==2 & !dat_proc$Country%.%c(4,9)] = "NotMEX_Stage2"
 
 }
 
