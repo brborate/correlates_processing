@@ -1,6 +1,6 @@
 Sys.setenv(TRIAL = "id27hpv")
 
-# no not loading _common.R
+# no need to load _common.R
 
 library(tidyverse)
 library(Hmisc) # wtd.quantile, cut2
@@ -40,7 +40,7 @@ uloqs=assay_metadata$uloq; names(uloqs)=assays
 lloqs=assay_metadata$lloq; names(lloqs)=assays
 llods=assay_metadata$lod; names(llods)=assays
 
-markers='M28'%.%assays
+markers='M18'%.%assays
 
 
 # read mapped data 
@@ -50,7 +50,8 @@ dat_proc=read.csv(mapped_data)
 table(dat_proc$EventIndPrimaryAnyHPV)
 
 # 4 cases have negative SusceptibilityTimeM18
-tmp=subset(dat_proc, EventIndPrimaryAnyHPV==1, c(EventTimePrimaryAnyHPVM18, EligibilityorinitialsamplingTimeM18, SusceptibilityTimeM18  )); tmp[order(tmp[[3]]),]
+tmp=subset(dat_proc, EventIndPrimaryAnyHPV==1, c(EventTimePrimaryAnyHPVM18, EligibilityorinitialsamplingTimeM18, SusceptibilityTimeM18  )); 
+# tmp[order(tmp[[3]]),]
 
 
 ###############################################################################
@@ -93,6 +94,7 @@ dat_proc$Wstratum = dat_proc$tps.stratum
 
 dat_proc$Wstratum[with(dat_proc, EventIndPrimaryAnyHPV==1)]=max.tps+1
 
+with(dat_proc, table(tps.stratum, EventIndPrimaryAnyHPV, useNA='ifany'))
 
 
 
@@ -111,7 +113,6 @@ with(dat_proc, table(!is.na(M18bindL1L2_HPV6), !is.na(M18bindL1L2_HPV11)))
 
 # markers are all or none, no imputation is needed, pick an arbitrary marker as must have
 must_have_assays <- c("bindL1L2_HPV6")
-
 dat_proc[["TwophasesampIndM18"]] = complete.cases(dat_proc[,c("M18"%.%must_have_assays)])      
         
 
@@ -147,8 +148,7 @@ assertthat::assert_that(
 
 
 
-
-
+###############################################################################
 # define mdw scores 
 bAb = assays[1:5]
 t = 'M18'
@@ -163,11 +163,10 @@ dat_proc[, t%.%'bindL1L2_mdw'] = scale(dat_proc[, t%.%bAb]) %*% mdw.weights
 write.csv(mdw.weights, file = here("data_clean", "csv", TRIAL%.%"_mdw_weights.csv"))
 
 
+
 ###############################################################################
 # impute covariates if necessary
-# do this last so as not to change earlier values
-###############################################################################
-
+# not needed b/c:
 # age is present for everybody
 # EligibilityorinitialsamplingTimeM18 is not imputable
 
@@ -181,9 +180,9 @@ write.csv(mdw.weights, file = here("data_clean", "csv", TRIAL%.%"_mdw_weights.cs
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         id27hpv = "a65ae98d20b2865c848edfecaf839eaa", 
+         id27hpv = "f42a284655a4b74ea89bcb380ba0e490", 
          NA)    
-    if (!is.na(tmp)) assertthat::assert_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))]))    
+    if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')    
 }
 
 data_name = paste0(TRIAL, "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv")
@@ -192,6 +191,5 @@ if (!dir.exists("data_clean/csv")) dir.create("data_clean/csv")
 
 data_name = paste0(TRIAL, "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv")
 write_csv(dat_proc, file = here("data_clean", "csv", data_name))
-
 
 print("run time: "%.%format(Sys.time()-begin, digits=1))

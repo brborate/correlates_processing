@@ -509,11 +509,12 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
   # for bAb and multivariate analyses
   # require baseline but not time point 1
   dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
+      with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
       # for non-cases, we use bAb to impute missing nAb since there are too many ptids with nAb but no bAb
-      dat_proc$EventIndFirstInfectionD1==0 & complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike']) |
+      (dat_proc$EventIndFirstInfectionD1==0 & complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike']) |
       # for cases, we use nAb and bAb to impute each other 
       dat_proc$EventIndFirstInfectionD1==1 & (complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50']) |
-                                              complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike']))
+                                              complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike'])))
 
   # same as tp2
   dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]]]
@@ -522,8 +523,9 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
   # differs from the previous version in that all non-cases with nAb are included in ph2
   # require baseline but not time point 1
   dat_proc[["TwophasesampIndnAbD"%.%timepoints[2]]] = 
-    complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50']) |
-    complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike'])
+    with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+    (complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50']) |
+    complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike']))
   
   # same as tp2
   dat_proc[["TwophasesampIndnAbD"%.%timepoints[1]]] = dat_proc[["TwophasesampIndnAbD"%.%timepoints[2]]]
@@ -1153,7 +1155,7 @@ if(TRIAL == "moderna_real") {
   
   dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Country==9] = "MEX_Stage2"
   dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Country==4] = "IND_Stage2"
-  dat_proc$Region[dat_proc$Trialstage==2 & !dat_proc$Country%.%c(4,9)] = "NotMEX_Stage2"
+  dat_proc$Region[dat_proc$Trialstage==2 & !dat_proc$Country%in%c(4,9)] = "NotMEX_Stage2"
 
 }
 
