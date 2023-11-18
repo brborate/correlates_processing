@@ -1155,7 +1155,7 @@ if(TRIAL == "moderna_real") {
   
   dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Country==9] = "MEX_Stage2"
   dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Country==4] = "IND_Stage2"
-  dat_proc$Region[dat_proc$Trialstage==2 & !dat_proc$Country%in%c(4,9)] = "NotMEX_Stage2"
+  dat_proc$Region[dat_proc$Trialstage==2 & !dat_proc$Country%in%c(4,9)] = "NotMEXIND_Stage2"
 
 }
 
