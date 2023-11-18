@@ -509,12 +509,12 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
   # for bAb and multivariate analyses
   # require baseline but not time point 1
   dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
-      with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-      # for non-cases, we use bAb to impute missing nAb since there are too many ptids with nAb but no bAb
-      (dat_proc$EventIndFirstInfectionD1==0 & complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike']) |
-      # for cases, we use nAb and bAb to impute each other 
-      dat_proc$EventIndFirstInfectionD1==1 & (complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50']) |
-                                              complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike'])))
+    with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+    # for non-cases, we use bAb to impute missing nAb since there are too many ptids with nAb but no bAb
+    (dat_proc$EventIndFirstInfectionD1==0 & complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike']) |
+    # for cases, we use nAb and bAb to impute each other 
+    dat_proc$EventIndFirstInfectionD1==1 & (complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50']) |
+                                            complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike'])))
 
   # same as tp2
   dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]]]
@@ -522,13 +522,13 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
   # for nAb analyses
   # differs from the previous version in that all non-cases with nAb are included in ph2
   # require baseline but not time point 1
-  dat_proc[["TwophasesampIndnAbD"%.%timepoints[2]]] = 
+  dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"nAb"]] = 
     with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
     (complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50']) |
     complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike']))
   
   # same as tp2
-  dat_proc[["TwophasesampIndnAbD"%.%timepoints[1]]] = dat_proc[["TwophasesampIndnAbD"%.%timepoints[2]]]
+  dat_proc[["TwophasesampIndD"%.%timepoints[1]%.%"nAb"]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"nAb"]]
   
   
 } else if (study_name %in% c("AZD1222", "PROFISCOV")) {
@@ -607,14 +607,16 @@ if (TRIAL=='vat08_combined') {
   # here we define weights for nAb analyses
   for (tp in rev(timepoints)) { # rev is just so that digest passes
     tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
-    wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndnAbD"%.%tp)))
+    wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp%.%"nAb")))
     # print(wts_table)
     wts_norm <- rowSums(wts_table) / wts_table[, 2]
-    dat_proc[["wt.nAb.D"%.%tp]] <- wts_norm[dat_proc$Wstratum %.% ""]
+    dat_proc[["wt.D"%.%tp%.%".nAb"]] <- wts_norm[dat_proc$Wstratum %.% ""]
     # the step above assigns weights for some subjects outside ph1. the next step makes them NA
-    dat_proc[["wt.nAb.D"%.%tp]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.nAb.D"%.%tp]], NA) 
-    dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.nAb.D"%.%tp]])
-    dat_proc[["ph2.nAb.D"%.%tp]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndnAbD"%.%tp]]
+    dat_proc[["wt.D"%.%tp%.%".nAb"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), 
+                                              dat_proc[["wt.D"%.%tp%.%".nAb"]], NA) 
+    stopifnot(all(is.na(dat_proc[["wt.D"%.%tp%.%".nAb"]])==is.na(dat_proc[["wt.D"%.%tp]])))
+    dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%".nAb"]])
+    dat_proc[["ph2.D"%.%tp%.%".nAb"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]]
     
     assertthat::assert_that(
       all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.nAb.D"%.%tp]])),
@@ -841,7 +843,7 @@ if (TRIAL=="janssen_partA_VL") {
     imp.markers=c(outer(c("B", if(tp==timepoints[2]) "Day"%.%timepoints else "Day"%.%tp), 
                         assays[startsWith(assays, "pseudoneutid50") & !endsWith(assays, "_mdw")], "%.%"))
     
-    dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndnAbD"%.%tp) == 1)
+    dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD"%.%tp%.%"nAb") == 1)
     
     for (trt in unique(dat_proc$Trt)) {
       for (sero in unique(dat_proc$Bserostatus)) {    
@@ -867,11 +869,11 @@ if (TRIAL=="janssen_partA_VL") {
     )    
     
     # populate dat_proc imp.markers with the imputed values
-    dat_proc[dat_proc[["TwophasesampIndnAbD"%.%tp]]==1, imp.markers] <-
-      dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndnAbD"%.%tp]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+    dat_proc[dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]]==1, imp.markers] <-
+      dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
     
     assertthat::assert_that(
-      all(complete.cases(dat_proc[dat_proc[["TwophasesampIndnAbD"%.%tp]] == 1, imp.markers])),
+      all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]] == 1, imp.markers])),
       msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
     )
   }
@@ -1178,7 +1180,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
-         vat08_combined = "da0620427de9383e87476326a411b38b", 
+         vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')    
 }
