@@ -451,13 +451,17 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 # with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50), SubcohortInd))
 # 
 
-with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudoneutid50_B.1.351), !is.na(Day43pseudoneutid50)))
-with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudoneutid50_BA.1), !is.na(Day43pseudoneutid50)))
-with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudoneutid50_BA.2), !is.na(Day43pseudoneutid50)))
-with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudoneutid50_BA.4.5), !is.na(Day43pseudoneutid50)))
+with(subset(dat_proc, Trialstage==1), table(SubcohortInd, !is.na(Day43pseudoneutid50), Country))
 
-
-
+# 
+# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudoneutid50_B.1.351), !is.na(Day43pseudoneutid50)))
+# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudoneutid50_BA.1), !is.na(Day43pseudoneutid50)))
+# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudoneutid50_BA.2), !is.na(Day43pseudoneutid50)))
+# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudoneutid50_BA.4.5), !is.na(Day43pseudoneutid50)))
+# 
+# 
+# #
+# with(subset(dat_proc, Trialstage==2 & Bserostatus==1 & Trt==1), table(SubcohortInd, !is.na(Day43pseudoneutid50), EventIndPrimaryD1))
 # 
 # with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day22pseudoneutid50), !is.na(Day43pseudoneutid50)))
 # with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Bpseudoneutid50), !is.na(Day22pseudoneutid50), !is.na(Day43pseudoneutid50)))
@@ -466,7 +470,7 @@ with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudon
 # 
 # with(subset(dat_proc, Trialstage==2 & Bserostatus==1), mypairs(cbind(Day22pseudoneutid50, Day43pseudoneutid50)))
 # with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike)))
-# 
+
 # par(mfrow=c(2,2))
 # corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==1 & Bserostatus==0 & Trt==0), xlim=c(0,4), ylim=c(0,4), main="Placebo, Naive")
 # corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==2 & Bserostatus==0 & Trt==0), add=T, col=2)
