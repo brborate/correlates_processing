@@ -68,11 +68,22 @@ prevent19: &prevent19 # note that RBD is added as a special step and is not incl
   timepoints: [35]
   times: [B, Day35, Delta35overB]
   time_labels: [Day 1, Day 35, D35 fold-rise over D1]
-  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/adata/COVID_Novavax_realdata_20220506.csv 
+  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/adata/stage1/COVID_Novavax_realdata_20220506.csv 
   assays: [bindSpike, pseudoneutid50]
   assay_labels: [Binding Antibody to Spike, PsV Neutralization 50% Titer]
   assay_labels_short: [Anti Spike IgG (BAU/ml), Pseudovirus-nAb ID50 (IU50/ml)]
   study_name: PREVENT19
+  
+prevent19_stage2: &prevent19_stage2
+  <<: *ows_trial
+  two_marker_timepoints: no
+  timepoints: [35]
+  times: [Day35]
+  time_labels: [Day 35]
+  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/stage2/adata/COVID_Novavax_stage2_mapped_20231101.csv 
+  assay_metadata: ../correlates_reporting2/assay_metadata/prevent19_stage2_assay_metadata.csv
+  study_name: PREVENT19
+
   
 azd1222_base: &azd1222_base
   <<: *ows_trial
