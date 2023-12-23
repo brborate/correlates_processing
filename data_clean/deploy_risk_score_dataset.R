@@ -29,11 +29,12 @@ deploy_path <- switch(study_name,
                       VAT08 =    "/trials/covpn/p3005/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
                       PROFISCOV = "/networks/cavd/Objective 4/GH-VAP/ID127-Gast/correlates/adata/",
                       IARC_HPV = "/networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/correlates/adata/",
+                      COVAIL =    "/trials/covpn/COVAILcorrelates/analysis/correlates/adata/",
                       stop("study_name not supported 1"))  
 
 
 
-if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08_combined", "vat08_nAb", "id27hpv")) {
+if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08_combined", "vat08_nAb", "id27hpv", "covail")) {
   data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d")))
   
 } else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {

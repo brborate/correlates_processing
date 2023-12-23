@@ -18,8 +18,6 @@ TRIAL=Sys.getenv("TRIAL")
 config <- config::get(config = TRIAL)
 for(opt in names(config))eval(parse(text = paste0(names(config[opt])," <- config[[opt]]")))
 
-data_name = paste0(attr(config, "config"), "_data_processed_with_riskscore.csv")
-
 # disabling lower level parallelization in favor of higher level of parallelization
 # set parallelization in openBLAS and openMP
 library(RhpcBLASctl)
@@ -50,7 +48,7 @@ dat_proc=read.csv(mapped_data)
 table(dat_proc$EventIndPrimaryAnyHPV)
 
 # 4 cases have negative SusceptibilityTimeM18
-tmp=subset(dat_proc, EventIndPrimaryAnyHPV==1, c(EventTimePrimaryAnyHPVM18, EligibilityorinitialsamplingTimeM18, SusceptibilityTimeM18  )); 
+tmp=subset(dat_proc, EventIndPrimaryAnyHPV==1, c(EligibilityorinitialsamplingTimeM18, SusceptibilityTimeM18  )); 
 # tmp[order(tmp[[3]]),]
 
 
@@ -180,7 +178,7 @@ write.csv(mdw.weights, file = here("data_clean", "csv", TRIAL%.%"_mdw_weights.cs
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         id27hpv = "23bb9f552b7c6c49fd796fc29648e852", 
+         id27hpv = "1c06f40f18b31dc41d4a7e040c02e887", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%'  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')    
 }

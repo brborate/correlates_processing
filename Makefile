@@ -29,7 +29,7 @@ endif
 
 
 risk_analysis:  
-ifeq ($(TRIAL),$(filter $(TRIAL), id27hpv))
+ifeq ($(TRIAL),$(filter $(TRIAL), id27hpv, covail))
 else
 	$(MAKE) -k -C riskscore_baseline all
 endif
@@ -52,7 +52,7 @@ endif
 
 
 check_clean_data: 
-ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost id27hpv))
+ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost id27hpv covail))
 else 
 	Rscript data_clean/make_clean_dat_check.R
 endif	

@@ -391,16 +391,13 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "Age < 60"
     )
 
-} else if (study_name %in% c("PROFISCOV")) {
+} else if (study_name %in% c("PROFISCOV", "COVAIL")) {
     Bstratum.labels <- c(
       "All"
     )
 
-} else if (study_name=="HVTN705") {
-    # do nothing
-    
-} else if(study_name=="COVEBoost") { 
-  # nothing to do, but this is needed so that _common.R can be called for making risk score
+} else if(study_name %in% c("COVEBoost", "HVTN705")) { 
+    # nothing to do, but this is needed so that _common.R can be called for making risk score
   
 } else stop("unknown study_name 2")
 
