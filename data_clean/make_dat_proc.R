@@ -59,19 +59,19 @@ if (TRIAL=="janssen_partA_VL") {
    
    # ptids with missing Bserostatus already filtered out in preprocess
    
-   # filter out countries based on lack of cases
-     # country 2, 4 for stage 2 naive
-     # country 4 for stage 2 nnaive
-     # country 5, 6 for stage 1 nnaive
+   # filter out countries based on lack of cases 
+   # country 4 for stage 2 nnaive
+   # country 2, 4 for stage 2 naive
+   # country 5, 6 for stage 1 nnaive
    dat_proc = subset(dat_proc, 
-                     !(
-                       Country %in% c(10 ) & Trialstage==2 & Bserostatus==0 | # Uganda, naive, no ph2 cases in the trt arm
-                       # Country %in% c(10 ) & Trialstage==2 & Bserostatus==1 & Age<60 # if we only use subchortind==1 this need to be filtered out due to lack of ph2 non-cases
-                       Country %in% c(2,4) & Trialstage==2 & Bserostatus==0 |
-                       Country %in% c(4)   & Trialstage==2 & Bserostatus==1 |
-                       Country %in% c(5,6) & Trialstage==1 & Bserostatus==1 
-                       ) 
-                     )
+       !(
+           Trialstage==2 & Bserostatus==1 & Country %in% c(4)   | # no Omi cases from either arm in India
+         # Trialstage==2 & Bserostatus==1 & Country %in% c(10 ) & Age<60 # if we only use subchortind==1 this need to be filtered out due to lack of ph2 non-cases
+           Trialstage==2 & Bserostatus==0 & Country %in% c(10 ) | # Uganda, naive, no ph2 cases in the trt arm
+           Trialstage==2 & Bserostatus==0 & Country %in% c(2,4) |
+           Trialstage==1 & Bserostatus==1 & Country %in% c(5,6)
+         ) 
+       )
    
    # filter out stage 1, naive
    dat_proc = subset(dat_proc, !(Trialstage==1 & Bserostatus==0))
@@ -101,10 +101,9 @@ if (TRIAL=="janssen_partA_VL") {
    
 } else if (TRIAL == "covail") {
   # no risk score for now
-  dat_proc=read.csv(mapped_data)
+  dat_raw=read.csv(mapped_data)
+  dat_proc = preprocess(dat_raw, study_name)   
   
-  # no need to call preprocess
-
   # bring in imputed variant column
   dat.lineage = read.csv('/trials/covpn/COVAILcorrelates/analysis/correlates/adata/lineages/covail_lineages_export_v1.csv')
   dat_proc$COVIDlineage = dat.lineage$inf1.lineage[match(dat_proc$Subjectid, dat.lineage$ptid)]
@@ -1459,6 +1458,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
+         covail = "d82e4d1b597215c464002962d9bd01f7", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')    
 }

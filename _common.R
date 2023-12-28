@@ -604,10 +604,11 @@ ggsave_custom <- function(filename = default_name(plot),
 
 preprocess=function(dat_raw, study_name) {
     dat_proc=dat_raw
-
+    
     if(is_ows_trial){
         dat_proc=subset(dat_proc, !is.na(Bserostatus))
     }
+    
     
     if(study_name=="ENSEMBLE") {
         # EventTimePrimaryIncludeNotMolecConfirmedD29 are the endpoint of interest and should be used to compute weights
@@ -624,16 +625,28 @@ preprocess=function(dat_raw, study_name) {
       dat_proc$EventIndPrimaryD22 =dat_proc$EventIndFirstInfectionD22
       dat_proc$EventTimePrimaryD1 =dat_proc$EventTimeFirstInfectionD1
       dat_proc$EventIndPrimaryD1  =dat_proc$EventIndFirstInfectionD1
+      
+    } else if (study_name=='COVAIL') {
+      dat_proc$EventTimePrimaryD15 =dat_proc$COVIDtimeD22toD181
+      dat_proc$EventIndPrimaryD15  =dat_proc$COVIDIndD22toD181
     }
-    
-    
-    for(tp in timepoints) dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
     
     
     for(tp in timepoints) {
+      print(table(is.na(dat_proc[["EventTimePrimaryD"%.%tp]])))
+      dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
+    }
+    
+    if (study_name=='COVAIL') {
+      dat_proc$EarlyinfectionD15=dat_proc$EarlyendpointD15
+      
+    } else {
+      for(tp in timepoints) {
         dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, 
           ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
+      }
     }
+    
 
     # ENSEMBLE only, since we are not using this variable to define Riskscorecohortflag and we are not doing D29start1 analyses for other trials
     if (study_name %in% c("MockENSEMBLE", "ENSEMBLE")) {
