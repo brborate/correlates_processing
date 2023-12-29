@@ -43,7 +43,7 @@ vat08_combined: &vat08_combined
   <<: *ows_trial
   # mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20231030.csv # batch 1 only
   # mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20231107.csv
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20231213.csv
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20231228.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/vat08_combined_assay_metadata.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]
@@ -62,7 +62,7 @@ covail: &covail
 
 
 id27hpv: &id27hpv
-  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20231209.csv
+  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20231227.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/id27hpv_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [18]

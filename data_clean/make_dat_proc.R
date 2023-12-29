@@ -1,13 +1,13 @@
 #Sys.setenv(TRIAL = "moderna_real")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
-#Sys.setenv(TRIAL = "vat08_combined")
 #Sys.setenv(TRIAL = "covail")
+#Sys.setenv(TRIAL = "vat08_combined")
 
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
 
 source(here::here("_common.R"))
 
-if (TRIAL=="moderna_boost") stop("For moderna_boost, run make_dat_moderna_boost.R") 
+if (TRIAL %in% c("moderna_boost","id27hpv")) stop("For moderna_boost, run make_dat_moderna_boost.R") 
 
 library(tidyverse)
 library(Hmisc) # wtd.quantile, cut2
@@ -50,6 +50,9 @@ if (TRIAL=="janssen_partA_VL") {
    
    dat_proc = preprocess(dat_raw, study_name)   
    colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
+   
+   # scale FOI
+   dat_proc$FOI = scale(log10(dat_proc$FOI+1))[,1]
    
    # add risk score
    load(file = paste0('riskscore_baseline/output/vat08_combined/inputFile_with_riskscore.RData'))
@@ -114,7 +117,7 @@ if (TRIAL=="janssen_partA_VL") {
   
   # bring in FOI
   dat.foi = read.csv('/trials/covpn/COVAILcorrelates/analysis/correlates/adata/covail_foi_v2.csv')
-  dat_proc$FOI = dat.foi$foi[match(dat_proc$Subjectid, dat.foi$ptid)]
+  dat_proc$FOI = scale(dat.foi$foi[match(dat_proc$Subjectid, dat.foi$ptid)])
   # check NA
   stopifnot(!any(is.na(dat_proc$FOI[dat_proc$Immunemarkerset==1])))
   
@@ -136,7 +139,7 @@ if (TRIAL=="janssen_partA_VL") {
 if(TRUE) { # use this to navigate faster in Rstudio
   colnames(dat_proc)[1] <- "Ptid" 
   dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
-  dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08=60, PROFISCOV=NA, IARC_HPV=15, COVAIL=65, stop("unknown study_name 1")))
+  dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08=60, PROFISCOV=NA, COVAIL=65, stop("unknown study_name 1")))
   
   # for the mock datasets, hardcode AnyinfectionD1 
   if (study_name %in% c("MockENSEMBLE", "MockCOVE")) dat_proc$AnyinfectionD1=0
