@@ -52,7 +52,7 @@ vat08_combined: &vat08_combined
   study_name: VAT08
 
 covail: &covail
-  mapped_data: /trials/covpn/COVAILcorrelates/analysis/mapping_immune_correlates/adata/covail_mapped_data_12222023.csv
+  mapped_data: /trials/covpn/COVAILcorrelates/analysis/mapping_immune_correlates/adata/covail_mapped_data_01022024.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/covail_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [15]
@@ -62,7 +62,7 @@ covail: &covail
 
 
 id27hpv: &id27hpv
-  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20231227.csv
+  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20240102.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/id27hpv_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [18]

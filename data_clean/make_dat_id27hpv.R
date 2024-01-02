@@ -12,7 +12,6 @@ library(mdw)
 
 begin=Sys.time()
 
-
 TRIAL=Sys.getenv("TRIAL")
 
 config <- config::get(config = TRIAL)
@@ -71,7 +70,7 @@ names(Bstratum.labels) <- Bstratum.labels
 
 dat_proc$demo.stratum = dat_proc$Bstratum
 
-# tps stratum, 1 ~ 4*max(demo.stratum), used in tps regression
+# tps stratum, used in tps regression
 dat_proc <- dat_proc %>%
   mutate(
     tps.stratum = demo.stratum + (Trt-1) * max(demo.stratum,na.rm=T)
@@ -98,25 +97,17 @@ with(dat_proc, table(tps.stratum, EventIndPrimaryAnyHPV, useNA='ifany'))
 
 
 ###############################################################################
-# observation-level weights
-# Note that Wstratum may have NA if any variables to form strata has NA
+# observation-level weights for bAb
 ###############################################################################
 
-
-# M18bindL1L2_HPV31 has 40% response rate and 0.5 correlation with other markers
-# with(dat_proc, mypairs(cbind(M18bindL1L2_HPV6, M18bindL1L2_HPV11, M18bindL1L2_HPV16, M18bindL1L2_HPV18, M18bindL1L2_HPV31)))
-
-with(dat_proc, summary(cbind(M18bindL1L2_HPV6, M18bindL1L2_HPV11, M18bindL1L2_HPV16, M18bindL1L2_HPV18, M18bindL1L2_HPV31)))
-with(dat_proc, table(!is.na(M18bindL1L2_HPV6), !is.na(M18bindL1L2_HPV11)))
-
 # markers are all or none, no imputation is needed, pick an arbitrary marker as must have
-must_have_assays <- c("bindL1L2_HPV6")
+must_have_assays <- c("bind_HPV6")
 dat_proc[["TwophasesampIndM18"]] = complete.cases(dat_proc[,c("M18"%.%must_have_assays)])      
         
 
 # weights 
 # ph1
-kp = with(dat_proc, PerProtocol == 1 & EligibilityorinitialsamplingTimeM18>0)
+kp = with(dat_proc, Perprotocol == 1 & EligibilityorinitialsamplingTimeM18>0)
 wts_table <- with(dat_proc[kp,], table(Wstratum, get("TwophasesampIndM18")))
 wts_norm <- rowSums(wts_table) / wts_table[, 2]
 dat_proc[["wt.M18"]] <- wts_norm[dat_proc$Wstratum %.% ""]
@@ -132,7 +123,7 @@ assertthat::assert_that(
 
 # alternatively, use SusceptibilityTimeM18>0 to define ph1
 # ph1
-kp = with(dat_proc, PerProtocol == 1 & SusceptibilityTimeM18>0)
+kp = with(dat_proc, Perprotocol == 1 & SusceptibilityTimeM18>0)
 wts_table <- with(dat_proc[kp,], table(Wstratum, get("TwophasesampIndM18")))
 wts_norm <- rowSums(wts_table) / wts_table[, 2]
 dat_proc[["wt.M18.sus"]] <- wts_norm[dat_proc$Wstratum %.% ""]
@@ -146,8 +137,51 @@ assertthat::assert_that(
 
 
 
+
 ###############################################################################
-# define mdw scores 
+# observation-level weights for nAb
+###############################################################################
+
+# markers are all or none, no imputation is needed, pick an arbitrary marker as must have
+must_have_assays <- c("pseudoneutid50_HPV6")
+dat_proc[["TwophasesampIndM18nAb"]] = complete.cases(dat_proc[,c("M18"%.%must_have_assays)])      
+
+
+# weights 
+# ph1
+kp = with(dat_proc, Perprotocol == 1 & EligibilityorinitialsamplingTimeM18>0)
+wts_table <- with(dat_proc[kp,], table(Wstratum, get("TwophasesampIndM18nAb")))
+wts_norm <- rowSums(wts_table) / wts_table[, 2]
+dat_proc[["wt.M18.nAb"]] <- wts_norm[dat_proc$Wstratum %.% ""]
+# the step above assigns weights for some subjects outside ph1. the next step makes them NA
+dat_proc[["wt.M18.nAb"]] = ifelse(kp, dat_proc[["wt.M18.nAb"]], NA) 
+stopifnot(all(dat_proc[["ph1.M18"]]==!is.na(dat_proc[["wt.M18.nAb"]])))
+dat_proc[["ph2.M18.nAb"]]=dat_proc[["ph1.M18"]] & dat_proc[["TwophasesampIndM18nAb"]]
+
+assertthat::assert_that(
+  all(!is.na(subset(dat_proc, kp & !is.na(Wstratum))[["wt.M18.nAb"]])),
+  msg = "missing wt.D for D analyses ph1 subjects")
+
+
+# alternatively, use SusceptibilityTimeM18>0 to define ph1
+# ph1
+kp = with(dat_proc, Perprotocol == 1 & SusceptibilityTimeM18>0)
+wts_table <- with(dat_proc[kp,], table(Wstratum, get("TwophasesampIndM18nAb")))
+wts_norm <- rowSums(wts_table) / wts_table[, 2]
+dat_proc[["wt.M18.sus.nAb"]] <- wts_norm[dat_proc$Wstratum %.% ""]
+dat_proc[["wt.M18.sus.nAb"]] = ifelse(kp, dat_proc[["wt.M18.sus.nAb"]], NA) 
+stopifnot(all(dat_proc[["ph1.M18.sus"]]==!is.na(dat_proc[["wt.M18.sus.nAb"]])))
+dat_proc[["ph2.M18.sus.nAb"]]=dat_proc[["ph1.M18.sus"]] & dat_proc[["TwophasesampIndM18nAb"]]
+
+assertthat::assert_that(
+  all(!is.na(subset(dat_proc, kp & !is.na(Wstratum))[["wt.M18.sus.nAb"]])),
+  msg = "missing wt.D for D analyses ph1 subjects")
+
+
+
+###############################################################################
+# define mdw scores
+
 bAb = assays[1:5]
 t = 'M18'
 mdw.weights=tryCatch({
@@ -157,9 +191,21 @@ mdw.weights=tryCatch({
   rep(1/length(bAb), length(bAb))
 })
 print(mdw.weights)  
-dat_proc[, t%.%'bindL1L2_mdw'] = scale(dat_proc[, t%.%bAb]) %*% mdw.weights
-write.csv(mdw.weights, file = here("data_clean", "csv", TRIAL%.%"_mdw_weights.csv"))
+dat_proc[, t%.%'bind_mdw'] = scale(dat_proc[, t%.%bAb]) %*% mdw.weights
+write.csv(mdw.weights, file = here("data_clean", "csv", TRIAL%.%"_mdw_weights_bAb.csv"))
 
+
+nAb = assays[11:15]
+t = 'M18'
+mdw.weights=tryCatch({
+  tree.weight(cor(dat_proc[, t%.%nAb], use='complete.obs'))
+}, error = function(err) {
+  print(err$message)
+  rep(1/length(nAb), length(nAb))
+})
+print(mdw.weights)  
+dat_proc[, t%.%'pseudoneutid50_mdw'] = scale(dat_proc[, t%.%nAb]) %*% mdw.weights
+write.csv(mdw.weights, file = here("data_clean", "csv", TRIAL%.%"_mdw_weights_nAb.csv"))
 
 
 ###############################################################################
@@ -178,7 +224,7 @@ write.csv(mdw.weights, file = here("data_clean", "csv", TRIAL%.%"_mdw_weights.cs
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         id27hpv = "1c06f40f18b31dc41d4a7e040c02e887", 
+         id27hpv = "d73d29eeafc8f93f44ce707730b09868", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%'  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')    
 }
