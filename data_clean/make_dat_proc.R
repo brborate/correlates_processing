@@ -105,6 +105,10 @@ if (TRIAL=="janssen_partA_VL") {
 } else if (TRIAL == "covail") {
   # no risk score for now
   dat_raw=read.csv(mapped_data)
+  # add a dummy risk score
+  dat_raw$standardized_risk_score = rnorm (nrow(dat_raw))
+  dat_raw$risk_score = dat_raw$standardized_risk_score * 2 + 1
+  
   dat_proc = preprocess(dat_raw, study_name)   
   
   # bring in imputed variant column
@@ -1463,7 +1467,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
          covail = "d82e4d1b597215c464002962d9bd01f7", 
          NA)    
-    if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')    
+    if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
 
 data_name = paste0(TRIAL, "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv")
