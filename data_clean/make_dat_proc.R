@@ -121,7 +121,8 @@ if (TRIAL=="janssen_partA_VL") {
   
   # bring in FOI
   dat.foi = read.csv('/trials/covpn/COVAILcorrelates/analysis/correlates/adata/covail_foi_v2.csv')
-  dat_proc$FOI = scale(dat.foi$foi[match(dat_proc$Subjectid, dat.foi$ptid)])
+  dat_proc$FOIoriginal = dat.foi$foi[match(dat_proc$Subjectid, dat.foi$ptid)]
+  dat_proc$FOIstandardized = scale(dat_proc$FOIoriginal)
   # check NA
   stopifnot(!any(is.na(dat_proc$FOI[dat_proc$Immunemarkerset==1])))
   
@@ -806,10 +807,14 @@ if (TRIAL=='vat08_combined') {
   
   
 } else if (study_name=="COVAIL" ) {
+  # PP = no violation + marker available at d1 and d15
+  # Immunemarkerset = PP & no infection between enrollment and D15+6
+  # ph1.D15 = Immunemarkerset & arm!=3
   dat_proc[["wt.D15"]] = 1
-  dat_proc[["ph1.D15"]]=dat_proc$Immunemarkerset
-  dat_proc[["ph2.D15"]]=dat_proc$Immunemarkerset
-  
+  dat_proc[["ph1.D15"]]=dat_proc$ph1.D15 
+  dat_proc[["ph2.D15"]]=dat_proc$ph2.D15
+  dat_proc[["ph1.D92"]]=dat_proc$ph1.D92
+  dat_proc[["ph2.D92"]]=dat_proc$ph2.D92
   
   
 } else {
@@ -1196,6 +1201,7 @@ if(study_name == "COVAIL") {
   
   nAb = setdiff(assays[startsWith(assays, "pseudoneutid50_")], c('pseudoneutid50_MDW'))
   
+  # use Day15 to derive weights
   mdw.wt.nAb=tryCatch({
     tree.weight(cor(dat_proc[kp, "Day15"%.%nAb], use='complete.obs'))
   }, error = function(err) {
@@ -1205,8 +1211,9 @@ if(study_name == "COVAIL") {
   # using Day15 and using B lead to similar weights: BA1 and BA4 BA5 together takes about half of the weight
   print(mdw.wt.nAb)
   write.csv(mdw.wt.nAb, file = here("data_clean", "csv", TRIAL%.%"_nAb_mdw_weights.csv"))
+  
   # apply to all time points
-  for (t in c("B", "Day"%.%timepoints)) {
+  for (t in c("B", "Day15", "Day29", "Day91")) {
     dat_proc[, t%.%'pseudoneutid50_MDW'] = as.matrix(dat_proc[, t%.%nAb]) %*% mdw.wt.nAb
   }
   
