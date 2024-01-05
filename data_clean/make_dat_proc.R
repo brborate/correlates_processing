@@ -1,7 +1,7 @@
 #Sys.setenv(TRIAL = "moderna_real")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
-#Sys.setenv(TRIAL = "covail")
 #Sys.setenv(TRIAL = "vat08_combined")
+#Sys.setenv(TRIAL = "covail")
 
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
 
@@ -116,15 +116,15 @@ if (TRIAL=="janssen_partA_VL") {
   dat_proc$COVIDlineage = dat.lineage$inf1.lineage[match(dat_proc$Subjectid, dat.lineage$ptid)]
   dat_proc$COVIDlineageObserved = dat.lineage$inf1.observed[match(dat_proc$Subjectid, dat.lineage$ptid)]
   # check NA
-  stopifnot(!any(is.na(dat_proc$COVIDlineage[dat_proc$Immunemarkerset==1 & dat_proc$COVIDIndD22toD181==1])))
-  # this is not true: !any(is.na(dat_proc$COVIDlineage[dat_proc$Immunemarkerset==1 & dat_proc$AsympInfectIndD15to181==1]))
+  stopifnot(!any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D15==1 & dat_proc$COVIDIndD22toD181==1])))
+  # this is not true: !any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D15==1 & dat_proc$AsympInfectIndD15to181==1]))
   
   # bring in FOI
   dat.foi = read.csv('/trials/covpn/COVAILcorrelates/analysis/correlates/adata/covail_foi_v2.csv')
   dat_proc$FOIoriginal = dat.foi$foi[match(dat_proc$Subjectid, dat.foi$ptid)]
   dat_proc$FOIstandardized = scale(dat_proc$FOIoriginal)
   # check NA
-  stopifnot(!any(is.na(dat_proc$FOI[dat_proc$Immunemarkerset==1])))
+  stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D15==1])))
   
 } else {
   
@@ -725,7 +725,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
     
 } else if (study_name=="COVAIL" ) {
   # the whole cohort is treated as ph1 and ph2
-  dat_proc$TwophasesampIndD15 = dat_proc$Immunemarkerset 
+  dat_proc$TwophasesampIndD15 = dat_proc$ph1.D15 
   
   
 } else stop("unknown study_name 8")
@@ -938,41 +938,58 @@ if (!TRIAL %in% c('vat08_combined','covail')) {
 #     use baseline, each time point, but not Delta
 ###############################################################################
 
-# loop through the time points
-# first impute (B, D29, D57) among TwophasesampIndD57==1
-# next impute (B, D29) among TwophasesampIndD29==1
-
-# don't impute for vat08 for now
 if (study_name%in%c("COVAIL")) {
-  dat.tmp.impute <- subset(dat_proc, Immunemarkerset == 1)
   
-  # impute D15 BA.4/BA.5 nAb based on a linear regression with D29 BA.4/BA.5 nAb and number of days between the D15 and D29 visit
+  #### impute D15 BA.4/BA.5 nAb among ph1.D15
+  
+  dat.tmp.impute <- subset(dat_proc, ph1.D15 == 1)
+  
+  # first, do it based on a linear regression with D29 BA.4/BA.5 nAb and number of days between the D15 and D29 visit
   fit = lm(Day15pseudoneutid50_BA.4.BA.5~Day29pseudoneutid50_BA.4.BA.5, dat.tmp.impute)
   predicted = predict(fit, subset(dat.tmp.impute, select=Day29pseudoneutid50_BA.4.BA.5))
   dat.tmp.impute$Day15pseudoneutid50_BA.4.BA.5 = ifelse(is.na(dat.tmp.impute$Day15pseudoneutid50_BA.4.BA.5), predicted, dat.tmp.impute$Day15pseudoneutid50_BA.4.BA.5)
   
-  # there are still some ptids with missing D15 BA4.5 b/c not all have D29 BA4.5. impute with BA1
-  # mypairs(dat.tmp.impute["Day15"%.%assays[1:5]])
+  # there are still some ptids with missing D15 BA4.5 b/c not all have D29 BA4.5. impute with BA1: mypairs(dat.tmp.impute["Day15"%.%assays[1:5]])
   fit = lm(Day15pseudoneutid50_BA.4.BA.5~Day15pseudoneutid50_BA.1, dat.tmp.impute)
   predicted = predict(fit, subset(dat.tmp.impute, select=Day15pseudoneutid50_BA.1))
   dat.tmp.impute$Day15pseudoneutid50_BA.4.BA.5 = ifelse(is.na(dat.tmp.impute$Day15pseudoneutid50_BA.4.BA.5), predicted, dat.tmp.impute$Day15pseudoneutid50_BA.4.BA.5)
   
   # populate dat_proc with the imputed values
   imp.markers='Day15pseudoneutid50_BA.4.BA.5'
-  dat_proc[dat_proc[["Immunemarkerset"]]==1, imp.markers] <-
-    dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["Immunemarkerset"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+  dat_proc[dat_proc[["ph1.D15"]]==1, imp.markers] <-
+    dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["ph1.D15"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
   
   assertthat::assert_that(
-    all(complete.cases(dat_proc[dat_proc[["Immunemarkerset"]] == 1, imp.markers])),
+    all(complete.cases(dat_proc[dat_proc[["ph1.D15"]] == 1, imp.markers])),
     msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
   )
   
-
+  
+  #### impute D29 among those at risk at D29
+  dat.tmp.impute <- subset(dat_proc, ph1.D15==1 & COVIDtimeD22toD181>NumberdaysD15toD29 & AsympInfectIndD15to29==0)
+  with(dat.tmp.impute, print(table(!is.na(get("Day29"%.%assays[1])), !is.na(get("Day15"%.%assays[1])))))
+  # thus, no missingness actually
+  
+  #### impute D91 among those at risk at D91
+  dat.tmp.impute <- subset(dat_proc, ph1.D15==1 & COVIDtimeD22toD181>NumberdaysD15toD91 & AsympInfectIndD15to91==0)
+  with(dat.tmp.impute, print(table(!is.na(get("Day91"%.%assays[1])), !is.na(get("Day15"%.%assays[1])))))
+  # thus, no missingness actually
+  
+  #### impute D181 among those at risk at D181
+  dat.tmp.impute <- subset(dat_proc, ph1.D15==1 & COVIDtimeD22toD181>NumberdaysD15toD181 & AsympInfectIndD15to181==0)
+  with(dat.tmp.impute, print(table(!is.na(get("Day181"%.%assays[1])), !is.na(get("Day15"%.%assays[1])))))
+  # thus, no missingness actually
+  
+  
   
 } else if(study_name%in%c("VAT08")) {
   # do nothing for now
   
 } else {
+  # loop through the time points
+  # first impute (B, D29, D57) among TwophasesampIndD57==1
+  # next impute (B, D29) among TwophasesampIndD29==1
+  
   for (tp in rev(timepoints)) {    
       n.imp <- 1
       
@@ -1191,7 +1208,7 @@ if(study_name %in% c("COVE", "MockCOVE")){
 
 if(study_name == "COVAIL") {
   
-  kp = dat_proc$Immunemarkerset==1
+  kp = dat_proc$ph1.D15==1
   
   # myboxplot(dat_proc[kp, c("B"%.%assays[1:5], "Day15"%.%assays[1:5])], names=sub("pseudoneutid50_", "", rep(assays[1:5],2)))
   # mypairs(dat_proc["Day15"%.%assays[1:5]])
