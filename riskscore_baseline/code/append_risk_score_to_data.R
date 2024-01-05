@@ -20,7 +20,11 @@ if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
   placebos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), args[1], "placebo_ptids_with_riskscores.csv"))
   vaccinees_risk <- read.csv(here("output", Sys.getenv("TRIAL"), args[1], "vaccine_ptids_with_riskscores.csv"))
-}else{
+} else if (study_name %in% c("COVAIL")){
+  load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
+  load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
+  placebos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), "placebo_ptids_with_riskscores.csv"))
+} else {
   load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
   load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
   placebos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), "placebo_ptids_with_riskscores.csv"))
@@ -50,6 +54,12 @@ if(study_name == "COVE"){
            standardized_risk_score_old = standardized_risk_score)
   
   inputFile_with_riskscore <- full_join(inputFile, risk_scores, by = "Ptid") 
+  
+} else if (study_name == "COVAIL"){
+  risk_scores <- placebos_risk %>%
+    select(Ptid, risk_score, standardized_risk_score) 
+  
+  inputFile_with_riskscore <- left_join(inputFile, risk_scores, by = "Ptid")
   
 } else {
   risk_scores <- bind_rows(placebos_risk, vaccinees_risk) %>%
@@ -110,10 +120,16 @@ tab <- inputFile_with_riskscore
 #   tab <- tab %>%
 #     mutate(EventIndPrimaryD57 = ifelse(Trt == 0 & !is.na(EventIndPrimaryD1) & (EventIndPrimaryD1==1 | EventIndPrimaryD57==1), 1, EventIndPrimaryD57))
 # }
-tab <- tab %>%
-  filter(Riskscorecohortflag == 1) %>%
-  drop_na(Ptid, Trt, all_of(endpoint)) %>%
-  mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
+if(!study_name %in% c("COVAIL")){
+  tab <- tab %>%
+    filter(Riskscorecohortflag == 1) %>%
+    drop_na(Ptid, Trt, all_of(endpoint)) %>%
+    mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
+} else {
+  tab <- tab %>%
+    filter(Riskscorecohortflag == 1) %>%
+    drop_na(Ptid, treatment_actual, all_of(endpoint)) 
+}
 
 if(study_name == "PREVENT19")
   tab <- tab %>% filter(Country == 0)
@@ -121,6 +137,9 @@ if(study_name == "PREVENT19")
 if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   table(tab$Trt, tab %>% pull(endpoint)) %>%
     write.csv(file = here("output", Sys.getenv("TRIAL"), args[1], "cases_post_riskScoreAnalysis.csv"))
+} else if (study_name == "COVAIL"){
+  table(tab$treatment_actual, tab %>% pull(endpoint)) %>%
+    write.csv(file = here("output", Sys.getenv("TRIAL"), "cases_post_riskScoreAnalysis.csv"))
 }else{
   table(tab$Trt, tab %>% pull(endpoint)) %>%
     write.csv(file = here("output", Sys.getenv("TRIAL"), "cases_post_riskScoreAnalysis.csv"))

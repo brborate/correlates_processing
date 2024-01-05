@@ -15,5 +15,10 @@ library(here)
 here::i_am("riskscore_baseline/report.Rmd")
 ```
 
-```{r, child=here("riskscore_baseline", 'report_sub.Rmd')}
+<!-- ```{r, child=here("riskscore_baseline", 'report_sub.Rmd')} -->
+<!-- ``` -->
+
+
+
+```{r, child=here("riskscore_baseline", 'report_sub_vat08combined_bseroneg.Rmd')}
 ```

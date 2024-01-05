@@ -304,6 +304,7 @@ drop_riskVars_with_fewer_0s_or_1s <- function(dat, risk_vars, np) {
       
       # Remove a variable if the number of cases in the variable = 1 subgroup is <= 3 or the number of cases in the variable = 0 subgroup is <= 3
       for (i in 1:length(risk_vars)) {
+        print(i)
         if ((dat %>% select(starts_with(risk_vars[i])) %>% unique())[[1]] == c(0,1) | 
             (dat %>% select(starts_with(risk_vars[i])) %>% unique())[[1]] == c(1,0)) {
           if (dat %>% filter(get(risk_vars[i]) == 1) %>% pull(endpoint) %>% sum() <= 3 | dat %>% filter(get(risk_vars[i]) == 0) %>% pull(endpoint) %>% sum() <= 3){

@@ -80,7 +80,10 @@ if (study_name == "MockCOVE") {
              RiskscoreAUCflag = ifelse(Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7, 1, 0))
 } else if (study_name %in% c("PROFISCOV")) {
     # Needs Youyi's check; currently do nothing!
-  
+} else if (study_name %in% c("COVAIL")) {
+  inputFile <- inputFile %>%
+    mutate(Riskscorecohortflag = ifelse(Perprotocol == 1, 1, 0),
+           RiskscoreAUCflag = ifelse(Riskscorecohortflag == 1, 1, 0))
 } else stop("unknown study_name 4")
 
 assertthat::assert_that(
