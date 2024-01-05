@@ -22,12 +22,18 @@ output/vat08m/bseropos/*
 output/vat08_combined/bseroneg/*
 output/vat08_combined/bseropos/*
 output/vat08_combined/*
+output/covail/*
 *.Rout
 nohup.out
 .nfs*
 data_clean/janssen_pooled_partA_data_processed_with_riskscore.csv
 data_clean/janssen_pooled_partAnonsenior_data_processed_with_riskscore.csv
 data_clean/janssen_pooled_partAsenior_data_processed_with_riskscore.csv
+data_clean/vat08m_data_processed_with_riskscore.csv
+data_clean/vat08_combined_data_processed_20231027.csv
+data_raw/*
+data_raw/janssen/*
+data_raw/moderna/*
 
 
 

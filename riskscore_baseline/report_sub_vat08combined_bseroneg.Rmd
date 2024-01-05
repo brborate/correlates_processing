@@ -18,14 +18,9 @@ library(kableExtra, quietly = T)
 library(conflicted, quietly = T)
 conflicted::conflict_prefer("filter", "dplyr")
 conflict_prefer("summarise", "dplyr")
-if(Sys.getenv("TRIAL") == "vat08_combined"){
-  load(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "objects_for_running_SL.rda"))
-} else {
-  load(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "objects_for_running_SL.rda"))
-}
+load(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "objects_for_running_SL.rda"))
 source(here("riskscore_baseline", "code", "study_specific_functions.R"))
-
-study_name_code <- studyName_for_report
+study_name_code <- "vat08_combined"
 
 ```
 
@@ -36,7 +31,7 @@ This baseline risk score report is based off analysis data located here:
 
 ```{r riskVarstable, warning=FALSE, echo=FALSE, message=FALSE}
 ### create footnotes ###
-dropped.riskVars.fewer.0s1s <- read.table(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "drop_riskVars_with_fewer_0s_or_1s.csv")) %>%
+dropped.riskVars.fewer.0s1s <- read.table(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "drop_riskVars_with_fewer_0s_or_1s.csv")) %>%
   separate(V1, c("droppedVars"), sep = " ") %>%
   .$droppedVars %>%
   paste(collapse=", ") 
@@ -49,7 +44,7 @@ if(dropped.riskVars.fewer.0s1s == "No"){
   eval.footnote1.table = TRUE
 }
 
-dropped.riskVars.high.NAs <- read.table(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "drop_riskVars_with_high_total_missing_values.csv")) %>%
+dropped.riskVars.high.NAs <- read.table(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "drop_riskVars_with_high_total_missing_values.csv")) %>%
   separate(V1, c("droppedVars"), sep = " ") %>%
   .$droppedVars %>%
   paste(collapse=", ") 
@@ -62,7 +57,7 @@ if(dropped.riskVars.high.NAs == "No"){
   eval.footnote2.table = TRUE
 }
   
-vars.with.imputed.values <- read.table(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "impute_missing_values.csv")) %>%
+vars.with.imputed.values <- read.table(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "impute_missing_values.csv")) %>%
   separate(V1, c("delete", "imputedVars"), sep = ": ") %>%
   .$imputedVars %>%
   paste(collapse=", ") 
@@ -110,9 +105,9 @@ if(studyName_for_report == "PREVENT19"){
   dayrauc = "Day 43"
 } 
 
-caption <- "Individual baseline variables in baseline SARS-CoV-2 negative per-protocol placebo recipients that were used in the Superlearner model for developing risk score and predicting occurrence of COVID-19."
+caption <- "Individual baseline variables in baseline SARS-CoV-2 negative per-protocol recipients that were used in the Superlearner model for developing risk score and predicting occurrence of COVID-19."
 
-tab <- read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_vars.csv"), row.names = 1,
+tab <- read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "risk_vars.csv"), row.names = 1,
          header = TRUE) %>%
   kable(
     #format = output_type,
@@ -142,6 +137,8 @@ if(studyName_for_report %in% c("PREVENT19", "VAT08m")){
                footnote4),
              threeparttable = TRUE)
 }
+
+# mtcars[1:5, 1:2]
 
 tab
 rm(tab, footnote1, footnote2, footnote3, footnote4)
@@ -302,7 +299,7 @@ rm(tab, footnote1, footnote2, footnote3, footnote4)
 ```{r learner-screens, warning=FALSE, echo=FALSE}
 caption <- "All learner-screen combinations (14 in total) used as input to the Superlearner."
 
-read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "learner-screens.csv"),
+read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "learner-screens.csv"),
          row.names = 1, header = TRUE) %>%
   rename(`Screen*` = `Screen.`) %>%
   kable(
@@ -330,10 +327,10 @@ read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "learne
 ```{r cvsl-args, warning=FALSE, echo=FALSE}
 caption <- "Arguments supplied to CV.Superlearner."
 
-cvsl_args <- read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cvsl_args.csv"),
-         row.names = 1, header = TRUE) 
+cvsl_args <- read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "cvsl_args.csv"),
+         row.names = 1, header = TRUE)
 
-cases_placebo <- cvsl_args %>% filter(Argument == "Cases/Total Subjects in placebo group (%)") 
+cases_placebo <- cvsl_args %>% filter(Argument == "Cases/Total Subjects in placebo group (%)")
 
 cvsl_args %>%
   filter(Argument != "Cases/Total Subjects in placebo group (%)") %>%
@@ -358,199 +355,117 @@ cvsl_args %>%
 
 
 ```{r, echo=FALSE, out.width="99%", out.height="120%", fig.cap= paste0("Cross-validated AUC (95\\% CI) of algorithms for predicting COVID-19 disease status starting ", rscorestart, " after ", dayrscore, ". CV-AUCs were computed using only data from the placebo arm.")}
-knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_placebo_cvaucs.png"))
+knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "risk_placebo_cvaucs.png"))
 ```
 
 \end{landscape}
 
 
-```{r, echo=FALSE, out.height="94%", fig.cap=paste0("CV-estimated predicted probabilities of COVID-19 disease starting ", rscorestart, " after ", dayrscore, " by case/control status for top 2 learners, SuperLearner and Discrete SL. CV-estimated predicted probabilities were computed using only data from the placebo arm.")}
-knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "predProb_riskscore_plac.png"))
-```
-
-\clearpage
-
-
-```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap=paste0("ROC curves based off CV-estimated predicted probabilities for the top 2 learners, Superlearner and Discrete SL. CV-estimated predicted probabilities were derived considering cases as COVID-19 disease endpoints starting ", rscorestart, " after ", dayrscore, " using only data from the placebo arm.")}
-knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "ROCcurve_riskscore_plac.png"))
-```
-
-\clearpage
-
-```{r risk-sl-weights, warning=FALSE, echo=FALSE}
-caption <- "Weights assigned by Superlearner using data only from the placebo arm."
-read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "SL_weights.csv"), row.names = 1,
-         header = TRUE) %>%
-  kable(
-    booktabs = TRUE,
-    linesep = "",
-    caption = caption
-  ) %>%
-  kable_styling(latex_options = c("hold_position"),
-                font_size = 9) %>%
-  row_spec(0,bold=TRUE)
-```
-
-\begin{landscape}
-\clearpage
-
-```{r SLtopmodels, warning=FALSE, echo=FALSE}
-caption <- "Learners assigned weight > 0.0 by Superlearner sorted by weight. Predictors within each learner are sorted by variable importance which is the absolute value in Coefficient (in case of learners like SL.glm, SL.gam, SL.glm.interaction), or Gain (in case of SL.xgboost) or Importance (in case of SL.ranger.imp)."
-
-read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "SL_all_models_with_predictors.csv"),
-         row.names = 1, header = TRUE) %>%
-  mutate(Gain = if("Gain" %in% colnames(.)) as.numeric(Gain) else NULL,
-        Importance = if("Importance" %in% colnames(.)) as.numeric(Importance) else NULL,
-        Coefficient = if("Coefficient" %in% colnames(.)) as.numeric(Coefficient) else NULL) %>%
-  arrange( if("Weight" %in% colnames(.)) desc(Weight) else NULL,
-           if("Gain" %in% colnames(.)) desc(abs(Gain)) else NULL,
-           if("Importance" %in% colnames(.)) desc(abs(Importance)) else NULL,
-           if("Coefficient" %in% colnames(.)) desc(abs(Coefficient)) else NULL) %>%
-  filter(Weight > 0.0) %>%
-  mutate(across(.cols = everything(), ~gsub(" ", "", ., fixed = TRUE))) %>%
-  mutate(across(.cols = everything(), ~na_if(., "NA"))) %>%
-  select_if(~sum(!is.na(.)) > 0) %>%
-  kable(
-    longtable = T,
-    booktabs = TRUE,
-    linesep = "",
-    caption = caption
-  ) %>%
-  kable_styling(latex_options = c("hold_position", "repeat_header"),
-                font_size = 5) %>%
-  row_spec(0,bold=TRUE)
-
-```
-\end{landscape}
-
-
-```{r, echo=FALSE, out.width="100%", out.height="90%", fig.cap=paste0("Superlearner predicted probabilities of COVID-19 disease starting at least ", aucstart, " after ", dayrauc, " in vaccinees by case/control status.")}
-knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "predProb_riskscore_vacc_onlySL.png"))
-```
-
-\clearpage
-
-
-```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap=paste0("ROC curve based off Superlearner predicted probabilities of COVID-19 disease starting at least ", aucstart, " after ", dayrauc, " in vaccinees.")}
-knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "ROCcurve_riskscore_vacc_onlySL.png"))
-```
-
-\clearpage
-
-## Analysis details towards deriving baseline risk score
-
-The Baseline Risk Score analysis is conducted in baseline SARS-CoV-2 sero-negative per-protocol participants. The analysis considers the following as input:
-
-1. data_processed.csv file (created by the data processing step)
-
-2. Riskscorecohortflag (created by the data processing step): This flag identifies the subjects from both arms (placebo and vaccine) that are to be considered for risk score analysis. So, all subjects with Riskscorecohortflag == 1 have a risk score.
-
-3. Risk score variables (shown in Table 1)
-
-4. Endpoint: The endpoint used is `r endpoint`
-
-Tables 5, 6 and 7 (below) show the number of subjects by study arm and endpoint status in the data before applying the Riskscorecohortflag, after applying the Riskscorecohortflag and after conducting the risk score analysis, respectively. 
-
-The risk score analysis code appends two columns (risk_score and standardized_risk_score) to the data_processed.csv file and drops out subjects that do not have a risk score (thus keeps only subjects with Riskscorecohortflag == 1 and no missing value for the endpoint). 
-
-
-
-```{r cases-beforeRiskscorecohortFLAG, warning=FALSE, echo=FALSE, message=FALSE}
-caption <- "Cases per treatment arm in data\\_processed.csv before applying RiskscorecohortFLAG."
-
-if(any(sapply(c("COVE", "ENSEMBLE"), grepl, studyName_for_report))){
-  new_colnames = c("Non-Cases", paste0("Post-", dayrscore, "-Cases"))
-  footnote1 <- paste0("Post-Day ", dayrscore, " Cases: COVID-19 primary endpoints that occur at least ", rscorestart, " after the ", dayrscore, " visit.")
-  eval.footnote1.table = TRUE
-}else{
-  new_colnames = c("Non-Cases", "Post-Enrollment Cases")
-  footnote1 <- "Post-enrollment Cases: All COVID-19 primary endpoints that occur after enrollment (Day 1 in study)."
-  eval.footnote1.table = TRUE
-}
-
-read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_to_applying_Riskscorecohortflag.csv"), row.names = 1,
-         header = TRUE) %>%
-  tibble::rownames_to_column(var = "Study-Arm") %>%
-  rename_with(~new_colnames, c("X0", "X1")) %>%
-  kable(
-    booktabs = TRUE,
-    linesep = "",
-    caption = caption) %>%
-  kable_styling(latex_options = c("hold_position"),
-                font_size = 9) %>%
-  footnote(footnote1,
-             threeparttable = TRUE)
-
-```
-
-
-
-```{r cases-prior, warning=FALSE, echo=FALSE, message=FALSE}
-caption <- "Cases per treatment arm after applying RiskscorecohortFLAG (prior to risk score analysis)."
-
-read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_prior_riskScoreAnalysis.csv"), row.names = 1,
-         header = TRUE) %>%
-  tibble::rownames_to_column(var = "Study-Arm") %>%
-  rename_with(~new_colnames, c("X0", "X1")) %>%
-  kable(
-    booktabs = TRUE,
-    linesep = "",
-    caption = caption) %>%
-  kable_styling(latex_options = c("hold_position"),
-                font_size = 9) %>%
-  footnote(footnote1,
-             threeparttable = TRUE)
-
-```
-
-
-```{r cases-post-riskScore, warning=FALSE, echo=FALSE, message=FALSE}
-caption <- "Cases per treatment arm post risk score analysis."
-
-read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "cases_post_riskScoreAnalysis.csv"), row.names = 1,
-         header = TRUE) %>%
-  tibble::rownames_to_column(var = "Study-Arm") %>%
-  rename_with(~new_colnames, c("X0", "X1")) %>%
-  kable(
-    booktabs = TRUE,
-    linesep = "",
-    caption = caption) %>%
-  kable_styling(latex_options = c("hold_position"),
-                font_size = 9) %>%
-  footnote(footnote1,
-             threeparttable = TRUE)
-
-```
-
-
-
-```{r vacc-cases-AUC-calc, warning=FALSE, echo=FALSE, message=FALSE}
-caption <- "Cases/Controls in vaccine cohort used towards evaluation of SL prediction performance."
-
-read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "vacc.cases.AUC.calc_post_riskScoreAnalysis.csv"), row.names = 1,
-         header = TRUE) %>%
-  mutate(Var1 = ifelse(Var1 == 0, "Controls", paste0("Post-", dayrauc, " Cases"))) %>%
-  rename(`Vaccine Arm` = Var1) %>%
-  kable(
-    booktabs = TRUE,
-    linesep = "",
-    caption = caption) %>%
-  kable_styling(latex_options = c("hold_position"),
-                font_size = 9) %>%
-  footnote(c(paste0("Post-", dayrauc, " Cases: COVID-19 primary endpoints that occur at least ", aucstart, " after the ", dayrauc, " visit.")),
-             threeparttable = TRUE)
-
-```
+<!-- ```{r, echo=FALSE, out.height="94%", fig.cap=paste0("CV-estimated predicted probabilities of COVID-19 disease starting ", rscorestart, " after ", dayrscore, " by case/control status for top 2 learners, SuperLearner and Discrete SL. CV-estimated predicted probabilities were computed using only data from the placebo arm.")} -->
+<!-- knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "predProb_riskscore_plac.png")) -->
+<!-- ``` -->
 
 <!-- \clearpage -->
 
-<!-- ## Superlearner details  -->
+
+<!-- ```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap=paste0("ROC curves based off CV-estimated predicted probabilities for the top 2 learners, Superlearner and Discrete SL. CV-estimated predicted probabilities were derived considering cases as COVID-19 disease endpoints starting ", rscorestart, " after ", dayrscore, " using only data from the placebo arm.")} -->
+<!-- knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "ROCcurve_riskscore_plac.png")) -->
+<!-- ``` -->
+
+<!-- \clearpage -->
+
+<!-- ```{r risk-sl-weights, warning=FALSE, echo=FALSE} -->
+<!-- caption <- "Weights assigned by Superlearner using data only from the placebo arm." -->
+<!-- read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "SL_weights.csv"), row.names = 1, -->
+<!--          header = TRUE) %>% -->
+<!--   kable( -->
+<!--     booktabs = TRUE, -->
+<!--     linesep = "", -->
+<!--     caption = caption -->
+<!--   ) %>% -->
+<!--   kable_styling(latex_options = c("hold_position"), -->
+<!--                 font_size = 9) %>% -->
+<!--   row_spec(0,bold=TRUE) -->
+<!-- ``` -->
+
+<!-- \begin{landscape} -->
+<!-- \clearpage -->
+
+<!-- ```{r SLtopmodels, warning=FALSE, echo=FALSE} -->
+<!-- caption <- "Learners assigned weight > 0.0 by Superlearner sorted by weight. Predictors within each learner are sorted by variable importance which is the absolute value in Coefficient (in case of learners like SL.glm, SL.gam, SL.glm.interaction), or Gain (in case of SL.xgboost) or Importance (in case of SL.ranger.imp)." -->
+
+<!-- read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "SL_all_models_with_predictors.csv"), -->
+<!--          row.names = 1, header = TRUE) %>% -->
+<!--   mutate(Gain = if("Gain" %in% colnames(.)) as.numeric(Gain) else NULL, -->
+<!--         Importance = if("Importance" %in% colnames(.)) as.numeric(Importance) else NULL, -->
+<!--         Coefficient = if("Coefficient" %in% colnames(.)) as.numeric(Coefficient) else NULL) %>% -->
+<!--   arrange( if("Weight" %in% colnames(.)) desc(Weight) else NULL, -->
+<!--            if("Gain" %in% colnames(.)) desc(abs(Gain)) else NULL, -->
+<!--            if("Importance" %in% colnames(.)) desc(abs(Importance)) else NULL, -->
+<!--            if("Coefficient" %in% colnames(.)) desc(abs(Coefficient)) else NULL) %>% -->
+<!--   filter(Weight > 0.0) %>% -->
+<!--   mutate(across(.cols = everything(), ~gsub(" ", "", ., fixed = TRUE))) %>% -->
+<!--   mutate(across(.cols = everything(), ~na_if(., "NA"))) %>% -->
+<!--   select_if(~sum(!is.na(.)) > 0) %>% -->
+<!--   kable( -->
+<!--     longtable = T, -->
+<!--     booktabs = TRUE, -->
+<!--     linesep = "", -->
+<!--     caption = caption -->
+<!--   ) %>% -->
+<!--   kable_styling(latex_options = c("hold_position", "repeat_header"), -->
+<!--                 font_size = 5) %>% -->
+<!--   row_spec(0,bold=TRUE) -->
+
+<!-- ``` -->
+<!-- \end{landscape} -->
 
 
-<!-- ```{r cvsl-details, warning=FALSE, echo=FALSE, message=FALSE} -->
-<!-- caption <- "Arguments provided to CV-Superlearner function." -->
+<!-- ```{r, echo=FALSE, out.width="100%", out.height="90%", fig.cap=paste0("Superlearner predicted probabilities of COVID-19 disease starting at least ", aucstart, " after ", dayrauc, " in vaccinees by case/control status.")} -->
+<!-- knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "predProb_riskscore_vacc_onlySL.png")) -->
+<!-- ``` -->
 
-<!-- read.csv(here("riskscore_baseline", "output", "cases_post_riskScoreAnalysis.csv"), row.names = 1, -->
+<!-- \clearpage -->
+
+
+<!-- ```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap=paste0("ROC curve based off Superlearner predicted probabilities of COVID-19 disease starting at least ", aucstart, " after ", dayrauc, " in vaccinees.")} -->
+<!-- knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "ROCcurve_riskscore_vacc_onlySL.png")) -->
+<!-- ``` -->
+
+<!-- \clearpage -->
+
+<!-- ## Analysis details towards deriving baseline risk score -->
+
+<!-- The Baseline Risk Score analysis is conducted in baseline SARS-CoV-2 sero-negative per-protocol participants. The analysis considers the following as input: -->
+
+<!-- 1. data_processed.csv file (created by the data processing step) -->
+
+<!-- 2. Riskscorecohortflag (created by the data processing step): This flag identifies the subjects from both arms (placebo and vaccine) that are to be considered for risk score analysis. So, all subjects with Riskscorecohortflag == 1 have a risk score. -->
+
+<!-- 3. Risk score variables (shown in Table 1) -->
+
+<!-- 4. Endpoint: The endpoint used is `r endpoint` -->
+
+<!-- Tables 5, 6 and 7 (below) show the number of subjects by study arm and endpoint status in the data before applying the Riskscorecohortflag, after applying the Riskscorecohortflag and after conducting the risk score analysis, respectively.  -->
+
+<!-- The risk score analysis code appends two columns (risk_score and standardized_risk_score) to the data_processed.csv file and drops out subjects that do not have a risk score (thus keeps only subjects with Riskscorecohortflag == 1 and no missing value for the endpoint).  -->
+
+
+
+<!-- ```{r cases-beforeRiskscorecohortFLAG, warning=FALSE, echo=FALSE, message=FALSE} -->
+<!-- caption <- "Cases per treatment arm in data\\_processed.csv before applying RiskscorecohortFLAG." -->
+
+<!-- if(any(sapply(c("COVE", "ENSEMBLE"), grepl, studyName_for_report))){ -->
+<!--   new_colnames = c("Non-Cases", paste0("Post-", dayrscore, "-Cases")) -->
+<!--   footnote1 <- paste0("Post-Day ", dayrscore, " Cases: COVID-19 primary endpoints that occur at least ", rscorestart, " after the ", dayrscore, " visit.") -->
+<!--   eval.footnote1.table = TRUE -->
+<!-- }else{ -->
+<!--   new_colnames = c("Non-Cases", "Post-Enrollment Cases") -->
+<!--   footnote1 <- "Post-enrollment Cases: All COVID-19 primary endpoints that occur after enrollment (Day 1 in study)." -->
+<!--   eval.footnote1.table = TRUE -->
+<!-- } -->
+
+<!-- read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "cases_prior_to_applying_Riskscorecohortflag.csv"), row.names = 1, -->
 <!--          header = TRUE) %>% -->
 <!--   tibble::rownames_to_column(var = "Study-Arm") %>% -->
 <!--   rename_with(~new_colnames, c("X0", "X1")) %>% -->
@@ -560,7 +475,89 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "vacc.cases.A
 <!--     caption = caption) %>% -->
 <!--   kable_styling(latex_options = c("hold_position"), -->
 <!--                 font_size = 9) %>% -->
-<!--   footnote(c("Post-Day 29 Cases: COVID-19 primary endpoints that occur at least 7 days after the Day 29 visit."), -->
+<!--   footnote(footnote1, -->
 <!--              threeparttable = TRUE) -->
 
 <!-- ``` -->
+
+
+
+<!-- ```{r cases-prior, warning=FALSE, echo=FALSE, message=FALSE} -->
+<!-- caption <- "Cases per treatment arm after applying RiskscorecohortFLAG (prior to risk score analysis)." -->
+
+<!-- read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "cases_prior_riskScoreAnalysis.csv"), row.names = 1, -->
+<!--          header = TRUE) %>% -->
+<!--   tibble::rownames_to_column(var = "Study-Arm") %>% -->
+<!--   rename_with(~new_colnames, c("X0", "X1")) %>% -->
+<!--   kable( -->
+<!--     booktabs = TRUE, -->
+<!--     linesep = "", -->
+<!--     caption = caption) %>% -->
+<!--   kable_styling(latex_options = c("hold_position"), -->
+<!--                 font_size = 9) %>% -->
+<!--   footnote(footnote1, -->
+<!--              threeparttable = TRUE) -->
+
+<!-- ``` -->
+
+
+<!-- ```{r cases-post-riskScore, warning=FALSE, echo=FALSE, message=FALSE} -->
+<!-- caption <- "Cases per treatment arm post risk score analysis." -->
+
+<!-- read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "cases_post_riskScoreAnalysis.csv"), row.names = 1, -->
+<!--          header = TRUE) %>% -->
+<!--   tibble::rownames_to_column(var = "Study-Arm") %>% -->
+<!--   rename_with(~new_colnames, c("X0", "X1")) %>% -->
+<!--   kable( -->
+<!--     booktabs = TRUE, -->
+<!--     linesep = "", -->
+<!--     caption = caption) %>% -->
+<!--   kable_styling(latex_options = c("hold_position"), -->
+<!--                 font_size = 9) %>% -->
+<!--   footnote(footnote1, -->
+<!--              threeparttable = TRUE) -->
+
+<!-- ``` -->
+
+
+
+<!-- ```{r vacc-cases-AUC-calc, warning=FALSE, echo=FALSE, message=FALSE} -->
+<!-- caption <- "Cases/Controls in vaccine cohort used towards evaluation of SL prediction performance." -->
+
+<!-- read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "bseroneg", "vacc.cases.AUC.calc_post_riskScoreAnalysis.csv"), row.names = 1, -->
+<!--          header = TRUE) %>% -->
+<!--   mutate(Var1 = ifelse(Var1 == 0, "Controls", paste0("Post-", dayrauc, " Cases"))) %>% -->
+<!--   rename(`Vaccine Arm` = Var1) %>% -->
+<!--   kable( -->
+<!--     booktabs = TRUE, -->
+<!--     linesep = "", -->
+<!--     caption = caption) %>% -->
+<!--   kable_styling(latex_options = c("hold_position"), -->
+<!--                 font_size = 9) %>% -->
+<!--   footnote(c(paste0("Post-", dayrauc, " Cases: COVID-19 primary endpoints that occur at least ", aucstart, " after the ", dayrauc, " visit.")), -->
+<!--              threeparttable = TRUE) -->
+
+<!-- ``` -->
+
+<!-- <!-- \clearpage --> -->
+
+<!-- <!-- ## Superlearner details  --> -->
+
+
+<!-- <!-- ```{r cvsl-details, warning=FALSE, echo=FALSE, message=FALSE} --> -->
+<!-- <!-- caption <- "Arguments provided to CV-Superlearner function." --> -->
+
+<!-- <!-- read.csv(here("riskscore_baseline", "output", "cases_post_riskScoreAnalysis.csv"), row.names = 1, --> -->
+<!-- <!--          header = TRUE) %>% --> -->
+<!-- <!--   tibble::rownames_to_column(var = "Study-Arm") %>% --> -->
+<!-- <!--   rename_with(~new_colnames, c("X0", "X1")) %>% --> -->
+<!-- <!--   kable( --> -->
+<!-- <!--     booktabs = TRUE, --> -->
+<!-- <!--     linesep = "", --> -->
+<!-- <!--     caption = caption) %>% --> -->
+<!-- <!--   kable_styling(latex_options = c("hold_position"), --> -->
+<!-- <!--                 font_size = 9) %>% --> -->
+<!-- <!--   footnote(c("Post-Day 29 Cases: COVID-19 primary endpoints that occur at least 7 days after the Day 29 visit."), --> -->
+<!-- <!--              threeparttable = TRUE) --> -->
+
+<!-- <!-- ``` --> -->

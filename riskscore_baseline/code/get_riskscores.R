@@ -8,6 +8,7 @@
 # Sys.setenv(TRIAL = "janssen_pooled_partA") 
 # Sys.setenv(TRIAL = "butantan")
 # Sys.setenv(TRIAL = "moderna_boost")
+# Sys.setenv(TRIAL = "covail")
 
 print("GET_RISKSCORES.R")
 
@@ -24,7 +25,7 @@ print(args)
 
 source("code/loadlibraries_readinputdata.R")
 
-if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m", "VAT08", "PROFISCOV")){
+if(study_name %in% c("ENSEMBLE", "MockENSEMBLE", "PREVENT19", "AZD1222", "VAT08m", "VAT08", "PROFISCOV", "COVAIL")){
   inputFile <- inputFile %>%
     rename(Ptid = Subjectid)
 }else if(study_name == "MockCOVE"){
@@ -234,7 +235,6 @@ if(study_name %in% c("VAT08", "VAT08m")){
       "CalDtEnrollIND.X1", "CalDtEnrollIND.X2", "CalDtEnrollIND.X3", "CalDtEnrollIND.X4", "CalDtEnrollIND.X5"
     )
   }
-
   
   # Store original original risk variables as well to check in check_if_SL_needs_be_run.R!
   original_risk_vars <- c(
@@ -267,6 +267,53 @@ if(study_name %in% c("VAT08", "VAT08m")){
   rec <- recipe(~ Country.ind + CalDtEnrollIND, data = inputMod)
   dummies <- rec %>%
     step_dummy(Country.ind, CalDtEnrollIND) %>%
+    prep(training = inputMod)
+  inputMod <- inputMod %>% bind_cols(bake(dummies, new_data = NULL)) 
+  names(inputMod) <- gsub("\\_", ".", names(inputMod))
+}
+
+
+
+if(study_name == "COVAIL"){
+  inputFile <- inputFile %>%
+    mutate(EventIndPrimaryD15rscore = EventIndPrimaryD15,
+           EventIndPrimaryD15rauc = EventIndPrimaryD15,
+           primary_booster_type = case_when(primary_booster_type == "J, J" ~ "J.J",
+                                            primary_booster_type == "J, M" ~ "J.M",
+                                            primary_booster_type == "J, P" ~ "J.P",
+                                            primary_booster_type == "M, M" ~ "M.M",
+                                            primary_booster_type == "M, P" ~ "M.P",
+                                            primary_booster_type == "P, M" ~ "P.M",
+                                            primary_booster_type == "P, P" ~ "P.P")
+    ) 
+  
+  risk_vars <- c(
+    "Age", "Age65C", "Sex", "Black", "Asian", "NatAmer", "PacIsl",  
+    "Multiracial", "Unknown",
+    "EthnicityHispanic", "EthnicityNotreported", 
+    "pre.study.booster.until.studydose1.day", "pre.study.booster.until.studydose1.ind",
+    "primary.booster.type.J.M", "primary.booster.type.J.P", "primary.booster.type.M.M",
+    "primary.booster.type.M.P", "primary.booster.type.P.M", "primary.booster.type.P.P"
+  )
+  
+  original_risk_vars <- c(
+    "Age", "Age65C", "Sex", "Black", "Asian", "NatAmer", "PacIsl",  
+    "Multiracial", "Unknown",
+    "EthnicityHispanic", "EthnicityNotreported", 
+    "pre.study.booster.until.studydose1.day", "pre.study.booster.until.studydose1.ind",
+    "primary.booster.type"
+  )
+
+  endpoint <- "EventIndPrimaryD15rscore"
+  #endpoint <- paste0(endpoint, "rscore")
+  riskscore_timepoint <- 15
+  vaccAUC_timepoint <- 15
+  studyName_for_report <- "COVAIL"
+  inputMod <- inputFile 
+  
+  rec <- recipe(~ primary_booster_type, data = inputMod)
+  dummies <- rec %>%
+    step_dummy(primary_booster_type) %>%
     prep(training = inputMod)
   inputMod <- inputMod %>% bind_cols(bake(dummies, new_data = NULL)) 
   names(inputMod) <- gsub("\\_", ".", names(inputMod))

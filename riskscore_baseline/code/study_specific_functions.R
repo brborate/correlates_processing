@@ -160,5 +160,41 @@ get_defs_comments_riskVars <- function(data){
       ),
       Comments = "")
   }
+  
+  if(study_name %in% c("COVAIL")){
+    data <- data %>%
+      mutate(Definition = case_when(
+        `Variable Name` == "Age" ~ "Age at enrollment in years",
+        `Variable Name` == "Age65C" ~ "Binary indicator for Age >= 65",
+        `Variable Name` == "Sex" ~ "Sex assigned at birth (1=female, 0=male)",
+        #`Variable Name` == "BMI" ~ "BMI at enrollment (kg/m^2)",
+        #`Variable Name` == "MinorityInd" ~ "Baseline covariate underrepresented minority status (1=minority, 0=non-minority)",
+        `Variable Name` == "EthnicityHispanic" ~ "Indicator ethnicity = Hispanic or Latino (0 = Non-Hispanic/Non-Latino)",
+        #`Variable Name` == "EthnicityNotreported" ~ "Indicator ethnicity = Not reported (0 = Non-Hispanic)",
+        #`Variable Name` == "EthnicityUnknown" ~ "Indicator ethnicity = Unknown (0 = Non-Hispanic)",
+        `Variable Name` == "Black" ~ "Indicator race = Black (0 = White)",
+        `Variable Name` == "Asian" ~ "Indicator race = Asian (0 = White)",
+        `Variable Name` == "NatAmer" ~ "Indicator race = American Indian or Alaska Native (0 = White)",
+        #`Variable Name` == "PacIsl" ~ "Indicator race = Native Hawaiian or Other Pacific Islander (0 = White)",
+        #`Variable Name` == "WhiteNonHispanic" ~ "Indicator race = White or Caucasian (1 = White)",
+        `Variable Name` == "Multiracial" ~ "Indicator race = Multiracial (0 = White)",
+        #`Variable Name` == "Other" ~ "Indicator race = Other (0 = White)",
+        #`Variable Name` == "Notreported" ~ "Indicator race = Not reported (0 = White)",
+        #`Variable Name` == "Unknown" ~ "Indicator race = unknown (0 = White)",
+        #`Variable Name` == "URMforsubcohortsampling" ~ "URMforsubcohortsampling = ",
+        #`Variable Name` == "HighRiskInd" ~ "Baseline covariate high risk pre-existing condition (1=yes, 0=no)",
+        #`Variable Name` == "HIVinfection" ~ "HIV infection (1=yes, 0=no)"
+        #`Variable Name` == "Country.X1" ~ "Indicator country =  ",
+        `Variable Name` == "pre.study.booster.until.studydose1.day" ~ "",
+        `Variable Name` == "pre.study.booster.until.studydose1.ind" ~ "",
+        `Variable Name` == "primary.booster.type.J.M" ~ "",
+        `Variable Name` == "primary.booster.type.M.M" ~ "",
+        `Variable Name` == "primary.booster.type.M.P" ~ "",
+        `Variable Name` == "primary.booster.type.P.M" ~ "",
+        `Variable Name` == "primary.booster.type.P.P" ~ ""
+      ),
+      Comments = "")
+  }
+  
   return(data)
 }
