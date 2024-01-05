@@ -1,14 +1,23 @@
 # Check if only change in input dataset is marker data. 
 # If so, simply pull the earlier risk scores and add to the new processed dataset!
 generate_new_riskscores <- function(){
-  source(here("code", "clean_output_dir.R"))
-  source(here("code", "run_cvsl_riskscore.R"))
-  source(here("code", "createRDAfiles_fromSLobjects.R"))
-  source(here("code", "tables_figures.R"))
-  source(here("code", "constructSL_getSLweights_Modelpredictors.R"))
-  source(here("code", "predict_on_vaccine.R"))
-  source(here("code", "append_risk_score_to_data.R"))
-  source(here("code", "performance_on_vaccine.R"))
+  if(study_name == "COVAIL"){
+    source(here("code", "clean_output_dir.R"))
+    source(here("code", "run_cvsl_riskscore.R"))
+    source(here("code", "createRDAfiles_fromSLobjects.R"))
+    source(here("code", "tables_figures.R"))
+    source(here("code", "constructSL_getSLweights_Modelpredictors.R"))
+    source(here("code", "append_risk_score_to_data.R"))
+  } else {
+    source(here("code", "clean_output_dir.R"))
+    source(here("code", "run_cvsl_riskscore.R"))
+    source(here("code", "createRDAfiles_fromSLobjects.R"))
+    source(here("code", "tables_figures.R"))
+    source(here("code", "constructSL_getSLweights_Modelpredictors.R"))
+    source(here("code", "predict_on_vaccine.R"))
+    source(here("code", "append_risk_score_to_data.R"))
+    source(here("code", "performance_on_vaccine.R"))
+  }
 }
 
 if(!study_name %in% c("COVE", "PROFISCOV")){
@@ -34,11 +43,26 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
         load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
       } 
     
-    old_processed <- inputFile_with_riskscore %>%
-      select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars), risk_score, standardized_risk_score)
+    if(study_name == "COVAIL"){
+      old_processed <- inputFile_with_riskscore %>%
+        rename(pre.study.booster.until.studydose1.day = pre_study_booster_until_studydose1_day,
+               pre.study.booster.until.studydose1.ind = pre_study_booster_until_studydose1_ind,
+               primary.booster.type = primary_booster_type) %>%
+        select(Ptid, Riskscorecohortflag, treatment_actual, all_of(endpoint), all_of(original_risk_vars), risk_score, standardized_risk_score)
+      
+      new_processed <- inputFile  %>%
+        rename(pre.study.booster.until.studydose1.day = pre_study_booster_until_studydose1_day,
+               pre.study.booster.until.studydose1.ind = pre_study_booster_until_studydose1_ind,
+               primary.booster.type = primary_booster_type) %>%
+        select(Ptid, Riskscorecohortflag, treatment_actual, all_of(endpoint), all_of(original_risk_vars))
+    } else {
+      old_processed <- inputFile_with_riskscore %>%
+        select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars), risk_score, standardized_risk_score)
+      
+      new_processed <- inputFile %>%
+        select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars))
+    }
     
-    new_processed <- inputFile %>%
-      select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars))
     
     if(all.equal(old_processed %>% select(-c(risk_score, standardized_risk_score)), new_processed) == TRUE){
       message("Variables related to risk score generation in input data have not changed. Superlearner will not be run. Risk scores from earlier run will be appended to raw data!")

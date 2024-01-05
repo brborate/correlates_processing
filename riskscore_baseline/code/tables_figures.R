@@ -1,5 +1,6 @@
 # Sys.setenv(TRIAL = "janssen_pooled_realbAb")
 # Sys.setenv(TRIAL = "prevent19")
+# Sys.setenv(TRIAL = "covail")
 renv::activate(here::here(".."))
 # There is a bug on Windows that prevents renv from working properly. The following code provides a workaround:
 if (.Platform$OS.type == "windows") .libPaths(c(paste0(Sys.getenv ("R_HOME"), "/library"), .libPaths()))
@@ -41,20 +42,38 @@ if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
 
 
 ######## Table of demographic variables used to derive the risk score ##########
-dat <- inputMod %>%
-  filter(Riskscorecohortflag == 1 & Trt == 0) %>%
-  select(all_of(risk_vars)) 
+if(study_name == "COVAIL"){
+  dat <- inputMod %>%
+    filter(Riskscorecohortflag == 1) %>%
+    select(all_of(risk_vars)) 
+  
+  risk_vars <- dat %>%
+    map(~ sum(is.na(.))) %>%
+    as.data.frame() %>%
+    t() %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column(var = "Variable Name") %>%
+    mutate(V1 = paste0(V1, "/", nrow(dat), " (", format(round((V1 / nrow(dat)) * 100, 1), nsmall = 1), "%)")) %>%
+    get_defs_comments_riskVars() %>%
+    rename(`Total missing values` = V1) %>%
+    select(`Variable Name`, Definition, `Total missing values`, Comments) 
+} else {
+  dat <- inputMod %>%
+    filter(Riskscorecohortflag == 1 & Trt == 0) %>%
+    select(all_of(risk_vars)) 
+  
+  risk_vars <- dat %>%
+    map(~ sum(is.na(.))) %>%
+    as.data.frame() %>%
+    t() %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column(var = "Variable Name") %>%
+    mutate(V1 = paste0(V1, "/", nrow(dat), " (", format(round((V1 / nrow(dat)) * 100, 1), nsmall = 1), "%)")) %>%
+    get_defs_comments_riskVars() %>%
+    rename(`Total missing values` = V1) %>%
+    select(`Variable Name`, Definition, `Total missing values`, Comments) 
+}
 
-risk_vars <- dat %>%
-  map(~ sum(is.na(.))) %>%
-  as.data.frame() %>%
-  t() %>%
-  as.data.frame() %>%
-  tibble::rownames_to_column(var = "Variable Name") %>%
-  mutate(V1 = paste0(V1, "/", nrow(dat), " (", format(round((V1 / nrow(dat)) * 100, 1), nsmall = 1), "%)")) %>%
-  get_defs_comments_riskVars() %>%
-  rename(`Total missing values` = V1) %>%
-  select(`Variable Name`, Definition, `Total missing values`, Comments) 
 
 if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   risk_vars %>% write.csv(here("output", Sys.getenv("TRIAL"), args[1], "risk_vars.csv"))

@@ -11,6 +11,7 @@ if(study_name %in% c("VAT08m", "VAT08")){
 }
 
 # Create table of cases in both arms (prior to applying Riskscorecohortflag filter)
+if(!study_name %in% c("COVAIL")){
   tab <- inputMod %>%
     drop_na(Ptid, Trt, all_of(endpoint)) %>%
     mutate(Trt = ifelse(Trt == 0, "Placebo", "Vaccine")) 
@@ -24,8 +25,7 @@ if(study_name %in% c("VAT08m", "VAT08")){
   }
 
   rm(tab)
-  
-  
+
   dat.ph1 <- inputMod %>% filter(Riskscorecohortflag == 1 & Trt == 0)
   
   if(study_name == "COVE"){
@@ -57,6 +57,35 @@ if(study_name %in% c("VAT08m", "VAT08")){
   }
   
   rm(tab)
+}
+
+if(study_name %in% c("COVAIL")){
+  tab <- inputMod %>%
+    drop_na(Ptid, treatment.actual, all_of(endpoint)) 
+  
+  table(tab$treatment.actual, tab %>% pull(endpoint)) %>%
+    write.csv(file = here("output", Sys.getenv("TRIAL"), "cases_prior_to_applying_Riskscorecohortflag.csv"))
+  
+  rm(tab)
+  
+  dat.ph1 <- inputMod %>% filter(Riskscorecohortflag == 1)
+  
+  dat.ph1 <- dat.ph1 %>%
+    # Keep only variables to be included in risk score analyses
+    select(Ptid, treatment.actual, all_of(endpoint), all_of(risk_vars)) %>%
+    # Drop any observation with NA values in Ptid, Trt, or endpoint!
+    drop_na(Ptid, treatment.actual, all_of(endpoint))
+  
+  # Create table of cases in both arms (prior to Risk score analyses)
+  tab <- inputMod %>%
+    filter(Riskscorecohortflag == 1) %>%
+    drop_na(Ptid, treatment.actual, all_of(endpoint)) 
+  
+  table(tab$treatment.actual, tab %>% pull(endpoint)) %>%
+    write.csv(file = here("output", Sys.getenv("TRIAL"), "cases_prior_riskScoreAnalysis.csv"))
+  
+  rm(tab)
+}
   
   # Derive maxVar: the maximum number of variables that will be allowed by SL screens in the models.
   np <- sum(dat.ph1 %>% select(matches(endpoint)))
@@ -73,6 +102,10 @@ if(study_name %in% c("VAT08m", "VAT08")){
     risk_vars <- dat.ph1 %>%
       select(-Ptid, -Trt, -Bserostatus, -all_of(endpoint)) %>%
       colnames()
+  } else if (study_name == "COVAIL"){
+    risk_vars <- dat.ph1 %>%
+      select(-Ptid, -treatment.actual, -all_of(endpoint)) %>%
+      colnames()
   } else {
     risk_vars <- dat.ph1 %>%
       select(-Ptid, -Trt, -all_of(endpoint)) %>%
@@ -88,6 +121,10 @@ if(study_name %in% c("VAT08m", "VAT08")){
     risk_vars <- dat.ph1 %>%
       select(-Ptid, -Trt, -Bserostatus, -all_of(endpoint)) %>%
       colnames()
+  } else if (study_name == "COVAIL"){
+    risk_vars <- dat.ph1 %>%
+      select(-Ptid, -treatment.actual, -all_of(endpoint)) %>%
+      colnames()
   } else {
     risk_vars <- dat.ph1 %>%
       select(-Ptid, -Trt, -all_of(endpoint)) %>%
@@ -101,7 +138,7 @@ if(study_name %in% c("VAT08m", "VAT08")){
   if(study_name == "COVE"){
     risk_placebo_ptids <- dat.ph1 %>% filter(Bserostatus == 0) %>% select(Ptid, all_of(endpoint))
   } else {
-    risk_placebo_ptids <- dat.ph1 %>% select(Ptid, all_of(endpoint))
+    risk_placebo_ptids <- dat.ph1 %>% select(Ptid, all_of(endpoint)) # For COVAIL, there are no placebos, and though SuperLearner is built on vaccine arms, risk_placebo_ptids is just a name!
   }
   
   # Impute missing values in any variable included in risk_vars using the mice package!
