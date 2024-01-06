@@ -103,25 +103,21 @@ if (TRIAL=="janssen_partA_VL") {
    
    
 } else if (TRIAL == "covail") {
-  # no risk score for now
-  dat_raw=read.csv(mapped_data)
-  # add a dummy risk score
-  dat_raw$standardized_risk_score = rnorm (nrow(dat_raw))
-  dat_raw$risk_score = dat_raw$standardized_risk_score * 2 + 1
-  
-  dat_proc = preprocess(dat_raw, study_name)   
-  
+  # load risk score
+  load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
+  dat_proc <- inputFile_with_riskscore    
+
   # bring in imputed variant column
   dat.lineage = read.csv('/trials/covpn/COVAILcorrelates/analysis/correlates/adata/lineages/covail_lineages_export_v1.csv')
-  dat_proc$COVIDlineage = dat.lineage$inf1.lineage[match(dat_proc$Subjectid, dat.lineage$ptid)]
-  dat_proc$COVIDlineageObserved = dat.lineage$inf1.observed[match(dat_proc$Subjectid, dat.lineage$ptid)]
+  dat_proc$COVIDlineage = dat.lineage$inf1.lineage[match(dat_proc$Ptid, dat.lineage$ptid)]
+  dat_proc$COVIDlineageObserved = dat.lineage$inf1.observed[match(dat_proc$Ptid, dat.lineage$ptid)]
   # check NA
   stopifnot(!any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D15==1 & dat_proc$COVIDIndD22toD181==1])))
   # this is not true: !any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D15==1 & dat_proc$AsympInfectIndD15to181==1]))
   
   # bring in FOI
   dat.foi = read.csv('/trials/covpn/COVAILcorrelates/analysis/correlates/adata/covail_foi_v2.csv')
-  dat_proc$FOIoriginal = dat.foi$foi[match(dat_proc$Subjectid, dat.foi$ptid)]
+  dat_proc$FOIoriginal = dat.foi$foi[match(dat_proc$Ptid, dat.foi$ptid)]
   dat_proc$FOIstandardized = scale(dat_proc$FOIoriginal)
   # check NA
   stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D15==1])))
@@ -1489,7 +1485,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
-         covail = "d82e4d1b597215c464002962d9bd01f7", 
+         covail = "dc5b0c63d08d1a69094c062d913ffde8", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
