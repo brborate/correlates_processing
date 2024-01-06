@@ -55,6 +55,9 @@ if(!study_name %in% c("COVE", "PROFISCOV")){
                pre.study.booster.until.studydose1.ind = pre_study_booster_until_studydose1_ind,
                primary.booster.type = primary_booster_type) %>%
         select(Ptid, Riskscorecohortflag, treatment_actual, all_of(endpoint), all_of(original_risk_vars))
+      
+      row.names(old_processed) <- 1:nrow(old_processed)
+      row.names(new_processed) <- 1:nrow(new_processed)
     } else {
       old_processed <- inputFile_with_riskscore %>%
         select(Ptid, Riskscorecohortflag, Trt, all_of(endpoint), all_of(original_risk_vars), risk_score, standardized_risk_score)
