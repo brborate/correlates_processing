@@ -170,7 +170,7 @@ janssen_sa_partA:
 
 janssen_partA_VL: 
   inherits: janssen_trial_partA
-  mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_PartAComplete_variant_mapped_20230904.csv 
+  mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_PartAComplete_variant_mapped_20231228.csv 
   subset_variable: None
   subset_value: All
   assay_metadata: ../correlates_reporting2/assay_metadata/janssen_partA_VL_assay_metadata.csv
