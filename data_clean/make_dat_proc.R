@@ -1,7 +1,7 @@
 #Sys.setenv(TRIAL = "moderna_real")
+#Sys.setenv(TRIAL = "covail")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
 #Sys.setenv(TRIAL = "vat08_combined")
-#Sys.setenv(TRIAL = "covail")
 
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
 
@@ -43,7 +43,9 @@ if (TRIAL=="janssen_partA_VL") {
   # EventTimePrimaryD29 is set to EventIndPrimaryIncludeNotMolecConfirmedD29 in preprocess()
   
   
+  
  } else if (study_name=="VAT08") {
+
    # read hot deck data
    tmp = sub(".csv","_hotdeck.csv",mapped_data)
    if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
@@ -54,6 +56,13 @@ if (TRIAL=="janssen_partA_VL") {
    # scale FOI
    dat_proc$FOI = scale(log10(dat_proc$FOI+1))[,1]
    
+   # add country code
+   country.codes=c("Colombia", "Ghana", "Honduras", "India", "Japan", "Kenya", "Nepal", "United States", "Mexico", "Uganda", "Ukraine")
+   continents=c("Colombia"=1, "Ghana"=2, "Honduras"=1, "India"=3, "Japan"=3, "Kenya"=2, "Nepal"=3, "United States"=5, "Mexico"=1, "Uganda"=2, "Ukraine"=4)
+   dat_proc$cc = country.codes[dat_proc$Country]
+   dat_proc$continent = continents[dat_proc$cc]
+   table(dat_proc$continent, dat_proc$cc)
+   
    # add risk score
    load(file = paste0('riskscore_baseline/output/vat08_combined/inputFile_with_riskscore.RData'))
    stopifnot(all(inputFile_with_riskscore$Ptid==dat_proc$Ptid))
@@ -62,22 +71,9 @@ if (TRIAL=="janssen_partA_VL") {
    
    # ptids with missing Bserostatus already filtered out in preprocess
    
-   # filter out countries based on lack of cases 
-   # country 4 for stage 2 nnaive
-   # country 2, 4 for stage 2 naive
-   # country 5, 6 for stage 1 nnaive
-   dat_proc = subset(dat_proc, 
-       !(
-           Trialstage==2 & Bserostatus==1 & Country %in% c(4)   | # no Omi cases from either arm in India
-         # Trialstage==2 & Bserostatus==1 & Country %in% c(10 ) & Age<60 # if we only use subchortind==1 this need to be filtered out due to lack of ph2 non-cases
-           Trialstage==2 & Bserostatus==0 & Country %in% c(10 ) | # Uganda, naive, no ph2 cases in the trt arm
-           Trialstage==2 & Bserostatus==0 & Country %in% c(2,4) |
-           Trialstage==1 & Bserostatus==1 & Country %in% c(5,6)
-         ) 
-       )
+   # Trialstage==2 & Bserostatus==0 & Country %in% c(10 )  # Uganda, naive, no ph2 cases in the trt arm
    
-   # filter out stage 1, naive
-   dat_proc = subset(dat_proc, !(Trialstage==1 & Bserostatus==0))
+   # Trialstage==2 & Bserostatus==1 & Country %in% c(10 ) & Age<60 # if we only use subchortind==1 this need to be filtered out due to lack of ph2 non-cases
    
    # define event indicator and event time variables based on seq1.variant.hotdeck1 etc
    for (t in c(1,22,43)) {
@@ -340,10 +336,10 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
         
 } else if (study_name=="VAT08" ) {
     nCountries = 10 # 10 is easier to work with than length(unique(dat_proc$Country))
-    # demo.stratum computed as such are not a continuous sequence as some strata may be empty
-    dat_proc$demo.stratum = (dat_proc$Bstratum-1)*nCountries + dat_proc$Country
+    # use continent for naive and country for nnaive
+    dat_proc$demo.stratum = ifelse(dat_proc$Bserostatus==0, dat_proc$continent, dat_proc$Country)
     
-    # in this version make all Senior on stratum, assign 5 as its value b/c Japan is filtered out from stage 1 and not part of stage 2
+    # in this version make all Senior one stratum, assign 5 as its value b/c Japan is filtered out from stage 1 and not part of stage 2
     dat_proc$demo.stratum2 = dat_proc$demo.stratum
     dat_proc$demo.stratum2[dat_proc$Senior==1] = 5
     
@@ -362,40 +358,19 @@ with(dat_proc, table(demo.stratum))
 # tps stratum, used in tps regression and to define Wstratum
 if (study_name=="VAT08" ) {
   # include Senior in the list of stratification variables, user for nAb markers
-  dat_proc <- dat_proc %>% mutate(tps.stratum.nAb = demo.stratum + strtoi(paste0(Trt, Bserostatus, Trialstage-1, Senior), base = 2) * max(demo.stratum,na.rm=T))
+  dat_proc <- dat_proc %>% mutate(tps.stratum.nAb = demo.stratum + 
+                            strtoi(paste0(Trialstage-1, Bserostatus, Trt, Senior), base = 2) * nCountries)
+  
   
   # not include Senior in the list of stratification variables, used for bAb markers
   dat_proc <- dat_proc %>% mutate(tps.stratum.bAb = demo.stratum + strtoi(paste0(Trt, Bserostatus, Trialstage-1), base = 2) * max(demo.stratum,na.rm=T))
   
-  # original, Oct 30 version
-  dat_proc <- dat_proc %>% mutate(tps.stratum.original = strtoi(paste0(Trt, Bserostatus, Trialstage-1, Senior), base = 2))
+  # # original, Oct 30 version
+  # dat_proc <- dat_proc %>% mutate(tps.stratum.original = strtoi(paste0(Trt, Bserostatus, Trialstage-1, Senior), base = 2))
   
-
-  # collapse due to empty cells
-  
-  # collapse Senior and non-Senior in Stage 2 Uganda, placebo
-  unique(subset(dat_proc, tps.stratum.nAb%in%c(30,40), c(tps.stratum.nAb, Trialstage, Bserostatus, Trt, Country, Senior))) 
-  unique(subset(dat_proc, tps.stratum.nAb%in%c(70,80), c(tps.stratum.nAb, Trialstage, Bserostatus, Trt, Country, Senior))) 
-  dat_proc$tps.stratum.nAb[dat_proc$tps.stratum.nAb %in% c(30,40)]=30
-  dat_proc$tps.stratum.nAb[dat_proc$tps.stratum.nAb %in% c(70,80)]=70
-  
-  # collapse Senior and non-Senior in Stage 2 NPL
-  unique(subset(dat_proc, tps.stratum.nAb%in%c(107,117), c(tps.stratum.nAb, Trialstage, Bserostatus, Trt, Country, Senior))) 
-  dat_proc$tps.stratum.nAb[dat_proc$tps.stratum.nAb %in% c(107,117)]=107
-  
-  # collapse Senior and non-Senior in Stage 2 Mex, Uganda, vaccine
-  unique(subset(dat_proc, tps.stratum.nAb%in%c(110,120), c(tps.stratum.nAb, Trialstage, Bserostatus, Trt, Country, Senior))) 
-  unique(subset(dat_proc, tps.stratum.nAb%in%c(109,119), c(tps.stratum.nAb, Trialstage, Bserostatus, Trt, Country, Senior))) 
-  dat_proc$tps.stratum.nAb[dat_proc$tps.stratum.nAb %in% c(110,120)]=110
-  dat_proc$tps.stratum.nAb[dat_proc$tps.stratum.nAb %in% c(109,119)]=109
-  
-  # collapse
-  dat_proc$tps.stratum.original[dat_proc$tps.stratum.original %in% c(10,11)]=10
 
 } else if (study_name=="COVAIL" ) {
-  trt_arms = unique(dat_proc$treatment_actual)
-  dat_proc$treatment_actual_id = match(dat_proc$treatment_actual, trt_arms)
-  dat_proc <- dat_proc %>% mutate(tps.stratum = treatment_actual_id)
+  dat_proc <- dat_proc %>% mutate(tps.stratum = arm)
   
 } else {
   dat_proc <- dat_proc %>% mutate(tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * max(demo.stratum,na.rm=T))
@@ -414,8 +389,7 @@ if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
 
 if (study_name == "VAT08") {
   max.tps=max(dat_proc$tps.stratum.nAb,na.rm=T) # 160
-  tps.cnt=max.tps+1
-  
+
   # nAb
   dat_proc$Wstratum.nAb = dat_proc$tps.stratum.nAb
   dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0 & Trialstage==1)]=max.tps+1
@@ -426,6 +400,27 @@ if (study_name == "VAT08") {
   dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1 & Trialstage==2)]=max.tps+6
   dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==2)]=max.tps+7
   dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==2)]=max.tps+8
+  
+  kp = with(dat_proc, Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43 >= 7)
+  
+  # check if there are empty ph2 cells
+  with(dat_proc[kp,], table(complete.cases(cbind(Bpseudoneutid50, Day43pseudoneutid50)), Wstratum.nAb))
+  
+  unique(subset(dat_proc, tps.stratum.nAb%in%c(66,76,130,140,150,160), c(tps.stratum.nAb, Trialstage, Bserostatus, Trt, cc, Senior))) 
+  unique(subset(dat_proc, tps.stratum.nAb%in%c(101,103,111,113), c(tps.stratum.nAb, Trialstage, Bserostatus, Trt, continent, Senior))) 
+  
+  with(dat_proc[kp & dat_proc$tps.stratum.nAb%in%c(66,76,130,140),], table(complete.cases(cbind(Bpseudoneutid50, Day43pseudoneutid50)), Wstratum.nAb))
+  
+  # collapse nonseninor (i) and senior strata (i+10) to remove empty ph2 cells
+  i=66;  dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 1, NN, Vacc, Kenya
+  i=130; dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 2, NN, Plac, Uganda
+  i=150; dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 2, NN, Vacc, Uganda
+  i=101; dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 2, N,  Vacc, Lat Am
+  i=103; dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 2, N,  Vacc, Asia
+  
+  # check again for empty cells
+  stopifnot(all(with(dat_proc[kp,], table(complete.cases(cbind(Bpseudoneutid50, Day43pseudoneutid50)), Wstratum.nAb))[2,]!=0))
+  
   
   # bAb
   dat_proc$Wstratum.bAb = dat_proc$tps.stratum.bAb
@@ -439,15 +434,15 @@ if (study_name == "VAT08") {
   dat_proc$Wstratum.bAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==2)]=max.tps+8
   
   # original
-  dat_proc$Wstratum.original = dat_proc$tps.stratum.original
-  dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0 & Trialstage==1)]=max.tps+1
-  dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1 & Trialstage==1)]=max.tps+2
-  dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==1)]=max.tps+3
-  dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==1)]=max.tps+4
-  dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0 & Trialstage==2)]=max.tps+5
-  dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1 & Trialstage==2)]=max.tps+6
-  dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==2)]=max.tps+7
-  dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==2)]=max.tps+8
+  # dat_proc$Wstratum.original = dat_proc$tps.stratum.original
+  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0 & Trialstage==1)]=max.tps+1
+  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1 & Trialstage==1)]=max.tps+2
+  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==1)]=max.tps+3
+  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==1)]=max.tps+4
+  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0 & Trialstage==2)]=max.tps+5
+  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1 & Trialstage==2)]=max.tps+6
+  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==2)]=max.tps+7
+  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==2)]=max.tps+8
   
 } else if (study_name=="COVAIL" ) {
   dat_proc$Wstratum = dat_proc$tps.stratum
@@ -509,7 +504,7 @@ if (study_name == "VAT08") {
   
 }  
 
-if (!is.null(dat_proc$Wstratum)) table(dat_proc$Wstratum)
+if (!is.null(dat_proc$Wstratum)) table(dat_proc$Wstratum) # variables may be named other than Wstratum
 
 
 
@@ -552,70 +547,6 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 } else stop("unknown study_name 7")
 
 
-# examine marker data missingness pattern
-# # sanofi
-# with(dat_proc, table(!is.na(BbindSpike), !is.na(Bpseudoneutid50)))
-# with(dat_proc, table(!is.na(Day22bindSpike), !is.na(Day22pseudoneutid50)))
-# with(dat_proc, table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
-# 
-# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==1 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
-# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==2 & Bserostatus==0), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
-# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
-# 
-# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==0 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==1 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
-# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==0 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==2 & Bserostatus==0), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
-# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==0 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
-# 
-# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD1hotdeck1==1 & min(EventTimeKnownLineageOmicronD22, EventTimeMissingLineageD22)<=180+21 & Trialstage==2 & Bserostatus==1), table(!is.na(Day22pseudoneutid50), !is.na(Day43pseudoneutid50)))
-# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD1hotdeck1==1 & min(EventTimeKnownLineageOmicronD22, EventTimeMissingLineageD22)<=180+21 & Trialstage==2 & Bserostatus==1), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike)))
-# 
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50)))
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50), SubcohortInd))
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike) & !is.na(BbindSpike), !is.na(Day43pseudoneutid50) & !is.na(Bpseudoneutid50), SubcohortInd))
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1 & Trt==1 & ph1.D43==1), table(!is.na(Day43bindSpike) & !is.na(BbindSpike), !is.na(Day43pseudoneutid50) & !is.na(Bpseudoneutid50), SubcohortInd))
-
-
-# with(subset(dat_proc, Trialstage==1), table(SubcohortInd, !is.na(Day43pseudoneutid50), Country))
-
-# 
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudoneutid50_B.1.351), !is.na(Day43pseudoneutid50)))
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudoneutid50_BA.1), !is.na(Day43pseudoneutid50)))
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudoneutid50_BA.2), !is.na(Day43pseudoneutid50)))
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day43pseudoneutid50_BA.4.BA.5), !is.na(Day43pseudoneutid50)))
-# 
-# 
-# #
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1 & Trt==1), table(SubcohortInd, !is.na(Day43pseudoneutid50), EventIndPrimaryD1))
-# 
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day22pseudoneutid50), !is.na(Day43pseudoneutid50)))
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Bpseudoneutid50), !is.na(Day22pseudoneutid50), !is.na(Day43pseudoneutid50)))
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike)))
-# with(subset(dat_proc, Perprotocol & EarlyinfectionD43==0 & Trt==1 & EventIndOmicronD43hotdeck1==1 & min(EventTimeKnownLineageOmicronD43, EventTimeMissingLineageD43)<=180 & Trialstage==2 & Bserostatus==1), table(!is.na(Day43bindSpike), !is.na(Day43pseudoneutid50), SubcohortInd))
-# 
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), mypairs(cbind(Day22pseudoneutid50, Day43pseudoneutid50)))
-# with(subset(dat_proc, Trialstage==2 & Bserostatus==1), table(!is.na(Day22bindSpike), !is.na(Day43bindSpike)))
-
-# par(mfrow=c(2,2))
-# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==1 & Bserostatus==0 & Trt==0), xlim=c(0,4), ylim=c(0,4), main="Placebo, Naive")
-# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==2 & Bserostatus==0 & Trt==0), add=T, col=2)
-# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==1 & Bserostatus==1 & Trt==0), xlim=c(0,4), ylim=c(0,4), main="Placebo, Non-Naive")
-# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==2 & Bserostatus==1 & Trt==0), add=T, col=2)
-# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==1 & Bserostatus==0 & Trt==1), xlim=c(0,4), ylim=c(0,4), main="Vaccine, Naive")
-# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==2 & Bserostatus==0 & Trt==1), add=T, col=2)
-# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==1 & Bserostatus==1 & Trt==1), xlim=c(0,4), ylim=c(0,4), main="Vaccine, Non-Naive")
-# corplot(Day43pseudoneutid50~Day43bindSpike, subset(dat_proc, Trialstage==2 & Bserostatus==1 & Trt==1), add=T, col=2)
-
-# # correlation among different markers
-# mypairs(subset(dat_proc, Trialstage==2 & Bserostatus==1)[,c("Day43"%.%assays[10:14])])
-# mypairs(subset(dat_proc, Trialstage==2 & Bserostatus==0)[,c("Day43"%.%assays[10:14])])
-# 
-# apply(subset(dat_proc, Trialstage==2 & Bserostatus==1)[,c("Day43"%.%assays[10:14])], 2, sd, na.rm=T)
-# apply(subset(dat_proc, Trialstage==2 & Bserostatus==0)[,c("Day43"%.%assays[10:14])], 2, sd, na.rm=T)
-# 
-# mypairs(subset(dat_proc, Trialstage==2 & Bserostatus==1)[,c("Day43"%.%assays[1:8])])
-# myboxplot(subset(dat_proc, Trialstage==2 & Bserostatus==1)[,c("Day43"%.%assays[1:8])])
-# apply(subset(dat_proc, Trialstage==2 & Bserostatus==1)[,c("Day43"%.%assays[1:8])], 2, sd, na.rm=T)
-
 
 # TwophasesampInd: be in the subcohort or a case after time point 1  &  have the necessary markers
 if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
@@ -633,6 +564,19 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
     
 } else if (study_name %in% c("VAT08")) {
 
+  # for nAb analyses
+  # require baseline but not time point 1
+  dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"nAb"]] = 
+    complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50']) #|
+  # complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike'])
+  
+  # with(dat_proc, table(!is.na(Day43pseudoneutid50), !is.na(Day43bindSpike)))
+  # with(dat_proc, table(!is.na(Bpseudoneutid50), !is.na(BbindSpike)))
+  
+  # same as tp2
+  dat_proc[["TwophasesampIndD"%.%timepoints[1]%.%"nAb"]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"nAb"]]
+  
+  
   # for bAb analyses and multivariate analyses
   # require baseline but not time point 1
   dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"bAb"]] = 
@@ -646,29 +590,16 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
   dat_proc[["TwophasesampIndD"%.%timepoints[1]%.%"bAb"]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"bAb"]]
 
     
-  # for nAb analyses
-  # require baseline but not time point 1
-  dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"nAb"]] = 
-     complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50']) #|
-     # complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike'])
-  
-  # with(dat_proc, table(!is.na(Day43pseudoneutid50), !is.na(Day43bindSpike)))
-  # with(dat_proc, table(!is.na(Bpseudoneutid50), !is.na(BbindSpike)))
-  
-  # same as tp2
-  dat_proc[["TwophasesampIndD"%.%timepoints[1]%.%"nAb"]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"nAb"]]
-  
-  
-  # the original
-  # require baseline but not time point 1
-  dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"original"]] =
-    with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-    (dat_proc$EventIndFirstInfectionD1==0 & complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike']) |
-       dat_proc$EventIndFirstInfectionD1==1 & (complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50']) |
-                                                 complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike'])))
-  
-  # same as tp2
-  dat_proc[["TwophasesampIndD"%.%timepoints[1]%.%"original"]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"original"]]
+  # # the original
+  # # require baseline but not time point 1
+  # dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"original"]] =
+  #   with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+  #   (dat_proc$EventIndFirstInfectionD1==0 & complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike']) |
+  #      dat_proc$EventIndFirstInfectionD1==1 & (complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50']) |
+  #                                                complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike'])))
+  # 
+  # # same as tp2
+  # dat_proc[["TwophasesampIndD"%.%timepoints[1]%.%"original"]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"original"]]
   
   
 } else if (study_name %in% c("AZD1222", "PROFISCOV")) {
@@ -704,7 +635,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
             complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)])
         
         # define TwophasesampIndD29variant, which is same as TwophasesampIndD29 except that for the non-cases, it is limited to a subset with variant ID50
-        # need this anymore b/c even though we impute, for example, Beta ID50 for non-Beta cases in RSA, not all non-cases have variant ID50s
+        # need this b/c even though we impute, for example, Beta ID50 for non-Beta cases in RSA, not all non-cases have variant ID50s
         if (TRIAL=="janssen_partA_VL"){
           # an indicator for non-cases in the cohort
           select = with(dat_proc, SubcohortInd & (is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0))
@@ -734,71 +665,86 @@ if (TRIAL=='vat08_combined') {
   for (tp in rev(timepoints)) { # rev is just so that digest passes
     
     # nAb
-    tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
-    wts_table <- with(dat_proc[tmp,], table(Wstratum.nAb, get("TwophasesampIndD"%.%tp%.%"nAb")))
+    kp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
+    
+    # # for correlates studies, filter out 
+    # # stage 1 naive and 
+    # # countries based on lack of cases in both vacc and plac arms
+    # # country 4 for stage 2 nnaive
+    # # country 5, 6 for stage 1 nnaive
+    # # country 2, 4 for stage 2 naive
+    # kp = kp & with(dat_proc, 
+    #   !(
+    #         Trialstage==2 & Bserostatus==1 & Country %in% c(4)   | 
+    #         Trialstage==1 & Bserostatus==1 & Country %in% c(5,6) |
+    #         Trialstage==2 & Bserostatus==0 & Country %in% c(2,4) |
+    #         Trialstage==1 & Bserostatus==0 
+    #   ) 
+    # )
+    
+    wts_table <- with(dat_proc[kp,], table(Wstratum.nAb, get("TwophasesampIndD"%.%tp%.%"nAb")))
     print(wts_table)
     stopifnot(all(wts_table[,2]!=0))
+
     wts_norm <- rowSums(wts_table) / wts_table[, 2]
     dat_proc[["wt.D"%.%tp%.%".nAb"]] <- wts_norm[dat_proc$Wstratum.nAb %.% ""]
     # the step above assigns weights for some subjects outside ph1. the next step makes them NA
-    dat_proc[["wt.D"%.%tp%.%".nAb"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), 
-                                              dat_proc[["wt.D"%.%tp%.%".nAb"]], NA) 
+    dat_proc[["wt.D"%.%tp%.%".nAb"]] = ifelse(kp, dat_proc[["wt.D"%.%tp%.%".nAb"]], NA) 
     dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%".nAb"]])
     dat_proc[["ph2.D"%.%tp%.%".nAb"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]]
     
     assertthat::assert_that(
-      all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum.nAb))[["wt.D"%.%tp%.%'.nAb']])),
+      all(!is.na(subset(dat_proc, kp & !is.na(Wstratum.nAb))[["wt.D"%.%tp%.%'.nAb']])),
       msg = "missing wt.D for D analyses ph1 subjects")
   
     
-    # bAb
-    tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
-    wts_table <- with(dat_proc[tmp,], table(Wstratum.bAb, get("TwophasesampIndD"%.%tp%.%"bAb")))
-    print(wts_table)
-    stopifnot(all(wts_table[,2]!=0))
-    wts_norm <- rowSums(wts_table) / wts_table[, 2]
-    dat_proc[["wt.D"%.%tp%.%".bAb"]] <- wts_norm[dat_proc$Wstratum.bAb %.% ""]
-    # the step above assigns weights for some subjects outside ph1. the next step makes them NA
-    dat_proc[["wt.D"%.%tp%.%".bAb"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), 
-                                              dat_proc[["wt.D"%.%tp%.%".bAb"]], NA) 
-    dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%".bAb"]])
-    dat_proc[["ph2.D"%.%tp%.%".bAb"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"bAb"]]
-    
-    assertthat::assert_that(
-      all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum.bAb))[["wt.D"%.%tp%.%'.bAb']])),
-      msg = "missing wt.D for D analyses ph1 subjects")
-  
-    stopifnot(all(is.na(dat_proc[["wt.D"%.%tp%.%".bAb"]])==is.na(dat_proc[["wt.D"%.%tp%.%".nAb"]])))
-    
-    
-    # original
-    tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
-    wts_table <- with(dat_proc[tmp,], table(Wstratum.original, get("TwophasesampIndD"%.%tp%.%"original")))
-    print(wts_table)
-    stopifnot(all(wts_table[,2]!=0))
-    wts_norm <- rowSums(wts_table) / wts_table[, 2]
-    dat_proc[["wt.D"%.%tp%.%".original"]] <- wts_norm[dat_proc$Wstratum.original %.% ""]
-    # the step above assigns weights for some subjects outside ph1. the next step makes them NA
-    dat_proc[["wt.D"%.%tp%.%".original"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), 
-                                                   dat_proc[["wt.D"%.%tp%.%".original"]], NA) 
-    dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%".original"]])
-    dat_proc[["ph2.D"%.%tp%.%".original"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"original"]]
-    
-    
-    # original2
-    tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
-    dat_proc$Wstratum.original2 = dat_proc$Wstratum.nAb
-    wts_table <- with(dat_proc[tmp,], table(Wstratum.original2, get("TwophasesampIndD"%.%tp%.%"original")))
-    print(wts_table)
-    
+    # # bAb
+    # kp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
+    # wts_table <- with(dat_proc[kp,], table(Wstratum.bAb, get("TwophasesampIndD"%.%tp%.%"bAb")))
+    # print(wts_table)
     # stopifnot(all(wts_table[,2]!=0))
-    wts_norm <- rowSums(wts_table) / wts_table[, 2]
-    dat_proc[["wt.D"%.%tp%.%".original2"]] <- wts_norm[dat_proc$Wstratum.nAb %.% ""]
-    # the step above assigns weights for some subjects outside ph1. the next step makes them NA
-    dat_proc[["wt.D"%.%tp%.%".original2"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), 
-                                                   dat_proc[["wt.D"%.%tp%.%".original2"]], NA) 
-    dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%".original2"]])
-    dat_proc[["ph2.D"%.%tp%.%".original2"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"original"]]
+    # wts_norm <- rowSums(wts_table) / wts_table[, 2]
+    # dat_proc[["wt.D"%.%tp%.%".bAb"]] <- wts_norm[dat_proc$Wstratum.bAb %.% ""]
+    # # the step above assigns weights for some subjects outside ph1. the next step makes them NA
+    # dat_proc[["wt.D"%.%tp%.%".bAb"]] = ifelse(kp, dat_proc[["wt.D"%.%tp%.%".bAb"]], NA) 
+    # dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%".bAb"]])
+    # dat_proc[["ph2.D"%.%tp%.%".bAb"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"bAb"]]
+    # 
+    # assertthat::assert_that(
+    #   all(!is.na(subset(dat_proc, kp & !is.na(Wstratum.bAb))[["wt.D"%.%tp%.%'.bAb']])),
+    #   msg = "missing wt.D for D analyses ph1 subjects")
+    # 
+    # stopifnot(all(is.na(dat_proc[["wt.D"%.%tp%.%".bAb"]])==is.na(dat_proc[["wt.D"%.%tp%.%".nAb"]])))
+    
+    
+    # # original
+    # tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
+    # wts_table <- with(dat_proc[tmp,], table(Wstratum.original, get("TwophasesampIndD"%.%tp%.%"original")))
+    # print(wts_table)
+    # stopifnot(all(wts_table[,2]!=0))
+    # wts_norm <- rowSums(wts_table) / wts_table[, 2]
+    # dat_proc[["wt.D"%.%tp%.%".original"]] <- wts_norm[dat_proc$Wstratum.original %.% ""]
+    # # the step above assigns weights for some subjects outside ph1. the next step makes them NA
+    # dat_proc[["wt.D"%.%tp%.%".original"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), 
+    #                                                dat_proc[["wt.D"%.%tp%.%".original"]], NA) 
+    # dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%".original"]])
+    # dat_proc[["ph2.D"%.%tp%.%".original"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"original"]]
+    # 
+    # 
+    # # original2
+    # tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
+    # dat_proc$Wstratum.original2 = dat_proc$Wstratum.nAb
+    # wts_table <- with(dat_proc[tmp,], table(Wstratum.original2, get("TwophasesampIndD"%.%tp%.%"original")))
+    # print(wts_table)
+    # 
+    # # stopifnot(all(wts_table[,2]!=0))
+    # wts_norm <- rowSums(wts_table) / wts_table[, 2]
+    # dat_proc[["wt.D"%.%tp%.%".original2"]] <- wts_norm[dat_proc$Wstratum.nAb %.% ""]
+    # # the step above assigns weights for some subjects outside ph1. the next step makes them NA
+    # dat_proc[["wt.D"%.%tp%.%".original2"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), 
+    #                                                dat_proc[["wt.D"%.%tp%.%".original2"]], NA) 
+    # dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%".original2"]])
+    # dat_proc[["ph2.D"%.%tp%.%".original2"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"original"]]
   }
   
   
@@ -979,7 +925,75 @@ if (study_name%in%c("COVAIL")) {
   
   
 } else if(study_name%in%c("VAT08")) {
-  # do nothing for now
+
+  # impute D22 and D43 and Baseline at the same time
+  n.imp <- 1
+  
+  dat.tmp.impute <- subset(dat_proc, TwophasesampIndD43.nAb == 1)
+  
+  if (TRIAL=="janssen_partA_VL") {
+    # assays include many more assays than what are needed here
+    imp.markers=c(outer(c("B", "Day"%.%tp), c("bindSpike", "bindRBD", "pseudoneutid50"), "%.%"))
+    
+  } else {
+    if(two_marker_timepoints) {
+      imp.markers=c(outer(c("B", if(tp==timepoints[2]) "Day"%.%timepoints else "Day"%.%tp), assays, "%.%"))
+    } else {
+      imp.markers=c(outer(c("B", "Day"%.%tp), assays, "%.%"))
+    }
+    # mdw markers are not imputed
+    imp.markers=imp.markers[!endsWith(imp.markers, "_mdw")]
+  }
+  
+  for (trt in unique(dat_proc$Trt)) {
+    for (sero in unique(dat_proc$Bserostatus)) {    
+      
+      if (study_name=="VAT08") {
+        # further separate by trial stage
+        for (stage in unique(dat_proc$Trialstage)) {
+          imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero & Trialstage==stage) %>% select(all_of(imp.markers))         
+          if(any(is.na(imp))) {
+            # if there is no variability, fill in NA with constant values
+            for (a in names(imp)) {
+              if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
+            }            
+            # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+            imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+            dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero & dat.tmp.impute$Trialstage == stage, imp.markers] <- mice::complete(imp, action = 1)
+          } 
+        }
+        
+      } else {
+        #summary(subset(dat.tmp.impute, Trt == 1 & Bserostatus==0)[imp.markers])      
+        imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero) %>% select(all_of(imp.markers))         
+        if(any(is.na(imp))) {
+          # if there is no variability, fill in NA with constant values
+          for (a in names(imp)) {
+            if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
+          }            
+          # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+          imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+          dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero , imp.markers] <- mice::complete(imp, action = 1)
+        }                
+      }
+    }
+  }
+  
+  # missing markers imputed properly?
+  assertthat::assert_that(
+    all(complete.cases(dat.tmp.impute[, imp.markers])),
+    msg = "missing markers imputed properly?"
+  )    
+  
+  # populate dat_proc imp.markers with the imputed values
+  dat_proc[dat_proc[["TwophasesampIndD"%.%tp]]==1, imp.markers] <-
+    dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD"%.%tp]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+  
+  assertthat::assert_that(
+    all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD"%.%tp]] == 1, imp.markers])),
+    msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+  )
+  
   
 } else {
   # loop through the time points
@@ -1060,6 +1074,7 @@ if (study_name%in%c("COVAIL")) {
   }
 }
 
+# in addition
 # for janssen_partA_VL, impute 10 copies of ID50 variant markers
 if (TRIAL=="janssen_partA_VL") {
   
@@ -1100,48 +1115,6 @@ if (TRIAL=="janssen_partA_VL") {
   )
   
   
-} else if (TRIAL=='vat08_combined') {
-  # impute again for nAb markers among the non-cases without bAb measurements
-  for (tp in rev(timepoints)) {    
-    n.imp <- 1
-    
-    imp.markers=c(outer(c("B", if(tp==timepoints[2]) "Day"%.%timepoints else "Day"%.%tp), 
-                        assays[startsWith(assays, "pseudoneutid50") & !endsWith(assays, "_mdw")], "%.%"))
-    
-    dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD"%.%tp%.%"nAb") == 1)
-    
-    for (trt in unique(dat_proc$Trt)) {
-      for (sero in unique(dat_proc$Bserostatus)) {    
-        for (stage in unique(dat_proc$Trialstage)) {
-          imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero & Trialstage==stage) %>% select(all_of(imp.markers))         
-          if(any(is.na(imp))) {
-            # if there is no variability, fill in NA with constant values
-            for (a in names(imp)) {
-              if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
-            }            
-            # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
-            imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
-            dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero & dat.tmp.impute$Trialstage == stage, imp.markers] <- mice::complete(imp, action = 1)
-          } 
-        }
-      }
-    }
-    
-    # missing markers imputed properly?
-    assertthat::assert_that(
-      all(complete.cases(dat.tmp.impute[, imp.markers])),
-      msg = "missing markers imputed properly?"
-    )    
-    
-    # populate dat_proc imp.markers with the imputed values
-    dat_proc[dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]]==1, imp.markers] <-
-      dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
-    
-    assertthat::assert_that(
-      all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]] == 1, imp.markers])),
-      msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
-    )
-  }
   
 }
   
@@ -1276,26 +1249,33 @@ if(study_name == "COVAIL") {
 # thus no need to do, say, lloq censoring
 # but there is a need to do uloq censoring before computing delta
 
-# mdw scores delta are computed as weighted aveage of delta, not as delta of mdw
-# assays1 = assays.includeN[!endsWith(assays.includeN, "_mdw")]
+if (TRIAL %in% c("janssen_partA_VL")) {
+  # skipping b/c there is no baseline data
+  
+} else {
 
-assays1=assays
-
-tmp=list()
-for (a in assays1) {
-  for (t in c("B", paste0("Day", config$timepoints)) ) {
-    tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] > log10(uloqs[a]), log10(uloqs[a]), dat_proc[[t %.% a]])
+  assays1=assays
+  # mdw scores delta are computed as weighted average of delta, not as delta of mdw
+  # assays1 = assays.includeN[!endsWith(assays.includeN, "_mdw")]
+  
+  tmp=list()
+  for (a in assays1) {
+    for (t in c("B", paste0("Day", config$timepoints)) ) {
+      tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] > log10(uloqs[a]), log10(uloqs[a]), dat_proc[[t %.% a]])
+    }
   }
-}
-tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
-
-for (tp in rev(timepoints)) {
+  tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
+  
+  for (tp in rev(timepoints)) {
     dat_proc["Delta"%.%tp%.%"overB" %.% assays1] <- tmp["Day"%.%tp %.% assays1] - tmp["B" %.% assays1]
-}   
-
-if(two_marker_timepoints) {
+  }   
+  
+  if(two_marker_timepoints) {
     dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays1] <- tmp["Day"%.% timepoints[2]%.% assays1] - tmp["Day"%.%timepoints[1] %.% assays1]
+  }
+  
 }
+
 
 
 

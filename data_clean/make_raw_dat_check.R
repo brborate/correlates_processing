@@ -1,4 +1,4 @@
-#Sys.setenv(TRIAL = "janssen_pooled_partA_VL")
+#Sys.setenv(TRIAL = "janssen_partA_VL")
 
 source(here::here("_common.R"))
 
@@ -115,3 +115,4 @@ if(two_marker_timepoints) {
 
 
 }
+
