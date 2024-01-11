@@ -55,6 +55,8 @@ tmp=subset(dat_proc, EventIndPrimaryAnyHPV==1, c(EligibilityorinitialsamplingTim
 # define strata variables
 ###############################################################################
 
+dat_proc$single.dose = ifelse(dat_proc$TrtGroup=='Single-dose', 1, 0)
+
 
 dat_proc$Senior = as.integer(dat_proc$Age>=15)
   
@@ -224,9 +226,9 @@ write.csv(mdw.weights, file = here("data_clean", "csv", TRIAL%.%"_mdw_weights_nA
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         id27hpv = "332781220e74ea3a013dc44e7b85d91e", 
+         id27hpv = "5555f35b83ca193569ed5bdd3f0afbdc", 
          NA)    
-    if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "Warning: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%'  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')    
+    if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "---------  Warning: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%'  ------------')    
 }
 
 data_name = paste0(TRIAL, "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv")

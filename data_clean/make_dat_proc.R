@@ -19,6 +19,7 @@ library(mdw)
 begin=Sys.time()
 
 
+
 ########################################################################################################
 # read mapped data with risk score added
 
@@ -41,7 +42,6 @@ if (TRIAL=="janssen_partA_VL") {
   dat_proc$EventIndPrimaryHasVLD29[is.na(dat_proc$seq1.log10vl) & !is.na(dat_proc$EventIndPrimaryHasVLD29)] = 0 # if EventIndPrimaryHasVLD29 is NA, this will remain NA
   dat_proc$EventIndPrimaryD29 = dat_proc$EventIndPrimaryHasVLD29
   # EventTimePrimaryD29 is set to EventIndPrimaryIncludeNotMolecConfirmedD29 in preprocess()
-  
   
   
  } else if (study_name=="VAT08") {
@@ -70,10 +70,6 @@ if (TRIAL=="janssen_partA_VL") {
    dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
    
    # ptids with missing Bserostatus already filtered out in preprocess
-   
-   # Trialstage==2 & Bserostatus==0 & Country %in% c(10 )  # Uganda, naive, no ph2 cases in the trt arm
-   
-   # Trialstage==2 & Bserostatus==1 & Country %in% c(10 ) & Age<60 # if we only use subchortind==1 this need to be filtered out due to lack of ph2 non-cases
    
    # define event indicator and event time variables based on seq1.variant.hotdeck1 etc
    for (t in c(1,22,43)) {
@@ -222,45 +218,6 @@ if(TRUE) { # use this to navigate faster in Rstudio
 }
 
 
-# check coding via tables
-#table(dat_proc$race, useNA = "ifany")
-#table(dat_proc$WhiteNonHispanic, useNA = "ifany")
-#table(dat_proc$race, dat_proc$WhiteNonHispanic, useNA = "ifany")
-
-
-## URMforsubcohortsampling is defined in data_raw, the following is a check
-#dat_proc$URMforsubcohortsampling <- NA
-#dat_proc$URMforsubcohortsampling[dat_proc$Black==1] <- 1
-#dat_proc$URMforsubcohortsampling[dat_proc$ethnicity=="Hispanic or Latino"] <- 1
-#dat_proc$URMforsubcohortsampling[dat_proc$NatAmer==1] <- 1
-#dat_proc$URMforsubcohortsampling[dat_proc$PacIsl==1] <- 1
-#dat_proc$URMforsubcohortsampling[dat_proc$Asian==1 & dat_proc$EthnicityHispanic==0 & dat_proc$EthnicityUnknown==0 & dat_proc$EthnicityNotreported==0] <- 0
-#dat_proc$URMforsubcohortsampling[dat_proc$Multiracial==1 & dat_proc$EthnicityHispanic==0 & dat_proc$EthnicityUnknown==0 & dat_proc$EthnicityNotreported==0] <- 0
-#dat_proc$URMforsubcohortsampling[dat_proc$Other==1 & dat_proc$EthnicityHispanic==0 & dat_proc$EthnicityUnknown==0 & dat_proc$EthnicityNotreported==0] <- 0
-## Add observed White Non Hispanic:
-#dat_proc$URMforsubcohortsampling[dat_proc$EthnicityHispanic==0 & dat_proc$EthnicityUnknown==0 & dat_proc$EthnicityNotreported==0 & dat_proc$Black==0 & dat_proc$Asian==0 & dat_proc$NatAmer==0 & dat_proc$PacIsl==0 &
-#dat_proc$Multiracial==0 & dat_proc$Other==0 & dat_proc$Notreported==0 & dat_proc$Unknown==0] <- 0
-#
-#
-## nonURM=1 IF race is White AND ethnicity is not Hispanic
-#dat_proc$nonURM <- NA
-#dat_proc$nonURM <-
-#  ifelse(dat_proc$race %in% c("White","Asian","Other","Multiracial") &
-#    dat_proc$ethnicity == "Not Hispanic or Latino", 1,
-#  dat_proc$nonURM
-#  )
-## nonURM=0 IF race is not "white or unknown" OR ethnicity is Hispanic
-#dat_proc$nonURM <-
-#  ifelse(!dat_proc$race %in% c("White","Asian","Other","Multiracial","Not reported and unknown") |
-#    dat_proc$ethnicity == "Hispanic or Latino", 0,
-#    dat_proc$nonURM
-#  )
-#dat_proc$URM.2 = 1-dat_proc$nonURM
-#
-#with(dat_proc, table(URMforsubcohortsampling, URM.2, useNA="ifany"))
-
-
-
 
 ###############################################################################
 # stratum variables
@@ -280,7 +237,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
   dat_proc$Bstratum =  with(dat_proc, Senior + 1)
   
 } else if (study_name %in% c("VAT08")) {
-  dat_proc$Bstratum =  1 #with(dat_proc, Senior + 1)
+  dat_proc$Bstratum =  1 
   
 } else if (study_name %in% c("PROFISCOV", "COVAIL")) {
   dat_proc$Bstratum = 1 # there are no demographics stratum for subcohort sampling
@@ -289,23 +246,13 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 
 names(Bstratum.labels) <- Bstratum.labels
 
-# moderna check
-#with(dat_proc, table(Bstratum, Senior, HighRiskInd))
 
-# vat08 check
-# with(subset(dat_proc, EarlyendpointD43==0 & Perprotocol==1 & EventTimePrimaryD43 >= 7),
-#      table(!is.na(Day43pseudoneutid50), Country, Senior, Trialstage))
-# with(subset(dat_proc, EarlyendpointD22==0 & Perprotocol==1 & EventTimePrimaryD22 >= 7),
-#      table(!is.na(Day22pseudoneutid50), Country, Senior, Trialstage))
-# 
-# with(subset(dat_proc, Trialstage==2), table(EventIndFirstInfectionD22, Country, Trt))
-     
-     
 # demo.stratum: correlates sampling strata
 # Moderna: 1 ~ 6 defines the 6 baseline strata within trt/serostatus
 # may have NA b/c URMforsubcohortsampling may be NA
 if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$demo.stratum = with(dat_proc, ifelse (URMforsubcohortsampling==1, ifelse(Senior, 1, ifelse(HighRiskInd == 1, 2, 3)), 3+ifelse(Senior, 1, ifelse(HighRiskInd == 1, 2, 3))))
+    
     
 } else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     # first step, stratify by age and high risk
@@ -320,9 +267,11 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
         all(!with(dat_proc, xor(is.na(demo.stratum),  Region==0 & is.na(URMforsubcohortsampling) ))),
         msg = "demo.stratum is na if and only if URM is NA and north america")
     
+    
 } else if (study_name=="PREVENT19" ) {
     dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior, HighRiskInd), base = 2)) + 1
     dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 9, 10))) # 0 is US
+    
         
 } else if (study_name=="AZD1222" ) {
 #    US, <65, non-Minority
@@ -333,19 +282,18 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 #    non-US, >65
     dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior), base = 2)) + 1
     dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(!Senior, 5, 6))) # 2 is US
+    
         
 } else if (study_name=="VAT08" ) {
     nCountries = 10 # 10 is easier to work with than length(unique(dat_proc$Country))
     # use continent for naive and country for nnaive
     dat_proc$demo.stratum = ifelse(dat_proc$Bserostatus==0, dat_proc$continent, dat_proc$Country)
     
-    # in this version make all Senior one stratum, assign 5 as its value b/c Japan is filtered out from stage 1 and not part of stage 2
-    dat_proc$demo.stratum2 = dat_proc$demo.stratum
-    dat_proc$demo.stratum2[dat_proc$Senior==1] = 5
-    
+
 } else if (study_name %in% c("PROFISCOV", "COVAIL") ) {
     dat_proc$demo.stratum = 1 # # there are no demographics stratum for subcohort sampling
-    
+
+        
 } else stop("unknown study_name 5")  
   
 # names(demo.stratum.labels) <- demo.stratum.labels
@@ -357,10 +305,9 @@ with(dat_proc, table(demo.stratum))
 ###########################################
 # tps stratum, used in tps regression and to define Wstratum
 if (study_name=="VAT08" ) {
-  # include Senior in the list of stratification variables, user for nAb markers
+  # for nAb markers. include Senior in the list of stratification variables
   dat_proc <- dat_proc %>% mutate(tps.stratum.nAb = demo.stratum + 
                             strtoi(paste0(Trialstage-1, Bserostatus, Trt, Senior), base = 2) * nCountries)
-  
   
   # not include Senior in the list of stratification variables, used for bAb markers
   dat_proc <- dat_proc %>% mutate(tps.stratum.bAb = demo.stratum + strtoi(paste0(Trt, Bserostatus, Trialstage-1), base = 2) * max(demo.stratum,na.rm=T))
@@ -389,6 +336,7 @@ if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
 
 if (study_name == "VAT08") {
   max.tps=max(dat_proc$tps.stratum.nAb,na.rm=T) # 160
+  myprint(max.tps)
 
   # nAb
   dat_proc$Wstratum.nAb = dat_proc$tps.stratum.nAb
@@ -401,6 +349,7 @@ if (study_name == "VAT08") {
   dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==2)]=max.tps+7
   dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==2)]=max.tps+8
   
+  # ph1.d43 indicator
   kp = with(dat_proc, Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43 >= 7)
   
   # check if there are empty ph2 cells
@@ -929,7 +878,7 @@ if (study_name%in%c("COVAIL")) {
   # impute D22 and D43 and Baseline at the same time
   n.imp <- 1
   
-  dat.tmp.impute <- subset(dat_proc, TwophasesampIndD43.nAb == 1)
+  dat.tmp.impute <- subset(dat_proc, TwophasesampIndD43nAb == 1)
   
   if (TRIAL=="janssen_partA_VL") {
     # assays include many more assays than what are needed here
