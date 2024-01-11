@@ -349,27 +349,6 @@ if (study_name == "VAT08") {
   dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==2)]=max.tps+7
   dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==2)]=max.tps+8
   
-  # ph1.d43 indicator
-  kp = with(dat_proc, Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43 >= 7)
-  
-  # check if there are empty ph2 cells
-  with(dat_proc[kp,], table(complete.cases(cbind(Bpseudoneutid50, Day43pseudoneutid50)), Wstratum.nAb))
-  
-  unique(subset(dat_proc, tps.stratum.nAb%in%c(66,76,130,140,150,160), c(tps.stratum.nAb, Trialstage, Bserostatus, Trt, cc, Senior))) 
-  unique(subset(dat_proc, tps.stratum.nAb%in%c(101,103,111,113), c(tps.stratum.nAb, Trialstage, Bserostatus, Trt, continent, Senior))) 
-  
-  with(dat_proc[kp & dat_proc$tps.stratum.nAb%in%c(66,76,130,140),], table(complete.cases(cbind(Bpseudoneutid50, Day43pseudoneutid50)), Wstratum.nAb))
-  
-  # collapse nonseninor (i) and senior strata (i+10) to remove empty ph2 cells
-  i=66;  dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 1, NN, Vacc, Kenya
-  i=130; dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 2, NN, Plac, Uganda
-  i=150; dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 2, NN, Vacc, Uganda
-  i=101; dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 2, N,  Vacc, Lat Am
-  i=103; dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 2, N,  Vacc, Asia
-  
-  # check again for empty cells
-  stopifnot(all(with(dat_proc[kp,], table(complete.cases(cbind(Bpseudoneutid50, Day43pseudoneutid50)), Wstratum.nAb))[2,]!=0))
-  
   
   # bAb
   dat_proc$Wstratum.bAb = dat_proc$tps.stratum.bAb
@@ -483,16 +462,19 @@ if (study_name %in% c("COVE", "MockCOVE")) {
       must_have_assays <- c("bindSpike")
   } else stop("need to define must_have_assays")
   
+  
 } else if (study_name %in% c("PROFISCOV")) {
   if (TRIAL=="profiscov") {
       must_have_assays <- c("bindSpike")
   } else if (TRIAL=="profiscov_lvmn") {
       must_have_assays <- c("bindSpike")
   } else stop("need to define must_have_assays")
+  
     
 } else if (study_name %in% c("VAT08", "COVAIL")) {
   must_have_assays <- NULL
 
+  
 } else stop("unknown study_name 7")
 
 
@@ -513,19 +495,34 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
     
 } else if (study_name %in% c("VAT08")) {
 
-  # for nAb analyses
-  # require baseline but not time point 1
-  dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"nAb"]] = 
-    complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'pseudoneutid50']) #|
-  # complete.cases(dat_proc[,c("B", "Day"%.%timepoints[2])%.%'bindSpike'])
+  # for nAb analyses, require baseline but not time point 1
   
-  # with(dat_proc, table(!is.na(Day43pseudoneutid50), !is.na(Day43bindSpike)))
-  # with(dat_proc, table(!is.na(Bpseudoneutid50), !is.na(BbindSpike)))
+  # baseline any nAb
+  dat_proc$baseline.nAb = with(dat_proc, 
+             !is.na(Bpseudoneutid50) | 
+               !is.na(Bpseudoneutid50_B.1.351) | 
+               !is.na(Bpseudoneutid50_BA.1) | 
+               !is.na(Bpseudoneutid50_BA.2) | 
+               !is.na(Bpseudoneutid50_BA.4.5)) 
+  # D43 any nAb
+  dat_proc$D43.nAb = with(dat_proc, 
+             !is.na(Day43pseudoneutid50) | 
+               !is.na(Day43pseudoneutid50_B.1.351) | 
+               !is.na(Day43pseudoneutid50_BA.1) | 
+               !is.na(Day43pseudoneutid50_BA.2) | 
+               !is.na(Day43pseudoneutid50_BA.4.5)) 
+  # D43 any nAb
+  dat_proc$D22.nAb = with(dat_proc, 
+             !is.na(Day22pseudoneutid50) | 
+               !is.na(Day22pseudoneutid50_B.1.351) | 
+               !is.na(Day22pseudoneutid50_BA.1) | 
+               !is.na(Day22pseudoneutid50_BA.2) | 
+               !is.na(Day22pseudoneutid50_BA.4.5)) 
   
-  # same as tp2
-  dat_proc[["TwophasesampIndD"%.%timepoints[1]%.%"nAb"]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"nAb"]]
+  dat_proc[["TwophasesampIndD43nAb"]] = dat_proc$baseline.nAb & dat_proc$D43.nAb
+  dat_proc[["TwophasesampIndD22nAb"]] = dat_proc$baseline.nAb & dat_proc$D22.nAb
   
-  
+
   # for bAb analyses and multivariate analyses
   # require baseline but not time point 1
   dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"bAb"]] = 
@@ -634,6 +631,32 @@ if (TRIAL=='vat08_combined') {
     wts_table <- with(dat_proc[kp,], table(Wstratum.nAb, get("TwophasesampIndD"%.%tp%.%"nAb")))
     print(wts_table)
     stopifnot(all(wts_table[,2]!=0))
+    
+    
+    # ph1.d43 indicator
+    kp = with(dat_proc, Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43 >= 7)
+    
+    # check if there are empty ph2 cells
+    with(dat_proc[kp,], table(complete.cases(cbind(Bpseudoneutid50, Day43pseudoneutid50)), Wstratum.nAb))
+    
+    unique(subset(dat_proc, tps.stratum.nAb%in%c(66,76,130,140,150,160), c(tps.stratum.nAb, Trialstage, Bserostatus, Trt, cc, Senior))) 
+    unique(subset(dat_proc, tps.stratum.nAb%in%c(101,103,111,113), c(tps.stratum.nAb, Trialstage, Bserostatus, Trt, continent, Senior))) 
+    
+    with(dat_proc[kp & dat_proc$tps.stratum.nAb%in%c(66,76,130,140),], table(complete.cases(cbind(Bpseudoneutid50, Day43pseudoneutid50)), Wstratum.nAb))
+    
+    # collapse nonseninor (i) and senior strata (i+10) to remove empty ph2 cells
+    i=66;  dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 1, NN, Vacc, Kenya
+    i=130; dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 2, NN, Plac, Uganda
+    i=150; dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 2, NN, Vacc, Uganda
+    i=101; dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 2, N,  Vacc, Lat Am
+    i=103; dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb %in% c(i,i+10)]=i   # Stage 2, N,  Vacc, Asia
+    
+    # check again for empty cells
+    stopifnot(all(with(dat_proc[kp,], table(complete.cases(cbind(Bpseudoneutid50, Day43pseudoneutid50)), Wstratum.nAb))[2,]!=0))
+    
+    # note that since we merge Wstratum but not tps.stratum. tsp.stratum is not in sync with Wstratum
+    
+    
 
     wts_norm <- rowSums(wts_table) / wts_table[, 2]
     dat_proc[["wt.D"%.%tp%.%".nAb"]] <- wts_norm[dat_proc$Wstratum.nAb %.% ""]
