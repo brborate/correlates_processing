@@ -508,6 +508,10 @@ if(any(sapply(c("COVE", "ENSEMBLE"), grepl, studyName_for_report))){
   new_colnames = c("Non-Cases", paste0("Post-", dayrscore, "-Cases"))
   footnote1 <- paste0("Post-Day ", dayrscore, " Cases: COVID-19 primary endpoints that occur at least ", rscorestart, " after the ", dayrscore, " visit.")
   eval.footnote1.table = TRUE
+}else if(any(sapply(c("COVAIL"), grepl, studyName_for_report))){
+  new_colnames = c("Non-Cases", paste0("Post-", dayrscore, "-Cases"))
+  footnote1 <- paste0("Post-Day ", dayrscore, " Cases: COVID-19 primary endpoints that occur at least ", rscorestart, " after the ", dayrscore, " visit.")
+  eval.footnote1.table = TRUE
 }else{
   new_colnames = c("Non-Cases", "Post-Enrollment Cases")
   footnote1 <- "Post-enrollment Cases: All COVID-19 primary endpoints that occur after enrollment (Day 1 in study)."
