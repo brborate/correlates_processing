@@ -101,6 +101,9 @@ if(studyName_for_report %in% c("COVE", "MockCOVE")){
   rscorestart = "1 day"
   dayrauc = "Day 29"
   aucstart = "1 day"
+} else if (studyName_for_report %in% c("COVAIL")){
+  dayrscore = "D15"
+  rscorestart = "7 days"
 } else if (!any(sapply(c("COVE", "ENSEMBLE"), grepl, studyName_for_report))){
   dayrscore = "enrollment"
   rscorestart = "1 day"
@@ -364,7 +367,7 @@ cvsl_args <- read.csv(here::here("riskscore_baseline", "output", Sys.getenv("TRI
 cases_placebo <- cvsl_args %>% filter(Argument == "Cases/Total Subjects in placebo group (%)") 
 
 if(studyName_for_report == "COVAIL"){
-    cases_placebo$Argument <- sub("placebo group", "COVAIL trial", cases_placebo$Argument)
+    cases_placebo$Argument <- sub("placebo group", "per-protocol cohort", cases_placebo$Argument)
 }
 
 cvsl_args %>%
@@ -388,18 +391,11 @@ cvsl_args %>%
 \clearpage
 
 
+```{r, echo=FALSE, out.width="99%", out.height="120%", fig.cap= paste0("Cross-validated AUC (95\\% CI) of algorithms for predicting COVID-19 disease status starting ", rscorestart, " after ", dayrscore, ". CV-AUCs were computed using data from all per-protocol participants.")}
 
-```{r, echo=FALSE, out.width="99%", out.height="120%", fig.cap= paste0("Cross-validated AUC (95\\% CI) of algorithms for predicting COVID-19 disease status starting ", rscorestart, " after ", dayrscore, ". CV-AUCs were computed using only data from the placebo arm.")}
-
-# if(Sys.getenv("TRIAL") == "covail"){
-#   knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_cvaucs.png"))
-# } else {
-  knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_placebo_cvaucs.png"))
-# }
+knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "risk_placebo_cvaucs.png"))
 
 ```
-
-
 
 \end{landscape}
 
@@ -416,7 +412,7 @@ cvsl_args %>%
 \clearpage
 
 
-```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap=paste0("ROC curves based off CV-estimated predicted probabilities for the top 2 learners, Superlearner and Discrete SL. CV-estimated predicted probabilities were derived considering cases as COVID-19 disease endpoints starting ", rscorestart, " after ", dayrscore, " using only data from the placebo arm.")}
+```{r, echo=FALSE, out.width="95%", out.height="95%", fig.cap=paste0("ROC curves based off CV-estimated predicted probabilities for the top 2 learners, Superlearner and Discrete SL. CV-estimated predicted probabilities were derived considering cases as COVID-19 disease endpoints starting ", rscorestart, " after ", dayrscore, " using data from all per-protocol participants.")}
 # if(Sys.getenv("TRIAL") == "covail"){
 #   knitr::include_graphics(here::here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "ROCcurve_riskscore.png"))
 # } else {
@@ -428,7 +424,7 @@ cvsl_args %>%
 \clearpage
 
 ```{r risk-sl-weights, warning=FALSE, echo=FALSE}
-caption <- "Weights assigned by Superlearner using data only from the placebo arm."
+caption <- "Weights assigned by Superlearner using data from all per-protocol participants."
 read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "SL_weights.csv"), row.names = 1,
          header = TRUE) %>%
   kable(
@@ -489,17 +485,17 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "SL_all_model
 
 ## Analysis details towards deriving baseline risk score
 
-The Baseline Risk Score analysis is conducted in baseline SARS-CoV-2 sero-negative per-protocol participants. The analysis considers the following as input:
+The Baseline Risk Score analysis for COVAIL trial is conducted in all per-protocol participants. The analysis considers the following as input:
 
 1. data_processed.csv file (created by the data processing step)
 
-2. Riskscorecohortflag (created by the data processing step): This flag identifies the subjects from both arms (placebo and vaccine) that are to be considered for risk score analysis. So, all subjects with Riskscorecohortflag == 1 have a risk score.
+2. Riskscorecohortflag (created by the data processing step): This flag identifies the subjects in per-protocol cohort that are to be considered for risk score analysis. So, all subjects with Riskscorecohortflag == 1 have a risk score.
 
 3. Risk score variables (shown in Table 1)
 
 4. Endpoint: The endpoint used is `r endpoint`
 
-Tables 5, 6 and 7 (below) show the number of subjects by study arm and endpoint status in the data before applying the Riskscorecohortflag, after applying the Riskscorecohortflag and after conducting the risk score analysis, respectively. 
+Tables 6, 7 and 8 (below) show the number of subjects by study arm and endpoint status in the data before applying the Riskscorecohortflag, after applying the Riskscorecohortflag and after conducting the risk score analysis, respectively. 
 
 The risk score analysis code appends two columns (risk_score and standardized_risk_score) to the data_processed.csv file and drops out subjects that do not have a risk score (thus keeps only subjects with Riskscorecohortflag == 1 and no missing value for the endpoint). 
 
@@ -509,6 +505,10 @@ The risk score analysis code appends two columns (risk_score and standardized_ri
 caption <- "Cases per treatment arm in data\\_processed.csv before applying RiskscorecohortFLAG."
 
 if(any(sapply(c("COVE", "ENSEMBLE"), grepl, studyName_for_report))){
+  new_colnames = c("Non-Cases", paste0("Post-", dayrscore, "-Cases"))
+  footnote1 <- paste0("Post-Day ", dayrscore, " Cases: COVID-19 primary endpoints that occur at least ", rscorestart, " after the ", dayrscore, " visit.")
+  eval.footnote1.table = TRUE
+}else if(any(sapply(c("COVAIL"), grepl, studyName_for_report))){
   new_colnames = c("Non-Cases", paste0("Post-", dayrscore, "-Cases"))
   footnote1 <- paste0("Post-Day ", dayrscore, " Cases: COVID-19 primary endpoints that occur at least ", rscorestart, " after the ", dayrscore, " visit.")
   eval.footnote1.table = TRUE
