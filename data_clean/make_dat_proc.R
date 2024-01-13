@@ -744,11 +744,12 @@ if (TRIAL=='vat08_combined') {
   # PP = no violation + marker available at d1 and d15
   # Immunemarkerset = PP & no infection between enrollment and D15+6
   # ph1.D15 = Immunemarkerset & arm!=3
-  dat_proc[["wt.D15"]] = 1
   dat_proc[["ph1.D15"]]=dat_proc$ph1.D15 
   dat_proc[["ph2.D15"]]=dat_proc$ph2.D15
+  dat_proc[["wt.D15"]] = 1
   dat_proc[["ph1.D92"]]=dat_proc$ph1.D92
   dat_proc[["ph2.D92"]]=dat_proc$ph2.D92
+  dat_proc[["wt.D92"]] = 1
   
   
 } else {
@@ -1447,7 +1448,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
-         covail = "dc5b0c63d08d1a69094c062d913ffde8", 
+         covail = "7c7203b9768477a3ecb6ea23d9c7234e", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
