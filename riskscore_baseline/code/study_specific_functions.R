@@ -161,7 +161,7 @@ get_defs_comments_riskVars <- function(data){
       Comments = "")
   }
   
-  if(study_name %in% c("COVAIL")){
+  if(Sys.getenv("TRIAL") == "covail"){
     data <- data %>%
       mutate(Definition = case_when(
         `Variable Name` == "Age" ~ "Age at enrollment in years",
@@ -185,13 +185,15 @@ get_defs_comments_riskVars <- function(data){
         #`Variable Name` == "HighRiskInd" ~ "Baseline covariate high risk pre-existing condition (1=yes, 0=no)",
         #`Variable Name` == "HIVinfection" ~ "HIV infection (1=yes, 0=no)"
         #`Variable Name` == "Country.X1" ~ "Indicator country =  ",
-        `Variable Name` == "pre.study.booster.until.studydose1.day" ~ "",
-        `Variable Name` == "pre.study.booster.until.studydose1.ind" ~ "",
-        `Variable Name` == "primary.booster.type.J.M" ~ "",
-        `Variable Name` == "primary.booster.type.M.M" ~ "",
-        `Variable Name` == "primary.booster.type.M.P" ~ "",
-        `Variable Name` == "primary.booster.type.P.M" ~ "",
-        `Variable Name` == "primary.booster.type.P.P" ~ ""
+        `Variable Name` == "pre.study.booster.until.studydose1.day" ~ "Number of days from last prior vaccination until enrollment",
+        `Variable Name` == "pre.study.booster.until.studydose1.ind" ~ "Binary indicator that the number of days from last prior vaccination until enrollment is greater than the median value (1 if yes, 0 otherwise)",
+        `Variable Name` == "primary.booster.type.J.J" ~ "Indicator that primary booster type is J, J (Reference for primary.booster.type)",
+        `Variable Name` == "primary.booster.type.J.M" ~ "Indicator that primary booster type is J, M (1 if yes, 0 otherwise)",
+        `Variable Name` == "primary.booster.type.J.P" ~ "Indicator that primary booster type is J, P (1 if yes, 0 otherwise)",
+        `Variable Name` == "primary.booster.type.M.M" ~ "Indicator that primary booster type is M, M (1 if yes, 0 otherwise)",
+        `Variable Name` == "primary.booster.type.M.P" ~ "Indicator that primary booster type is M, P (1 if yes, 0 otherwise)",
+        `Variable Name` == "primary.booster.type.P.M" ~ "Indicator that primary booster type is P, M (1 if yes, 0 otherwise)",
+        `Variable Name` == "primary.booster.type.P.P" ~ "Indicator that primary booster type is P, P (1 if yes, 0 otherwise)"
       ),
       Comments = "")
   }

@@ -34,7 +34,7 @@ data_clean/vat08_combined_data_processed_20231027.csv
 data_raw/*
 data_raw/janssen/*
 data_raw/moderna/*
-
+all_riskscore_reports/covail_riskscore_report.pdf
 
 
 
