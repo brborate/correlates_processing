@@ -434,8 +434,12 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "SL_weights.c
   ) %>%
   kable_styling(latex_options = c("hold_position"),
                 font_size = 9) %>%
-  row_spec(0,bold=TRUE)
+  row_spec(0,bold=TRUE) 
+
 ```
+
+**Interpretation of SuperLearner model:**  
+SuperLearner gave highest weight to the SL.gam learner with univariate_logistic_pval screen (input for the SL.gam learner were variables having a Wald test 2-sided p-value < 0.10).  
 
 \begin{landscape}
 \clearpage
@@ -464,9 +468,21 @@ read.csv(here("riskscore_baseline", "output", Sys.getenv("TRIAL"), "SL_all_model
   ) %>%
   kable_styling(latex_options = c("hold_position", "repeat_header"),
                 font_size = 5) %>%
-  row_spec(0,bold=TRUE)
+  row_spec(0,bold=TRUE) 
 
 ```
+
+$\textbf{Interpretation of SL.gam model: }$     
+
+Being African-American was associated with a lower odds of acquiring COVID-19 after Day 15 through Day 188 by approximately 44\%.
+
+Having a longer period of time elapsed from last prior COVID vaccination until enrollment into the COVAIL study (greater than the median value) was associated with a higher odds of acquiring COVID-19 after Day 15 through Day 188 by approximately 30\%.  
+
+Having two Pfizer followed by one Moderna vaccination prior to enrollment was associated with higher odds of acquiring COVID-19 after Day 15 through Day 188 by approximately 27\% compared to receiving two Janssen Ad26.COV2.S vaccinations prior to enrollment.
+
+The other variables in the model, namely, Age65C, s(Age, 2), and s(pre.study.booster.until.studydose1.day, 2), have odds ratios close to 1 and seem to have less impact on the overall model.  
+           
+           
 \end{landscape}
 
 
