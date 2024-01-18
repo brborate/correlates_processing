@@ -38,12 +38,12 @@ moderna_mock: &moderna_mock
   study_name: MockCOVE
 
 
-# vat08_combined and vat08_nAb both includes both Stage 1 monovalent and 2 bivalent trials
+# sanofi vat08_combined and vat08_nAb both includes both Stage 1 monovalent and 2 bivalent trials
 vat08_combined: &vat08_combined
   <<: *ows_trial
   # mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20231030.csv # batch 1 only
   # mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20231107.csv
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20231228.csv
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20240108.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/vat08_combined_assay_metadata.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]
@@ -170,7 +170,7 @@ janssen_sa_partA:
 
 janssen_partA_VL: 
   inherits: janssen_trial_partA
-  mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_PartAComplete_variant_mapped_20231228.csv 
+  mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_PartAComplete_variant_mapped_20240108.csv
   subset_variable: None
   subset_value: All
   assay_metadata: ../correlates_reporting2/assay_metadata/janssen_partA_VL_assay_metadata.csv
