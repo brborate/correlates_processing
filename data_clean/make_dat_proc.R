@@ -1448,7 +1448,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
-         covail = "7c7203b9768477a3ecb6ea23d9c7234e", 
+         covail = "e70481aba2c514ca360e9d4f3195ea98", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
