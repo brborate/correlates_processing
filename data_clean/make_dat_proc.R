@@ -1,7 +1,7 @@
 #Sys.setenv(TRIAL = "moderna_real")
-#Sys.setenv(TRIAL = "covail")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
 #Sys.setenv(TRIAL = "vat08_combined")
+#Sys.setenv(TRIAL = "covail")
 
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
 
@@ -1155,8 +1155,7 @@ if(study_name %in% c("COVE", "MockCOVE")){
 
 
 ###############################################################################
-# compute mdw scores
-###############################################################################
+# add mdw scores
 
 if(study_name == "COVAIL") {
   
@@ -1227,10 +1226,11 @@ if(study_name == "COVAIL") {
 
 
 ###############################################################################
-# define delta for dat_proc
+# add delta for dat_proc
 # assuming data has been censored at the lower limit
 # thus no need to do, say, lloq censoring
 # but there is a need to do uloq censoring before computing delta
+
 
 if (TRIAL %in% c("janssen_partA_VL")) {
   # skipping b/c there is no baseline data
@@ -1261,8 +1261,25 @@ if (TRIAL %in% c("janssen_partA_VL")) {
 
 
 
+###############################################################################
+# add discrete markers
+
+if (TRIAL=="covail") {
+  # add trichotomized markers to TrtonedosemRNA
+  dat_proc$tmp = with(dat_proc, ph1.D15 & TrtonedosemRNA==1)
+  
+  assays = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
+  all.markers = c("B"%.%assays, "Day15"%.%assays, "Delta15overB"%.%assays)
+  dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15")
+  
+  # remove tmp column
+  dat_proc$tmp = NULL
+
+}
 
 
+
+###############################################################################
 # add two synthetic ID50 markers by region for ensemble
 
 if(TRIAL %in% c("janssen_pooled_EUA", "janssen_na_EUA", "janssen_la_EUA", "janssen_sa_EUA")) {
@@ -1448,7 +1465,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
          janssen_partA_VL = "e7925542e4a1ccc1cc94c0e7a118da95", 
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
-         covail = "e70481aba2c514ca360e9d4f3195ea98", 
+         covail = "56fef72ed3916a81fb6f2c7a925b948f", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
