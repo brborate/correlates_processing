@@ -10,6 +10,7 @@
 *.log
 nohup.out
 _book
+_main.Rmd
 _bookdown_files
 packages.bib
 data_clean/csv/*

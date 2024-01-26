@@ -46,7 +46,7 @@ if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", 
   data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
 }
 
-cat("Enter reason for updating adata without quotes (this text will be added to adata/README change log): ")
+cat("Enter reason for updating adata without quotes (this text will be added to adata/changelog): ")
 args <- readLines(con = "stdin", n = 1)
 
 
@@ -82,8 +82,8 @@ for(j in 1:length(data_name_amended)){
               copy.date = TRUE)
     cat(paste0("Deployed to: ", deploy_path, data_name_amended[j], ".csv\n"))
     
-    # Add reason for adata update to README file!
-    write(update_reason, file = paste0(deploy_path, "readme.txt"), append=TRUE)
+    # Add reason for adata update to changelog!
+    write(update_reason, file = paste0(deploy_path, "changelog.txt"), append=TRUE)
     
   }else{
     print(paste0("data_clean/csv/", data_name_amended[j], ".csv not found!"))

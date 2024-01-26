@@ -633,7 +633,7 @@ preprocess=function(dat_raw, study_name) {
     
     
     for(tp in timepoints) {
-      print(table(is.na(dat_proc[["EventTimePrimaryD"%.%tp]])))
+      cat("subset to ptids without missing EventTimePrimaryD"%.%tp%.%"\n")
       dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
     }
     
