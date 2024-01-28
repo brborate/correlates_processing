@@ -52,6 +52,22 @@ if (TRIAL=="janssen_partA_VL") {
   mytable(dat_proc$COL_variants_study)
   # update SubcohortInd to include the Colombians sampled for the variants study
   dat_proc$SubcohortInd = ifelse(dat_proc$SubcohortInd | dat_proc$COL_variants_study, 1, 0)
+  
+  # create a mdw score
+  # the reason to do it in the beginning is that this score replaces the five delta markers completely
+  # 
+  delta_markers = c("bindSpike_AY.2", "bindSpike_B.1.617.2_AY.4", "bindSpike_AY.12", "bindSpike_AY.1", "bindSpike_B.1.617.2" )
+  mdw.wt=tryCatch({
+    tree.weight(cor(dat_proc["Day29"%.%delta_markers], use='complete.obs'))
+  }, error = function(err) {
+    print(err$message)
+    rep(1/length(delta_markers), length(delta_markers))
+  })
+  write.csv(mdw.wt, file = here("data_clean", "csv", TRIAL%.%"_delta_score_mdw_weights.csv"))
+  t="Day29"
+  dat_proc[, t%.%'bindSpike_DeltaMDW'] = c(as.matrix(dat_proc[, t%.%delta_markers]) %*% mdw.wt)
+  # remove delta_markers
+  for (a in delta_markers) dat_proc[, t%.%a] = NULL
 
   
   
