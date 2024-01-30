@@ -1051,7 +1051,7 @@ if (study_name%in%c("COVAIL")) {
   
   assays_panel19 = assays[startsWith(assays, "bindSpike_")]
   
-  # three imputations are done
+  # three imputation steps are done
 
   # impute 98 non-case bindSpike values (COL) by 521 bindSpike_D614 values for the variants study samples
   n.imp = 1
@@ -1121,25 +1121,6 @@ if (study_name%in%c("COVAIL")) {
     for (a in assays_panel19) dat_proc[["Day29"%.%a%.%"_"%.%i]] = NA
   }
   
-  # RSA, impute Beta nAb for non-Beta cases, impute Delta nAb for non-Delta cases (the latter can be skipped if desired b/c not used for correlates)
-  select = with(dat_proc, Trt == 1 & Bserostatus==0 & Region==2 & TwophasesampIndD29variant==1)
-  imp.markers = c("Day29bindSpike", "Day29bindRBD", "Day29pseudoneutid50", "Day29pseudoneutid50_Beta", "Day29pseudoneutid50_Delta", "Day29"%.%assays_panel19)
-  imp <- dat_proc[select,] %>% select(all_of(imp.markers)) 
-  summary(imp)
-  nrow(imp)
-  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
-  # add 10 new columns for each of the variants to the dataset
-  for (i in 1:10) {
-    dat_proc[select, "Day29pseudoneutid50_Beta"%.%"_"%.%i] = mice::complete(imp, action=i)[,"Day29pseudoneutid50_Beta"]
-    dat_proc[select, "Day29pseudoneutid50_Delta"%.%"_"%.%i] = mice::complete(imp, action=i)[,"Day29pseudoneutid50_Delta"]
-    for (a in assays_panel19) dat_proc[select, "Day29"%.%a%.%"_"%.%i] = mice::complete(imp, action=i)[,"Day29"%.%a]
-  } 
-  assertthat::assert_that(
-    all(complete.cases(dat_proc[select, c("Day29pseudoneutid50_Beta"%.%"_"%.%1:10)])),
-    all(complete.cases(dat_proc[select, c("Day29pseudoneutid50_Delta"%.%"_"%.%1:10)])),
-    msg = "janssen_partA_VL: imputed values of missing markers merged properly for all individuals in the two phase sample?"
-  )
-  
   # LatAm, impute four variants
   # Day29bindRBD not in the list b/c there are 98 missing values and there is no need to impute it 
   select = with(dat_proc, Trt == 1 & Bserostatus==0 & Region==1 & TwophasesampIndD29variant==1)
@@ -1162,8 +1143,29 @@ if (study_name%in%c("COVAIL")) {
     msg = "janssen_partA_VL: imputed values of missing markers merged properly for all individuals in the two phase sample?"
   )
   
+  # RSA, impute Beta nAb for non-Beta cases, impute Delta nAb for non-Delta cases (the latter can be skipped if desired b/c not used for correlates)
+  select = with(dat_proc, Trt == 1 & Bserostatus==0 & Region==2 & TwophasesampIndD29variant==1)
+  imp.markers = c("Day29bindSpike", "Day29bindRBD", "Day29pseudoneutid50", "Day29pseudoneutid50_Beta", "Day29pseudoneutid50_Delta", "Day29"%.%assays_panel19)
+  imp <- dat_proc[select,] %>% select(all_of(imp.markers)) 
+  summary(imp)
+  nrow(imp)
+  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+  # add 10 new columns for each of the variants to the dataset
+  for (i in 1:10) {
+    dat_proc[select, "Day29pseudoneutid50_Beta"%.%"_"%.%i] = mice::complete(imp, action=i)[,"Day29pseudoneutid50_Beta"]
+    dat_proc[select, "Day29pseudoneutid50_Delta"%.%"_"%.%i] = mice::complete(imp, action=i)[,"Day29pseudoneutid50_Delta"]
+    for (a in assays_panel19) dat_proc[select, "Day29"%.%a%.%"_"%.%i] = mice::complete(imp, action=i)[,"Day29"%.%a]
+  } 
+  assertthat::assert_that(
+    all(complete.cases(dat_proc[select, c("Day29pseudoneutid50_Beta"%.%"_"%.%1:10)])),
+    all(complete.cases(dat_proc[select, c("Day29pseudoneutid50_Delta"%.%"_"%.%1:10)])),
+    msg = "janssen_partA_VL: imputed values of missing markers merged properly for all individuals in the two phase sample?"
+  )
+
+    
   # remove Day29bindSpike_D614 from dataset so that there is only one ancestral bAb variable in the dataset
   dat_proc = subset(dat_proc, select=-Day29bindSpike_D614)
+  
   
 } else {
   # loop through the time points
@@ -1603,7 +1605,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
          janssen_pooled_EUA = "c38fb43e2c87cf2d392757840af68bba",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
-         janssen_partA_VL = "8cfb4f1812e383385bb08cdfad102d0d", 
+         janssen_partA_VL = "b16f3cb9662cdec8ade147f96b43b875", 
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
