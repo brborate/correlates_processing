@@ -47,15 +47,15 @@ if (TRIAL=="janssen_partA_VL") {
   country.codes=c("USA", "ARG", "BRA", "CHL", "COL", "MEX", "PER", "ZAF")
   dat_proc$cc=country.codes[dat_proc$Country+1]
   
-  # create a new indicator variable subcohortplus := subcohort + 98 newly sampled Colombians for the variants study
+  # update SubcohortInd to 1) include the Colombians sampled for the variants study 
   dat_proc$COL_variants_study = with(dat_proc, cc=="COL" & EventIndPrimaryIncludeNotMolecConfirmedD1==0 & SubcohortInd!=1 & !is.na(Day29bindSpike_D614))
   mytable(dat_proc$COL_variants_study)
-  # update SubcohortInd to include the Colombians sampled for the variants study
   dat_proc$SubcohortInd = ifelse(dat_proc$SubcohortInd | dat_proc$COL_variants_study, 1, 0)
+  # 2) remove ARV users
+  dat_proc$SubcohortInd = ifelse(dat_proc$SubcohortInd & dat_proc$ARVuseDay29==0, 1, 0)
   
   # create a mdw score
   # the reason to do it in the beginning is that this score replaces the five delta markers completely
-  # 
   delta_markers = c("bindSpike_AY.2", "bindSpike_B.1.617.2_AY.4", "bindSpike_AY.12", "bindSpike_AY.1", "bindSpike_B.1.617.2" )
   mdw.wt=tryCatch({
     tree.weight(cor(dat_proc["Day29"%.%delta_markers], use='complete.obs'))
@@ -933,7 +933,6 @@ if (!TRIAL %in% c('vat08_combined','covail')) {
 }
 
 
-
 ###############################################################################
 # impute missing biomarkers in ph2 (assay imputation)
 #     impute vaccine and placebo, baseline pos and neg, separately
@@ -1078,8 +1077,8 @@ if (study_name%in%c("COVAIL")) {
   summary(imp)
   nrow(imp)
   subset(dat_proc, select & is.na(Day29bindSpike_D614), c(Region, Trt, Bserostatus, ph2.D29))
-  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)   
   
+  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)   
   for (a in assays_panel19) {
     dat_proc[select, "Day29"%.%a] = mice::complete(imp, action=1)[,"Day29"%.%a]
     assertthat::assert_that(
@@ -1096,8 +1095,8 @@ if (study_name%in%c("COVAIL")) {
   imp <- dat_proc[select,] %>% select(all_of(imp.markers)) 
   nrow(imp)
   summary(imp)
-  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)   
   
+  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)   
   for (a in assays_panel19) {
     dat_proc[select, "Day29"%.%a] = mice::complete(imp, action=1)[,"Day29"%.%a]
     assertthat::assert_that(
@@ -1123,11 +1122,13 @@ if (study_name%in%c("COVAIL")) {
   
   # LatAm, impute four variants
   # Day29bindRBD not in the list b/c there are 98 missing values and there is no need to impute it 
+  # TwophasesampIndD29variant includes all cases
   select = with(dat_proc, Trt == 1 & Bserostatus==0 & Region==1 & TwophasesampIndD29variant==1)
   imp.markers = c("Day29bindSpike", "Day29pseudoneutid50", "Day29pseudoneutid50_Gamma", "Day29pseudoneutid50_Lambda", "Day29pseudoneutid50_Mu", "Day29pseudoneutid50_Zeta", "Day29"%.%assays_panel19)
   imp <- dat_proc[select, ] %>% select(all_of(imp.markers)) 
   summary(imp)
   nrow(imp)
+  
   imp = imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
   # add 10 new columns for each of the variants to the dataset
   for (i in 1:n.imp) {
@@ -1143,12 +1144,14 @@ if (study_name%in%c("COVAIL")) {
     msg = "janssen_partA_VL: imputed values of missing markers merged properly for all individuals in the two phase sample?"
   )
   
+
   # RSA, impute Beta nAb for non-Beta cases, impute Delta nAb for non-Delta cases (the latter can be skipped if desired b/c not used for correlates)
   select = with(dat_proc, Trt == 1 & Bserostatus==0 & Region==2 & TwophasesampIndD29variant==1)
   imp.markers = c("Day29bindSpike", "Day29bindRBD", "Day29pseudoneutid50", "Day29pseudoneutid50_Beta", "Day29pseudoneutid50_Delta", "Day29"%.%assays_panel19)
   imp <- dat_proc[select,] %>% select(all_of(imp.markers)) 
   summary(imp)
   nrow(imp)
+  
   imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
   # add 10 new columns for each of the variants to the dataset
   for (i in 1:10) {
@@ -1405,18 +1408,56 @@ if (TRIAL %in% c("janssen_partA_VL")) {
 # add discrete markers
 
 if (TRIAL=="covail") {
-  # add trichotomized markers to TrtonedosemRNA
-  dat_proc$tmp = with(dat_proc, ph1.D15 & TrtonedosemRNA==1)
+  # define a temp ph2 column
+  dat_proc$tmp = with(dat_proc, ph1.D15 & TrtonedosemRNA==1) # add trichotomized markers to TrtonedosemRNA
   
   assays = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
   all.markers = c("B"%.%assays, "Day15"%.%assays, "Delta15overB"%.%assays)
   dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15")
   
-  # remove tmp column
+  # remove the temp ph2 column
   dat_proc$tmp = NULL
 
+  
+} else if (TRIAL=="janssen_partA_VL") {
+  
+  # use Latin America for ancestral
+  # define a temp ph2 column
+  dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & ph1.D29 & Region==1) 
+  assays = c("pseudoneutid50", "bindSpike")
+  all.markers = c("Day29"%.%assays)
+  dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D29")
+  
+  # use Latin America for Lambda, Mu, Zeta, Gamma
+  # define a temp ph2 column
+  dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & ph2.D29variant & Region==1) 
+  assays = c("pseudoneutid50_Zeta", "pseudoneutid50_Mu", "pseudoneutid50_Gamma", "pseudoneutid50_Lambda",
+                                    "bindSpike_B.1.621", "bindSpike_P.1", "bindSpike_C.37")
+  all.markers = c("Day29"%.%assays)
+  dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="ph2.D29variant", wt.col.name="wt.D29variant")
+  # cut the imputed markers
+  cutpoints=attr(dat_proc, "marker.cutpoints")
+  for (a in all.markers) {
+    for (i in 1:10) dat_proc[[a%.%"_"%.%i%.%"cat"]]=factor(cut(dat_proc[[a%.%"_"%.%i]], breaks = c(-Inf, cutpoints[[a]], Inf)))
+  }
+  
+  # use South Africa for Beta, Delta
+  # define a temp ph2 column
+  dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & ph2.D29variant & Region==2) 
+  assays = c("pseudoneutid50_Beta", "pseudoneutid50_Delta",
+             "bindSpike_B.1.351", "bindSpike_DeltaMDW")
+  all.markers = c("Day29"%.%assays)
+  dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D29variant")
+  # cut the imputed markers
+  cutpoints=attr(dat_proc, "marker.cutpoints")
+  for (a in all.markers) {
+    for (i in 1:10) dat_proc[[a%.%"_"%.%i%.%"cat"]]=factor(cut(dat_proc[[a%.%"_"%.%i]], breaks = c(-Inf, cutpoints[[a]], Inf)))
+  }
+  
+  # remove the temp ph2 column
+  dat_proc$tmp = NULL
+  
 }
-
 
 
 ###############################################################################
@@ -1605,7 +1646,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
          janssen_pooled_EUA = "c38fb43e2c87cf2d392757840af68bba",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
-         janssen_partA_VL = "b16f3cb9662cdec8ade147f96b43b875", 
+         janssen_partA_VL = "be70e58897d461c242f930d09bbbcd0a", 
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",

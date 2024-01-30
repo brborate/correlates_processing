@@ -169,7 +169,7 @@ janssen_sa_partA:
 ## In addition to having variants ID50 data, the new mapped dataset also has updated ancestral ID50 and about 25 new ancestral ID50 data in the subchort
 
 janssen_partA_VL: 
-  mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_PartAComplete_variant_mapped_20240123.csv
+  mapped_data: /trials/covpn/p3003/analysis/mapping_immune_correlates/adata/COVID_ENSEMBLE_PartAComplete_variant_mapped_20240129.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/janssen_partA_VL_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [29]
