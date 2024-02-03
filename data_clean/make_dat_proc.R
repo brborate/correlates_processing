@@ -1170,6 +1170,13 @@ if (study_name%in%c("COVAIL")) {
   dat_proc = subset(dat_proc, select=-Day29bindSpike_D614)
   
   
+  # add 10 identical copies of ancestral markers to make programming easier (every marker has 10 copies)
+  for (i in 1:10) {
+    dat_proc[, "Day29pseudoneutid50"%.%"_"%.%i] = dat_proc[, "Day29pseudoneutid50"]
+    dat_proc[, "Day29bindSpike"%.%"_"%.%i]      = dat_proc[, "Day29bindSpike"]
+  } 
+  
+  
 } else {
   # loop through the time points
   # first impute (B, D29, D57) among TwophasesampIndD57==1
@@ -1400,6 +1407,22 @@ if (TRIAL %in% c("janssen_partA_VL")) {
     dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays1] <- tmp["Day"%.% timepoints[2]%.% assays1] - tmp["Day"%.%timepoints[1] %.% assays1]
   }
   
+  
+  if (TRIAL=="covail") {
+  # also need D29 delta for sanofi arms
+    assays1=setdiff(assays, "pseudoneutid50Duke_BA.2.12.1")
+    
+    tmp=list()
+    for (a in assays1) {
+      for (t in c("B", "Day29") ) {
+        tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] > log10(uloqs[a]), log10(uloqs[a]), dat_proc[[t %.% a]])
+      }
+    }
+    tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
+    
+    dat_proc["Delta29overB" %.% assays1] <- tmp["Day29" %.% assays1] - tmp["B" %.% assays1]
+  }
+  
 }
 
 
@@ -1408,11 +1431,16 @@ if (TRIAL %in% c("janssen_partA_VL")) {
 # add discrete markers
 
 if (TRIAL=="covail") {
-  # define a temp ph2 column
-  dat_proc$tmp = with(dat_proc, ph1.D15 & TrtonedosemRNA==1) # add trichotomized markers to TrtonedosemRNA
-  
+  # mRNA arms
+  dat_proc$tmp = with(dat_proc, ph1.D15 & TrtonedosemRNA==1) 
   assays = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
   all.markers = c("B"%.%assays, "Day15"%.%assays, "Delta15overB"%.%assays)
+  dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15")
+  
+  # Sanofi arms
+  dat_proc$tmp = with(dat_proc, ph1.D15 & treatment_actual %in% c("Beta (Sanofi)", "Beta + Prototype (Sanofi)", "Prototype (Sanofi)"))
+  assays = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
+  all.markers = c("Day29"%.%assays, "Delta29overB"%.%assays)
   dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15")
   
   # remove the temp ph2 column
@@ -1457,6 +1485,11 @@ if (TRIAL=="covail") {
   # remove the temp ph2 column
   dat_proc$tmp = NULL
   
+  # add 10 identical copies of ancestral markers to make programming easier (every marker has 10 copies)
+  for (i in 1:10) {
+    dat_proc[, "Day29pseudoneutid50"%.%"_"%.%i%.%"cat"] = dat_proc[, "Day29pseudoneutid50cat"]
+    dat_proc[, "Day29bindSpike"%.%"_"%.%i%.%"cat"]      = dat_proc[, "Day29bindSpikecat"]
+  } 
 }
 
 

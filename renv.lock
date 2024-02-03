@@ -394,8 +394,8 @@
       "RemoteUsername": "CoVPN",
       "RemoteRepo": "copcor",
       "RemoteRef": "main",
-      "RemoteSha": "f5e7e7d01c1e81086880c4d89790a3b73ccb80c0",
-      "Hash": "61458c7811fa3e697e50ae9a31900326"
+      "RemoteSha": "4c01418bc08419c288e243d5d6dda8651f38b6ee",
+      "Hash": "b27de5bd6861e9f5e9bcd41376232338"
     },
     "covr": {
       "Package": "covr",
