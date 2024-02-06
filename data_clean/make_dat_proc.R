@@ -132,6 +132,7 @@ if (TRIAL=="janssen_partA_VL") {
   dat_proc$COVIDlineageObserved = dat.lineage$inf1.observed[match(dat_proc$Ptid, dat.lineage$ptid)]
   # check NA
   stopifnot(!any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D15==1 & dat_proc$COVIDIndD22toD181==1])))
+  stopifnot(!any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D29==1 & dat_proc$COVIDIndD36toD181==1])))
   # this is not true: !any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D15==1 & dat_proc$AsympInfectIndD15to181==1]))
   
   # bring in FOI
@@ -140,6 +141,7 @@ if (TRIAL=="janssen_partA_VL") {
   dat_proc$FOIstandardized = scale(dat_proc$FOIoriginal)
   # check NA
   stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D15==1])))
+  stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D29==1])))
   
 } else {
   
@@ -689,6 +691,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
 } else if (study_name=="COVAIL" ) {
   # the whole cohort is treated as ph1 and ph2
   dat_proc$TwophasesampIndD15 = dat_proc$ph1.D15 
+  dat_proc$TwophasesampIndD29 = dat_proc$ph1.D29
   
   
 } else stop("unknown study_name 8")
@@ -807,6 +810,9 @@ if (TRIAL=='vat08_combined') {
   dat_proc[["ph1.D92"]]=dat_proc$ph1.D92
   dat_proc[["ph2.D92"]]=dat_proc$ph2.D92
   dat_proc[["wt.D92"]] = 1
+  dat_proc[["ph1.D29"]]=dat_proc$ph1.D29
+  dat_proc[["ph2.D29"]]=dat_proc$ph2.D29
+  dat_proc[["wt.D29"]] = 1
   
 
 } else if (TRIAL=="janssen_partA_VL") {
@@ -1438,10 +1444,10 @@ if (TRIAL=="covail") {
   dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15")
   
   # Sanofi arms
-  dat_proc$tmp = with(dat_proc, ph1.D15 & treatment_actual %in% c("Beta (Sanofi)", "Beta + Prototype (Sanofi)", "Prototype (Sanofi)"))
+  dat_proc$tmp = with(dat_proc, ph1.D29 & TrtSanofi==1)
   assays = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
   all.markers = c("Day29"%.%assays, "Delta29overB"%.%assays)
-  dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15")
+  dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D29")
   
   # remove the temp ph2 column
   dat_proc$tmp = NULL
@@ -1684,7 +1690,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
-         covail = "56fef72ed3916a81fb6f2c7a925b948f", 
+         covail = "7a0051f29a0d73bb65d424119c959c27", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
