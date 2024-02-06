@@ -52,7 +52,7 @@ vat08_combined: &vat08_combined
   study_name: VAT08
 
 covail: &covail
-  mapped_data: /trials/covpn/COVAILcorrelates/analysis/mapping_immune_correlates/adata/covail_mapped_data_20240205.csv
+  mapped_data: /trials/covpn/COVAILcorrelates/analysis/mapping_immune_correlates/adata/covail_mapped_data_20240206.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/covail_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [15] # 29 for Sanofi is handled ad hoc 

@@ -1690,7 +1690,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
-         covail = "7a0051f29a0d73bb65d424119c959c27", 
+         covail = "ab211f1a4206bdc308e589afc8b46b05", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
