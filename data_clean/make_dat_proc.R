@@ -2,6 +2,7 @@
 #Sys.setenv(TRIAL = "vat08_combined")
 #Sys.setenv(TRIAL = "covail")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
+#Sys.setenv(TRIAL = "azd1222_stage2")
 
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
 
@@ -143,8 +144,21 @@ if (TRIAL=="janssen_partA_VL") {
   stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D15==1])))
   stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D29==1])))
   
-} else {
   
+  
+} else if (TRIAL == "azd1222_stage2") {
+  dat_raw=read.csv(mapped_data)
+  dat_proc = preprocess(dat_raw, study_name)   
+  colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
+  
+  # borrow risk score from azd1222_stage2
+  load(file = 'riskscore_baseline/output/azd1222/inputFile_with_riskscore.RData')
+  # stage 2 dataset has fewer rows than stage 1
+  dat_proc$risk_score = inputFile_with_riskscore$risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
+  dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
+  
+  
+} else {
   if (make_riskscore) {
     # load inputFile_with_riskscore.Rdata, a product of make riskscore_analysis, which calls preprocess and makes risk scores
     load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
@@ -159,7 +173,7 @@ if (TRIAL=="janssen_partA_VL") {
 
 # define new variables
 { # use this to navigate faster in Rstudio
-  colnames(dat_proc)[1] <- "Ptid" 
+  colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
   dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
   dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08=60, PROFISCOV=NA, COVAIL=65, stop("unknown study_name 1")))
   
@@ -1337,7 +1351,7 @@ if(study_name == "COVAIL") {
   write.csv(mdw.wt.nAb, file = here("data_clean", "csv", TRIAL%.%"_nAb_mdw_weights.csv"))
   
   # apply to all time points
-  for (t in c("B", "Day15", "Day29", "Day91")) {
+  for (t in c("B", "Day15", "Day29", "Day91", "Day181")) {
     dat_proc[, t%.%'pseudoneutid50_MDW'] = as.matrix(dat_proc[, t%.%nAb]) %*% mdw.wt.nAb
   }
   
@@ -1690,7 +1704,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
-         covail = "ab211f1a4206bdc308e589afc8b46b05", 
+         covail = "6f75d31eff6089a930784373e56ed8ae", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }

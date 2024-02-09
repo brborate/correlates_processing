@@ -52,7 +52,7 @@ vat08_combined: &vat08_combined
   study_name: VAT08
 
 covail: &covail
-  mapped_data: /trials/covpn/COVAILcorrelates/analysis/mapping_immune_correlates/adata/covail_mapped_data_20240206.csv
+  mapped_data: /trials/covpn/COVAILcorrelates/analysis/mapping_immune_correlates/adata/covail_mapped_data_20240208.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/covail_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [15] # 29 for Sanofi is handled ad hoc 
@@ -116,6 +116,16 @@ azd1222_bAb: &azd1222_bAb
   assays: [bindSpike]
   assay_labels: [Binding Antibody to Spike]
   assay_labels_short: [Anti Spike IgG (BAU/ml)]
+
+azd1222_stage2: &azd1222_stage2
+  <<: *ows_trial
+  two_marker_timepoints: no
+  timepoints: [57]
+  times: [Day57]
+  time_labels: [Day 57]
+  mapped_data: /trials/covpn/p3002/analysis/mapping_immune_correlates/stage2/adata/COVID_AstraZeneca_stage2_mapped_20240129.csv 
+  assay_metadata: ../correlates_reporting2/assay_metadata/azd1222_stage2_assay_metadata.csv
+  study_name: AZD1222
 
 
 
