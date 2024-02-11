@@ -1457,7 +1457,7 @@ if (TRIAL=="covail") {
   all.markers = c("B"%.%assays, "Day15"%.%assays, "Delta15overB"%.%assays)
   dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15")
   
-  # Sanofi arms
+  # # Sanofi arms
   dat_proc$tmp = with(dat_proc, ph1.D29 & TrtSanofi==1)
   assays = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
   all.markers = c("Day29"%.%assays, "Delta29overB"%.%assays)
