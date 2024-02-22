@@ -123,10 +123,19 @@ if (TRIAL=="janssen_partA_VL") {
    
    
 } else if (TRIAL == "covail") {
-  # load risk score
-  load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
-  dat_proc <- inputFile_with_riskscore    
-
+  # # load risk score from running risk analysis
+  # load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
+  # dat_proc <- inputFile_with_riskscore    
+  
+  # load risk score from a file
+  dat.risk = read.csv("/trials/covpn/COVAILcorrelates/analysis/correlates/adata/risk_score.csv")
+  # read mapped data
+  dat_raw = read.csv(mapped_data)
+  dat_proc = preprocess(dat_raw, study_name)   
+  names(dat_proc)[[1]]="Ptid"
+  dat_proc$risk_score = dat.risk$risk_score[match(dat_proc$Pti, dat.risk$Ptid)]
+  dat_proc$standardized_risk_score = dat.risk$standardized_risk_score[match(dat_proc$Ptid, dat.risk$Ptid)]
+  
   # bring in imputed variant column
   dat.lineage = read.csv('/trials/covpn/COVAILcorrelates/analysis/correlates/adata/lineages/covail_lineages_export_v1.csv')
   dat_proc$COVIDlineage = dat.lineage$inf1.lineage[match(dat_proc$Ptid, dat.lineage$ptid)]
@@ -1704,7 +1713,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
-         covail = "6f75d31eff6089a930784373e56ed8ae", 
+         covail = "4d50209a413c9e12903a662eb241a1bf", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
