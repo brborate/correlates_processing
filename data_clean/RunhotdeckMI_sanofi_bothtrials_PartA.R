@@ -3,6 +3,7 @@
 # T:/covpn/p3005/analysis/correlates/Part_A_Blinded_Phase_Data/code/RunhotdeckMI_sanofi_bothtrials_PartA.R
 # Peter Gilbert
 # October 24, 2023
+# Updated Feb 23, 2024 to match more the finalized stratified marker sampling plan.
 #
 # Sanofi Final Part A data sets: 
 # /trials/covpn/p3005/analysis/mapping_immune_correlates/adata/COVID_Sanofi_stage1&2_20231024.csv
@@ -56,6 +57,19 @@ dat_mapped=read.csv(mapped_data)
 # So the 5 region variables are (TrialStage==1 & Country=="Honduras", TrialStage==1 & Country!="Honduras", 
 # TrialStage==2 & Country=="India", TrialStage==2 & Country=="Mexico", TrialStage==2 & (Country!="India" & Country!="Mexico"))
 
+# Update Feb 2024 to harmonize with the updated correlates SAP:
+# Definition of countries for stratified sampling:
+#For the Stage 1 trial, the country category was defined by the four levels
+#(United States, Japan) (Honduras, Colombia) (Kenya, Ghana) (India, Nepal).
+#For the Stage 2 trial, 
+#the country category was defined by the three levels
+#(Colombia, Mexico) (Kenya, Uganda, Ghana), (India, Nepal), i.e., by continent Latin America, Africa, SE Asia. 
+
+# For hotdeck, doesn't make sense to combine U.S. and Japan, so 
+# For Stage 1 use United States, Japan, (Honduras, Colombia) (Kenya, Ghana) (India, Nepal).
+# For Stage 2, use (Colombia, Mexico) (Kenya, Uganda, Ghana), (India, Nepal), i.e., by continent Latin America, Africa, SE Asia. 
+
+
 
 # Define the event indicator based on the COVID-19 primary endpoint regardless of lineage information
 EventInd <- ifelse(dat_mapped[,"EventIndKnownLineageOmicronD1"]==1 | 
@@ -82,14 +96,33 @@ Delta <- EventInd
 #"Uganda" = 10
 #"Ukraine" = 11
 
+#Country <- dat[,"Country"]
+#TrialStage <- dat[,"Trialstage"]
+#courseregion <- rep(NA,nrow(dat))
+#courseregion[TrialStage==1 & Country==3] <- 0
+#courseregion[TrialStage==1 & Country!=3] <- 1
+#courseregion[TrialStage==2 & Country==4] <- 2
+#courseregion[TrialStage==2 & Country==9] <- 3
+#courseregion[TrialStage==2 & (Country!=4 & Country!=9)] <- 4
+
+
+# Update:
+# For Stage 1 use United States, Japan, (Honduras, Colombia) (Kenya, Ghana) (India, Nepal).
+# For Stage 2, use (Colombia, Mexico) (Kenya, Uganda, Ghana), (India, Nepal), i.e., by continent Latin America, Africa, SE Asia. 
+
 Country <- dat[,"Country"]
 TrialStage <- dat[,"Trialstage"]
 courseregion <- rep(NA,nrow(dat))
-courseregion[TrialStage==1 & Country==3] <- 0
-courseregion[TrialStage==1 & Country!=3] <- 1
-courseregion[TrialStage==2 & Country==4] <- 2
-courseregion[TrialStage==2 & Country==9] <- 3
-courseregion[TrialStage==2 & (Country!=4 & Country!=9)] <- 4
+courseregion[TrialStage==1 & Country==8] <- 0
+courseregion[TrialStage==1 & Country==5] <- 1
+courseregion[TrialStage==1 & (Country==1 | Country==3)] <- 2
+courseregion[TrialStage==1 & (Country==6 | Country==2)] <- 3
+courseregion[TrialStage==1 & (Country==4 | Country==7)] <- 4
+
+courseregion[TrialStage==2 & (Country==1 | Country==9)] <- 5
+courseregion[TrialStage==2 & (Country==6 | Country==2 | Country==10)] <- 6
+courseregion[TrialStage==2 & (Country==4 | Country==7))] <- 7
+
 Z1discrete <- as.matrix(cbind(dat[,"Trt"],courseregion))
 # Turn off the effect of Z1scalar on the nearest neighbors, as Avscalar is much more relevant and should carry the weight
 Z1scalar <- matrix(rep(1,nrow(dat)),ncol=1)
