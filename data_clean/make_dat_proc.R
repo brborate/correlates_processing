@@ -48,12 +48,14 @@ if (TRIAL=="janssen_partA_VL") {
   country.codes=c("USA", "ARG", "BRA", "CHL", "COL", "MEX", "PER", "ZAF")
   dat_proc$cc=country.codes[dat_proc$Country+1]
   
-  # update SubcohortInd to 1) include the Colombians sampled for the variants study 
+  # update SubcohortInd to include the Colombians sampled for the variants study 
   dat_proc$COL_variants_study = with(dat_proc, cc=="COL" & EventIndPrimaryIncludeNotMolecConfirmedD1==0 & SubcohortInd!=1 & !is.na(Day29bindSpike_D614))
   mytable(dat_proc$COL_variants_study)
   dat_proc$SubcohortInd = ifelse(dat_proc$SubcohortInd | dat_proc$COL_variants_study, 1, 0)
-  # 2) remove ARV users
-  dat_proc$SubcohortInd = ifelse(dat_proc$SubcohortInd & dat_proc$ARVuseDay29==0, 1, 0)
+  
+  # # this is no longer done per discussion with Monogram
+  # #remove ARV users
+  # dat_proc$SubcohortInd = ifelse(dat_proc$SubcohortInd & dat_proc$ARVuseDay29==0, 1, 0)
   
   # create a mdw score
   # the reason to do it in the beginning is that this score replaces the five delta markers completely
@@ -65,12 +67,12 @@ if (TRIAL=="janssen_partA_VL") {
     rep(1/length(delta_markers), length(delta_markers))
   })
   write.csv(mdw.wt, file = here("data_clean", "csv", TRIAL%.%"_delta_score_mdw_weights.csv"))
-  t="Day29"
-  dat_proc[, t%.%'bindSpike_DeltaMDW'] = c(as.matrix(dat_proc[, t%.%delta_markers]) %*% mdw.wt)
-  # remove delta_markers
-  for (a in delta_markers) dat_proc[, t%.%a] = NULL
-
   
+  for (t in c("Day29", "Day71", "Mon6")) {
+    dat_proc[, t%.%'bindSpike_DeltaMDW'] = c(as.matrix(dat_proc[, t%.%delta_markers]) %*% mdw.wt)
+    # remove delta_markers
+    for (a in delta_markers) dat_proc[, t%.%a] = NULL
+  }
   
  } else if (study_name=="VAT08") {
 
