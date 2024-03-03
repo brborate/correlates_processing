@@ -4,7 +4,7 @@ source(here::here("_common.R"))
 
 
 # same as deploy script
-if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08_combined", "covail")) {
+if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08_combined", "covail", "nvx_uk302")) {
   data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv"))
   
 } else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {

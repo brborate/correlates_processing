@@ -30,12 +30,13 @@ deploy_path <- switch(study_name,
                       PROFISCOV = "/networks/cavd/Objective 4/GH-VAP/ID127-Gast/correlates/adata/",
                       IARC_HPV = "/networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/correlates/adata/",
                       COVAIL =    "/trials/covpn/COVAILcorrelates/analysis/correlates/adata/",
+                      NVX_UK302 =    "/trials/covpn/p3004/analysis/correlates/UK302/adata/",
                       stop("study_name not supported 1"))  
 
 
 
-if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08_combined", "vat08_nAb", "id27hpv", "covail")) {
-  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d")))
+if (TRIAL %in% c()) {
+  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
   
 } else if(attr(config, "config") %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA")) {
   data_name_amended <- c( paste0(attr(config, "config"), "_data_processed_with_riskscore"), 
@@ -43,7 +44,8 @@ if (attr(config, "config") %in% c("prevent19", "moderna_real", "moderna_boost", 
                           paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore"))
   
 } else {
-  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))
+  # c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08_combined", "vat08_nAb", "id27hpv", "covail", "nvx_uk302")) {
+  data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d")))
 }
 
 cat("Enter reason for updating adata without quotes (this text will be added to adata/changelog): ")

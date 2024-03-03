@@ -94,6 +94,14 @@ prevent19_stage2: &prevent19_stage2
   study_name: PREVENT19
   
   
+nvx_uk302: &nvx_uk302
+  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/UK302/adata/COVID_Novavax_302UK_mapped_20240301.csv
+  assay_metadata: ../correlates_reporting2/assay_metadata/nvx_uk302_assay_metadata.csv
+  two_marker_timepoints: no
+  timepoints: [35]
+  times: [Day35]
+  time_labels: [Day 35]
+  study_name: NVX_UK302
 
   
 azd1222_base: &azd1222_base

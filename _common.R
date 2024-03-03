@@ -276,7 +276,7 @@ if (!is.null(config$assay_metadata)) {
   } else if(study_name=="COVEBoost") { 
     # nothing to do, but this is needed so that _common.R can be called for making risk score
     
-  } else stop("unknown study_name 1")
+  } else stop("unknown study_name 1") # not necessary if there is assay metadata file
   
 }
 
@@ -379,7 +379,7 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
       "Age >= 60, At risk"
     )
     
-} else if (study_name %in% c("PREVENT19","AZD1222")) {
+} else if (study_name %in% c("PREVENT19","AZD1222","NVX_UK302")) {
     Bstratum.labels <- c(
       "Age >= 65",
       "Age < 65"
@@ -392,10 +392,10 @@ if (study_name=="COVE" | study_name=="MockCOVE") {
     )
 
 } else if (study_name %in% c("PROFISCOV", "COVAIL")) {
-    Bstratum.labels <- c(
-      "All"
-    )
-
+  Bstratum.labels <- c(
+    "All"
+  )
+  
 } else if(study_name %in% c("COVEBoost", "HVTN705")) { 
     # nothing to do, but this is needed so that _common.R can be called for making risk score
   
@@ -633,7 +633,10 @@ preprocess=function(dat_raw, study_name) {
     
     
     for(tp in timepoints) {
-      cat("subset to ptids without missing EventTimePrimaryD"%.%tp%.%"\n")
+      empty = nrow(dat_proc[is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ])
+      if (empty>0) {
+        warning("there are "%.%empty%.%" ptids without event time. subset to ptids without missing EventTimePrimaryD"%.%tp%.%"\n")
+      }
       dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
     }
     

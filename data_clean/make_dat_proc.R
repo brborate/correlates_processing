@@ -1,15 +1,16 @@
+#Sys.setenv(TRIAL = "nvx_uk302")
 #Sys.setenv(TRIAL = "moderna_real")
 #Sys.setenv(TRIAL = "vat08_combined")
 #Sys.setenv(TRIAL = "covail")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
 #Sys.setenv(TRIAL = "azd1222_stage2")
+if (Sys.getenv("TRIAL")  %in% c("moderna_boost","id27hpv")) stop("Please run TRIAL-specific scripts.") 
 
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
 
+{
 source(here::here("_common.R"))
-
-if (TRIAL %in% c("moderna_boost","id27hpv")) stop("For moderna_boost, run make_dat_moderna_boost.R") 
-
+  
 library(tidyverse)
 library(Hmisc) # wtd.quantile, cut2
 library(mice)
@@ -18,7 +19,7 @@ library(here)
 library(mdw)
 
 begin=Sys.time()
-
+}
 
 
 ########################################################################################################
@@ -162,7 +163,7 @@ if (TRIAL=="janssen_partA_VL") {
   dat_proc = preprocess(dat_raw, study_name)   
   colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
   
-  # borrow risk score from azd1222_stage2
+  # borrow risk score from azd1222
   load(file = 'riskscore_baseline/output/azd1222/inputFile_with_riskscore.RData')
   # stage 2 dataset has fewer rows than stage 1
   dat_proc$risk_score = inputFile_with_riskscore$risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
@@ -183,10 +184,10 @@ if (TRIAL=="janssen_partA_VL") {
 
 
 # define new variables
-{ # use this to navigate faster in Rstudio
+{
   colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
   dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
-  dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08=60, PROFISCOV=NA, COVAIL=65, stop("unknown study_name 1")))
+  dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08=60, PROFISCOV=NA, COVAIL=65, NVX_UK302=65, stop("unknown study_name 1")))
   
   # for the mock datasets, hardcode AnyinfectionD1 
   if (study_name %in% c("MockENSEMBLE", "MockCOVE")) dat_proc$AnyinfectionD1=0
@@ -231,7 +232,7 @@ if (TRIAL=="janssen_partA_VL") {
         race = factor(race, levels = labels.race)
       )
     
-  } else if (study_name %in% c("PROFISCOV", "VAT08", "COVAIL")) {
+  } else if (study_name %in% c("PROFISCOV", "VAT08", "COVAIL", "NVX_UK302")) {
     dat_proc$race = 0 # not applicable, but has to define a value so that the next chunk of code can run
     
   } else stop("unknown study_name 2")
@@ -255,7 +256,7 @@ if (TRIAL=="janssen_partA_VL") {
   dat_proc$MinorityInd[is.na(dat_proc$MinorityInd)] = 0
   
   # set MinorityInd to 0 for latin america and south africa
-  if (study_name %in% c("COVE", "MockCOVE", "PROFISCOV", "VAT08", "COVAIL")) {
+  if (study_name %in% c("COVE", "MockCOVE", "PROFISCOV", "VAT08", "COVAIL", "NVX_UK302")) {
     # nothing to do
     # COVE only has US data
     
@@ -287,7 +288,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 } else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
     dat_proc$Bstratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
     
-} else if (study_name %in% c("PREVENT19", "AZD1222")) {
+} else if (study_name %in% c("PREVENT19", "AZD1222", "NVX_UK302")) {
   dat_proc$Bstratum =  with(dat_proc, Senior + 1)
   
 } else if (study_name %in% c("VAT08")) {
@@ -331,9 +332,13 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     
     
 } else if (study_name=="PREVENT19" ) {
-    dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior, HighRiskInd), base = 2)) + 1
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 9, 10))) # 0 is US
-    
+  dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior, HighRiskInd), base = 2)) + 1
+  dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 9, 10))) # 0 is US
+  
+  
+} else if (study_name=="NVX_UK302" ) {
+  dat_proc$demo.stratum = as.integer(factor(dat_proc$Site)) * 2 - dat_proc$Senior
+
         
 } else if (study_name=="AZD1222" ) {
 #    US, <65, non-Minority
@@ -496,6 +501,11 @@ if (study_name == "VAT08") {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
     
+  } else if (study_name == "NVX_UK302") {
+    # data has only Bserostatus 0
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD35==1 & Trt==0 & Bserostatus==0)]=max.tps+1
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD35==1 & Trt==1 & Bserostatus==0)]=max.tps+2
+
   } else if (study_name == "PROFISCOV") {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD43==1 & Trt==0 & Bserostatus==0)]=max.tps+1
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD43==1 & Trt==0 & Bserostatus==1)]=max.tps+2
@@ -536,7 +546,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
   }    
     
 
-} else if (study_name %in% c("PREVENT19")) {
+} else if (study_name %in% c("PREVENT19","NVX_UK302")) {
   must_have_assays <- c("bindSpike")
     
 
@@ -693,7 +703,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
   # dat_proc[["TwophasesampIndD"%.%timepoints[1]%.%"original"]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"original"]]
   
   
-} else if (study_name %in% c("AZD1222", "PROFISCOV")) {
+} else if (study_name %in% c("AZD1222", "PROFISCOV","NVX_UK302")) {
     if (two_marker_timepoints) {
         # does not require baseline or time point 1
         dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
@@ -1019,8 +1029,8 @@ if (study_name%in%c("COVAIL")) {
 
   n.imp <- 1
 
-  # impute each time point separately
-  for (i in 1:2) {
+  for (i in 1:2) { # nAb and bAb
+    # impute each time point separately
     for (tp in c("B","Day22","Day43")) {
       
       if (i==1) {
@@ -1206,6 +1216,10 @@ if (study_name%in%c("COVAIL")) {
     dat_proc[, "Day29pseudoneutid50"%.%"_"%.%i] = dat_proc[, "Day29pseudoneutid50"]
     dat_proc[, "Day29bindSpike"%.%"_"%.%i]      = dat_proc[, "Day29bindSpike"]
   } 
+  
+  
+} else if (TRIAL=="nvx_uk302") {
+  # nothing to be done since we don't need to impute baseline and there is only one marker at D35
   
   
 } else {
@@ -1413,7 +1427,7 @@ if(study_name == "COVAIL") {
 # but there is a need to do uloq censoring before computing delta
 
 
-if (TRIAL %in% c("janssen_partA_VL")) {
+if (TRIAL %in% c("janssen_partA_VL", "nvx_uk302")) {
   # skipping b/c there is no baseline data
   
 } else {
@@ -1459,7 +1473,7 @@ if (TRIAL %in% c("janssen_partA_VL")) {
 
 
 ###############################################################################
-# add discrete markers
+# add discrete/trichotomized markers
 
 if (TRIAL=="covail") {
   # mRNA arms
@@ -1521,7 +1535,17 @@ if (TRIAL=="covail") {
     dat_proc[, "Day29pseudoneutid50"%.%"_"%.%i%.%"cat"] = dat_proc[, "Day29pseudoneutid50cat"]
     dat_proc[, "Day29bindSpike"%.%"_"%.%i%.%"cat"]      = dat_proc[, "Day29bindSpikecat"]
   } 
-}
+
+} else if (TRIAL %in% c("nvx_uk302")) {
+  dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & ph2.D35) 
+  all.markers = c("Day35"%.%assays)
+  dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D35")
+  # remove the temp ph2 column
+  dat_proc$tmp = NULL
+  
+} else {
+  stop ("unknown study name")
+}  
 
 
 ###############################################################################
@@ -1716,6 +1740,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
          covail = "4d50209a413c9e12903a662eb241a1bf", 
+         nvx_uk302 = "104037b2d53999eadfc37208dcd7c254", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }

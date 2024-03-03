@@ -121,7 +121,7 @@ courseregion[TrialStage==1 & (Country==4 | Country==7)] <- 4
 
 courseregion[TrialStage==2 & (Country==1 | Country==9)] <- 5
 courseregion[TrialStage==2 & (Country==6 | Country==2 | Country==10)] <- 6
-courseregion[TrialStage==2 & (Country==4 | Country==7))] <- 7
+courseregion[TrialStage==2 & (Country==4 | Country==7)] <- 7
 
 Z1discrete <- as.matrix(cbind(dat[,"Trt"],courseregion))
 # Turn off the effect of Z1scalar on the nearest neighbors, as Avscalar is much more relevant and should carry the weight
