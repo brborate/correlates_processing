@@ -387,15 +387,15 @@
     },
     "copcor": {
       "Package": "copcor",
-      "Version": "2024.2-27",
+      "Version": "2024.2-28",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteUsername": "CoVPN",
       "RemoteRepo": "copcor",
       "RemoteRef": "main",
-      "RemoteSha": "e0f4c971710946d0d075c3062f878c3bfe940f6d",
-      "Hash": "be6dcc90ddc3da0d688a50c762c9d476"
+      "RemoteSha": "bd141d062a78a4722f851eb27fbe01b606f5e8f9",
+      "Hash": "95c4145ed89eea548aceb5d98c08e8f8"
     },
     "covr": {
       "Package": "covr",
@@ -941,15 +941,15 @@
     },
     "marginalizedRisk": {
       "Package": "marginalizedRisk",
-      "Version": "2021.2-4",
+      "Version": "2024.1-27",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteRepo": "marginalizedRisk",
       "RemoteUsername": "youyifong",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "a33f807f9510fc299a380b7b7e898e5e055d8cff",
-      "Hash": "aca84af528655beda99bd8b942e48bbc"
+      "RemoteRepo": "marginalizedRisk",
+      "RemoteRef": "master",
+      "RemoteSha": "c660b1c3e9d4e042f60caa566b509fa392533483",
+      "Hash": "df31a3f36217c895da2921fbcbc2ebfe"
     },
     "markdown": {
       "Package": "markdown",

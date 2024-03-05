@@ -1,16 +1,15 @@
-#Sys.setenv(TRIAL = "nvx_uk302")
-#Sys.setenv(TRIAL = "moderna_real")
+#Sys.setenv(TRIAL = "prevent19_stage2")
 #Sys.setenv(TRIAL = "vat08_combined")
+#Sys.setenv(TRIAL = "nvx_uk302")
 #Sys.setenv(TRIAL = "covail")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
 #Sys.setenv(TRIAL = "azd1222_stage2")
+#Sys.setenv(TRIAL = "moderna_real")
 if (Sys.getenv("TRIAL")  %in% c("moderna_boost","id27hpv")) stop("Please run TRIAL-specific scripts.") 
+source(here::here("_common.R"))
 
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
-
 {
-source(here::here("_common.R"))
-  
 library(tidyverse)
 library(Hmisc) # wtd.quantile, cut2
 library(mice)
@@ -93,6 +92,19 @@ if (TRIAL=="janssen_partA_VL") {
    dat_proc$cc = country.codes[dat_proc$Country]
    dat_proc$continent = continents[dat_proc$cc]
    table(dat_proc$continent, dat_proc$cc)
+   region.1 = c( # stage 1
+     "United States" = 1, "Japan" = 1, 
+     "Colombia" = 2, "Honduras" = 2, 
+     "Ghana" = 3, "Kenya" = 3, 
+     "Nepal" = 4, "India" = 4)
+   region.2 = c( # stage 2
+     "Colombia" = 1, "Mexico" = 1, 
+     "Ghana" = 2, "Kenya" = 2, "Uganda" = 2,
+     "Nepal" = 3, "India" = 3)
+   # first set it to stage 1 region, then change the region for stage 2 countries
+   dat_proc$region = region.1[dat_proc$cc] 
+   dat_proc$region = ifelse(dat_proc$Trialstage==2, region.2[dat_proc$cc], dat_proc$region)
+   
    
    # add risk score
    load(file = paste0('riskscore_baseline/output/vat08_combined/inputFile_with_riskscore.RData'))
@@ -102,7 +114,7 @@ if (TRIAL=="janssen_partA_VL") {
    
    # ptids with missing Bserostatus already filtered out in preprocess
    
-   # define event indicator and event time variables based on seq1.variant.hotdeck1 etc
+   # define ten copies of imputed Omicron indicator and event time variables based on seq1.variant.hotdeck1 etc
    for (t in c(1,22,43)) {
      for (i in 1:10) {
        dat_proc[[paste0("EventIndOmicronD",t,"M12hotdeck",i)]]  = 
@@ -116,7 +128,7 @@ if (TRIAL=="janssen_partA_VL") {
      }
    }
    
-   # create event time and indicator variables censored on 180 days post dose 2
+   # create event time and indicator variables censored after M6 (instead of M12) post dose 2
    for (t in c(1,22,43)) {
      for (i in 1:10) {
        dat_proc[[paste0("EventIndOmicronD",t,"M6hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 0,   dat_proc[[paste0("EventIndOmicronD",t,"M12hotdeck",i)]])
@@ -157,7 +169,6 @@ if (TRIAL=="janssen_partA_VL") {
   stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D29==1])))
   
   
-  
 } else if (TRIAL == "azd1222_stage2") {
   dat_raw=read.csv(mapped_data)
   dat_proc = preprocess(dat_raw, study_name)   
@@ -166,6 +177,20 @@ if (TRIAL=="janssen_partA_VL") {
   # borrow risk score from azd1222
   load(file = 'riskscore_baseline/output/azd1222/inputFile_with_riskscore.RData')
   # stage 2 dataset has fewer rows than stage 1
+  dat_proc$risk_score = inputFile_with_riskscore$risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
+  dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
+  
+  
+} else if (TRIAL == "prevent19_stage2") {
+  dat_raw=read.csv(mapped_data)
+  dat_proc = preprocess(dat_raw, study_name)   
+  colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
+  
+  # borrow risk score from prevent19
+  load(file = 'riskscore_baseline/output/prevent19/inputFile_with_riskscore.RData')
+  nrow(inputFile_with_riskscore)
+  nrow(dat_proc)
+  # stage 2 dataset has fewer rows than stage 1 b/c it is vaccine only, baseline seronegative only
   dat_proc$risk_score = inputFile_with_riskscore$risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
   dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
   
@@ -183,14 +208,11 @@ if (TRIAL=="janssen_partA_VL") {
 }
 
 
-# define new variables
+# define Senior and race/ethnicity
 {
   colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
   dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
   dat_proc$Senior = as.integer(dat_proc$Age>=switch(study_name, COVE=65, MockCOVE=65, ENSEMBLE=60, MockENSEMBLE=60, PREVENT19=65, AZD1222=65, VAT08=60, PROFISCOV=NA, COVAIL=65, NVX_UK302=65, stop("unknown study_name 1")))
-  
-  # for the mock datasets, hardcode AnyinfectionD1 
-  if (study_name %in% c("MockENSEMBLE", "MockCOVE")) dat_proc$AnyinfectionD1=0
   
   # ethnicity labeling
   dat_proc$ethnicity <- ifelse(dat_proc$EthnicityHispanic == 1, labels.ethnicity[1], labels.ethnicity[2])
@@ -237,6 +259,8 @@ if (TRIAL=="janssen_partA_VL") {
     
   } else stop("unknown study_name 2")
   
+  
+  
   dat_proc$WhiteNonHispanic <- NA
   # WhiteNonHispanic=1 IF race is White AND ethnicity is not Hispanic
   dat_proc$WhiteNonHispanic <-
@@ -270,13 +294,17 @@ if (TRIAL=="janssen_partA_VL") {
     dat_proc$MinorityInd[dat_proc$Country!=2] = 0 # 2 is US
     
   } else stop("unknown study_name 3")  
+  
+  # for the mock datasets, hardcode AnyinfectionD1 
+  if (study_name %in% c("MockENSEMBLE", "MockCOVE")) dat_proc$AnyinfectionD1=0
+
 }
 
 
 
 ###############################################################################
 # stratum variables
-# The code for Bstratum is trial specifc
+# The code for Bstratum is trial-specific
 # The code for tps.stratum and Wstratum are not trial specific since they are constructed on top of Bstratum
 ###############################################################################
 
@@ -624,7 +652,6 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
     # all those have variants bAb have variants nAb
     with(subset(dat_proc, SubcohortInd & EventIndPrimaryIncludeNotMolecConfirmedD1==0), 
          table(!is.na(Day29bindSpike_D614), TwophasesampIndD29variant, Region))
-    
   }
   
 
@@ -652,8 +679,10 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
                !is.na(Day22pseudoneutid50_BA.2) | 
                !is.na(Day22pseudoneutid50_BA.4.5)) 
   
-  dat_proc[["TwophasesampIndD43nAb"]] = dat_proc$baseline.nAb & dat_proc$D43.nAb
-  dat_proc[["TwophasesampIndD22nAb"]] = dat_proc$baseline.nAb & dat_proc$D22.nAb
+  # dat_proc[["TwophasesampIndD43nAb"]] = dat_proc$baseline.nAb & dat_proc$D43.nAb
+  # dat_proc[["TwophasesampIndD22nAb"]] = dat_proc$baseline.nAb & dat_proc$D22.nAb
+  # 
+  dat_proc[["TwophasesampIndnAb"]] = dat_proc$baseline.nAb & dat_proc$D43.nAb & dat_proc$D22.nAb
   
 
   # baseline any bAb
@@ -687,10 +716,41 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
                             !is.na(Day22bindSpike_delta3) | 
                             !is.na(Day22bindSpike_omicron)) 
   
-  dat_proc[["TwophasesampIndD43bAb"]] = dat_proc$baseline.bAb & dat_proc$D43.bAb
-  dat_proc[["TwophasesampIndD22bAb"]] = dat_proc$baseline.bAb & dat_proc$D22.bAb
+  # dat_proc[["TwophasesampIndD43bAb"]] = dat_proc$baseline.bAb & dat_proc$D43.bAb
+  # dat_proc[["TwophasesampIndD43bAb"]] = dat_proc$baseline.bAb & dat_proc$D43.bAb
+  # 
+  dat_proc[["TwophasesampIndbAb"]] = dat_proc$baseline.bAb & dat_proc$D22.bAb & dat_proc$D43.bAb
 
-    
+
+  #### strata size
+  # nAb  
+  dat_proc$tmp = dat_proc$region + 4*dat_proc$Senior # combine region and senior to stack tables
+  with(subset(dat_proc, Trialstage==1 & 
+                EarlyendpointD43==0 & Perprotocol==1 & EventTimePrimaryD43 >= 7 & 
+                TwophasesampIndnAb==1), 
+       mytable(Trt, tmp, RAPDIAG, Bserostatus))
+  
+  dat_proc$tmp = dat_proc$region + 3*dat_proc$Senior # combine region and senior to stack tables
+  with(subset(dat_proc, Trialstage==2 & 
+                EarlyendpointD43==0 & Perprotocol==1 & EventTimePrimaryD43 >= 7 & 
+                TwophasesampIndnAb==1), 
+       mytable(Trt, tmp, RAPDIAG, Bserostatus))
+  
+  
+  # bAb  
+  dat_proc$tmp = dat_proc$region + 4*dat_proc$Senior # combine region and senior to stack tables
+  with(subset(dat_proc, Trialstage==1 & 
+                EarlyendpointD43==0 & Perprotocol==1 & EventTimePrimaryD43 >= 7 & 
+                TwophasesampIndbAb==1), 
+       mytable(Trt, tmp, RAPDIAG, Bserostatus))
+  
+  dat_proc$tmp = dat_proc$region + 3*dat_proc$Senior # combine region and senior to stack tables
+  with(subset(dat_proc, Trialstage==2 & 
+                EarlyendpointD43==0 & Perprotocol==1 & EventTimePrimaryD43 >= 7 & 
+                TwophasesampIndbAb==1), 
+       mytable(Trt, tmp, RAPDIAG, Bserostatus))
+  
+  
   # # the original
   # # require baseline but not time point 1
   # dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"original"]] =
