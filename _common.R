@@ -189,6 +189,13 @@ if (!is.null(config$assay_metadata)) {
     uloqs["bindN"]=574.6783
     pos.cutoffs["bindN"]=23.4711
     
+    llods["bindNVXIgG"]=200
+    lloqs["bindNVXIgG"]=200
+    uloqs["bindNVXIgG"]=Inf
+    pos.cutoffs["bindN"]=200
+    
+    
+    
   } else if(study_name=="AZD1222") {
     
     # data less than lloq is set to lloq/2 in the raw data, Nexelis

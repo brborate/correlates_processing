@@ -1057,6 +1057,8 @@ if (study_name%in%c("COVAIL")) {
   predicted = predict(fit, subset(dat.tmp.impute, select=Day15pseudoneutid50_BA.1))
   dat.tmp.impute$Day15pseudoneutid50_BA.4.BA.5 = ifelse(is.na(dat.tmp.impute$Day15pseudoneutid50_BA.4.BA.5), predicted, dat.tmp.impute$Day15pseudoneutid50_BA.4.BA.5)
   
+  # save a copy for Lauren before assigning imputed values
+  dat_proc$Day15pseudoneutid50_BA.4.BA.5_unimputed = dat_proc$Day15pseudoneutid50_BA.4.BA.5
   # populate dat_proc with the imputed values
   imp.markers='Day15pseudoneutid50_BA.4.BA.5'
   dat_proc[dat_proc[["ph1.D15"]]==1, imp.markers] <-
@@ -1068,17 +1070,17 @@ if (study_name%in%c("COVAIL")) {
   )
   
   
-  #### impute D29 among those at risk at D29
+  #### none missing to impute D29 among those at risk at D29
   dat.tmp.impute <- subset(dat_proc, ph1.D15==1 & COVIDtimeD22toD181>NumberdaysD15toD29 & AsympInfectIndD15to29==0)
   with(dat.tmp.impute, print(table(!is.na(get("Day29"%.%assays[1])), !is.na(get("Day15"%.%assays[1])))))
   # thus, no missingness actually
   
-  #### impute D91 among those at risk at D91
+  #### none missing to impute D91 among those at risk at D91
   dat.tmp.impute <- subset(dat_proc, ph1.D15==1 & COVIDtimeD22toD181>NumberdaysD15toD91 & AsympInfectIndD15to91==0)
   with(dat.tmp.impute, print(table(!is.na(get("Day91"%.%assays[1])), !is.na(get("Day15"%.%assays[1])))))
   # thus, no missingness actually
   
-  #### impute D181 among those at risk at D181
+  #### none missing to impute D181 among those at risk at D181
   dat.tmp.impute <- subset(dat_proc, ph1.D15==1 & COVIDtimeD22toD181>NumberdaysD15toD181 & AsympInfectIndD15to181==0)
   with(dat.tmp.impute, print(table(!is.na(get("Day181"%.%assays[1])), !is.na(get("Day15"%.%assays[1])))))
   # thus, no missingness actually
@@ -1603,6 +1605,9 @@ if (TRIAL=="covail") {
   # remove the temp ph2 column
   dat_proc$tmp = NULL
   
+} else if (TRIAL %in% c("prevent19")) {
+  # do nothing
+  
 } else {
   stop ("unknown study name")
 }  
@@ -1799,7 +1804,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
-         covail = "4d50209a413c9e12903a662eb241a1bf", 
+         covail = "35b9942c61ce87499e8f3a4d9f53d87e", 
          nvx_uk302 = "104037b2d53999eadfc37208dcd7c254", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    

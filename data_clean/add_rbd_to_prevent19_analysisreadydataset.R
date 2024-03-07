@@ -1,5 +1,5 @@
 # read LVMN marker data
-dat.1=read.csv("/trials/covpn/p3004/analysis/mapping_immune_correlates/adata/COVID_Novavax_RBD_20221005.csv") 
+dat.1=read.csv("/trials/covpn/p3004/analysis/mapping_immune_correlates/stage1/adata/COVID_Novavax_RBD_20221005.csv") 
 
 for (t in c("B","Day35")) {
     x=dat.1[[t%.%"bindRBD"]]
