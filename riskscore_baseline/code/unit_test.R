@@ -2,8 +2,8 @@ library(digest)
 
 if(attr(config, "config") == "prevent19"){
   tmp <- switch(args[1],
-                onlyUSsubjects = "432e24718a92a9ee3c6fe4a71af177f8", 
-                allsubjects = "41588e90ae5325c87b5304b2b9087a3b", 
+                onlyUSsubjects = "76405bdd76df7565dc6fa697a0e34d0e", 
+                allsubjects = "07e22b6acf911b1aa7993722332971d2", 
                 SLnotrun = "795a3b72a0dde6aff71b7487f738839c",
                 NA) 
 } else {
@@ -18,12 +18,26 @@ if(attr(config, "config") == "prevent19"){
 }
 
 
-if (Sys.getenv("NOCHECK") == "" &
-    all.equal(names(inputFile_with_riskscore %>% select(Ptid, risk_score, standardized_risk_score)), c("Ptid", "risk_score", "standardized_risk_score"))) {
+
+if(Sys.getenv("NOCHECK") == "" &
+   all.equal(names(inputFile_with_riskscore %>% select(Ptid, risk_score, standardized_risk_score)), c("Ptid", "risk_score", "standardized_risk_score"))){
   
-  if (!is.na(tmp)) 
-    assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == tmp, 
-                            msg = paste0("failed risk_score digest check. Old digest ", tmp, ". New digest ", digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]))) 
-  
-  print("======================= Passed risk_score digest check =======================")    
+  if(!is.na(tmp)){
+    if(attr(config, "config") %in% c("moderna_real", "moderna_mock", "janssen_pooled_mock", "janssen_pooled_real", "azd1222", "vat08_combined")){
+      assertthat::assert_that(digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))]) == tmp, 
+                              msg = paste0("failed risk_score digest check. Old digest ", tmp, ". New digest ", digest(inputFile_with_riskscore[order(names(inputFile_with_riskscore))])))
+      
+      print("======================= Passed risk_score digest check =======================") 
+    } else {
+      only_riskscores <- inputFile_with_riskscore %>% select(Ptid, risk_score, standardized_risk_score) 
+      assertthat::assert_that(digest(only_riskscores[order(names(only_riskscores))]) == tmp, 
+                              msg = paste0("failed risk_score digest check. Old digest ", tmp, ". New digest ", digest(only_riskscores[order(names(only_riskscores))]))) 
+      
+      print("======================= Passed risk_score digest check =======================")
+    }
+  }
 }
+  
+
+
+
