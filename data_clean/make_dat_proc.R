@@ -1,3 +1,4 @@
+#Sys.setenv(TRIAL = "prevent19")
 #Sys.setenv(TRIAL = "prevent19_stage2")
 #Sys.setenv(TRIAL = "vat08_combined")
 #Sys.setenv(TRIAL = "nvx_uk302")
@@ -7,6 +8,8 @@
 #Sys.setenv(TRIAL = "moderna_real")
 if (Sys.getenv("TRIAL")  %in% c("moderna_boost","id27hpv")) stop("Please run TRIAL-specific scripts.") 
 source(here::here("_common.R"))
+
+
 
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
 {
@@ -194,6 +197,14 @@ if (TRIAL=="janssen_partA_VL") {
   dat_proc$risk_score = inputFile_with_riskscore$risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
   dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
   
+  
+} else if (TRIAL == "nvx_uk302") {
+  dat_raw=read.csv(mapped_data)
+  dat_proc = preprocess(dat_raw, study_name)   
+  colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
+  
+  # filter out ptids with AnyinfectionD1==1 & EventIndPrimaryD1==0
+  dat_proc = subset(dat_proc, !(AnyinfectionD1==1 & EventIndPrimaryD1==0))
   
 } else {
   if (make_riskscore) {
@@ -547,13 +558,9 @@ if (study_name == "VAT08") {
 if (!is.null(dat_proc$Wstratum)) table(dat_proc$Wstratum) # variables may be named other than Wstratum
 
 
-
-###############################################################################
-# observation-level weights
-# Note that Wstratum may have NA if any variables to form strata has NA
-###############################################################################
-
+################################################################################
 # define must_have_assays for ph2 definition
+
 if (study_name %in% c("COVE", "MockCOVE")) {
   must_have_assays <- c("bindSpike", "bindRBD")
     
@@ -574,10 +581,14 @@ if (study_name %in% c("COVE", "MockCOVE")) {
   }    
     
 
-} else if (study_name %in% c("PREVENT19","NVX_UK302")) {
+} else if (study_name %in% c("PREVENT19")) {
   must_have_assays <- c("bindSpike")
-    
-
+  
+  
+} else if (study_name %in% c("NVX_UK302")) {
+  must_have_assays <- c("bindNVXIgG")
+  
+  
 } else if (study_name %in% c("AZD1222")) {
   if (TRIAL=="azd1222") {
       must_have_assays <- c("pseudoneutid50")
@@ -603,19 +614,30 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 
 
 # TwophasesampInd: be in the subcohort or a case after time point 1  &  have the necessary markers
-if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
-    if (two_marker_timepoints) {
+if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
+  if (two_marker_timepoints) {
     # require baseline and timepoint 1
-        dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
-            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-            complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays, "Day"%.%timepoints[2]%.%must_have_assays)])      
-    }
-    # require baseline
-    dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
-            with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-            complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
-        
-    
+    dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
+      with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+      complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays, "Day"%.%timepoints[2]%.%must_have_assays)])      
+  }
+  # require baseline
+  dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
+    with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+    complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
+  
+  
+} else if (study_name == "PREVENT19") {
+  # require baseline
+  dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
+    with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+    complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
+  
+  # for bindNVXIgG, does not require baseline, does not require case-cohort
+  dat_proc[["TwophasesampIndD35NVX"]] = 
+    complete.cases(dat_proc[,c("Day35bindNVXIgG")])      
+  
+  
 } else if (study_name=="ENSEMBLE") {
   if (endsWith(TRIAL, "EUA")) {
     # require baseline
@@ -775,6 +797,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
             with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
             # adding | is because if D57 is present, D29 will be imputed if missing
             (complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)]) | complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])) 
+    
     } else {
         # does not require baseline
         dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
@@ -791,6 +814,11 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE", "PREVENT19")) {
   
 } else stop("unknown study_name 8")
 
+
+###############################################################################
+# observation-level weights
+# Note that Wstratum may have NA if any variables to form strata has NA
+###############################################################################
 
 
 # weights 
@@ -974,6 +1002,40 @@ if (TRIAL=='vat08_combined') {
     msg = "missing wt.D29start1 for D29start1 analyses ph1 subjects")
 
     
+} else if (TRIAL == "prevent19") {
+  tp=35
+  tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
+  wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
+  print(wts_table)
+  wts_norm <- rowSums(wts_table) / wts_table[, 2]
+  dat_proc[["wt.D"%.%tp]] <- wts_norm[dat_proc$Wstratum %.% ""]
+  # the step above assigns weights for some subjects outside ph1. the next step makes them NA
+  dat_proc[["wt.D"%.%tp]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.D"%.%tp]], NA) 
+  dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp]])
+  dat_proc[["ph2.D"%.%tp]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp]]
+  
+  assertthat::assert_that(
+    all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp]])),
+    msg = "missing wt.D for D analyses ph1 subjects")
+  
+  # a second weight for bindNVXIgG
+  tp=35
+  tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
+  wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp%.%"NVX")))
+  print(wts_table)
+  wts_norm <- rowSums(wts_table) / wts_table[, 2]
+  dat_proc[["wt.D"%.%tp%.%"NVX"]] <- wts_norm[dat_proc$Wstratum %.% ""]
+  # the step above assigns weights for some subjects outside ph1. the next step makes them NA
+  dat_proc[["wt.D"%.%tp%.%"NVX"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.D"%.%tp%.%"NVX"]], NA) 
+  dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%"NVX"]])
+  dat_proc[["ph2.D"%.%tp%.%"NVX"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"NVX"]]
+  
+  assertthat::assert_that(
+    all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp%.%"NVX"]])),
+    msg = "missing wt.D.NVX for D analyses ph1 subjects")
+  
+  
+  
 } else {
   # the default
   for (tp in rev(timepoints)) { # rev is just so that digest passes
@@ -1300,7 +1362,12 @@ if (study_name%in%c("COVAIL")) {
       if(two_marker_timepoints) {
         imp.markers=c(outer(c("B", if(tp==timepoints[2]) "Day"%.%timepoints else "Day"%.%tp), assays, "%.%"))
       } else {
-        imp.markers=c(outer(c("B", "Day"%.%tp), assays, "%.%"))
+        if (TRIAL=="prevent19") {
+          # don't impute bindNVXIgG b/c it has its own ph2 indicator
+          imp.markers=c(outer(c("B", "Day"%.%tp), setdiff(assays,"bindNVXIgG"), "%.%"))
+        } else {
+          imp.markers=c(outer(c("B", "Day"%.%tp), assays, "%.%"))
+        }
       }
       # mdw markers are not imputed
       imp.markers=imp.markers[!endsWith(imp.markers, "_mdw")]
@@ -1606,7 +1673,7 @@ if (TRIAL=="covail") {
   dat_proc$tmp = NULL
   
 } else if (TRIAL %in% c("prevent19")) {
-  # do nothing
+  # do nothing, to be backward compatible
   
 } else {
   stop ("unknown study name")
@@ -1805,7 +1872,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
          covail = "35b9942c61ce87499e8f3a4d9f53d87e", 
-         nvx_uk302 = "104037b2d53999eadfc37208dcd7c254", 
+         nvx_uk302 = "e86a785f297bd03dd57d14bdf1ce34db", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }

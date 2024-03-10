@@ -1,3 +1,4 @@
+{
 Sys.setenv(TRIAL = "id27hpv")
 
 # no need to load _common.R
@@ -49,12 +50,14 @@ table(dat_proc$EventIndPrimaryAnyHPV)
 # 4 cases have negative SusceptibilityTimeM18
 tmp=subset(dat_proc, EventIndPrimaryAnyHPV==1, c(EligibilityorinitialsamplingTimeM18, SusceptibilityTimeM18  )); 
 # tmp[order(tmp[[3]]),]
+}
+
 
 
 ###############################################################################
 # define strata variables
 ###############################################################################
-
+{
 dat_proc$single.dose = ifelse(dat_proc$TrtGroup=='Single-dose', 1, 0)
 
 
@@ -95,13 +98,13 @@ dat_proc$Wstratum[with(dat_proc, EventIndPrimaryAnyHPV==1)]=max.tps+1
 
 with(dat_proc, table(tps.stratum, EventIndPrimaryAnyHPV, useNA='ifany'))
 
-
+}
 
 
 ###############################################################################
 # observation-level weights for bAb
 ###############################################################################
-
+{
 # markers are all or none, no imputation is needed, pick an arbitrary marker as must have
 must_have_assays <- c("bind_HPV6")
 dat_proc[["TwophasesampIndM18"]] = complete.cases(dat_proc[,c("M18"%.%must_have_assays)])      
@@ -136,14 +139,14 @@ dat_proc[["ph2.M18.sus"]]=dat_proc[["ph1.M18.sus"]] & dat_proc[["TwophasesampInd
 assertthat::assert_that(
   all(!is.na(subset(dat_proc, kp & !is.na(Wstratum))[["wt.M18.sus"]])),
   msg = "missing wt.D for D analyses ph1 subjects")
-
+}
 
 
 
 ###############################################################################
 # observation-level weights for nAb
 ###############################################################################
-
+{
 # markers are all or none, no imputation is needed, pick an arbitrary marker as must have
 must_have_assays <- c("pseudoneutid50_HPV6")
 dat_proc[["TwophasesampIndM18nAb"]] = complete.cases(dat_proc[,c("M18"%.%must_have_assays)])      
@@ -178,12 +181,12 @@ dat_proc[["ph2.M18.sus.nAb"]]=dat_proc[["ph1.M18.sus"]] & dat_proc[["Twophasesam
 assertthat::assert_that(
   all(!is.na(subset(dat_proc, kp & !is.na(Wstratum))[["wt.M18.sus.nAb"]])),
   msg = "missing wt.D for D analyses ph1 subjects")
-
+}
 
 
 ###############################################################################
 # define mdw scores
-
+{
 bAb = assays[1:5]
 t = 'M18'
 mdw.weights=tryCatch({
@@ -208,7 +211,7 @@ mdw.weights=tryCatch({
 print(mdw.weights)  
 dat_proc[, t%.%'pseudoneutid50_mdw'] = scale(dat_proc[, t%.%nAb]) %*% mdw.weights
 write.csv(mdw.weights, file = here("data_clean", "csv", TRIAL%.%"_mdw_weights_nAb.csv"))
-
+}
 
 ###############################################################################
 # impute covariates if necessary

@@ -2,9 +2,9 @@ library(digest)
 
 if(attr(config, "config") == "prevent19"){
   tmp <- switch(args[1],
-                onlyUSsubjects = "432e24718a92a9ee3c6fe4a71af177f8", 
-                allsubjects = "41588e90ae5325c87b5304b2b9087a3b", 
-                SLnotrun = "795a3b72a0dde6aff71b7487f738839c",
+                onlyUSsubjects = "64709ad36f1e982b3a1c9fa3c0d20532", 
+                allsubjects = "eed29375dfb27bdd9c25abfe769d9a1f", 
+                SLnotrun = "0cffe738dca698637ec40c2c3cc2a476",
                 NA) 
 } else {
   tmp <- switch(attr(config, "config"),
