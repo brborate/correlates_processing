@@ -191,7 +191,7 @@ if (!is.null(config$assay_metadata)) {
     
     llods["bindNVXIgG"]=200
     lloqs["bindNVXIgG"]=200
-    uloqs["bindNVXIgG"]=Inf
+    uloqs["bindNVXIgG"]=2904275
     pos.cutoffs["bindN"]=200
     
     
