@@ -181,6 +181,9 @@ janssen_sa_partA:
   <<: *janssen_trial_partA
   subset_variable: Region
   subset_value: 2
+  
+janssen_sa_partA_3008: 
+  <<: *janssen_trial_partA
 
 
 ## ENSMEMBLE part A datasets for variants analysis
