@@ -1,5 +1,5 @@
-#Sys.setenv(TRIAL = "prevent19")
 #Sys.setenv(TRIAL = "prevent19_stage2")
+#Sys.setenv(TRIAL = "prevent19")
 #Sys.setenv(TRIAL = "vat08_combined")
 #Sys.setenv(TRIAL = "nvx_uk302")
 #Sys.setenv(TRIAL = "covail")
@@ -8,7 +8,6 @@
 #Sys.setenv(TRIAL = "moderna_real")
 if (Sys.getenv("TRIAL")  %in% c("moderna_boost","id27hpv")) stop("Please run TRIAL-specific scripts.") 
 source(here::here("_common.R"))
-
 
 
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
@@ -189,11 +188,11 @@ if (TRIAL=="janssen_partA_VL") {
   dat_proc = preprocess(dat_raw, study_name)   
   colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
   
-  # borrow risk score from prevent19
+  # borrow risk score from prevent19, even though the clinical database changed slightly
   load(file = 'riskscore_baseline/output/prevent19/inputFile_with_riskscore.RData')
   nrow(inputFile_with_riskscore)
   nrow(dat_proc)
-  # stage 2 dataset has fewer rows than stage 1 b/c it is vaccine only, baseline seronegative only
+  # stage 2 dataset has fewer rows than stage 1 b/c it is vaccine only, baseline sero-negative only
   dat_proc$risk_score = inputFile_with_riskscore$risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
   dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
   
@@ -534,11 +533,19 @@ if (study_name == "VAT08") {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1)]=max.tps+4
     
-  } else if (study_name == "PREVENT19") {
+  } else if (TRIAL == "prevent19") {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==0)]=max.tps+1
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==1)]=max.tps+2
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
+    
+  } else if (TRIAL == "prevent19_stage2") {
+    # use EventIndPrimaryD35 instead of EventIndPrimaryD21 as case definition
+    # keep the other case strata even though they are empty
+    dat_proc$Wstratum[with(dat_proc, DeltaEventIndD35==1 & Trt==0 & Bserostatus==0)]=max.tps+1
+    dat_proc$Wstratum[with(dat_proc, DeltaEventIndD35==1 & Trt==0 & Bserostatus==1)]=max.tps+2
+    dat_proc$Wstratum[with(dat_proc, DeltaEventIndD35==1 & Trt==1 & Bserostatus==0)]=max.tps+3
+    dat_proc$Wstratum[with(dat_proc, DeltaEventIndD35==1 & Trt==1 & Bserostatus==1)]=max.tps+4
     
   } else if (study_name == "NVX_UK302") {
     # data has only Bserostatus 0
@@ -635,7 +642,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
   
   # for bindNVXIgG, does not require baseline, does not require case-cohort
   dat_proc[["TwophasesampIndD35NVX"]] = 
-    complete.cases(dat_proc[,c("Day35bindNVXIgG")])      
+    complete.cases(dat_proc[,c("ACE2")])      
   
   
 } else if (study_name=="ENSEMBLE") {
@@ -1018,7 +1025,7 @@ if (TRIAL=='vat08_combined') {
     all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp]])),
     msg = "missing wt.D for D analyses ph1 subjects")
   
-  # a second weight for bindNVXIgG
+  # a second weight for ACE2 and bindNVXIgG
   tp=35
   tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
   wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp%.%"NVX")))
@@ -1363,8 +1370,8 @@ if (study_name%in%c("COVAIL")) {
         imp.markers=c(outer(c("B", if(tp==timepoints[2]) "Day"%.%timepoints else "Day"%.%tp), assays, "%.%"))
       } else {
         if (TRIAL=="prevent19") {
-          # don't impute bindNVXIgG b/c it has its own ph2 indicator
-          imp.markers=c(outer(c("B", "Day"%.%tp), setdiff(assays,"bindNVXIgG"), "%.%"))
+          # don't impute bindNVXIgG and ACE2 b/c it has its own ph2 indicator
+          imp.markers=c(outer(c("B", "Day"%.%tp), setdiff(assays,c("bindNVXIgG","ACE2")), "%.%"))
         } else {
           imp.markers=c(outer(c("B", "Day"%.%tp), assays, "%.%"))
         }

@@ -194,6 +194,11 @@ if (!is.null(config$assay_metadata)) {
     uloqs["bindNVXIgG"]=2904275
     pos.cutoffs["bindN"]=500
     
+    llods["ACE2"]=10
+    lloqs["ACE2"]=10
+    uloqs["ACE2"]=Inf
+    pos.cutoffs["ACE2"]=10
+    
     
     
   } else if(study_name=="AZD1222") {
