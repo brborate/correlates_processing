@@ -20,7 +20,7 @@ if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile.RData"))
   placebos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), args[1], "placebo_ptids_with_riskscores.csv"))
   vaccinees_risk <- read.csv(here("output", Sys.getenv("TRIAL"), args[1], "vaccine_ptids_with_riskscores.csv"))
-} else if (study_name %in% c("COVAIL")){
+} else if (study_name %in% c("COVAIL") | (study_name == "ENSEMBLE" & Sys.getenv("TRIAL") == "janssen_sa_partA_3008")){
   load(paste0("output/", Sys.getenv("TRIAL"), "/objects_for_running_SL.rda"))
   load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile.RData"))
   placebos_risk <- read.csv(here("output", Sys.getenv("TRIAL"), "placebo_ptids_with_riskscores.csv"))
@@ -55,7 +55,7 @@ if(study_name == "COVE"){
   
   inputFile_with_riskscore <- full_join(inputFile, risk_scores, by = "Ptid") 
   
-} else if (study_name == "COVAIL"){
+} else if (study_name == "COVAIL" | (study_name == "ENSEMBLE" & Sys.getenv("TRIAL") == "janssen_sa_partA_3008")){
   risk_scores <- placebos_risk %>%
     select(Ptid, risk_score, standardized_risk_score) 
   

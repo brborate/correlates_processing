@@ -4,7 +4,7 @@ if(attr(config, "config") == "prevent19"){
   tmp <- switch(args[1],
                 onlyUSsubjects = "76405bdd76df7565dc6fa697a0e34d0e", 
                 allsubjects = "07e22b6acf911b1aa7993722332971d2", 
-                SLnotrun = "795a3b72a0dde6aff71b7487f738839c",
+                SLnotrun = "76405bdd76df7565dc6fa697a0e34d0e",
                 NA) 
 } else {
   tmp <- switch(attr(config, "config"),

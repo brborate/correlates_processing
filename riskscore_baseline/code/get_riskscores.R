@@ -6,6 +6,7 @@
 # Sys.setenv(TRIAL = "vat08m") # Sanofi
 # Sys.setenv(TRIAL = "vat08_combined") # Sanofi
 # Sys.setenv(TRIAL = "janssen_pooled_partA") 
+# Sys.setenv(TRIAL = "janssen_sa_partA_3008") 
 # Sys.setenv(TRIAL = "butantan")
 # Sys.setenv(TRIAL = "moderna_boost")
 # Sys.setenv(TRIAL = "covail")
@@ -64,71 +65,112 @@ if(study_name %in% c("COVE", "MockCOVE")){
 
 
 if(study_name %in% c("ENSEMBLE", "MockENSEMBLE")){
-  risk_vars <- c(
-    "EthnicityHispanic","EthnicityNotreported", "EthnicityUnknown",
-    "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
-    "URMforsubcohortsampling", "HighRiskInd", "HIVinfection", 
-    "Sex", "Age", "BMI",
-    "Country.X1", "Country.X2", "Country.X3", "Country.X4", "Country.X5", "Country.X6", "Country.X7", 
-    "Region.X1", "Region.X2", 
-    "CalDtEnrollIND.X1"
-  )
   
-  # Store original original risk variables as well to check in check_if_SL_needs_be_run.R!
-  original_risk_vars <- c(
-    "EthnicityHispanic","EthnicityNotreported", "EthnicityUnknown",
-    "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
-    "URMforsubcohortsampling", "HighRiskInd", "HIVinfection", 
-    "Sex", "Age", "BMI",
-    "Country", "Region", "CalendarDateEnrollment"
-  )
-  
-  if(run_prod){
-    risk_vars <- append(risk_vars, c("CalDtEnrollIND.X2", "CalDtEnrollIND.X3"))
-  }
-  
-  endpoint <- "EventIndPrimaryIncludeNotMolecConfirmedD29"
-  risk_timepoint <- 29
-  studyName_for_report <- "ENSEMBLE"
-  
-  # Create binary indicator variables for Country and Region
-  inputMod <- inputFile %>%
-    drop_na(CalendarDateEnrollment, all_of(endpoint)) %>%
-    mutate(Sex.rand = sample(0:1, n(), replace = TRUE),
-           Sex = ifelse(Sex %in% c(2, 3), Sex.rand, Sex), # assign Sex randomly as 0 or 1 if Sex is 2 or 3.
-           Country = as.factor(Country),
-           Region = as.factor(Region),
-           CalDtEnrollIND = case_when(CalendarDateEnrollment < 28 ~ 0,
-                                      CalendarDateEnrollment >= 28 & CalendarDateEnrollment < 56 ~ 1,
-                                      CalendarDateEnrollment >= 56 & CalendarDateEnrollment < 84 ~ 2,
-                                      CalendarDateEnrollment >= 84 & CalendarDateEnrollment < 112 ~ 3,
-                                      CalendarDateEnrollment >= 112 & CalendarDateEnrollment < 140 ~ 4,
-                                      CalendarDateEnrollment >= 140 & CalendarDateEnrollment < 168 ~ 5),
-           CalDtEnrollIND = as.factor(CalDtEnrollIND)) %>%
-    select(-Sex.rand)
-  
-  rec <- recipe(~ Country + Region + CalDtEnrollIND, data = inputMod)
-  dummies <- rec %>%
-    step_dummy(Country, Region, CalDtEnrollIND) %>%
-    prep(training = inputMod)
-  inputMod <- inputMod %>% bind_cols(bake(dummies, new_data = NULL)) 
-  # %>%
-  #   select(-c(Country, Region, CalDtEnrollIND))
-  names(inputMod)<-gsub("\\_",".",names(inputMod))
-  
-  # # Create interaction variables between Region and CalDtEnrollIND
-  # rec <- recipe(EventIndPrimaryIncludeNotMolecConfirmedD29 ~., data = inputMod)
-  # int_mod_1 <- rec %>%
-  #   step_interact(terms = ~ starts_with("Region"):starts_with("CalDtEnrollIND"))
-  # int_mod_1 <- prep(int_mod_1, training = inputMod)
-  # inputMod <- bake(int_mod_1, inputMod)
-  # names(inputMod)<-gsub("\\_",".",names(inputMod))
-  # if(run_prod){
-  #   risk_vars <- append(risk_vars, c("Region.X1.x.CalDtEnrollIND.X1", "Region.X1.x.CalDtEnrollIND.X2",
-  #                                    "Region.X1.x.CalDtEnrollIND.X3",
-  #                                    "Region.X2.x.CalDtEnrollIND.X1", "Region.X2.x.CalDtEnrollIND.X2",
-  #                                    "Region.X2.x.CalDtEnrollIND.X3"))
-  # }
+  if(Sys.getenv("TRIAL") != "janssen_sa_partA_3008"){
+    risk_vars <- c(
+      "EthnicityHispanic","EthnicityNotreported", "EthnicityUnknown",
+      "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
+      "URMforsubcohortsampling", "HighRiskInd", "HIVinfection", 
+      "Sex", "Age", "BMI",
+      "Country.X1", "Country.X2", "Country.X3", "Country.X4", "Country.X5", "Country.X6", "Country.X7", 
+      "Region.X1", "Region.X2", 
+      "CalDtEnrollIND.X1"
+    )
+    
+    # Store original original risk variables as well to check in check_if_SL_needs_be_run.R!
+    original_risk_vars <- c(
+      "EthnicityHispanic","EthnicityNotreported", "EthnicityUnknown",
+      "Black", "Asian", "NatAmer", "PacIsl", "Multiracial", "Notreported", "Unknown",
+      "URMforsubcohortsampling", "HighRiskInd", "HIVinfection", 
+      "Sex", "Age", "BMI",
+      "Country", "Region", "CalendarDateEnrollment"
+    )
+    
+    if(run_prod){
+      risk_vars <- append(risk_vars, c("CalDtEnrollIND.X2", "CalDtEnrollIND.X3"))
+    }
+    
+    endpoint <- "EventIndPrimaryIncludeNotMolecConfirmedD29"
+    risk_timepoint <- 29
+    studyName_for_report <- "ENSEMBLE"
+    
+    # Create binary indicator variables for Country and Region
+    inputMod <- inputFile %>%
+      drop_na(CalendarDateEnrollment, all_of(endpoint)) %>%
+      mutate(Sex.rand = sample(0:1, n(), replace = TRUE),
+             Sex = ifelse(Sex %in% c(2, 3), Sex.rand, Sex), # assign Sex randomly as 0 or 1 if Sex is 2 or 3.
+             Country = as.factor(Country),
+             Region = as.factor(Region),
+             CalDtEnrollIND = case_when(CalendarDateEnrollment < 28 ~ 0,
+                                        CalendarDateEnrollment >= 28 & CalendarDateEnrollment < 56 ~ 1,
+                                        CalendarDateEnrollment >= 56 & CalendarDateEnrollment < 84 ~ 2,
+                                        CalendarDateEnrollment >= 84 & CalendarDateEnrollment < 112 ~ 3,
+                                        CalendarDateEnrollment >= 112 & CalendarDateEnrollment < 140 ~ 4,
+                                        CalendarDateEnrollment >= 140 & CalendarDateEnrollment < 168 ~ 5),
+             CalDtEnrollIND = as.factor(CalDtEnrollIND)) %>%
+      select(-Sex.rand)
+    
+    rec <- recipe(~ Country + Region + CalDtEnrollIND, data = inputMod)
+    dummies <- rec %>%
+      step_dummy(Country, Region, CalDtEnrollIND) %>%
+      prep(training = inputMod)
+    inputMod <- inputMod %>% bind_cols(bake(dummies, new_data = NULL)) 
+    # %>%
+    #   select(-c(Country, Region, CalDtEnrollIND))
+    names(inputMod)<-gsub("\\_",".",names(inputMod))
+    
+    # # Create interaction variables between Region and CalDtEnrollIND
+    # rec <- recipe(EventIndPrimaryIncludeNotMolecConfirmedD29 ~., data = inputMod)
+    # int_mod_1 <- rec %>%
+    #   step_interact(terms = ~ starts_with("Region"):starts_with("CalDtEnrollIND"))
+    # int_mod_1 <- prep(int_mod_1, training = inputMod)
+    # inputMod <- bake(int_mod_1, inputMod)
+    # names(inputMod)<-gsub("\\_",".",names(inputMod))
+    # if(run_prod){
+    #   risk_vars <- append(risk_vars, c("Region.X1.x.CalDtEnrollIND.X1", "Region.X1.x.CalDtEnrollIND.X2",
+    #                                    "Region.X1.x.CalDtEnrollIND.X3",
+    #                                    "Region.X2.x.CalDtEnrollIND.X1", "Region.X2.x.CalDtEnrollIND.X2",
+    #                                    "Region.X2.x.CalDtEnrollIND.X3"))
+    # }
+  } else if(Sys.getenv("TRIAL") == "janssen_sa_partA_3008"){
+    
+    # Restrict to South African placebo participants and use only Sex, Age and BMI as input variables for risk score!
+    inputFile <- inputFile %>% filter(Country == 7, Trt == 0)
+    
+    risk_vars <- c("Sex", "Age", "BMI")
+    
+    # Store original original risk variables as well to check in check_if_SL_needs_be_run.R!
+    original_risk_vars <- risk_vars
+    
+    endpoint <- "EventIndPrimaryIncludeNotMolecConfirmedD29"
+    risk_timepoint <- 29
+    studyName_for_report <- "ENSEMBLE"
+    
+    # Create binary indicator variables for Country and Region
+    inputMod <- inputFile %>%
+      drop_na(CalendarDateEnrollment, all_of(endpoint)) %>%
+      mutate(Sex.rand = sample(0:1, n(), replace = TRUE),
+             Sex = ifelse(Sex %in% c(2, 3), Sex.rand, Sex), # assign Sex randomly as 0 or 1 if Sex is 2 or 3.
+             Country = as.factor(Country),
+             Region = as.factor(Region),
+             CalDtEnrollIND = case_when(CalendarDateEnrollment < 28 ~ 0,
+                                        CalendarDateEnrollment >= 28 & CalendarDateEnrollment < 56 ~ 1,
+                                        CalendarDateEnrollment >= 56 & CalendarDateEnrollment < 84 ~ 2,
+                                        CalendarDateEnrollment >= 84 & CalendarDateEnrollment < 112 ~ 3,
+                                        CalendarDateEnrollment >= 112 & CalendarDateEnrollment < 140 ~ 4,
+                                        CalendarDateEnrollment >= 140 & CalendarDateEnrollment < 168 ~ 5),
+             CalDtEnrollIND = as.factor(CalDtEnrollIND)) %>%
+      select(-Sex.rand)
+    
+    rec <- recipe(~ CalDtEnrollIND, data = inputMod)
+    dummies <- rec %>%
+      step_dummy(CalDtEnrollIND) %>%
+      prep(training = inputMod)
+    inputMod <- inputMod %>% bind_cols(bake(dummies, new_data = NULL)) 
+    # %>%
+    #   select(-c(Country, Region, CalDtEnrollIND))
+    names(inputMod)<-gsub("\\_",".",names(inputMod))
+    }
 }
 
 if(study_name == "PREVENT19"){
