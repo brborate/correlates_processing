@@ -652,6 +652,8 @@ preprocess=function(dat_raw, study_name) {
       dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
     }
     
+    
+    # define early infection 
     if (study_name=='COVAIL') {
       dat_proc$EarlyinfectionD15=dat_proc$EarlyendpointD15
       

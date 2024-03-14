@@ -185,6 +185,10 @@ if (TRIAL=="janssen_partA_VL") {
   
 } else if (TRIAL == "prevent19_stage2") {
   dat_raw=read.csv(mapped_data)
+  # add EventIndPrimaryD1 and time. these two are not defined in the mapped data
+  dat_raw$EventIndPrimaryD1 = dat_raw$EventIndFirstD1
+  dat_raw$EventTimePrimaryD1 = dat_raw$EventTimeFirstD1
+  str(dat_raw$EventIndPrimaryD1)
   dat_proc = preprocess(dat_raw, study_name)   
   colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
   
