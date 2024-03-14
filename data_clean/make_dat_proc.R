@@ -156,7 +156,7 @@ if (TRIAL=="janssen_partA_VL") {
   # bring in imputed variant column
   dat.lineage = read.csv('/trials/covpn/COVAILcorrelates/analysis/correlates/adata/lineages/covail_lineages_export_v1.csv')
   dat_proc$COVIDlineage = dat.lineage$inf1.lineage[match(dat_proc$Ptid, dat.lineage$ptid)]
-  dat_proc$COVIDlineageObserved = dat.lineage$inf1.observed[match(dat_proc$Ptid, dat.lineage$ptid)]
+  dat_proc$COVIDlineageObserved = !dat.lineage$inf1.imputed[match(dat_proc$Ptid, dat.lineage$ptid)]
   # check NA
   stopifnot(!any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D15==1 & dat_proc$COVIDIndD22toD181==1])))
   stopifnot(!any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D29==1 & dat_proc$COVIDIndD36toD181==1])))
@@ -640,9 +640,10 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
     complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
   
-  # for bindNVXIgG, does not require baseline, does not require case-cohort
+  # for ACE2 and bindNVXIgG
+  # does not require baseline, does not require case-cohort
   dat_proc[["TwophasesampIndD35NVX"]] = 
-    complete.cases(dat_proc[,c("ACE2")])      
+    complete.cases(dat_proc[,c("Day35ACE2","Day35bindNVXIgG")])      
   
   
 } else if (study_name=="ENSEMBLE") {
@@ -1876,9 +1877,9 @@ if(Sys.getenv ("NOCHECK")=="") {
          janssen_partA_VL = "be70e58897d461c242f930d09bbbcd0a", 
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
-         prevent19 = "a4c1de3283155afb103261ce6ff8cec2",
+         prevent19 = "61eccc478dfd5594e0faa9f2c8569fa1",
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
-         covail = "35b9942c61ce87499e8f3a4d9f53d87e", 
+         covail = "8c995d5f0b087be17cfc7bb70be62afa", 
          nvx_uk302 = "e86a785f297bd03dd57d14bdf1ce34db", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
