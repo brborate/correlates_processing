@@ -76,7 +76,7 @@ if (TRIAL=="janssen_partA_VL") {
     for (a in delta_markers) dat_proc[, t%.%a] = NULL
   }
   
- } else if (study_name=="VAT08") {
+ } else if (TRIAL=="vat08_combined") {
 
    # read hot deck data
    tmp = sub(".csv","_hotdeck.csv",mapped_data)
@@ -185,10 +185,6 @@ if (TRIAL=="janssen_partA_VL") {
   
 } else if (TRIAL == "prevent19_stage2") {
   dat_raw=read.csv(mapped_data)
-  # add EventIndPrimaryD1 and time. these two are not defined in the mapped data
-  dat_raw$EventIndPrimaryD1 = dat_raw$EventIndFirstD1
-  dat_raw$EventTimePrimaryD1 = dat_raw$EventTimeFirstD1
-  str(dat_raw$EventIndPrimaryD1)
   dat_proc = preprocess(dat_raw, study_name)   
   colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
   
@@ -333,11 +329,9 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 } else if (study_name %in% c("PREVENT19", "AZD1222", "NVX_UK302")) {
   dat_proc$Bstratum =  with(dat_proc, Senior + 1)
   
-} else if (study_name %in% c("VAT08")) {
+} else if (TRIAL %in% c("vat08_combined", "profiscov", "profiscov_lvmn", "covail")) {
+  # there are no demographics stratum for subcohort sampling
   dat_proc$Bstratum =  1 
-  
-} else if (study_name %in% c("PROFISCOV", "COVAIL")) {
-  dat_proc$Bstratum = 1 # there are no demographics stratum for subcohort sampling
   
 } else stop("unknown study_name 4")
 
@@ -393,7 +387,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
     dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(!Senior, 5, 6))) # 2 is US
     
         
-} else if (study_name=="VAT08" ) {
+} else if (TRIAL=="vat08_combined" ) {
     nCountries = 10 # 10 is easier to work with than length(unique(dat_proc$Country))
     
     # for nAb
@@ -424,7 +418,7 @@ with(dat_proc, table(demo.stratum))
 
 ###########################################
 # tps stratum, used in tps regression and to define Wstratum
-if (study_name=="VAT08" ) {
+if (TRIAL=="vat08_combined" ) {
   # for nAb markers. include Senior in the list of stratification variables
   dat_proc <- dat_proc %>% mutate(tps.stratum.nAb = demo.stratum + 
                             strtoi(paste0(Trialstage-1, Bserostatus, Trt, Senior), base = 2) * nCountries)
@@ -455,7 +449,7 @@ if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
 # A case will have a Wstratum even if its tps.stratum is NA
 # The case is defined using EventIndPrimaryD29
 
-if (study_name == "VAT08") {
+if (TRIAL=="vat08_combined") {
   max.tps=max(dat_proc$tps.stratum.nAb,na.rm=T) # 160
   myprint(max.tps)
 
@@ -591,32 +585,26 @@ if (study_name %in% c("COVE", "MockCOVE")) {
     must_have_assays <- c("bindSpike","bindRBD")
   }    
     
-
-} else if (study_name %in% c("PREVENT19")) {
+} else if (TRIAL == "prevent19") {
   must_have_assays <- c("bindSpike")
   
-  
-} else if (study_name %in% c("NVX_UK302")) {
+} else if (TRIAL == "nvx_uk302") {
   must_have_assays <- c("bindNVXIgG")
   
+} else if (TRIAL=="azd1222") {
+  must_have_assays <- c("pseudoneutid50")
+      
+} else if (TRIAL=="azd1222_bAb") {
+  must_have_assays <- c("bindSpike")
   
-} else if (study_name %in% c("AZD1222")) {
-  if (TRIAL=="azd1222") {
-      must_have_assays <- c("pseudoneutid50")
-  } else if (TRIAL=="azd1222_bAb") {
+} else if (TRIAL=="profiscov") {
       must_have_assays <- c("bindSpike")
-  } else stop("need to define must_have_assays")
-  
-  
-} else if (study_name %in% c("PROFISCOV")) {
-  if (TRIAL=="profiscov") {
-      must_have_assays <- c("bindSpike")
-  } else if (TRIAL=="profiscov_lvmn") {
-      must_have_assays <- c("bindSpike")
-  } else stop("need to define must_have_assays")
-  
+      
+} else if (TRIAL=="profiscov_lvmn") {
+    must_have_assays <- c("bindSpike")
     
-} else if (study_name %in% c("VAT08", "COVAIL")) {
+} else if (TRIAL %in% c("vat08_combined", "covail", "prevent19_stage2")) {
+  # will implement twophase indicators specifically
   must_have_assays <- NULL
 
   
@@ -638,7 +626,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     complete.cases(dat_proc[,c("B"%.%must_have_assays, "Day"%.%timepoints[1]%.%must_have_assays)])      
   
   
-} else if (study_name == "PREVENT19") {
+} else if (TRIAL == "prevent19") {
   # require baseline
   dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
     with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
@@ -689,39 +677,39 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
   }
   
 
-} else if (study_name %in% c("VAT08")) {
-
+} else if (TRIAL == "vat08_combined") {
+  
   # baseline any nAb
   dat_proc$baseline.nAb = with(dat_proc, 
-             !is.na(Bpseudoneutid50) | 
-               !is.na(Bpseudoneutid50_B.1.351) | 
-               !is.na(Bpseudoneutid50_BA.1) | 
-               !is.na(Bpseudoneutid50_BA.2) | 
-               !is.na(Bpseudoneutid50_BA.4.5)) 
+                               !is.na(Bpseudoneutid50) | 
+                                 !is.na(Bpseudoneutid50_B.1.351) | 
+                                 !is.na(Bpseudoneutid50_BA.1) | 
+                                 !is.na(Bpseudoneutid50_BA.2) | 
+                                 !is.na(Bpseudoneutid50_BA.4.5)) 
   # D43 any nAb
   dat_proc$D43.nAb = with(dat_proc, 
-             !is.na(Day43pseudoneutid50) | 
-               !is.na(Day43pseudoneutid50_B.1.351) | 
-               !is.na(Day43pseudoneutid50_BA.1) | 
-               !is.na(Day43pseudoneutid50_BA.2) | 
-               !is.na(Day43pseudoneutid50_BA.4.5)) 
+                          !is.na(Day43pseudoneutid50) | 
+                            !is.na(Day43pseudoneutid50_B.1.351) | 
+                            !is.na(Day43pseudoneutid50_BA.1) | 
+                            !is.na(Day43pseudoneutid50_BA.2) | 
+                            !is.na(Day43pseudoneutid50_BA.4.5)) 
   # D22 any nAb
   dat_proc$D22.nAb = with(dat_proc, 
-             !is.na(Day22pseudoneutid50) | 
-               !is.na(Day22pseudoneutid50_B.1.351) | 
-               !is.na(Day22pseudoneutid50_BA.1) | 
-               !is.na(Day22pseudoneutid50_BA.2) | 
-               !is.na(Day22pseudoneutid50_BA.4.5)) 
+                          !is.na(Day22pseudoneutid50) | 
+                            !is.na(Day22pseudoneutid50_B.1.351) | 
+                            !is.na(Day22pseudoneutid50_BA.1) | 
+                            !is.na(Day22pseudoneutid50_BA.2) | 
+                            !is.na(Day22pseudoneutid50_BA.4.5)) 
   
   # dat_proc[["TwophasesampIndD43nAb"]] = dat_proc$baseline.nAb & dat_proc$D43.nAb
   # dat_proc[["TwophasesampIndD22nAb"]] = dat_proc$baseline.nAb & dat_proc$D22.nAb
   # 
   dat_proc[["TwophasesampIndnAb"]] = dat_proc$baseline.nAb & dat_proc$D43.nAb & dat_proc$D22.nAb
   
-
+  
   # baseline any bAb
   dat_proc$baseline.bAb = with(dat_proc, 
-                                 !is.na(BbindSpike) | 
+                               !is.na(BbindSpike) | 
                                  !is.na(BbindSpike_beta) | 
                                  !is.na(BbindSpike_alpha) | 
                                  !is.na(BbindSpike_gamma) | 
@@ -731,17 +719,17 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
                                  !is.na(BbindSpike_omicron)) 
   # D43 any bAb
   dat_proc$D43.bAb = with(dat_proc, 
-                                 !is.na(Day43bindSpike) | 
-                                 !is.na(Day43bindSpike_beta) | 
-                                 !is.na(Day43bindSpike_alpha) | 
-                                 !is.na(Day43bindSpike_gamma) | 
-                                 !is.na(Day43bindSpike_delta1) | 
-                                 !is.na(Day43bindSpike_delta2) | 
-                                 !is.na(Day43bindSpike_delta3) | 
-                                 !is.na(Day43bindSpike_omicron)) 
+                          !is.na(Day43bindSpike) | 
+                            !is.na(Day43bindSpike_beta) | 
+                            !is.na(Day43bindSpike_alpha) | 
+                            !is.na(Day43bindSpike_gamma) | 
+                            !is.na(Day43bindSpike_delta1) | 
+                            !is.na(Day43bindSpike_delta2) | 
+                            !is.na(Day43bindSpike_delta3) | 
+                            !is.na(Day43bindSpike_omicron)) 
   # D22 any bAb
   dat_proc$D22.bAb = with(dat_proc, 
-                            !is.na(Day22bindSpike) | 
+                          !is.na(Day22bindSpike) | 
                             !is.na(Day22bindSpike_beta) | 
                             !is.na(Day22bindSpike_alpha) | 
                             !is.na(Day22bindSpike_gamma) | 
@@ -754,8 +742,8 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
   # dat_proc[["TwophasesampIndD43bAb"]] = dat_proc$baseline.bAb & dat_proc$D43.bAb
   # 
   dat_proc[["TwophasesampIndbAb"]] = dat_proc$baseline.bAb & dat_proc$D22.bAb & dat_proc$D43.bAb
-
-
+  
+  
   #### strata size
   # nAb  
   dat_proc$tmp = dat_proc$region + 4*dat_proc$Senior # combine region and senior to stack tables
@@ -797,6 +785,23 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
   # dat_proc[["TwophasesampIndD"%.%timepoints[1]%.%"original"]] = dat_proc[["TwophasesampIndD"%.%timepoints[2]%.%"original"]]
   
   
+} else if (TRIAL == "prevent19_stage2") {
+  
+  # D35 bAb is all or none
+  # D35 nAb will be used to impute each other
+  dat_proc$TwophasesampIndD35 = with(dat_proc, 
+                                     !is.na(Day35bindSpike_D614) & 
+                                      (!is.na(Day35pseudoneutid50_D614G) | 
+                                       !is.na(Day35pseudoneutid50_Delta) )
+  )
+  
+  
+} else if (TRIAL=="COVAIL" ) {
+  # the whole cohort is treated as ph1 and ph2
+  dat_proc$TwophasesampIndD15 = dat_proc$ph1.D15 
+  dat_proc$TwophasesampIndD29 = dat_proc$ph1.D29
+  
+  
 } else if (study_name %in% c("AZD1222", "PROFISCOV","NVX_UK302")) {
     if (two_marker_timepoints) {
         # does not require baseline or time point 1
@@ -816,12 +821,6 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
             with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
             (complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)]) ) 
     }
-        
-  
-} else if (study_name=="COVAIL" ) {
-  # the whole cohort is treated as ph1 and ph2
-  dat_proc$TwophasesampIndD15 = dat_proc$ph1.D15 
-  dat_proc$TwophasesampIndD29 = dat_proc$ph1.D29
   
   
 } else stop("unknown study_name 8")
@@ -1050,6 +1049,7 @@ if (TRIAL=='vat08_combined') {
   
 } else {
   # the default
+  cat("running the default code for weight computation")
   for (tp in rev(timepoints)) { # rev is just so that digest passes
     tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
     wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
@@ -1161,7 +1161,7 @@ if (study_name%in%c("COVAIL")) {
   
   
   
-} else if(study_name%in%c("VAT08")) {
+} else if(TRIAL=="vat08_combined") {
 
   n.imp <- 1
 
@@ -1366,20 +1366,25 @@ if (study_name%in%c("COVAIL")) {
   for (tp in rev(timepoints)) {    
       n.imp <- 1
       
-      # .nAb does not need to be further imputed
-      if (TRIAL=='vat08_combined') dat_proc[["TwophasesampIndD"%.%tp]] <- dat_proc[["TwophasesampIndD"%.%tp%.%'bAb']]
-  
       dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD"%.%tp) == 1)
       
+      # markers can be TRIAL-specific
       if(two_marker_timepoints) {
         imp.markers=c(outer(c("B", if(tp==timepoints[2]) "Day"%.%timepoints else "Day"%.%tp), assays, "%.%"))
+        
       } else {
         if (TRIAL=="prevent19") {
-          # don't impute bindNVXIgG and ACE2 b/c it has its own ph2 indicator
+          # no need to impute bindNVXIgG and ACE2
           imp.markers=c(outer(c("B", "Day"%.%tp), setdiff(assays,c("bindNVXIgG","ACE2")), "%.%"))
+          
+        } else if (TRIAL=="prevent19") {
+            # no need to impute bAb
+            imp.markers=paste0("Day"%.%tp, c("pseudoneutid50_D614G", "pseudoneutid50_Delta"))
+            
         } else {
           imp.markers=c(outer(c("B", "Day"%.%tp), assays, "%.%"))
         }
+        
       }
       # mdw markers are not imputed
       imp.markers=imp.markers[!endsWith(imp.markers, "_mdw")]
@@ -1387,7 +1392,7 @@ if (study_name%in%c("COVAIL")) {
       for (trt in unique(dat_proc$Trt)) {
       for (sero in unique(dat_proc$Bserostatus)) {    
         
-        if (study_name=="VAT08") {
+        if (TRIAL=="vat08_combined") {
           # further separate by trial stage
           for (stage in unique(dat_proc$Trialstage)) {
             imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero & Trialstage==stage) %>% select(all_of(imp.markers))         
@@ -1522,7 +1527,7 @@ if(study_name == "COVAIL") {
   }
   
   
-} else if(study_name == "VAT08") {
+} else if(TRIAL=="vat08_combined") {
   # should be the same for vat08_combined and vat08_nAb
   bAb = setdiff(assays[startsWith(assays, "bindSpike")], c('bindSpike_mdw'))
   nAb = setdiff(assays[startsWith(assays, "pseudoneutid50")], c('pseudoneutid50_mdw'))
@@ -1845,7 +1850,7 @@ if(TRIAL == "moderna_real") {
   # add bindSpike data for multivariable modles
   source(here::here("data_clean", "add_bindSpike_to_azd1222ID50_analysisreadydataset.R"))
   
-} else if(study_name == "VAT08") {
+} else if(TRIAL=="vat08_combined") {
   # add region variable for regression
   # Honduras (3), not Honduras for the Stage 1 trial nnaive
   # Mexico (9), Other/Else country for the Stage 2 trial naive

@@ -9,7 +9,7 @@ endif
 
 
 risk_analysis:  
-ifeq ($(TRIAL),$(filter $(TRIAL), id27hpv covail nvx_uk302))
+ifeq ($(TRIAL),$(filter $(TRIAL), id27hpv covail nvx_uk302 prevent19_stage2))
 else
 	$(MAKE) -k -C riskscore_baseline all
 endif
