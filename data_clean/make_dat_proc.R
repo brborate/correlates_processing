@@ -1377,9 +1377,9 @@ if (study_name%in%c("COVAIL")) {
           # no need to impute bindNVXIgG and ACE2
           imp.markers=c(outer(c("B", "Day"%.%tp), setdiff(assays,c("bindNVXIgG","ACE2")), "%.%"))
           
-        } else if (TRIAL=="prevent19") {
-            # no need to impute bAb
-            imp.markers=paste0("Day"%.%tp, c("pseudoneutid50_D614G", "pseudoneutid50_Delta"))
+        } else if (TRIAL=="prevent19_stage2") {
+          # no need to impute bAb
+          imp.markers=paste0("Day"%.%tp, c("pseudoneutid50_D614G", "pseudoneutid50_Delta"))
             
         } else {
           imp.markers=c(outer(c("B", "Day"%.%tp), assays, "%.%"))
@@ -1573,7 +1573,7 @@ if(study_name == "COVAIL") {
 # but there is a need to do uloq censoring before computing delta
 
 
-if (TRIAL %in% c("janssen_partA_VL", "nvx_uk302")) {
+if (TRIAL %in% c("janssen_partA_VL", "nvx_uk302", "prevent19_stage2")) {
   # skipping b/c there is no baseline data
   
 } else {
@@ -1682,7 +1682,7 @@ if (TRIAL=="covail") {
     dat_proc[, "Day29bindSpike"%.%"_"%.%i%.%"cat"]      = dat_proc[, "Day29bindSpikecat"]
   } 
 
-} else if (TRIAL %in% c("nvx_uk302")) {
+} else if (TRIAL %in% c("nvx_uk302", "prevent19_stage2")) {
   dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & ph2.D35) 
   all.markers = c("Day35"%.%assays)
   dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D35")
@@ -1887,6 +1887,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "61eccc478dfd5594e0faa9f2c8569fa1",
+         prevent19_stage2 = "8e1f99c39d34bd1378e2c08d78238e72",
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
          covail = "8c995d5f0b087be17cfc7bb70be62afa", 
          nvx_uk302 = "e86a785f297bd03dd57d14bdf1ce34db", 
