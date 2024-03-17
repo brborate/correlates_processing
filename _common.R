@@ -189,10 +189,16 @@ if (!is.null(config$assay_metadata)) {
     uloqs["bindN"]=574.6783
     pos.cutoffs["bindN"]=23.4711
     
+    # data less than pos is set to pos/2 by Yiwen
     llods["bindNVXIgG"]=200
     lloqs["bindNVXIgG"]=200
     uloqs["bindNVXIgG"]=2904275
     pos.cutoffs["bindN"]=500
+    
+    llods["bindNVXIgGIU"]=200/22
+    lloqs["bindNVXIgGIU"]=200/22
+    uloqs["bindNVXIgGIU"]=2904275/22
+    pos.cutoffs["bindNIU"]=500/22
     
     llods["ACE2"]=10
     lloqs["ACE2"]=10
