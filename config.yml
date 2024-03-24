@@ -62,7 +62,10 @@ covail: &covail
 
 
 id27hpv: &id27hpv
-  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20240307.csv
+  # include ptid without M18 visits
+  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20240318.csv
+  # without additional ptids without M18 visit
+  # mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20240307.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/id27hpv_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [18]
@@ -77,7 +80,7 @@ prevent19: &prevent19 # note that RBD is added as a special step and is not incl
   timepoints: [35]
   times: [B, Day35, Delta35overB]
   time_labels: [Day 1, Day 35, D35 fold-rise over D1]
-  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/stage1/adata/COVID_Novavax_realdata_20240313.csv 
+  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/stage1/adata/COVID_Novavax_realdata_20240318.csv 
   assays: [bindSpike, pseudoneutid50, bindNVXIgG, ACE2]
   assay_labels: [Binding Antibody to Spike, PsV Neutralization 50% Titer, NVX Binding Assay, NVX ACE2]
   assay_labels_short: [Anti Spike IgG (BAU/ml), Pseudovirus-nAb ID50 (IU50/ml), NVX IgG, NVX ACE2]
@@ -89,13 +92,13 @@ prevent19_stage2: &prevent19_stage2
   timepoints: [35]
   times: [Day35]
   time_labels: [Day 35]
-  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/stage2/adata/COVID_Novavax_stage2_mapped_20240314.csv 
+  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/stage2/adata/COVID_Novavax_stage2_mapped_20240322.csv 
   assay_metadata: ../correlates_reporting2/assay_metadata/prevent19_stage2_assay_metadata.csv
   study_name: PREVENT19
   
   
 nvx_uk302: &nvx_uk302
-  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/UK302/adata/COVID_Novavax_302UK_mapped_20240305.csv
+  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/UK302/adata/COVID_Novavax_302UK_mapped_20240318.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/nvx_uk302_assay_metadata.csv
   two_marker_timepoints: no
   timepoints: [35]
@@ -133,7 +136,7 @@ azd1222_stage2: &azd1222_stage2
   timepoints: [57]
   times: [Day57]
   time_labels: [Day 57]
-  mapped_data: /trials/covpn/p3002/analysis/mapping_immune_correlates/stage2/adata/COVID_AstraZeneca_stage2_mapped_20240319.csv 
+  mapped_data: /trials/covpn/p3002/analysis/mapping_immune_correlates/stage2/adata/COVID_AstraZeneca_stage2_mapped_20240322.csv 
   assay_metadata: ../correlates_reporting2/assay_metadata/azd1222_stage2_assay_metadata.csv
   study_name: AZD1222
 

@@ -45,7 +45,7 @@ markers='M18'%.%assays
 dat_proc=read.csv(mapped_data)
 
 # 26 cases
-table(dat_proc$EventIndPrimaryAnyHPV)
+mytable(dat_proc$EventIndPrimaryAnyHPV)
 
 # 4 cases have negative SusceptibilityTimeM18
 tmp=subset(dat_proc, EventIndPrimaryAnyHPV==1, c(EligibilityorinitialsamplingTimeM18, SusceptibilityTimeM18  )); 
@@ -229,7 +229,7 @@ write.csv(mdw.weights, file = here("data_clean", "csv", TRIAL%.%"_mdw_weights_nA
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         id27hpv = "5555f35b83ca193569ed5bdd3f0afbdc", 
+         id27hpv = "f06584f08c723671d6e00d05b2f22a21", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "---------  Warning: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%'  ------------')    
 }

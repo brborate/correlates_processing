@@ -182,6 +182,9 @@ if (TRIAL=="janssen_partA_VL") {
   dat_proc$risk_score = inputFile_with_riskscore$risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
   dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
   
+  # subset to vaccine and seroneg, necessary for getting weights correctly
+  dat_proc = subset(dat_proc, Trt==1 & Bserostatus==0)
+  
   
 } else if (TRIAL == "prevent19_stage2") {
   dat_raw=read.csv(mapped_data)
@@ -192,9 +195,16 @@ if (TRIAL=="janssen_partA_VL") {
   load(file = 'riskscore_baseline/output/prevent19/inputFile_with_riskscore.RData')
   nrow(inputFile_with_riskscore)
   nrow(dat_proc)
+  
+  # ptids are formatted differently in the two datasets, need to be transformed
+  inputFile_with_riskscore$Ptid = sub("2019nCoV301","2019nCoV-301",inputFile_with_riskscore$Ptid)
+  
   # stage 2 dataset has fewer rows than stage 1 b/c it is vaccine only, baseline sero-negative only
   dat_proc$risk_score = inputFile_with_riskscore$risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
   dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
+
+  # subset to vaccine and seroneg, necessary for getting weights correctly
+  dat_proc = subset(dat_proc, Trt==1 & Bserostatus==0)
   
   
 } else if (TRIAL == "prevent19") {
@@ -203,11 +213,7 @@ if (TRIAL=="janssen_partA_VL") {
   
   # set outliers values to NA for bindNVXIgG and ACE2
   outliers=c("2019nCoV301-US039-0381", "2019nCoV301-US060-0015", "2019nCoV301-US104-0092", "2019nCoV301-US106-0027", "2019nCoV301-US135-0229", "2019nCoV301-US139-0041", "2019nCoV301-US147-0266", "2019nCoV301-US147-0344", "2019nCoV301-US160-0085", "2019nCoV301-US160-0192", "2019nCoV301-US162-0247", "2019nCoV301-US164-0113", "2019nCoV301-US187-0007", "2019nCoV301-US191-0334", "2019nCoV301-US191-0366", "2019nCoV301-US194-0170", "2019nCoV301-US195-0053", "2019nCoV301-US207-0292", "2019nCoV301-US215-0081", "2019nCoV301-US215-0109", "2019nCoV301-US215-0218", "2019nCoV301-US217-0074", "2019nCoV301-US217-0160", "2019nCoV301-US219-0056", "2019nCoV301-US225-0013", "2019nCoV301-US228-0183", "2019nCoV301-US232-0305", "2019nCoV301-US235-0031", "2019nCoV301-US242-0004", "2019nCoV301-US245-0116")
-  # set outliers to the last batch
-  stratum7 = "2019nCoV301-"%.%c("US005-0247","US013-0005","US013-0051","US018-0022","US027-0191","US039-0294","US039-0381","US049-0037","US081-0007","US081-0050","US097-0030","US097-0034","US097-0042","US097-0127","US098-0067","US098-0084","US106-0027","US134-0011","US135-0068","US135-0229","US139-0041","US142-0036","US143-0039","US143-0081","US143-0102","US143-0513","US143-0518","US143-0585","US144-0051","US147-0145","US147-0163","US147-0275","US147-0344","US152-0176","US152-0337","US154-0100","US154-0209","US156-0093","US157-0048","US160-0192","US160-0239","US160-0275","US160-0382","US160-0392","US160-0436","US160-0525","US161-0306","US162-0187","US170-0064","US176-0014","US178-0161","US179-0057","US179-0332","US179-0382","US180-0004","US180-0227","US187-0007","US189-0040","US191-0162","US191-0301","US191-0334","US191-0366","US194-0284","US195-0053","US196-0057","US203-0065","US204-0100","US204-0127","US206-0203","US206-0260","US207-0292","US208-0029","US213-0007","US213-0080","US215-0003","US215-0081","US215-0142","US215-0160","US215-0175","US217-0160","US219-0056","US225-0013","US228-0018","US228-0113","US228-0182","US228-0183","US230-0014","US230-0046","US230-0054","US232-0001","US232-0004","US235-0031","US235-0062","US236-0062","US239-0036","US239-0177","US239-0316","US242-0004","US243-0020","US249-0089")
-  stratum8 = "2019nCoV301-"%.%c("US005-0018","US005-0272","US039-0004","US039-0081","US047-0105","US049-0219","US060-0015","US060-0138","US081-0042","US097-0009","US097-0021","US097-0031","US097-0040","US104-0092","US134-0084","US135-0010","US135-0158","US142-0018","US142-0021","US142-0041","US142-0060","US142-0064","US142-0117","US143-0233","US146-0107","US147-0266","US152-0183","US154-0020","US154-0123","US154-0222","US156-0002","US156-0013","US156-0145","US157-0045","US160-0037","US160-0085","US160-0477","US160-0506","US160-0555","US161-0272","US162-0247","US163-0039","US163-0041","US164-0113","US166-0010","US168-0348","US172-0008","US172-0031","US176-0006","US176-0027","US176-0028","US176-0034","US178-0252","US179-0068","US188-0053","US191-0048","US191-0099","US191-0144","US191-0246","US194-0170","US194-0219","US196-0378","US203-0016","US203-0039","US204-0027","US204-0103","US204-0138","US205-0131","US205-0145","US206-0286","US208-0247","US211-0005","US211-0008","US211-0063","US215-0026","US215-0027","US215-0109","US215-0112","US215-0218","US217-0074","US217-0143","US217-0266","US218-0017","US219-0060","US225-0030","US231-0148","US232-0026","US232-0208","US232-0245","US232-0305","US239-0078","US239-0242","US239-0251","US239-0309","US240-0061","US242-0027","US242-0040","US244-0039","US245-0078","US245-0116")
-  outliers = c(stratum7, stratum8)
-  
+
   dat_proc$Day35ACE2[dat_proc$Ptid %in% outliers] = NA  
   dat_proc$Day35bindNVXIgG[dat_proc$Ptid %in% outliers] = NA  
   
@@ -543,7 +549,20 @@ if (TRIAL=="vat08_combined") {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1 & Region==2 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1 & Region==2 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
     
-  } else if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "AZD1222")) {
+  } else if (TRIAL == "azd1222_stage2") {
+    # this needs to come before study_name AZD1222
+    # Severe case and Delta cases are case-sampling strata
+    # severe has to come second to overwrite delta
+    dat_proc$Wstratum[with(dat_proc, DeltaEventIndD57==1 & Trt==1 & Bserostatus==0)]=max.tps+1
+    dat_proc$Wstratum[with(dat_proc, SevereEventIndD57==1 & Trt==1 & Bserostatus==0)]=max.tps+2
+    
+  } else if (TRIAL == "prevent19_stage2") {
+    # Severe case and Delta cases are case-sampling strata
+    # severe has to come second to overwrite delta
+    dat_proc$Wstratum[with(dat_proc, DeltaEventIndD35==1 & Trt==1 & Bserostatus==0)]=max.tps+1
+    dat_proc$Wstratum[with(dat_proc, SevereEventIndD35 ==1 & Trt==1 & Bserostatus==0)]=max.tps+2
+    
+} else if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "AZD1222")) {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0)]=max.tps+1
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1)]=max.tps+2
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0)]=max.tps+3
@@ -554,14 +573,6 @@ if (TRIAL=="vat08_combined") {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==1)]=max.tps+2
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
-    
-  } else if (TRIAL == "prevent19_stage2") {
-    # use EventIndPrimaryD35 instead of EventIndPrimaryD21 as case definition
-    # keep the other case strata even though they are empty
-    dat_proc$Wstratum[with(dat_proc, DeltaEventIndD35==1 & Trt==0 & Bserostatus==0)]=max.tps+1
-    dat_proc$Wstratum[with(dat_proc, DeltaEventIndD35==1 & Trt==0 & Bserostatus==1)]=max.tps+2
-    dat_proc$Wstratum[with(dat_proc, DeltaEventIndD35==1 & Trt==1 & Bserostatus==0)]=max.tps+3
-    dat_proc$Wstratum[with(dat_proc, DeltaEventIndD35==1 & Trt==1 & Bserostatus==1)]=max.tps+4
     
   } else if (study_name == "NVX_UK302") {
     # data has only Bserostatus 0
@@ -669,7 +680,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
 } else if (TRIAL == "azd1222_stage2") {
   # two separate indicators, one for bAb and one for nAb
   
-  # nAb
+  # nAb, we only use Delta to impute ancestral
   dat_proc[["TwophasesampIndD57nAb"]] = 
     complete.cases(dat_proc[,c("Day57pseudoneutid50_Delta")])      
   
@@ -1081,7 +1092,7 @@ if (TRIAL=='vat08_combined') {
   
 } else if (TRIAL == "azd1222_stage2") {
   tp=57
-  tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
+  tmp = with(dat_proc, get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
   
   # once for bAb
   wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp%.%"nAb")))
@@ -1091,8 +1102,8 @@ if (TRIAL=='vat08_combined') {
   # the step above assigns weights for some subjects outside ph1. the next step makes them NA
   dat_proc[["wt.D"%.%tp%.%"nAb"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 &
                                                   get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.D"%.%tp%.%"nAb"]], NA) 
-  dat_proc[["ph1.D"%.%tp%.%"nAb"]]=!is.na(dat_proc[["wt.D"%.%tp%.%"nAb"]])
-  dat_proc[["ph2.D"%.%tp%.%"nAb"]]=dat_proc[["ph1.D"%.%tp%.%"nAb"]] & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]]
+  dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%"nAb"]])
+  dat_proc[["ph2.D"%.%tp%.%"nAb"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]]
   assertthat::assert_that(
     all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp%.%"nAb"]])),
     msg = "missing wt.D for D analyses ph1 subjects")
@@ -1106,16 +1117,83 @@ if (TRIAL=='vat08_combined') {
   # the step above assigns weights for some subjects outside ph1. the next step makes them NA
   dat_proc[["wt.D"%.%tp%.%"bAb"]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 &
                                                   get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.D"%.%tp%.%"bAb"]], NA) 
-  dat_proc[["ph1.D"%.%tp%.%"bAb"]]=!is.na(dat_proc[["wt.D"%.%tp%.%"bAb"]])
-  dat_proc[["ph2.D"%.%tp%.%"bAb"]]=dat_proc[["ph1.D"%.%tp%.%"bAb"]] & dat_proc[["TwophasesampIndD"%.%tp%.%"bAb"]]
+  dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%"bAb"]])
+  dat_proc[["ph2.D"%.%tp%.%"bAb"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"bAb"]]
   assertthat::assert_that(
     all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp%.%"bAb"]])),
     msg = "missing wt.D for D analyses ph1 subjects")
   
   
-} else if (TRIAL %in% c("prevent19_stage2", "nvx_uk302")) {
+  tp="57_120"
+  sp=57
+  tmp = with(dat_proc, get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%sp) >= 120)
+  
+  # once for bAb
+  wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%sp%.%"nAb")))
+  print(wts_table)
+  wts_norm <- rowSums(wts_table) / wts_table[, 2]
+  dat_proc[["wt.D"%.%tp%.%"nAb"]] <- wts_norm[dat_proc$Wstratum %.% ""]
+  # the step above assigns weights for some subjects outside ph1. the next step makes them NA
+  dat_proc[["wt.D"%.%tp%.%"nAb"]] = ifelse(with(dat_proc, get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 &
+                                                  get("EventTimePrimaryD"%.%sp)>=120), dat_proc[["wt.D"%.%tp%.%"nAb"]], NA) 
+  dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%"nAb"]])
+  dat_proc[["ph2.D"%.%tp%.%"nAb"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%sp%.%"nAb"]]
+  assertthat::assert_that(
+    all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp%.%"nAb"]])),
+    msg = "missing wt.D for D analyses ph1 subjects")
+  
+  
+  # once for bAb
+  wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%sp%.%"bAb")))
+  print(wts_table)
+  wts_norm <- rowSums(wts_table) / wts_table[, 2]
+  dat_proc[["wt.D"%.%tp%.%"bAb"]] <- wts_norm[dat_proc$Wstratum %.% ""]
+  # the step above assigns weights for some subjects outside ph1. the next step makes them NA
+  dat_proc[["wt.D"%.%tp%.%"bAb"]] = ifelse(with(dat_proc, get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 &
+                                                  get("EventTimePrimaryD"%.%sp)>=120), dat_proc[["wt.D"%.%tp%.%"bAb"]], NA) 
+  dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp%.%"bAb"]])
+  dat_proc[["ph2.D"%.%tp%.%"bAb"]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%sp%.%"bAb"]]
+  assertthat::assert_that(
+    all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp%.%"bAb"]])),
+    msg = "missing wt.D for D analyses ph1 subjects")
+  
+  
+} else if (TRIAL %in% c("prevent19_stage2")) {
+  tp=35
+  tmp = with(dat_proc, get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
+  wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
+  print(wts_table)
+  wts_norm <- rowSums(wts_table) / wts_table[, 2]
+  dat_proc[["wt.D"%.%tp]] <- wts_norm[dat_proc$Wstratum %.% ""]
+  # the step above assigns weights for some subjects outside ph1. the next step makes them NA
+  dat_proc[["wt.D"%.%tp]] = ifelse(with(dat_proc, 
+                  get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.D"%.%tp]], NA) 
+  dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp]])
+  dat_proc[["ph2.D"%.%tp]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp]]
+  assertthat::assert_that(
+    all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp]])),
+    msg = "missing wt.D for D analyses ph1 subjects")
+
+  # ph1.D35_108
+  tp='35_108'
+  sp=35
+  tmp = with(dat_proc, get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%sp) >= 108)
+  wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%sp)))
+  print(wts_table)
+  wts_norm <- rowSums(wts_table) / wts_table[, 2]
+  dat_proc[["wt.D"%.%tp]] <- wts_norm[dat_proc$Wstratum %.% ""]
+  # the step above assigns weights for some subjects outside ph1. the next step makes them NA
+  dat_proc[["wt.D"%.%tp]] = ifelse(with(dat_proc, 
+                  get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%sp)>=108), dat_proc[["wt.D"%.%tp]], NA) 
+  dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp]])
+  dat_proc[["ph2.D"%.%tp]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%sp]]
+  assertthat::assert_that(
+    all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp]])),
+    msg = "missing wt.D for D analyses ph1 subjects")
+  
+    
+} else if (TRIAL %in% c("nvx_uk302")) {
   # the default, using TwophasesampIndDxx
-  cat("running the default code for weight computation")
   for (tp in rev(timepoints)) { # rev is just so that digest passes
     tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
     wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
@@ -1131,7 +1209,7 @@ if (TRIAL=='vat08_combined') {
       all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp]])),
       msg = "missing wt.D for D analyses ph1 subjects")
   }
-
+  
   
 } else {
   stop ("unknown study name 9")
@@ -1976,11 +2054,12 @@ if(Sys.getenv ("NOCHECK")=="") {
          janssen_partA_VL = "be70e58897d461c242f930d09bbbcd0a", 
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
+         azd1222_stage2 = "c40377f28e549323a551b012a2ea2af5",
          prevent19 = "61eccc478dfd5594e0faa9f2c8569fa1",
-         prevent19_stage2 = "ea5b6411bd1baa92673ebbf8ffa2a4d3",
+         prevent19_stage2 = "35c32bef0d1a7df9d82a9715c897431b",
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
          covail = "8c995d5f0b087be17cfc7bb70be62afa", 
-         nvx_uk302 = "2bbec33211acaad372a0967f508d9adf", 
+         nvx_uk302 = "99a9d33175c7ff52fa008020fff955b4", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
