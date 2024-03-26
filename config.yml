@@ -63,7 +63,7 @@ covail: &covail
 
 id27hpv: &id27hpv
   # include ptid without M18 visits
-  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20240318.csv
+  mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20240322.csv
   # without additional ptids without M18 visit
   # mapped_data: /networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/mapping_immune_correlates/adata/ID27_IARC_HPV_mapped_20240307.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/id27hpv_assay_metadata.csv
@@ -113,7 +113,7 @@ azd1222_base: &azd1222_base
   timepoints: [29, 57]
   times: [B, Day29, Day57, Delta29overB, Delta57overB, Delta57over29]
   time_labels: [Day 1, Day 29, Day 57, D29 fold-rise over D1, D57 fold-rise over D1, D57 fold-rise over D29]
-  mapped_data: /trials/covpn/p3002/analysis/mapping_immune_correlates/adata/COVID_AstraZeneca_realdata_20221208.csv 
+  mapped_data: /trials/covpn/p3002/analysis/mapping_immune_correlates/stage1/adata/COVID_AstraZeneca_realdata_20221208.csv 
   subset_variable: None
   subset_value: All
   study_name: AZD1222

@@ -20,6 +20,9 @@ library(tidyverse)
 
 
 # set deployment path for each study
+deploy_path=""
+
+# first try with study_name, then try with TRIAL
 deploy_path <- switch(study_name,
                       COVE =      "/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/",
                       COVEBoost =      "/trials/covpn/p3001/analysis/correlates/Part_C_Unblinded_Phase_Data/adata/",
@@ -31,9 +34,18 @@ deploy_path <- switch(study_name,
                       IARC_HPV = "/networks/cavd/Objective 4/GH-VAP/ID27-Sankaranarayanan/analysis/correlates/adata/",
                       COVAIL =    "/trials/covpn/COVAILcorrelates/analysis/correlates/adata/",
                       NVX_UK302 =    "/trials/covpn/p3004/analysis/correlates/UK302/adata/",
-                      stop("study_name not supported 1"))  
+                      deploy_path
+                      )  
 
+deploy_path <- switch(TRIAL,
+                      azd1222_stage2 =   "/trials/covpn/p3002/analysis/correlates/stage2/adata/",
+                      prevent19_stage2 = "/trials/covpn/p3004/analysis/correlates/stage2/adata/",
+                      deploy_path
+)  
 
+if (deploy_path=="") {
+  stop("no deply_path")
+}
 
 if (TRIAL %in% c()) {
   data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_with_riskscore"))

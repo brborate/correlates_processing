@@ -206,7 +206,6 @@ if (!is.null(config$assay_metadata)) {
     pos.cutoffs["ACE2"]=10
     
     
-    
   } else if(study_name=="AZD1222") {
     
     # data less than lloq is set to lloq/2 in the raw data, Nexelis

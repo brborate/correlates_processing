@@ -185,6 +185,11 @@ if (TRIAL=="janssen_partA_VL") {
   # subset to vaccine and seroneg, necessary for getting weights correctly
   dat_proc = subset(dat_proc, Trt==1 & Bserostatus==0)
   
+  # there are 11 ptids without risk_score. these ptids are absent from stage 1 risk score dataset and from stage 1 mapped dataset
+  # will impute them later in this script
+  # subset(dat_proc, is.na(risk_score), c(Ptid, Country))
+  # subset(inputFile_with_riskscore, Ptid=="D8110C00001/E20052580178")
+  # subset(dat_mapped_stage1, Subjectid=="D8110C00001/E2005329019")
   
 } else if (TRIAL == "prevent19_stage2") {
   dat_raw=read.csv(mapped_data)
@@ -1128,7 +1133,7 @@ if (TRIAL=='vat08_combined') {
   sp=57
   tmp = with(dat_proc, get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%sp) >= 120)
   
-  # once for bAb
+  # once for nAb
   wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%sp%.%"nAb")))
   print(wts_table)
   wts_norm <- rowSums(wts_table) / wts_table[, 2]
@@ -1507,6 +1512,43 @@ if (study_name%in%c("COVAIL")) {
   # nothing to be done since we don't need to impute baseline and there is only one marker at D35
   
   
+} else if (TRIAL=="azd1222_stage2") {
+  tp=57
+  n.imp <- 1
+  
+  # impute nAb
+  dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD57nAb") == 1)
+  imp.markers=paste0("Day"%.%tp, c("pseudoneutid50_D614G", "pseudoneutid50_Delta"))
+      
+  trt=1; sero=0
+  
+  imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero) %>% select(all_of(imp.markers))         
+  if(any(is.na(imp))) {
+    # if there is no variability, fill in NA with constant values
+    for (a in names(imp)) {
+      if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
+    }            
+    # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+    imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+    dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero , imp.markers] <- mice::complete(imp, action = 1)
+  }                
+
+  # missing markers imputed properly?
+  assertthat::assert_that(
+    all(complete.cases(dat.tmp.impute[, imp.markers])),
+    msg = "missing markers imputed properly?"
+  )    
+  
+  # populate dat_proc imp.markers with the imputed values
+  dat_proc[dat_proc[["TwophasesampIndD57nAb"]]==1, imp.markers] <-
+    dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD57nAb"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+  
+  assertthat::assert_that(
+    all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD57nAb"]] == 1, imp.markers])),
+    msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+  )
+  
+  
 } else {
   # loop through the time points
   # first impute (B, D29, D57) among TwophasesampIndD57==1
@@ -1515,7 +1557,7 @@ if (study_name%in%c("COVAIL")) {
   for (tp in rev(timepoints)) {    
       n.imp <- 1
       
-      # dat.tmp.impute can be TRIAL-specific
+      # dat.tmp.impute can NOT be TRIAL-specific. Too many changes to be made for that
       if (TRIAL=="azd1222_stage2") {
         dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD57nAb") == 1)
         
@@ -1898,15 +1940,21 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 # do this last so as not to change earlier values
 ###############################################################################
 
-if (TRIAL %in% c("profiscov", "profiscov_lvmn", "vat08_combined", "vat08_nAb")) {
+if (TRIAL %in% c("profiscov", "profiscov_lvmn", "vat08_combined", "vat08_nAb", "azd1222_stage2")) {
     # no risk score for profiscov, but some have missing BMI
     n.imp <- 1
     dat.tmp.impute <- dat_proc
     
     if (TRIAL %in% c("profiscov", "profiscov_lvmn")) {
       imp.markers=c("HighRiskInd", "Sex", "Age", "BMI")
+      
     } else if (TRIAL %in% c("vat08_combined", "vat08_nAb")) {     
       imp.markers=c("FOI", "risk_score")
+      
+    } else if (TRIAL %in% c("azd1222_stage2")) {     
+      imp.markers=c("risk_score", "Age", "Sex", "BMI", "URMforsubcohortsampling", "HighRiskInd", 
+                    "USAInd", "HIVinfection", "CalendarGrp", "Bserostatus")
+      
     }
         
     imp <- dat.tmp.impute %>%  select(all_of(imp.markers))         
@@ -2054,8 +2102,8 @@ if(Sys.getenv ("NOCHECK")=="") {
          janssen_partA_VL = "be70e58897d461c242f930d09bbbcd0a", 
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
-         azd1222_stage2 = "c40377f28e549323a551b012a2ea2af5",
-         prevent19 = "61eccc478dfd5594e0faa9f2c8569fa1",
+         azd1222_stage2 = "71f748fba28255c5118bd35497f2cad6",
+         prevent19 = "9a766566d32dd7cafab6cca804a8dfb3",
          prevent19_stage2 = "35c32bef0d1a7df9d82a9715c897431b",
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
          covail = "8c995d5f0b087be17cfc7bb70be62afa", 
