@@ -554,12 +554,11 @@ if (TRIAL=="vat08_combined") {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1 & Region==2 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1 & Region==2 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
     
-  } else if (TRIAL == "azd1222_stage2") {
-    # this needs to come before study_name AZD1222
-    # Severe case and Delta cases are case-sampling strata
-    # severe has to come second to overwrite delta
-    dat_proc$Wstratum[with(dat_proc, DeltaEventIndD57==1 & Trt==1 & Bserostatus==0)]=max.tps+1
-    dat_proc$Wstratum[with(dat_proc, SevereEventIndD57==1 & Trt==1 & Bserostatus==0)]=max.tps+2
+  } else if (TRIAL == "prevent19") {
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==0)]=max.tps+1
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==1)]=max.tps+2
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
+    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
     
   } else if (TRIAL == "prevent19_stage2") {
     # Severe case and Delta cases are case-sampling strata
@@ -567,17 +566,18 @@ if (TRIAL=="vat08_combined") {
     dat_proc$Wstratum[with(dat_proc, DeltaEventIndD35==1 & Trt==1 & Bserostatus==0)]=max.tps+1
     dat_proc$Wstratum[with(dat_proc, SevereEventIndD35 ==1 & Trt==1 & Bserostatus==0)]=max.tps+2
     
-} else if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "AZD1222")) {
+  } else if (TRIAL == "azd1222_stage2") {
+    # this needs to come before study_name AZD1222
+    # Severe case and Delta cases are case-sampling strata
+    # severe has to come second to overwrite delta
+    dat_proc$Wstratum[with(dat_proc, DeltaEventIndD57==1 & Trt==1 & Bserostatus==0)]=max.tps+1
+    dat_proc$Wstratum[with(dat_proc, SevereEventIndD57==1 & Trt==1 & Bserostatus==0)]=max.tps+2
+    
+  } else if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "AZD1222")) {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0)]=max.tps+1
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1)]=max.tps+2
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1)]=max.tps+4
-    
-  } else if (TRIAL == "prevent19") {
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==0)]=max.tps+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==1)]=max.tps+2
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
     
   } else if (study_name == "NVX_UK302") {
     # data has only Bserostatus 0
@@ -1165,54 +1165,21 @@ if (TRIAL=='vat08_combined') {
   
 } else if (TRIAL %in% c("prevent19_stage2")) {
   tp=35
-  tmp = with(dat_proc, get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
-  wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
-  print(wts_table)
-  wts_norm <- rowSums(wts_table) / wts_table[, 2]
-  dat_proc[["wt.D"%.%tp]] <- wts_norm[dat_proc$Wstratum %.% ""]
-  # the step above assigns weights for some subjects outside ph1. the next step makes them NA
-  dat_proc[["wt.D"%.%tp]] = ifelse(with(dat_proc, 
-                  get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.D"%.%tp]], NA) 
-  dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp]])
+  dat_proc[["ph1.D"%.%tp]] = with(dat_proc, get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
   dat_proc[["ph2.D"%.%tp]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp]]
-  assertthat::assert_that(
-    all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp]])),
-    msg = "missing wt.D for D analyses ph1 subjects")
+  dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp, Wstratum="Wstratum", wt="wt.D"%.%tp, verbose=F) 
 
-  # ph1.D35_108
-  tp='35_108'
-  sp=35
-  tmp = with(dat_proc, get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%sp) >= 108)
-  wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%sp)))
-  print(wts_table)
-  wts_norm <- rowSums(wts_table) / wts_table[, 2]
-  dat_proc[["wt.D"%.%tp]] <- wts_norm[dat_proc$Wstratum %.% ""]
-  # the step above assigns weights for some subjects outside ph1. the next step makes them NA
-  dat_proc[["wt.D"%.%tp]] = ifelse(with(dat_proc, 
-                  get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%sp)>=108), dat_proc[["wt.D"%.%tp]], NA) 
-  dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp]])
+  tp='35_108'; sp=35
+  dat_proc[["ph1.D"%.%tp]] = with(dat_proc, get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%sp) >= 108)
   dat_proc[["ph2.D"%.%tp]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%sp]]
-  assertthat::assert_that(
-    all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp]])),
-    msg = "missing wt.D for D analyses ph1 subjects")
-  
-    
+  dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp, Wstratum="Wstratum", wt="wt.D"%.%tp, verbose=F) 
+
 } else if (TRIAL %in% c("nvx_uk302")) {
-  # the default, using TwophasesampIndDxx
-  for (tp in rev(timepoints)) { # rev is just so that digest passes
-    tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
-    wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
-    print(wts_table)
-    wts_norm <- rowSums(wts_table) / wts_table[, 2]
-    dat_proc[["wt.D"%.%tp]] <- wts_norm[dat_proc$Wstratum %.% ""]
-    # the step above assigns weights for some subjects outside ph1. the next step makes them NA
-    dat_proc[["wt.D"%.%tp]] = ifelse(with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp)>=7), dat_proc[["wt.D"%.%tp]], NA) 
-    dat_proc[["ph1.D"%.%tp]]=!is.na(dat_proc[["wt.D"%.%tp]])
+  # the default
+  for (tp in rev(timepoints)) { # rev is done as a convention
+    dat_proc[["ph1.D"%.%tp]] = with(dat_proc, get("EarlyinfectionD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
     dat_proc[["ph2.D"%.%tp]]=dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp]]
-    
-    assertthat::assert_that(
-      all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum))[["wt.D"%.%tp]])),
-      msg = "missing wt.D for D analyses ph1 subjects")
+    dat_proc = add.wt(dat_proc, ph1="ph1", ph2="ph2", Wstratum="Wstratum", wt="wt.D"%.%tp, verbose=FALSE) 
   }
   
   
