@@ -92,7 +92,7 @@ prevent19_stage2: &prevent19_stage2
   timepoints: [35]
   times: [Day35]
   time_labels: [Day 35]
-  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/stage2/adata/COVID_Novavax_stage2_mapped_20240322.csv 
+  mapped_data: /trials/covpn/p3004/analysis/mapping_immune_correlates/stage2/adata/COVID_Novavax_stage2_mapped_20240326.csv 
   assay_metadata: ../correlates_reporting2/assay_metadata/prevent19_stage2_assay_metadata.csv
   study_name: PREVENT19
   
