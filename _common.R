@@ -649,24 +649,28 @@ preprocess=function(dat_raw, study_name) {
     }
     
     
-    for(tp in timepoints) {
-      empty = nrow(dat_proc[is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ])
-      if (empty>0) {
-        warning("there are "%.%empty%.%" ptids without event time. subset to ptids without missing EventTimePrimaryD"%.%tp%.%"\n")
-      }
-      dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
-    }
+    # Mar 29, 24 skip this check because things are now more complicated, the dataset does not always have EventTimePrimaryDxx
+    # for(tp in timepoints) {
+    #   empty = nrow(dat_proc[is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ])
+    #   if (empty>0) {
+    #     warning("there are "%.%empty%.%" ptids without event time. subset to ptids without missing EventTimePrimaryD"%.%tp%.%"\n")
+    #   }
+    #   dat_proc=dat_proc[!is.na(dat_proc[["EventTimePrimaryD"%.%tp]]), ]
+    # }
     
     
     # define early infection 
     if (study_name=='COVAIL') {
       dat_proc$EarlyinfectionD15=dat_proc$EarlyendpointD15
       
-    } else {
+    } else if (TRIAL %in% c("prevent19")) {
       for(tp in timepoints) {
         dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, 
           ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))
       }
+    } else {
+      # do nothing
+      # EarlyendpointDxx is not necessary anymore. For example, in prevent19_stage2, we use EarlyinfectionDxx to define ph1.
     }
     
 
