@@ -1,12 +1,11 @@
 #Sys.setenv(TRIAL = "azd1222_stage2")
-#Sys.setenv(TRIAL = "prevent19_stage2")
 #Sys.setenv(TRIAL = "prevent19")
 #Sys.setenv(TRIAL = "vat08_combined")
 #Sys.setenv(TRIAL = "nvx_uk302")
 #Sys.setenv(TRIAL = "covail")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
 #Sys.setenv(TRIAL = "moderna_real")
-if (Sys.getenv("TRIAL")  %in% c("moderna_boost","id27hpv")) stop("Please run TRIAL-specific scripts.") 
+if (file.exists(paste0("data_clean/make_dat_", Sys.getenv("TRIAL"), ".R"))) stop("A TRIAL-specific R script exist.") 
 source(here::here("_common.R"))
 
 
@@ -191,27 +190,7 @@ if (TRIAL=="janssen_partA_VL") {
   # subset(inputFile_with_riskscore, Ptid=="D8110C00001/E20052580178")
   # subset(dat_mapped_stage1, Subjectid=="D8110C00001/E2005329019")
   
-} else if (TRIAL == "prevent19_stage2") {
-  dat_raw=read.csv(mapped_data)
-  dat_proc = preprocess(dat_raw, study_name)   
-  colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
-  
-  # borrow risk score from prevent19, even though the clinical database changed slightly
-  load(file = 'riskscore_baseline/output/prevent19/inputFile_with_riskscore.RData')
-  nrow(inputFile_with_riskscore)
-  nrow(dat_proc)
-  
-  # ptids are formatted differently in the two datasets, need to be transformed
-  inputFile_with_riskscore$Ptid = sub("2019nCoV301","2019nCoV-301",inputFile_with_riskscore$Ptid)
-  
-  # stage 2 dataset has fewer rows than stage 1 b/c it is vaccine only, baseline sero-negative only
-  dat_proc$risk_score = inputFile_with_riskscore$risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
-  dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
 
-  # subset to vaccine and seroneg, necessary for getting weights correctly
-  dat_proc = subset(dat_proc, Trt==1 & Bserostatus==0)
-  
-  
 } else if (TRIAL == "prevent19") {
   load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
   dat_proc <- inputFile_with_riskscore    
@@ -560,12 +539,6 @@ if (TRIAL=="vat08_combined") {
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
     dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
     
-  } else if (TRIAL == "prevent19_stage2") {
-    # Severe case and Delta cases are case-sampling strata
-    # severe has to come second to overwrite delta
-    dat_proc$Wstratum[with(dat_proc, KnownOrImputedDeltaCOVIDInd21Apr19to22Mar26==1 & Trt==1 & Bserostatus==0)]=max.tps+1
-    dat_proc$Wstratum[with(dat_proc, SevereCOVIDInd21Apr19to22Mar26 ==1 & Trt==1 & Bserostatus==0)]=max.tps+2
-    
   } else if (TRIAL == "azd1222_stage2") {
     # this needs to come before study_name AZD1222
     # Severe case and Delta cases are case-sampling strata
@@ -638,7 +611,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 } else if (TRIAL=="profiscov_lvmn") {
   must_have_assays <- c("bindSpike")
     
-} else if (TRIAL %in% c("vat08_combined", "covail", "prevent19_stage2", "azd1222_stage2")) {
+} else if (TRIAL %in% c("vat08_combined", "covail", "azd1222_stage2")) {
   # will implement twophase indicators specifically
   must_have_assays <- NULL
 
@@ -671,23 +644,6 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
   # does not require baseline, does not require case-cohort
   dat_proc[["TwophasesampIndD35NVX"]] = 
     complete.cases(dat_proc[,c("Day35ACE2","Day35bindNVXIgG")])      
-  
-  
-} else if (TRIAL == "prevent19_stage2") {
-  # requires both bAb and nAb
-  dat_proc$TwophasesampIndD35 = with(dat_proc, 
-                                       # bAb is all or none
-                                      !is.na(Day35bindSpike_D614) & 
-                                       # nAb will be used to impute each other
-                                      (!is.na(Day35pseudoneutid50_D614G) | !is.na(Day35pseudoneutid50_Delta) )
-  )
-  
-  # remove three ptids from TwophasesampIndD35 because NVX programmer used the investigator’s 
-  # assessment of severity (variable SEV) rather than the final severity assessment ASEV. 
-  dat_proc$TwophasesampIndD35[dat_proc$Ptid %in% c(
-    "2019nCoV-301-US228-0105", "2019nCoV-301-US232-0013", # non-severe Mu and Gamma cases in the final determination
-    "2019nCoV-301-US179-0082") # a less than mild Delta case in the final determination
-    ] = F 
   
   
 } else if (TRIAL == "azd1222_stage2") {
@@ -1171,21 +1127,6 @@ if (TRIAL=='vat08_combined') {
     msg = "missing wt.D for D analyses ph1 subjects")
   
   
-} else if (TRIAL %in% c("prevent19_stage2")) {
-  
-  tp='35_108'
-  dat_proc[["ph1.D"%.%tp]] = with(dat_proc, 
-    Perprotocol==1 & 
-    get("AnyInfectionD1toD"%.%tp)==0 & # no evidence of any infection by D35_108
-    COVIDTimeD35to21Dec10 >= 108 & # COVID time or censor time is after D35_108
-    # either Delta COVID, severe COVID, or no evidence of infection till 22Mar26
-    (KnownOrImputedDeltaCOVIDInd21Apr19to22Mar26==1 | SevereCOVIDInd21Apr19to22Mar26 | AnyInfectionD1to22Mar26==0)
-  )
-  dat_proc[["ph2.D"%.%tp]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD35"]]
-  
-  dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp, Wstratum="Wstratum", wt="wt.D"%.%tp, verbose=F) 
-  
-  
 } else if (TRIAL %in% c("nvx_uk302")) {
   # the default
   for (tp in rev(timepoints)) { # rev is done as a convention
@@ -1202,7 +1143,7 @@ if (TRIAL=='vat08_combined') {
 
 
 # immunogenicity weights and intercurrent weights
-if (!TRIAL %in% c('vat08_combined','covail',"azd1222_stage2","prevent19_stage2")) {
+if (!TRIAL %in% c('vat08_combined','covail',"azd1222_stage2")) {
   
   # weights for immunogenicity analyses that use subcohort only and are not enriched by cases outside subcohort
   tp=timepoints[ifelse(two_marker_timepoints, 2, 1)]
@@ -1553,10 +1494,6 @@ if (study_name%in%c("COVAIL")) {
           # no need to impute bindNVXIgG and ACE2
           imp.markers=c(outer(c("B", "Day"%.%tp), setdiff(assays,c("bindNVXIgG","bindNVXIgGIU","ACE2")), "%.%"))
           
-        } else if (TRIAL=="prevent19_stage2") {
-          # no need to impute bAb
-          imp.markers=paste0("Day"%.%tp, c("pseudoneutid50_D614G", "pseudoneutid50_Delta"))
-          
         } else if (TRIAL=="azd1222_stage2") {
           # no need to impute bAb
           imp.markers=paste0("Day"%.%tp, c("pseudoneutid50_D614G", "pseudoneutid50_Delta"))
@@ -1753,7 +1690,7 @@ if(study_name == "COVAIL") {
 # but there is a need to do uloq censoring before computing delta
 
 
-if (TRIAL %in% c("janssen_partA_VL", "nvx_uk302", "prevent19_stage2", "azd1222_stage2")) {
+if (TRIAL %in% c("janssen_partA_VL", "nvx_uk302", "azd1222_stage2")) {
   # skipping b/c there is no baseline data
   
 } else {
@@ -1803,12 +1740,6 @@ if (TRIAL %in% c("janssen_partA_VL", "nvx_uk302", "prevent19_stage2", "azd1222_s
 
 if (TRIAL %in% c("nvx_uk302")) {
   dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & get("ph2.D"%.%tp)) 
-  dat_proc = add.trichotomized.markers (dat_proc, c("Day"%.%tp%.%assays), ph2.col.name="tmp", wt.col.name="wt.D"%.%tp)
-  dat_proc$tmp = NULL
-  
-  
-} else if (TRIAL == "prevent19_stage2") {
-  dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & get("ph2.D35_108")) 
   dat_proc = add.trichotomized.markers (dat_proc, c("Day"%.%tp%.%assays), ph2.col.name="tmp", wt.col.name="wt.D"%.%tp)
   dat_proc$tmp = NULL
   
@@ -2089,7 +2020,6 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          azd1222_stage2 = "71f748fba28255c5118bd35497f2cad6",
          prevent19 = "9a766566d32dd7cafab6cca804a8dfb3",
-         prevent19_stage2 = "ae01d23dae5971fd017a0eca3facc7ca",
          vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
          covail = "8c995d5f0b087be17cfc7bb70be62afa", 
          nvx_uk302 = "99a9d33175c7ff52fa008020fff955b4", 
