@@ -1,4 +1,4 @@
-Sys.setenv(TRIAL = "prevent19_stage2")
+Sys.setenv(TRIAL = "azd1222_stage2")
 source(here::here("_common.R"))
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
 
@@ -17,26 +17,24 @@ begin=Sys.time()
 ########################################################################################################
 # read mapped data with risk score added
 
-
 dat_raw=read.csv(mapped_data)
 dat_proc = preprocess(dat_raw, study_name)   
 colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
 
-# borrow risk score from prevent19, even though the clinical database changed slightly
-load(file = 'riskscore_baseline/output/prevent19/inputFile_with_riskscore.RData')
-nrow(inputFile_with_riskscore)
-nrow(dat_proc)
-
-# ptids are formatted differently in the two datasets, need to be transformed
-inputFile_with_riskscore$Ptid = sub("2019nCoV301","2019nCoV-301",inputFile_with_riskscore$Ptid)
-
-# stage 2 dataset has fewer rows than stage 1 b/c it is vaccine only, baseline sero-negative only
+# borrow risk score from azd1222
+load(file = 'riskscore_baseline/output/azd1222/inputFile_with_riskscore.RData')
+# stage 2 dataset has fewer rows than stage 1
 dat_proc$risk_score = inputFile_with_riskscore$risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
 dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score[match(dat_proc$Ptid, inputFile_with_riskscore$Ptid)]
 
 # subset to vaccine and seroneg, necessary for getting weights correctly
 dat_proc = subset(dat_proc, Trt==1 & Bserostatus==0)
 
+# there are 11 ptids without risk_score. these ptids are absent from stage 1 risk score dataset and from stage 1 mapped dataset
+# will impute them later in this script
+# subset(dat_proc, is.na(risk_score), c(Ptid, Country))
+# subset(inputFile_with_riskscore, Ptid=="D8110C00001/E20052580178")
+# subset(dat_mapped_stage1, Subjectid=="D8110C00001/E2005329019")
 
 
 # define Senior and race/ethnicity
@@ -135,8 +133,6 @@ dat_proc = subset(dat_proc, Trt==1 & Bserostatus==0)
 
 ###############################################################################
 # stratum variables
-# The code for Bstratum is trial-specific
-# The code for tps.stratum and Wstratum are not trial specific since they are constructed on top of Bstratum
 ###############################################################################
 
 # Bstratum: randomization strata
@@ -146,20 +142,21 @@ names(Bstratum.labels) <- Bstratum.labels
 
 # demo.stratum: correlates sampling strata
 # may have NA b/c URMforsubcohortsampling may be NA
-dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior, HighRiskInd), base = 2)) + 1
-dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 9, 10))) # 0 is US
-with(dat_proc, table(demo.stratum))
+#    US, <65, non-Minority
+#    US, >65, non-Minority
+#    US, <65, Minority
+#    US, >65, Minority
+#    non-US, <65
+#    non-US, >65
+dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior), base = 2)) + 1
+dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(!Senior, 5, 6))) # 2 is US
 
 
-
-###########################################
 # tps stratum, used in tps regression and to define Wstratum
 dat_proc <- dat_proc %>% mutate(tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * max(demo.stratum,na.rm=T))
 if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
 
-
-
-###########################################
+  
 # Wstratum, 1 ~ max(tps.stratum), max(tps.stratum)+1, ..., 
 # Used to compute sampling weights. 
 # Differs from tps stratum in that case is a separate stratum within each of the four groups defined by Trt and Bserostatus
@@ -170,55 +167,45 @@ dat_proc$Wstratum = dat_proc$tps.stratum
 tps.cnt=max.tps+1
 # Severe case and Delta cases are case-sampling strata
 # severe has to come second to overwrite delta
-dat_proc$Wstratum[with(dat_proc, KnownOrImputedDeltaCOVIDInd21Apr19to22Mar26==1 & Trt==1 & Bserostatus==0)]=max.tps+1
-dat_proc$Wstratum[with(dat_proc, SevereCOVIDInd21Apr19to22Mar26 ==1 & Trt==1 & Bserostatus==0)]=max.tps+2
-if (!is.null(dat_proc$Wstratum)) table(dat_proc$Wstratum) # variables may be named other than Wstratum
+stop("it is a lot more complicated, see Tab 1 in overleaf")
+dat_proc$Wstratum[with(dat_proc, DeltaEventIndD57==1 & Trt==1 & Bserostatus==0)]=max.tps+1
+dat_proc$Wstratum[with(dat_proc, SevereEventIndD57==1 & Trt==1 & Bserostatus==0)]=max.tps+2
+
+stop("needs changes")
 
 
-################################################################################
-# define must_have_assays for ph2 definition
 
-# will implement twophase indicators specifically
-must_have_assays <- NULL
-
-
-# TwophasesampInd: be in the subcohort or a case after time point 1  &  have the necessary markers
-# requires both bAb and nAb
-dat_proc$TwophasesampIndD35 = with(dat_proc, 
-                                     # bAb is all or none
-                                    !is.na(Day35bindSpike_D614) & 
-                                     # nAb will be used to impute each other
-                                    (!is.na(Day35pseudoneutid50_D614G) | !is.na(Day35pseudoneutid50_Delta) )
-)
-
-# remove three ptids from TwophasesampIndD35 because NVX programmer used the investigator’s 
-# assessment of severity (variable SEV) rather than the final severity assessment ASEV. 
-dat_proc$TwophasesampIndD35[dat_proc$Ptid %in% c(
-  "2019nCoV-301-US228-0105", "2019nCoV-301-US232-0013", # non-severe Mu and Gamma cases in the final determination
-  "2019nCoV-301-US179-0082") # a less than mild Delta case in the final determination
-  ] = F 
-
-  
 ###############################################################################
 # observation-level weights
 # Note that Wstratum may have NA if any variables to form strata has NA
-###############################################################################
 
-tp='35_108'
+tp='57_120'
+
 dat_proc[["ph1.D"%.%tp]] = with(dat_proc, 
   Perprotocol==1 & 
-  get("AnyInfectionD1toD"%.%tp)==0 & # no evidence of any infection by D35_108
-  COVIDTimeD35to21Dec10 >= 108 & # COVID time or censor time is after D35_108
+  get("AnyInfectionD1toD"%.%tp)==0 & # no evidence of any infection by D57_120
+  COVIDTimeD57to21Dec10 >= 120 & # COVID time or censor time is after D57_120
   # either Delta COVID, severe COVID, or no evidence of infection till 22Mar26
-  (KnownOrImputedDeltaCOVIDInd21Apr19to22Mar26==1 | SevereCOVIDInd21Apr19to22Mar26 | AnyInfectionD1to22Mar26==0)
+  (KnownOrImputedDeltaCOVIDIndD57_7toD360==1 | SevereCOVIDIndD57_7toD360 | AnyInfectionD1toD57_7==0)
 )
-dat_proc[["ph2.D"%.%tp]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD35"]]
 
-dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp, Wstratum="Wstratum", wt="wt.D"%.%tp, verbose=F) 
+# two separate indicators, one for bAb and one for nAb
+
+# define must_have_assays for ph2 definition
+must_have_assays <- NULL # will implement twophase indicators specifically
+
+# nAb, we only use Delta to impute ancestral
+dat_proc[["TwophasesampIndD57nAb"]] = complete.cases(dat_proc[,c("Day57pseudoneutid50_Delta")])      
+dat_proc[["ph2.D"%.%tp%.%"nAb"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD57nAb"]]
+dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp%.%"nAb", Wstratum="Wstratum", wt="wt.D"%.%tp%.%"nAb", verbose=F) 
+
+# bAb
+dat_proc[["TwophasesampIndD57bAb"]] = complete.cases(dat_proc[,c("Day57bindSpike_Alpha")])      
+dat_proc[["ph2.D"%.%tp%.%"bAb"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD57bAb"]]
+dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp%.%"bAb", Wstratum="Wstratum", wt="wt.D"%.%tp%.%"bAb", verbose=F) 
+
+
   
-
-
-
 
 ###############################################################################
 # impute missing biomarkers in ph2 (assay imputation)
@@ -227,104 +214,46 @@ dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp, Wstratum="Wstrat
 #     use baseline, each time point, but not Delta
 ###############################################################################
 
-# loop through the time points
-# first impute (B, D29, D57) among TwophasesampIndD57==1
-# next impute (B, D29) among TwophasesampIndD29==1
+n.imp <- 1
 
-for (tp in rev(timepoints)) {    
-    n.imp <- 1
-    
-    dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD"%.%tp) == 1)
+# impute nAb
+dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD57nAb") == 1)
+imp.markers=paste0("Day57", c("pseudoneutid50_D614G", "pseudoneutid50_Delta"))
 
-    # markers can be TRIAL-specific
-    # no need to impute bAb
-    imp.markers=paste0("Day"%.%tp, c("pseudoneutid50_D614G", "pseudoneutid50_Delta"))
-    # mdw markers are not imputed
-    imp.markers=imp.markers[!endsWith(imp.markers, "_mdw")]
+trt=1; sero=0
 
-    for (trt in unique(dat_proc$Trt)) {
-    for (sero in unique(dat_proc$Bserostatus)) {    
-      
-      #summary(subset(dat.tmp.impute, Trt == 1 & Bserostatus==0)[imp.markers])      
-      imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero) %>% select(all_of(imp.markers))         
-      if(any(is.na(imp))) {
-        # if there is no variability, fill in NA with constant values
-        for (a in names(imp)) {
-          if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
-        }            
-        # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
-        imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
-        dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero , imp.markers] <- mice::complete(imp, action = 1)
-      }                
-    }
-    }
-    
-    # missing markers imputed properly?
-    assertthat::assert_that(
-        all(complete.cases(dat.tmp.impute[, imp.markers])),
-        msg = "missing markers imputed properly?"
-    )    
-    
-    # populate dat_proc imp.markers with the imputed values
-    dat_proc[dat_proc[["TwophasesampIndD"%.%tp]]==1, imp.markers] <-
-      dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD"%.%tp]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
-    
-    assertthat::assert_that(
-      all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD"%.%tp]] == 1, imp.markers])),
-      msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
-    )
+imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero) %>% select(all_of(imp.markers))         
+if(any(is.na(imp))) {
+  # if there is no variability, fill in NA with constant values
+  for (a in names(imp)) {
+    if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
+  }            
+  # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+  dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero , imp.markers] <- mice::complete(imp, action = 1)
+}                
+
+# missing markers imputed properly?
+assertthat::assert_that(
+  all(complete.cases(dat.tmp.impute[, imp.markers])),
+  msg = "missing markers imputed properly?"
+)    
+
+# populate dat_proc imp.markers with the imputed values
+dat_proc[dat_proc[["TwophasesampIndD57nAb"]]==1, imp.markers] <-
+  dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD57nAb"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+
+assertthat::assert_that(
+  all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD57nAb"]] == 1, imp.markers])),
+  msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+)
+
+
   
-}
-
-
   
 ###############################################################################
 # transformation of the markers
 
-# converting binding variables from AU to IU for binding assays
-# COVE only 
-# moderna_real immune.csv file is not on international scale and other mapped data files are
-
-# some trials have N some don't
-if (is.null(config$assay_metadata)) {
-  includeN = switch(study_name, COVE=1, MockCOVE=1, ENSEMBLE=1, MockENSEMBLE=1, PREVENT19=0, AZD1222=0, VAT08=0, PROFISCOV=1, COVAIL=1, stop("unknown study_name 9"))
-  assays.includeN=c(assays, if(includeN==1) "bindN")
-  
-} else if (TRIAL=="janssen_partA_VL") {
-    assays.includeN = c("bindSpike", "bindRBD", "pseudoneutid50", "bindN")
-    
-} else {
-  assays.includeN = assays
-}
-
-
-if(study_name=="COVE"){
-    # conversion is only done for COVE for backward compatibility
-    convf=c(bindSpike=0.0090, bindRBD=0.0272, bindN=0.0024, pseudoneutid50=0.242, pseudoneutid80=1.502)    
-    for (a in assays.includeN) {
-      for (t in c("B", paste0("Day", config$timepoints)) ) {
-          dat_proc[[t %.% a]] <- dat_proc[[t %.% a]] + log10(convf[a])
-      }
-    }
-}
-
-
-# censoring values below LLOD
-# COVE and mock only
-# after COVE, the mapped data comes censored
-if(study_name %in% c("COVE", "MockCOVE")){
-    for (a in assays.includeN) {
-      for (t in c("B", paste0("Day", config$timepoints)) ) {
-        dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(llods[a]), log10(llods[a] / 2), dat_proc[[t %.% a]])
-      }
-    }
-} else if(study_name %in% c("MockENSEMBLE")){
-    for (a in assays.includeN) {
-      for (t in c("B", paste0("Day", config$timepoints)) ) {
-        dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(lloqs[a]), log10(lloqs[a] / 2), dat_proc[[t %.% a]])
-      }
-    }
-}
 
 
 ###############################################################################
@@ -334,25 +263,67 @@ if(study_name %in% c("COVE", "MockCOVE")){
 
 ###############################################################################
 # add delta for dat_proc
-# assuming data has been censored at the lower limit
-# thus no need to do, say, lloq censoring
-# but there is a need to do uloq censoring before computing delta
-
-
-# skipping b/c there is no baseline data
 
 
 ###############################################################################
 # add discrete/trichotomized markers
 
-dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & get("ph2.D35_108")) 
-dat_proc = add.trichotomized.markers (dat_proc, c("Day35"%.%assays), ph2.col.name="tmp", wt.col.name="wt.D35_108")
+bAb.assays = subset(assay_metadata, panel=="bindSpike", assay, drop=T)
+dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & get("ph2.D57_120nAb")) 
+dat_proc = add.trichotomized.markers (dat_proc, c("Day57"%.%bAb.assays), ph2.col.name="tmp", wt.col.name="wt.D57_120nAb")
 dat_proc$tmp = NULL
   
+nAb.assays = subset(assay_metadata, panel=="id50", assay, drop=T)
+dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & get("ph2.D57_120bAb")) 
+dat_proc = add.trichotomized.markers (dat_proc, c("Day57"%.%nAb.assays), ph2.col.name="tmp", wt.col.name="wt.D57_120bAb")
+dat_proc$tmp = NULL
+
+
+
+
+###############################################################################
+# subset on subset_variable
 
 
 ###############################################################################
 # impute covariates if necessary
+# do this last so as not to change earlier values
+###############################################################################
+
+# some ptids have missing risk score
+
+# no risk score for profiscov, but some have missing BMI
+n.imp <- 1
+dat.tmp.impute <- dat_proc
+
+imp.markers=c("risk_score", "Age", "Sex", "BMI", "URMforsubcohortsampling", "HighRiskInd", 
+              "USAInd", "HIVinfection", "CalendarGrp", "Bserostatus")
+  
+
+
+imp <- dat.tmp.impute %>%  select(all_of(imp.markers))         
+if(any(is.na(imp))) {
+    # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+    imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+    dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
+}                
+
+# missing markers imputed properly?
+assertthat::assert_that(
+    all(complete.cases(dat.tmp.impute[, imp.markers])),
+    msg = "missing covariates imputed properly?"
+)    
+
+# populate dat_proc imp.markers with the imputed values
+dat_proc[, imp.markers] <-
+  dat.tmp.impute[imp.markers][match(dat_proc[, "Ptid"], dat.tmp.impute$Ptid), ]
+
+# imputed values of missing markers merged properly for all individuals in the two phase sample?
+assertthat::assert_that(
+  all(complete.cases(dat_proc[, imp.markers])),
+  msg = "imputed values of missing covariates merged properly for all individuals?"
+)
+
 
 
 
@@ -364,11 +335,12 @@ dat_proc$tmp = NULL
 
 ###############################################################################
 # digest check
+###############################################################################
 
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         prevent19_stage2 = "ae01d23dae5971fd017a0eca3facc7ca",
+         azd1222_stage2 = "4d3e0b2abdd5f8e1aee72066965d9748",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
