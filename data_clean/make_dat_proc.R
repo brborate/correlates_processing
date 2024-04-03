@@ -22,7 +22,7 @@ begin=Sys.time()
 
 
 ########################################################################################################
-# read mapped data with risk score added
+# 1. read mapped data with risk score added
 
 if (TRIAL=="janssen_partA_VL") {
   # read hot deck data
@@ -205,7 +205,9 @@ if (TRIAL=="janssen_partA_VL") {
 }
 
 
-# define Senior and race/ethnicity
+
+########################################################################################################
+# 2. define Senior and race/ethnicity
 {
   colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
   dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
@@ -301,9 +303,9 @@ if (TRIAL=="janssen_partA_VL") {
 
 ###############################################################################
 # stratum variables
+
 # The code for Bstratum is trial-specific
 # The code for tps.stratum and Wstratum are not trial specific since they are constructed on top of Bstratum
-###############################################################################
 
 # Bstratum: randomization strata
 # e.g., Moderna: 1 ~ 3, defines the 3 baseline strata within trt/serostatus
@@ -403,7 +405,6 @@ with(dat_proc, table(demo.stratum))
 
 
 
-###########################################
 # tps stratum, used in tps regression and to define Wstratum
 if (TRIAL=="vat08_combined" ) {
   # for nAb markers. include Senior in the list of stratification variables
@@ -429,7 +430,6 @@ if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
 
 
 
-###########################################
 # Wstratum, 1 ~ max(tps.stratum), max(tps.stratum)+1, ..., max(tps.stratum)+4. 
 # Used to compute sampling weights. 
 # Differs from tps stratum in that case is a separate stratum within each of the four groups defined by Trt and Bserostatus
@@ -543,16 +543,19 @@ if (!is.null(dat_proc$Wstratum)) table(dat_proc$Wstratum) # variables may be nam
 
 
 ################################################################################
+# 4. observation-level weights
+# Note that Wstratum may have NA if any variables to form strata has NA
+
 # define must_have_assays for ph2 definition
 
 if (study_name %in% c("COVE", "MockCOVE")) {
   must_have_assays <- c("bindSpike", "bindRBD")
-    
-
+  
+  
 } else if (study_name %in% c("ENSEMBLE", "MockENSEMBLE")) {
   if (endsWith(TRIAL,"ADCP")) {
-      must_have_assays <- c("ADCP") 
-      
+    must_have_assays <- c("ADCP") 
+    
   } else if (TRIAL=="janssen_partA_VL") {
     # we change from bindSpike to pseudoneutid50+bindSpike
     # 4 ptids have Day29bindSpike but no Day29pseudoneutid50, they are all vaccinees, baseline neg, non-cases, US
@@ -563,7 +566,7 @@ if (study_name %in% c("COVE", "MockCOVE")) {
     # bindSpike and bindRBD are all or none
     must_have_assays <- c("bindSpike","bindRBD")
   }    
-    
+  
 } else if (TRIAL == "prevent19") {
   must_have_assays <- c("bindSpike")
   
@@ -572,20 +575,20 @@ if (study_name %in% c("COVE", "MockCOVE")) {
   
 } else if (TRIAL=="azd1222") {
   must_have_assays <- c("pseudoneutid50")
-      
+  
 } else if (TRIAL=="azd1222_bAb") {
   must_have_assays <- c("bindSpike")
   
 } else if (TRIAL=="profiscov") {
   must_have_assays <- c("bindSpike")
-      
+  
 } else if (TRIAL=="profiscov_lvmn") {
   must_have_assays <- c("bindSpike")
-    
+  
 } else if (TRIAL %in% c("vat08_combined", "covail")) {
   # will implement twophase indicators specifically
   must_have_assays <- NULL
-
+  
   
 } else stop("unknown study_name 7")
 
@@ -644,8 +647,8 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
     tmp = (complete.cases(dat_proc[,"Day29"%.%must_have_assays]) | dat_proc$COL_variants_study) &
       with(dat_proc, 
            Region==0 & !is.na(Day29pseudoneutid50) |
-           Region==1 & !is.na(Day29pseudoneutid50_Gamma) | # G/L/M/Z
-           Region==2 & !is.na(Day29pseudoneutid50_Beta) 
+             Region==1 & !is.na(Day29pseudoneutid50_Gamma) | # G/L/M/Z
+             Region==2 & !is.na(Day29pseudoneutid50_Beta) 
       ) 
     dat_proc$TwophasesampIndD29variant[noncases] = tmp [noncases]
     # check if they all have variants bAb
@@ -655,7 +658,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
          table(!is.na(Day29bindSpike_D614), TwophasesampIndD29variant, Region))
   }
   
-
+  
 } else if (TRIAL == "vat08_combined") {
   
   # baseline any nAb
@@ -773,18 +776,18 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
 } else if (TRIAL %in% c("azd1222", "azd1222_bAb", "profiscov")) {
   # does not require baseline or time point 1
   dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
-      with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-      complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])        
+    with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+    complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])        
   
   # does not require baseline or time point 2
   # note the comment about |
   dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
-      with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
-      # adding | is because if D57 is present, D29 will be imputed if missing
-      (complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)]) | 
-         complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])) 
-    
-        
+    with(dat_proc, SubcohortInd | !(is.na(get("EventIndPrimaryD"%.%timepoints[1])) | get("EventIndPrimaryD"%.%timepoints[1]) == 0)) &
+    # adding | is because if D57 is present, D29 will be imputed if missing
+    (complete.cases(dat_proc[,c("Day"%.%timepoints[1]%.%must_have_assays)]) | 
+       complete.cases(dat_proc[,c("Day"%.%timepoints[2]%.%must_have_assays)])) 
+  
+  
 } else if (TRIAL %in% c("nvx_uk302", "profiscov_lvmn")) {
   # does not require baseline
   dat_proc[["TwophasesampIndD"%.%timepoints[1]]] = 
@@ -796,11 +799,6 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
   
 } else stop("unknown study_name 8")
 
-
-###############################################################################
-# observation-level weights
-# Note that Wstratum may have NA if any variables to form strata has NA
-###############################################################################
 
 
 # weights 
@@ -1074,11 +1072,11 @@ if (!TRIAL %in% c('vat08_combined','covail')) {
 
 
 ###############################################################################
-# impute missing biomarkers in ph2 (assay imputation)
+# 5. impute missing biomarkers in ph2 (assay imputation)
 #     impute vaccine and placebo, baseline pos and neg, separately
 #     use all assays (not bindN)
 #     use baseline, each time point, but not Delta
-###############################################################################
+
 
 if (study_name%in%c("COVAIL")) {
   
@@ -1409,9 +1407,7 @@ if (study_name%in%c("COVAIL")) {
   
   
 ###############################################################################
-# transformation of the markers
-###############################################################################
-
+# 6. transformation of the markers
 
 # converting binding variables from AU to IU for binding assays
 # COVE only 
@@ -1460,7 +1456,7 @@ if(study_name %in% c("COVE", "MockCOVE")){
 
 
 ###############################################################################
-# add mdw scores
+# 7. add mdw scores
 
 if(study_name == "COVAIL") {
   
@@ -1531,7 +1527,7 @@ if(study_name == "COVAIL") {
 
 
 ###############################################################################
-# add delta for dat_proc
+# 8. add delta for dat_proc
 # assuming data has been censored at the lower limit
 # thus no need to do, say, lloq censoring
 # but there is a need to do uloq censoring before computing delta
@@ -1583,7 +1579,7 @@ if (TRIAL %in% c("janssen_partA_VL", "nvx_uk302", "azd1222_stage2")) {
 
 
 ###############################################################################
-# add discrete/trichotomized markers
+# 9. add discrete/trichotomized markers
 
 if (TRIAL %in% c("nvx_uk302")) {
   dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & get("ph2.D"%.%tp)) 
@@ -1663,7 +1659,6 @@ if (TRIAL %in% c("nvx_uk302")) {
 }  
 
 
-###############################################################################
 # add two synthetic ID50 markers by region for ensemble
 
 if (study_name=="ENSEMBLE") {
@@ -1679,10 +1674,7 @@ if (study_name=="ENSEMBLE") {
 
 
 
-###############################################################################
 # subset on subset_variable
-###############################################################################
-
 if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
     if(subset_value != "All") {
         include_in_subset <- dat_proc[[subset_variable]] == subset_value
@@ -1692,7 +1684,7 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 
 
 ###############################################################################
-# impute covariates if necessary
+# 10. impute covariates if necessary
 # do this last so as not to change earlier values
 ###############################################################################
 

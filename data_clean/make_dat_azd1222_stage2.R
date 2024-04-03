@@ -15,7 +15,7 @@ begin=Sys.time()
 
 
 ########################################################################################################
-# read mapped data with risk score added
+# 1. read mapped data with risk score added
 
 dat_raw=read.csv(mapped_data)
 dat_proc = preprocess(dat_raw, study_name)   
@@ -37,7 +37,8 @@ dat_proc = subset(dat_proc, Trt==1 & Bserostatus==0)
 # subset(dat_mapped_stage1, Subjectid=="D8110C00001/E2005329019")
 
 
-# define Senior and race/ethnicity
+########################################################################################################
+# 2. define Senior and race/ethnicity
 {
   colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
   dat_proc <- dat_proc %>% mutate(age.geq.65 = as.integer(Age >= 65))
@@ -132,8 +133,7 @@ dat_proc = subset(dat_proc, Trt==1 & Bserostatus==0)
 
 
 ###############################################################################
-# stratum variables
-###############################################################################
+# 3. stratum variables
 
 # Bstratum: randomization strata
 dat_proc$Bstratum =  with(dat_proc, Senior + 1)
@@ -164,19 +164,19 @@ if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
 
 max.tps=max(dat_proc$tps.stratum,na.rm=T)
 dat_proc$Wstratum = dat_proc$tps.stratum
-tps.cnt=max.tps+1
-# Severe case and Delta cases are case-sampling strata
-# severe has to come second to overwrite delta
-stop("it is a lot more complicated, see Tab 1 in overleaf")
-dat_proc$Wstratum[with(dat_proc, DeltaEventIndD57==1 & Trt==1 & Bserostatus==0)]=max.tps+1
-dat_proc$Wstratum[with(dat_proc, SevereEventIndD57==1 & Trt==1 & Bserostatus==0)]=max.tps+2
 
-stop("needs changes")
+# Delta/ancestral/minor variants are case-sampling strata
+# severe has to come last
 
+stop("be careful, may have to merge strata")
+dat_proc$Wstratum[with(dat_proc, KnownOrImputedDeltaCOVIDIndD57_7toD360==1 & Trt==1 & Bserostatus==0)]=   max.tps+dat_proc$tps.stratum
+dat_proc$Wstratum[with(dat_proc, AncestralCOVIDIndD57_7toD360==1 & Trt==1 & Bserostatus==0)]          = 2*max.tps+dat_proc$tps.stratum
+dat_proc$Wstratum[with(dat_proc, MinorVariantsCOVIDIndD57_7toD360==1 & Trt==1 & Bserostatus==0)]      = 3*max.tps+dat_proc$tps.stratum
+dat_proc$Wstratum[with(dat_proc, SevereCOVIDIndD57_7toD360==1 & Trt==1 & Bserostatus==0)]             = 4*max.tps+dat_proc$tps.stratum
 
 
 ###############################################################################
-# observation-level weights
+# 4. Define ph1, ph2, and weights
 # Note that Wstratum may have NA if any variables to form strata has NA
 
 tp='57_120'
@@ -191,12 +191,11 @@ dat_proc[["ph1.D"%.%tp]] = with(dat_proc,
 
 # two separate indicators, one for bAb and one for nAb
 
-# define must_have_assays for ph2 definition
-must_have_assays <- NULL # will implement twophase indicators specifically
-
 # nAb, we only use Delta to impute ancestral
 dat_proc[["TwophasesampIndD57nAb"]] = complete.cases(dat_proc[,c("Day57pseudoneutid50_Delta")])      
+
 dat_proc[["ph2.D"%.%tp%.%"nAb"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD57nAb"]]
+
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp%.%"nAb", Wstratum="Wstratum", wt="wt.D"%.%tp%.%"nAb", verbose=F) 
 
 # bAb
@@ -208,11 +207,10 @@ dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp%.%"bAb", Wstratum
   
 
 ###############################################################################
-# impute missing biomarkers in ph2 (assay imputation)
+# 5. impute missing biomarkers in ph2 (assay imputation)
 #     impute vaccine and placebo, baseline pos and neg, separately
 #     use all assays (not bindN)
 #     use baseline, each time point, but not Delta
-###############################################################################
 
 n.imp <- 1
 
@@ -252,21 +250,26 @@ assertthat::assert_that(
   
   
 ###############################################################################
-# transformation of the markers
+# 6. transformation of the markers if necessary
+# e.g., convert binding variables from AU to IU for binding assays
 
 
 
 ###############################################################################
-# add mdw scores
+# 7. add mdw scores
 
 
 
 ###############################################################################
-# add delta for dat_proc
+# 8. add fold change markers
+# assuming data has been censored at the lower limit
+# thus no need to do, say, lloq censoring
+# but there is a need to do uloq censoring before computing delta
+
 
 
 ###############################################################################
-# add discrete/trichotomized markers
+# 9. add discrete/trichotomized markers
 
 bAb.assays = subset(assay_metadata, panel=="bindSpike", assay, drop=T)
 dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & get("ph2.D57_120nAb")) 
@@ -282,17 +285,10 @@ dat_proc$tmp = NULL
 
 
 ###############################################################################
-# subset on subset_variable
-
-
-###############################################################################
-# impute covariates if necessary
-# do this last so as not to change earlier values
-###############################################################################
+# 10. impute covariates if necessary
 
 # some ptids have missing risk score
 
-# no risk score for profiscov, but some have missing BMI
 n.imp <- 1
 dat.tmp.impute <- dat_proc
 
@@ -328,7 +324,8 @@ assertthat::assert_that(
 
 
 ###############################################################################
-# special handling 
+# special handling
+# e.g., merging datasets
 
 
 
@@ -342,7 +339,8 @@ if(Sys.getenv ("NOCHECK")=="") {
     tmp = switch(TRIAL,
          azd1222_stage2 = "4d3e0b2abdd5f8e1aee72066965d9748",
          NA)    
-    if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
+    if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
+      msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
 
 data_name = paste0(TRIAL, "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv")

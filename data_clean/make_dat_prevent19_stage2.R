@@ -15,7 +15,7 @@ begin=Sys.time()
 
 
 ########################################################################################################
-# read mapped data with risk score added
+# 1. read mapped data with risk score added
 
 
 dat_raw=read.csv(mapped_data)
@@ -39,6 +39,7 @@ dat_proc = subset(dat_proc, Trt==1 & Bserostatus==0)
 
 
 
+########################################################################################################
 # define Senior and race/ethnicity
 {
   colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
@@ -134,10 +135,7 @@ dat_proc = subset(dat_proc, Trt==1 & Bserostatus==0)
 
 
 ###############################################################################
-# stratum variables
-# The code for Bstratum is trial-specific
-# The code for tps.stratum and Wstratum are not trial specific since they are constructed on top of Bstratum
-###############################################################################
+# 3. stratum variables
 
 # Bstratum: randomization strata
 dat_proc$Bstratum =  with(dat_proc, Senior + 1)
@@ -151,35 +149,41 @@ dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!
 with(dat_proc, table(demo.stratum))
 
 
-
-###########################################
 # tps stratum, used in tps regression and to define Wstratum
 dat_proc <- dat_proc %>% mutate(tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * max(demo.stratum,na.rm=T))
 if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
 
 
-
-###########################################
 # Wstratum, 1 ~ max(tps.stratum), max(tps.stratum)+1, ..., 
 # Used to compute sampling weights. 
 # Differs from tps stratum in that case is a separate stratum within each of the four groups defined by Trt and Bserostatus
 # A case will have a Wstratum even if its tps.stratum is NA
 
-max.tps=max(dat_proc$tps.stratum,na.rm=T)
 dat_proc$Wstratum = dat_proc$tps.stratum
-tps.cnt=max.tps+1
-# Severe case and Delta cases are case-sampling strata
+max.tps=max(dat_proc$tps.stratum,na.rm=T)
+# cannot use KnownOrImputedDeltaCOVIDInd21Apr19to22Mar26 b/c cases are not defined using that
+dat_proc$Wstratum[with(dat_proc, KnownOrImputedDeltaCOVIDIndD35_108to21Dec10==1 & Trt==1 & Bserostatus==0)]=max.tps+2
 # severe has to come second to overwrite delta
-dat_proc$Wstratum[with(dat_proc, KnownOrImputedDeltaCOVIDInd21Apr19to22Mar26==1 & Trt==1 & Bserostatus==0)]=max.tps+1
-dat_proc$Wstratum[with(dat_proc, SevereCOVIDInd21Apr19to22Mar26 ==1 & Trt==1 & Bserostatus==0)]=max.tps+2
-if (!is.null(dat_proc$Wstratum)) table(dat_proc$Wstratum) # variables may be named other than Wstratum
+dat_proc$Wstratum[with(dat_proc, SevereCOVIDIndD35_108to21Dec10 ==1 & Trt==1 & Bserostatus==0)]=max.tps+2
+
+table(dat_proc$Wstratum) 
+
 
 
 ################################################################################
-# define must_have_assays for ph2 definition
+# 4. Define ph1, ph2, and weights
+# Note that Wstratum may have NA if any variables to form strata has NA
 
-# will implement twophase indicators specifically
-must_have_assays <- NULL
+tp='35_108'
+
+# ph1
+dat_proc[["ph1.D"%.%tp]] = with(dat_proc, 
+                                Perprotocol==1 & 
+                                  get("AnyInfectionD1toD"%.%tp)==0 & # no evidence of any infection by D35_108
+                                  COVIDTimeD35to21Dec10 >= 108 & # COVID time or censor time is after D35_108
+                                  # either Delta COVID, severe COVID, or no evidence of infection till 22Mar26
+                                  (KnownOrImputedDeltaCOVIDInd21Apr19to22Mar26==1 | SevereCOVIDInd21Apr19to22Mar26==1 | AnyInfectionD1to22Mar26==0)
+)
 
 
 # TwophasesampInd: be in the subcohort or a case after time point 1  &  have the necessary markers
@@ -199,33 +203,21 @@ dat_proc$TwophasesampIndD35[dat_proc$Ptid %in% c(
   ] = F 
 
   
-###############################################################################
-# observation-level weights
-# Note that Wstratum may have NA if any variables to form strata has NA
-###############################################################################
+# ph2
+dat_proc[["ph2.D"%.%tp]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD35"]] & 
+  # remove cases outside D35_108to21Dec10
+  !(dat_proc$KnownOrImputedDeltaCOVIDInd21Apr19to22Mar26==1 & dat_proc$KnownOrImputedDeltaCOVIDIndD35_108to21Dec10==0)
 
-tp='35_108'
-dat_proc[["ph1.D"%.%tp]] = with(dat_proc, 
-  Perprotocol==1 & 
-  get("AnyInfectionD1toD"%.%tp)==0 & # no evidence of any infection by D35_108
-  COVIDTimeD35to21Dec10 >= 108 & # COVID time or censor time is after D35_108
-  # either Delta COVID, severe COVID, or no evidence of infection till 22Mar26
-  (KnownOrImputedDeltaCOVIDInd21Apr19to22Mar26==1 | SevereCOVIDInd21Apr19to22Mar26 | AnyInfectionD1to22Mar26==0)
-)
-dat_proc[["ph2.D"%.%tp]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD35"]]
-
+# weights
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp, Wstratum="Wstratum", wt="wt.D"%.%tp, verbose=F) 
   
 
 
-
-
 ###############################################################################
-# impute missing biomarkers in ph2 (assay imputation)
+# 5. impute missing biomarkers in ph2 (assay imputation)
 #     impute vaccine and placebo, baseline pos and neg, separately
 #     use all assays (not bindN)
 #     use baseline, each time point, but not Delta
-###############################################################################
 
 # loop through the time points
 # first impute (B, D29, D57) among TwophasesampIndD57==1
@@ -279,7 +271,7 @@ for (tp in rev(timepoints)) {
 
   
 ###############################################################################
-# transformation of the markers
+# 6. transformation of the markers
 
 # converting binding variables from AU to IU for binding assays
 # COVE only 
@@ -328,12 +320,12 @@ if(study_name %in% c("COVE", "MockCOVE")){
 
 
 ###############################################################################
-# add mdw scores
+# 7. add mdw scores
 
 
 
 ###############################################################################
-# add delta for dat_proc
+# 8. add fold change markers
 # assuming data has been censored at the lower limit
 # thus no need to do, say, lloq censoring
 # but there is a need to do uloq censoring before computing delta
@@ -343,7 +335,7 @@ if(study_name %in% c("COVE", "MockCOVE")){
 
 
 ###############################################################################
-# add discrete/trichotomized markers
+# 9. add discrete/trichotomized markers
 
 dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & get("ph2.D35_108")) 
 dat_proc = add.trichotomized.markers (dat_proc, c("Day35"%.%assays), ph2.col.name="tmp", wt.col.name="wt.D35_108")
@@ -352,7 +344,7 @@ dat_proc$tmp = NULL
 
 
 ###############################################################################
-# impute covariates if necessary
+# 10. impute covariates if necessary
 
 
 
@@ -368,7 +360,7 @@ dat_proc$tmp = NULL
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         prevent19_stage2 = "ae01d23dae5971fd017a0eca3facc7ca",
+         prevent19_stage2 = "0197ec25780673886bd7b985a4ffdba4",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
