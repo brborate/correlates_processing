@@ -212,21 +212,25 @@ dat_proc[["ph2.D"%.%tp]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampInd
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp, Wstratum="Wstratum", wt="wt.D"%.%tp, verbose=F) 
 
 
+
 # weights for D35 immunogenicity analyses that use subcohort only and are not enriched by cases outside subcohort
-dat_proc$ph1.immuno = with(dat_proc, AnyInfectionD1toD35_7==0 & Perprotocol==1)
-dat_proc$ph2.immuno = with(dat_proc, ph1.immuno==1 & SubcohortInd & TwophasesampIndD35)
-dat_proc = add.wt(dat_proc, ph1="ph1.immuno", ph2="ph2.immuno", Wstratum="tps.stratum", wt="wt.subcohort", verbose=T) 
+dat_proc$ph1.immuno.D35 = with(dat_proc, AnyInfectionD1toD35_7==0 & Perprotocol==1)
+dat_proc$ph2.immuno.D35 = with(dat_proc, ph1.immuno.D35==1 & SubcohortInd & TwophasesampIndD35)
+dat_proc = add.wt(dat_proc, ph1="ph1.immuno.D35", ph2="ph2.immuno.D35", Wstratum="tps.stratum", wt="wt.immuno.D35", verbose=T) 
+
 
 
 # weights for C1 immunogenicity analyses that use subcohort only and are not enriched by cases outside subcohort
 # strictly speaking, C1 population is different from the original population, but we have to use an approximation
-dat_proc$ph1.C1 = with(dat_proc, ph1.immuno)
+dat_proc$ph1.immuno.C1 = with(dat_proc, ph1.immuno.D35)
 dat_proc$TwophasesampIndC1 = with(dat_proc, TwophasesampIndD35 &
-                                   !is.na(C1bindSpike_D614) & 
-                                  (!is.na(C1pseudoneutid50_D614G) | !is.na(C1pseudoneutid50_Delta) )
+                                    # bAb is all or none at C1 as well
+                                    !is.na(C1bindSpike_D614) & 
+                                    # require both ID50s because no imputation is done, so as not to interfere with exposure proximal correlates analysis
+                                  (!is.na(C1pseudoneutid50_D614G) & !is.na(C1pseudoneutid50_Delta) )
 )
-dat_proc$ph2.C1 = with(dat_proc, ph1.C1==1 & SubcohortInd & TwophasesampIndC1)
-dat_proc = add.wt(dat_proc, ph1="ph1.C1", ph2="ph2.C1", Wstratum="tps.stratum", wt="wt.C1", verbose=T) 
+dat_proc$ph2.immuno.C1 = with(dat_proc, ph1.immuno.C1==1 & SubcohortInd & TwophasesampIndC1)
+dat_proc = add.wt(dat_proc, ph1="ph1.immuno.C1", ph2="ph2.immuno.C1", Wstratum="tps.stratum", wt="wt.immuno.C1", verbose=T) 
 
 
 
