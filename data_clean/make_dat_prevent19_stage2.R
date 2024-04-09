@@ -193,7 +193,7 @@ dat_proc$TwophasesampIndD35 = with(dat_proc,
                                     !is.na(Day35bindSpike_D614) & 
                                      # nAb will be used to impute each other
                                     (!is.na(Day35pseudoneutid50_D614G) | !is.na(Day35pseudoneutid50_Delta) )
-)
+                              )
 
 # remove three ptids from TwophasesampIndD35 because NVX programmer used the investigator’s 
 # assessment of severity (variable SEV) rather than the final severity assessment ASEV. 
@@ -210,12 +210,23 @@ dat_proc[["ph2.D"%.%tp]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampInd
 
 # weights for correlates
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp, Wstratum="Wstratum", wt="wt.D"%.%tp, verbose=F) 
-  
 
-# weights for immunogenicity analyses that use subcohort only and are not enriched by cases outside subcohort
+
+# weights for D35 immunogenicity analyses that use subcohort only and are not enriched by cases outside subcohort
 dat_proc$ph1.immuno = with(dat_proc, AnyInfectionD1toD35_7==0 & Perprotocol==1)
 dat_proc$ph2.immuno = with(dat_proc, ph1.immuno==1 & SubcohortInd & TwophasesampIndD35)
 dat_proc = add.wt(dat_proc, ph1="ph1.immuno", ph2="ph2.immuno", Wstratum="tps.stratum", wt="wt.subcohort", verbose=T) 
+
+
+# weights for C1 immunogenicity analyses that use subcohort only and are not enriched by cases outside subcohort
+# strictly speaking, C1 population is different from the original population, but we have to use an approximation
+dat_proc$ph1.C1 = with(dat_proc, ph1.immuno)
+dat_proc$TwophasesampIndC1 = with(dat_proc, TwophasesampIndD35 &
+                                   !is.na(C1bindSpike_D614) & 
+                                  (!is.na(C1pseudoneutid50_D614G) | !is.na(C1pseudoneutid50_Delta) )
+)
+dat_proc$ph2.C1 = with(dat_proc, ph1.C1==1 & SubcohortInd & TwophasesampIndC1)
+dat_proc = add.wt(dat_proc, ph1="ph1.C1", ph2="ph2.C1", Wstratum="tps.stratum", wt="wt.C1", verbose=T) 
 
 
 
@@ -336,8 +347,6 @@ if(study_name %in% c("COVE", "MockCOVE")){
 # thus no need to do, say, lloq censoring
 # but there is a need to do uloq censoring before computing delta
 
-
-# skipping b/c there is no baseline data
 
 
 ###############################################################################
