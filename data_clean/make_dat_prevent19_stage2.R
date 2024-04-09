@@ -162,7 +162,7 @@ if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
 dat_proc$Wstratum = dat_proc$tps.stratum
 max.tps=max(dat_proc$tps.stratum,na.rm=T)
 # cannot use KnownOrImputedDeltaCOVIDInd21Apr19to22Mar26 b/c cases are not defined using that
-dat_proc$Wstratum[with(dat_proc, KnownOrImputedDeltaCOVIDIndD35_108to21Dec10==1 & Trt==1 & Bserostatus==0)]=max.tps+2
+dat_proc$Wstratum[with(dat_proc, KnownOrImputedDeltaCOVIDIndD35_108to21Dec10==1 & Trt==1 & Bserostatus==0)]=max.tps+1
 # severe has to come second to overwrite delta
 dat_proc$Wstratum[with(dat_proc, SevereCOVIDIndD35_108to21Dec10 ==1 & Trt==1 & Bserostatus==0)]=max.tps+2
 
@@ -379,7 +379,7 @@ dat_proc$tmp = NULL
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         prevent19_stage2 = "fe5d9b98844aceadfcc915394b4996af",
+         prevent19_stage2 = "71321219fa1afe7dc948e86cf7dca492",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
       msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
