@@ -3,6 +3,7 @@
 #Sys.setenv(TRIAL = "nvx_uk302")
 #Sys.setenv(TRIAL = "covail")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
+#Sys.setenv(TRIAL = "janssen_pooled_partA")
 #Sys.setenv(TRIAL = "moderna_real")
 if (file.exists(paste0("data_clean/make_dat_", Sys.getenv("TRIAL"), ".R"))) stop("A TRIAL-specific R script exist.") 
 source(here::here("_common.R"))

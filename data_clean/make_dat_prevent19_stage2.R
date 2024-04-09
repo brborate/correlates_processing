@@ -208,9 +208,15 @@ dat_proc[["ph2.D"%.%tp]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampInd
   # remove cases outside D35_108to21Dec10
   !(dat_proc$KnownOrImputedDeltaCOVIDInd21Apr19to22Mar26==1 & dat_proc$KnownOrImputedDeltaCOVIDIndD35_108to21Dec10==0)
 
-# weights
+# weights for correlates
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp, Wstratum="Wstratum", wt="wt.D"%.%tp, verbose=F) 
   
+
+# weights for immunogenicity analyses that use subcohort only and are not enriched by cases outside subcohort
+dat_proc$ph1.immuno = with(dat_proc, AnyInfectionD1toD35_7==0 & Perprotocol==1)
+dat_proc$ph2.immuno = with(dat_proc, ph1.immuno==1 & SubcohortInd & TwophasesampIndD35)
+dat_proc = add.wt(dat_proc, ph1="ph1.immuno", ph2="ph2.immuno", Wstratum="tps.stratum", wt="wt.subcohort", verbose=T) 
+
 
 
 ###############################################################################
@@ -360,9 +366,10 @@ dat_proc$tmp = NULL
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         prevent19_stage2 = "0197ec25780673886bd7b985a4ffdba4",
+         prevent19_stage2 = "fe5d9b98844aceadfcc915394b4996af",
          NA)    
-    if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
+    if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
+      msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
 
 data_name = paste0(TRIAL, "_data_processed_", format(Sys.Date(), "%Y%m%d"), ".csv")
