@@ -142,37 +142,48 @@ names(Bstratum.labels) <- Bstratum.labels
 
 # demo.stratum: correlates sampling strata
 # may have NA b/c URMforsubcohortsampling may be NA
-#    US, <65, non-Minority
+# make the order same as Table 3 in the SAP
 #    US, >65, non-Minority
-#    US, <65, Minority
+#    US, <65, non-Minority
 #    US, >65, Minority
-#    non-US, <65
+#    US, <65, Minority
 #    non-US, >65
-dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior), base = 2)) + 1
-dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(!Senior, 5, 6))) # 2 is US
+#    non-US, <65
+dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, 1-Senior), base = 2)) + 1
+dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(Senior, 5, 6))) # 2 is US
 
 
 # tps stratum, used in tps regression and to define Wstratum
-dat_proc <- dat_proc %>% mutate(tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * max(demo.stratum,na.rm=T))
-if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
+# since we only care about vacc and seroneg, we set it to demo.stratum
+dat_proc <- dat_proc %>% mutate(tps.stratum = demo.stratum)
+mytable(dat_proc$tps.stratum)
 
   
-# Wstratum, 1 ~ max(tps.stratum), max(tps.stratum)+1, ..., 
-# Used to compute sampling weights. 
-# Differs from tps stratum in that case is a separate stratum within each of the four groups defined by Trt and Bserostatus
-# A case will have a Wstratum even if its tps.stratum is NA
+# Wstratum is used to compute sampling weights. 
+# Note that a case should still have a Wstratum even if its tps.stratum is NA
 
-max.tps=max(dat_proc$tps.stratum,na.rm=T)
 dat_proc$Wstratum = dat_proc$tps.stratum
 
 # Delta/ancestral/minor variants are case-sampling strata
-# severe has to come last
 
-stop("be careful, may have to merge strata")
-dat_proc$Wstratum[with(dat_proc, KnownOrImputedDeltaCOVIDIndD57_7toD360==1 & Trt==1 & Bserostatus==0)]=   max.tps+dat_proc$tps.stratum
-dat_proc$Wstratum[with(dat_proc, AncestralCOVIDIndD57_7toD360==1 & Trt==1 & Bserostatus==0)]          = 2*max.tps+dat_proc$tps.stratum
-dat_proc$Wstratum[with(dat_proc, MinorVariantsCOVIDIndD57_7toD360==1 & Trt==1 & Bserostatus==0)]      = 3*max.tps+dat_proc$tps.stratum
-dat_proc$Wstratum[with(dat_proc, SevereCOVIDIndD57_7toD360==1 & Trt==1 & Bserostatus==0)]             = 4*max.tps+dat_proc$tps.stratum
+cond=!is.na(dat_proc$KnownOrImputedDeltaCOVIDIndD57_7toD360) & dat_proc$KnownOrImputedDeltaCOVIDIndD57_7toD360==1
+dat_proc$Wstratum[cond] = 100+dat_proc$tps.stratum[cond]
+
+cond=!is.na(dat_proc$MinorVariantsCOVIDIndD57_7toD360) & dat_proc$MinorVariantsCOVIDIndD57_7toD360==1
+dat_proc$Wstratum[cond] = 300+dat_proc$tps.stratum[cond]
+
+cond=!is.na(dat_proc$AncestralCOVIDIndD57_7toD360) & dat_proc$AncestralCOVIDIndD57_7toD360==1
+dat_proc$Wstratum[cond] = 200+dat_proc$tps.stratum[cond]
+
+# Severe cases form one stratum and are not stratified by demographics groups because we sample all severe cases
+# severe has to come last, 
+dat_proc$Wstratum[!is.na(dat_proc$SevereCOVIDIndD57_7toD360) & dat_proc$SevereCOVIDIndD57_7toD360==1] = 401
+
+mytable(dat_proc$Wstratum)
+
+# merge 105 (KnownOrImputedDelta, Non-US Age ≥ 65) with 101 (KnownOrImputedDelta, US Age ≥ 65 URM)
+# this ptid has unknown lineage, which we assume to be Delta, which is why the ptid was not sampled at design time
+dat_proc$Wstratum[dat_proc$Wstratum==105]=101
 
 
 ###############################################################################
@@ -183,8 +194,8 @@ tp='57_120'
 
 dat_proc[["ph1.D"%.%tp]] = with(dat_proc, 
   Perprotocol==1 & 
-  get("AnyInfectionD1toD"%.%tp)==0 & # no evidence of any infection by D57_120
-  COVIDTimeD57to21Dec10 >= 120 & # COVID time or censor time is after D57_120
+    get("AnyInfectionD1toD"%.%tp)==0 & # no evidence of any infection by D57_120
+    COVIDTimeD57to21Dec10 >= 120 & # COVID time or censor time is after D57_120
   # either Delta COVID, severe COVID, or no evidence of infection till 22Mar26
   (KnownOrImputedDeltaCOVIDIndD57_7toD360==1 | SevereCOVIDIndD57_7toD360 | AnyInfectionD1toD57_7==0)
 )
@@ -193,17 +204,15 @@ dat_proc[["ph1.D"%.%tp]] = with(dat_proc,
 
 # nAb, we only use Delta to impute ancestral
 dat_proc[["TwophasesampIndD57nAb"]] = complete.cases(dat_proc[,c("Day57pseudoneutid50_Delta")])      
-
 dat_proc[["ph2.D"%.%tp%.%"nAb"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD57nAb"]]
-
-dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp%.%"nAb", Wstratum="Wstratum", wt="wt.D"%.%tp%.%"nAb", verbose=F) 
+dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp%.%"nAb", Wstratum="Wstratum", wt="wt.D"%.%tp%.%"nAb", verbose=T) 
 
 # bAb
 dat_proc[["TwophasesampIndD57bAb"]] = complete.cases(dat_proc[,c("Day57bindSpike_Alpha")])      
 dat_proc[["ph2.D"%.%tp%.%"bAb"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD57bAb"]]
-dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp%.%"bAb", Wstratum="Wstratum", wt="wt.D"%.%tp%.%"bAb", verbose=F) 
+dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp%.%"bAb", Wstratum="Wstratum", wt="wt.D"%.%tp%.%"bAb", verbose=T) 
 
-
+mytable(dat_proc$TwophasesampIndD57nAb, dat_proc$TwophasesampIndD57bAb)
   
 
 ###############################################################################
@@ -288,6 +297,8 @@ dat_proc$tmp = NULL
 # 10. impute covariates if necessary
 
 # some ptids have missing risk score
+summary (subset(dat_proc, Trt==1 & Bserostatus==0, risk_score))
+
 
 n.imp <- 1
 dat.tmp.impute <- dat_proc
@@ -337,7 +348,7 @@ assertthat::assert_that(
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         azd1222_stage2 = "4d3e0b2abdd5f8e1aee72066965d9748",
+         azd1222_stage2 = "739d207c1ac5ee2bea34b654a62daf2b",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
       msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    

@@ -1,14 +1,7 @@
-#Sys.setenv(TRIAL = "prevent19")
-#Sys.setenv(TRIAL = "nvx_uk302")
-#Sys.setenv(TRIAL = "covail")
-#Sys.setenv(TRIAL = "janssen_partA_VL")
-#Sys.setenv(TRIAL = "janssen_pooled_partA")
-#Sys.setenv(TRIAL = "moderna_real")
-if (file.exists(paste0("data_clean/make_dat_", Sys.getenv("TRIAL"), ".R"))) stop("A TRIAL-specific R script exist.") 
+Sys.setenv(TRIAL = "vat08_combined")
 source(here::here("_common.R"))
-
-
 # no need to run renv::activate(here::here()) b/c .Rprofile exists
+
 {
 library(tidyverse)
 library(Hmisc) # wtd.quantile, cut2
@@ -24,124 +17,66 @@ begin=Sys.time()
 ########################################################################################################
 # 1. read mapped data with risk score added
 
-if (TRIAL=="janssen_partA_VL") {
-  # read hot deck data
-  tmp = sub(".csv","_hotdeck.csv",mapped_data)
-  if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
-  dat_proc = preprocess(dat_raw, study_name)   
-  colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
-  
-  # borrow risk score from janssen_pooled_partA
-  load(file = 'riskscore_baseline/output/janssen_pooled_partA/inputFile_with_riskscore.RData')
-  stopifnot(all(dat_proc$Ptid==inputFile_with_riskscore$Ptid))
-  dat_proc$risk_score = inputFile_with_riskscore$risk_score
-  dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
-  
-  # create a new event indicator variable that censors cases without VL, which also include all non-molec confirmed cases
-  # define here b/c it is needed to define weights
-  dat_proc$EventIndPrimaryHasVLD29 = dat_proc$EventIndPrimaryIncludeNotMolecConfirmedD29
-  # if EventIndPrimaryHasVLD29 is NA, this will remain NA
-  dat_proc$EventIndPrimaryHasVLD29[is.na(dat_proc$seq1.log10vl) & !is.na(dat_proc$EventIndPrimaryHasVLD29)] = 0 
-  dat_proc$EventIndPrimaryD29 = dat_proc$EventIndPrimaryHasVLD29
-  # EventTimePrimaryD29 is already set to EventIndPrimaryIncludeNotMolecConfirmedD29 in preprocess()
-  
-  country.codes=c("USA", "ARG", "BRA", "CHL", "COL", "MEX", "PER", "ZAF")
-  dat_proc$cc=country.codes[dat_proc$Country+1]
-  
-  # update SubcohortInd to include the Colombians sampled for the variants study 
-  dat_proc$COL_variants_study = with(dat_proc, cc=="COL" & EventIndPrimaryIncludeNotMolecConfirmedD1==0 & SubcohortInd!=1 & !is.na(Day29bindSpike_D614))
-  mytable(dat_proc$COL_variants_study)
-  dat_proc$SubcohortInd = ifelse(dat_proc$SubcohortInd | dat_proc$COL_variants_study, 1, 0)
-  
-  # # this is no longer done per discussion with Monogram
-  # #remove ARV users
-  # dat_proc$SubcohortInd = ifelse(dat_proc$SubcohortInd & dat_proc$ARVuseDay29==0, 1, 0)
-  
-  # create a mdw score
-  # the reason to do it in the beginning is that this score replaces the five delta markers completely
-  delta_markers = c("bindSpike_AY.2", "bindSpike_B.1.617.2_AY.4", "bindSpike_AY.12", "bindSpike_AY.1", "bindSpike_B.1.617.2" )
-  mdw.wt=tryCatch({
-    tree.weight(cor(dat_proc["Day29"%.%delta_markers], use='complete.obs'))
-  }, error = function(err) {
-    print(err$message)
-    rep(1/length(delta_markers), length(delta_markers))
-  })
-  write.csv(mdw.wt, file = here("data_clean", "csv", TRIAL%.%"_delta_score_mdw_weights.csv"))
-  
-  for (t in c("Day29", "Day71", "Mon6")) {
-    dat_proc[, t%.%'bindSpike_DeltaMDW'] = c(as.matrix(dat_proc[, t%.%delta_markers]) %*% mdw.wt)
-    # remove delta_markers
-    for (a in delta_markers) dat_proc[, t%.%a] = NULL
-  }
-  
- } else if (TRIAL == "covail") {
-  # # load risk score from running risk analysis
-  # load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
-  # dat_proc <- inputFile_with_riskscore    
-  
-  # load risk score from a file
-  dat.risk = read.csv("/trials/covpn/COVAILcorrelates/analysis/correlates/adata/risk_score.csv")
-  # read mapped data
-  dat_raw = read.csv(mapped_data)
-  dat_proc = preprocess(dat_raw, study_name)   
-  names(dat_proc)[[1]]="Ptid"
-  dat_proc$risk_score = dat.risk$risk_score[match(dat_proc$Pti, dat.risk$Ptid)]
-  dat_proc$standardized_risk_score = dat.risk$standardized_risk_score[match(dat_proc$Ptid, dat.risk$Ptid)]
-  
-  # bring in imputed variant column
-  dat.lineage = read.csv('/trials/covpn/COVAILcorrelates/analysis/correlates/adata/lineages/covail_lineages_export_v1.csv')
-  dat_proc$COVIDlineage = dat.lineage$inf1.lineage[match(dat_proc$Ptid, dat.lineage$ptid)]
-  dat_proc$COVIDlineageObserved = !dat.lineage$inf1.imputed[match(dat_proc$Ptid, dat.lineage$ptid)]
-  # check NA
-  stopifnot(!any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D15==1 & dat_proc$COVIDIndD22toD181==1])))
-  stopifnot(!any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D29==1 & dat_proc$COVIDIndD36toD181==1])))
-  # this is not true: !any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D15==1 & dat_proc$AsympInfectIndD15to181==1]))
-  
-  # bring in FOI
-  dat.foi = read.csv('/trials/covpn/COVAILcorrelates/analysis/correlates/adata/covail_foi_v2.csv')
-  dat_proc$FOIoriginal = dat.foi$foi[match(dat_proc$Ptid, dat.foi$ptid)]
-  dat_proc$FOIstandardized = scale(dat_proc$FOIoriginal)
-  # check NA
-  stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D15==1])))
-  stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D29==1])))
-  
+# read hot deck data
+tmp = sub(".csv","_hotdeck.csv",mapped_data)
+if (file.exists(tmp)) dat_raw=read.csv(tmp) else stop("hotdeck file not exists, run hotdeck R script first")
+
+dat_proc = preprocess(dat_raw, study_name)   
+colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
+
+# scale FOI
+dat_proc$FOI = scale(log10(dat_proc$FOI+1))[,1]
+
+# add country code
+country.codes=c("Colombia", "Ghana", "Honduras", "India", "Japan", "Kenya", "Nepal", "United States", "Mexico", "Uganda", "Ukraine")
+continents=c("Colombia"=1, "Ghana"=2, "Honduras"=1, "India"=3, "Japan"=3, "Kenya"=2, "Nepal"=3, "United States"=5, "Mexico"=1, "Uganda"=2, "Ukraine"=4)
+dat_proc$cc = country.codes[dat_proc$Country]
+dat_proc$continent = continents[dat_proc$cc]
+table(dat_proc$continent, dat_proc$cc)
+region.1 = c( # stage 1
+ "United States" = 1, "Japan" = 1, 
+ "Colombia" = 2, "Honduras" = 2, 
+ "Ghana" = 3, "Kenya" = 3, 
+ "Nepal" = 4, "India" = 4)
+region.2 = c( # stage 2
+ "Colombia" = 1, "Mexico" = 1, 
+ "Ghana" = 2, "Kenya" = 2, "Uganda" = 2,
+ "Nepal" = 3, "India" = 3)
+# first set it to stage 1 region, then change the region for stage 2 countries
+dat_proc$region = region.1[dat_proc$cc] 
+dat_proc$region = ifelse(dat_proc$Trialstage==2, region.2[dat_proc$cc], dat_proc$region)
 
 
-} else if (TRIAL == "prevent19") {
-  load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
-  dat_proc <- inputFile_with_riskscore    
-  
-  # set outliers values to NA for bindNVXIgG and ACE2
-  outliers=c("2019nCoV301-US039-0381", "2019nCoV301-US060-0015", "2019nCoV301-US104-0092", "2019nCoV301-US106-0027", "2019nCoV301-US135-0229", "2019nCoV301-US139-0041", "2019nCoV301-US147-0266", "2019nCoV301-US147-0344", "2019nCoV301-US160-0085", "2019nCoV301-US160-0192", "2019nCoV301-US162-0247", "2019nCoV301-US164-0113", "2019nCoV301-US187-0007", "2019nCoV301-US191-0334", "2019nCoV301-US191-0366", "2019nCoV301-US194-0170", "2019nCoV301-US195-0053", "2019nCoV301-US207-0292", "2019nCoV301-US215-0081", "2019nCoV301-US215-0109", "2019nCoV301-US215-0218", "2019nCoV301-US217-0074", "2019nCoV301-US217-0160", "2019nCoV301-US219-0056", "2019nCoV301-US225-0013", "2019nCoV301-US228-0183", "2019nCoV301-US232-0305", "2019nCoV301-US235-0031", "2019nCoV301-US242-0004", "2019nCoV301-US245-0116")
+# add risk score
+load(file = paste0('riskscore_baseline/output/vat08_combined/inputFile_with_riskscore.RData'))
+stopifnot(all(inputFile_with_riskscore$Ptid==dat_proc$Ptid))
+dat_proc$risk_score = inputFile_with_riskscore$risk_score
+dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_score
 
-  dat_proc$Day35ACE2[dat_proc$Ptid %in% outliers] = NA  
-  dat_proc$Day35bindNVXIgG[dat_proc$Ptid %in% outliers] = NA  
-  
-  
-} else if (TRIAL == "nvx_uk302") {
-  dat_raw=read.csv(mapped_data)
-  dat_proc = preprocess(dat_raw, study_name)   
-  colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
-  
-  # add an indicator for London
-  dat_proc$London = dat_proc$Region=="England South East"
-  
-  # filter out ptids with AnyinfectionD1==1 & EventIndPrimaryD1==0
-  dat_proc = subset(dat_proc, !(AnyinfectionD1==1 & EventIndPrimaryD1==0))
-  
-} else {
-  if (make_riskscore) {
-    # load inputFile_with_riskscore.Rdata, a product of make riskscore_analysis, which calls preprocess and makes risk scores
-    load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
-    dat_proc <- inputFile_with_riskscore    
-  } else {
-    dat_raw=read.csv(mapped_data)
-    dat_proc = preprocess(dat_raw, study_name)   
-  }
-  
+# ptids with missing Bserostatus already filtered out in preprocess
+
+# define ten copies of imputed Omicron indicator and event time variables based on seq1.variant.hotdeck1 etc
+for (t in c(1,22,43)) {
+ for (i in 1:10) {
+   dat_proc[[paste0("EventIndOmicronD",t,"M12hotdeck",i)]]  = 
+     ifelse(!is.na(dat_proc[["seq1.variant.hotdeck"%.%i]]) & dat_proc[["seq1.variant.hotdeck"%.%i]]=="Omicron" & !is.na(dat_proc[["EventIndFirstInfectionD"%.%t]]),
+            1,
+            0)
+   
+   dat_proc[[paste0("EventTimeOmicronD",t,"M12hotdeck",i)]] = ifelse(dat_proc[[paste0("EventIndOmicronD",t,"M12hotdeck",i)]] ==1, 
+                                                                  pmin(dat_proc[["EventTimeKnownLineageOmicronD"%.%t]],    dat_proc[["EventTimeMissingLineageD"%.%t]]),
+                                                                  pmax(dat_proc[["EventTimeKnownLineageNonOmicronD"%.%t]], dat_proc[["EventTimeMissingLineageD"%.%t]]))
+ }
 }
 
-
+# create event time and indicator variables censored after M6 (instead of M12) post dose 2
+for (t in c(1,22,43)) {
+ for (i in 1:10) {
+   dat_proc[[paste0("EventIndOmicronD",t,"M6hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 0,   dat_proc[[paste0("EventIndOmicronD",t,"M12hotdeck",i)]])
+   dat_proc[[paste0("EventTimeOmicronD",t,"M6hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 180-21, dat_proc[[paste0("EventTimeOmicronD",t,"M12hotdeck",i)]])
+ }
+}
+   
 
 ########################################################################################################
 # 2. define Senior and race/ethnicity
@@ -245,239 +180,77 @@ if (TRIAL=="janssen_partA_VL") {
 # The code for tps.stratum and Wstratum are not trial specific since they are constructed on top of Bstratum
 
 # Bstratum: randomization strata
-# e.g., Moderna: 1 ~ 3, defines the 3 baseline strata within trt/serostatus
-if (study_name=="COVE" | study_name=="MockCOVE" ) {
-    dat_proc$Bstratum = with(dat_proc, ifelse(Senior, 1, ifelse(HighRiskInd == 1, 2, 3)))
-    
-} else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
-    dat_proc$Bstratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
-    
-} else if (study_name %in% c("PREVENT19", "AZD1222", "NVX_UK302")) {
-  dat_proc$Bstratum =  with(dat_proc, Senior + 1)
-  
-} else if (TRIAL %in% c("vat08_combined", "profiscov", "profiscov_lvmn", "covail")) {
-  # there are no demographics stratum for subcohort sampling
-  dat_proc$Bstratum =  1 
-  
-} else stop("unknown study_name 4")
-
+dat_proc$Bstratum =  with(dat_proc, Senior + 1)
 names(Bstratum.labels) <- Bstratum.labels
 
 
-# demo.stratum: correlates sampling strata
-# Moderna: 1 ~ 6 defines the 6 baseline strata within trt/serostatus
-# may have NA b/c URMforsubcohortsampling may be NA
-if (study_name=="COVE" | study_name=="MockCOVE" ) {
-    dat_proc$demo.stratum = with(dat_proc, ifelse (URMforsubcohortsampling==1, ifelse(Senior, 1, ifelse(HighRiskInd == 1, 2, 3)), 3+ifelse(Senior, 1, ifelse(HighRiskInd == 1, 2, 3))))
-    
-    
-} else if (study_name=="ENSEMBLE" | study_name=="MockENSEMBLE" ) {
-    # first step, stratify by age and high risk
-    dat_proc$demo.stratum =  with(dat_proc, strtoi(paste0(Senior, HighRiskInd), base = 2)) + 1
-    # second step, stratify by region
-    dat_proc$demo.stratum=with(dat_proc, ifelse(Region==0 & URMforsubcohortsampling==0, demo.stratum + 4, demo.stratum)) # US, non-URM
-    dat_proc$demo.stratum[dat_proc$Region==1] = dat_proc$demo.stratum[dat_proc$Region==1] + 8 # Latin America
-    dat_proc$demo.stratum[dat_proc$Region==2] = dat_proc$demo.stratum[dat_proc$Region==2] + 12 # Southern Africa
-    # the above sequence ends up setting US URM=NA to NA
-    
-    # for the variants study, in LatAm, COL becomes part of the demographics sampling strata
-    # we add 8 for COL b/c +4 is for RSA
-    if (TRIAL=="janssen_partA_VL") {
-      dat_proc$demo.stratum[dat_proc$Region==1] = with(subset(dat_proc,Region==1), 
-        ifelse(cc=="COL", demo.stratum+8, demo.stratum)
-      )
-    }
-    
-    assertthat::assert_that(
-        all(!with(dat_proc, xor(is.na(demo.stratum),  Region==0 & is.na(URMforsubcohortsampling) ))),
-        msg = "demo.stratum is na if and only if URM is NA and north america")
-    
-    
-} else if (study_name=="PREVENT19" ) {
-  dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior, HighRiskInd), base = 2)) + 1
-  dat_proc$demo.stratum = with(dat_proc, ifelse(Country==0, demo.stratum, ifelse(!Senior, 9, 10))) # 0 is US
-  
-  
-} else if (study_name=="NVX_UK302" ) {
-  dat_proc$demo.stratum = as.integer(factor(dat_proc$Region)) * 2 - dat_proc$Senior
-
-        
-} else if (study_name=="AZD1222" ) {
-#    US, <65, non-Minority
-#    US, >65, non-Minority
-#    US, <65, Minority
-#    US, >65, Minority
-#    non-US, <65
-#    non-US, >65
-    dat_proc$demo.stratum = with(dat_proc, strtoi(paste0(URMforsubcohortsampling, Senior), base = 2)) + 1
-    dat_proc$demo.stratum = with(dat_proc, ifelse(Country==2, demo.stratum, ifelse(!Senior, 5, 6))) # 2 is US
-    
-        
-} else if (TRIAL=="vat08_combined" ) {
-    nCountries = 10 # 10 is easier to work with than length(unique(dat_proc$Country))
-    
-    # for nAb
-    # use continent for naive and country for nnaive
-    dat_proc$demo.stratum = ifelse(dat_proc$Bserostatus==0, dat_proc$continent, dat_proc$Country)
-    unique(subset(dat_proc, cc=='Japan', c(demo.stratum, Bserostatus)))
-    # move JPN to be in the US group for Naive
-    dat_proc$demo.stratum[dat_proc$Bserostatus==0 & dat_proc$cc=='Japan']=5
-    unique(subset(dat_proc, cc=='Japan', c(demo.stratum, Bserostatus)))
-    
-    # for bAb
-    # use continent for all
-    dat_proc$demo.stratum2 = dat_proc$continent
-    # move JPN to be in the US group 
-    dat_proc$demo.stratum2[dat_proc$cc=='Japan']=5
-
-    
-} else if (study_name %in% c("PROFISCOV", "COVAIL") ) {
-    dat_proc$demo.stratum = 1 # # there are no demographics stratum for subcohort sampling
-
-        
-} else stop("unknown study_name 5")  
-# names(demo.stratum.labels) <- demo.stratum.labels
-
-with(dat_proc, table(demo.stratum))
-
+dat_proc$demo.stratum = dat_proc$region
 
 
 # tps stratum, used in tps regression and to define Wstratum
-if (TRIAL=="vat08_combined" ) {
-  # for nAb markers. include Senior in the list of stratification variables
-  dat_proc <- dat_proc %>% mutate(tps.stratum.nAb = demo.stratum + 
-                            strtoi(paste0(Trialstage-1, Bserostatus, Trt, Senior), base = 2) * nCountries)
-  
-  # not include Senior in the list of stratification variables, used for bAb markers
-  dat_proc <- dat_proc %>% mutate(tps.stratum.bAb = demo.stratum2 + 
-                                strtoi(paste0(Trialstage-1, Bserostatus, Trt, Senior), base = 2) * nCountries)
-  
-  # # original, Oct 30 version
-  # dat_proc <- dat_proc %>% mutate(tps.stratum.original = strtoi(paste0(Trt, Bserostatus, Trialstage-1, Senior), base = 2))
-  
 
-} else if (study_name=="COVAIL" ) {
-  dat_proc <- dat_proc %>% mutate(tps.stratum = arm)
-  
-} else {
-  dat_proc <- dat_proc %>% mutate(tps.stratum = demo.stratum + strtoi(paste0(Trt, Bserostatus), base = 2) * max(demo.stratum,na.rm=T))
-}
-
-if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
-
-
-
-# Wstratum, 1 ~ max(tps.stratum), max(tps.stratum)+1, ..., max(tps.stratum)+4. 
+# Wstratum
 # Used to compute sampling weights. 
-# Differs from tps stratum in that case is a separate stratum within each of the four groups defined by Trt and Bserostatus
+# Differs from tps stratum in that cases are separated out
 # A case will have a Wstratum even if its tps.stratum is NA
-# The case is defined using EventIndPrimaryD29
 
-if (TRIAL=="vat08_combined") {
-  max.tps=max(dat_proc$tps.stratum.nAb,na.rm=T) # 160
-  myprint(max.tps)
 
-  # nAb
-  dat_proc$Wstratum.nAb = dat_proc$tps.stratum.nAb
-  dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0 & Trialstage==1)]=max.tps+1
-  dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1 & Trialstage==1)]=max.tps+2
-  dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==1)]=max.tps+3
-  dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==1)]=max.tps+4
-  dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0 & Trialstage==2)]=max.tps+5
-  dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1 & Trialstage==2)]=max.tps+6
-  dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==2)]=max.tps+7
-  dat_proc$Wstratum.nAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==2)]=max.tps+8
-  
-  
-  # bAb
-  dat_proc$Wstratum.bAb = dat_proc$tps.stratum.bAb
-  dat_proc$Wstratum.bAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0 & Trialstage==1)]=max.tps+1
-  dat_proc$Wstratum.bAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1 & Trialstage==1)]=max.tps+2
-  dat_proc$Wstratum.bAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==1)]=max.tps+3
-  dat_proc$Wstratum.bAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==1)]=max.tps+4
-  dat_proc$Wstratum.bAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0 & Trialstage==2)]=max.tps+5
-  dat_proc$Wstratum.bAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1 & Trialstage==2)]=max.tps+6
-  dat_proc$Wstratum.bAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==2)]=max.tps+7
-  dat_proc$Wstratum.bAb[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==2)]=max.tps+8
-  
-  # original
-  # dat_proc$Wstratum.original = dat_proc$tps.stratum.original
-  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0 & Trialstage==1)]=max.tps+1
-  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1 & Trialstage==1)]=max.tps+2
-  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==1)]=max.tps+3
-  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==1)]=max.tps+4
-  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==0 & Trialstage==2)]=max.tps+5
-  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Bserostatus==1 & Trialstage==2)]=max.tps+6
-  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==0 & Trialstage==2)]=max.tps+7
-  # dat_proc$Wstratum.original[with(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Bserostatus==1 & Trialstage==2)]=max.tps+8
-  
-} else if (study_name=="COVAIL" ) {
-  dat_proc$Wstratum = dat_proc$tps.stratum
-  
-} else {
-  max.tps=max(dat_proc$tps.stratum,na.rm=T)
-  dat_proc$Wstratum = dat_proc$tps.stratum
-  tps.cnt=max.tps+1
-  if(TRIAL %in% c("janssen_pooled_partA", "janssen_na_partA", "janssen_la_partA", "janssen_sa_partA",
-                  "janssen_partA_VL")) {
-    # cases sampling weights are also conditional on region and age group
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0 & Region==0 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0 & Region==0 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0 & Region==1 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0 & Region==1 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0 & Region==2 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0 & Region==2 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
-    
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1 & Region==0 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1 & Region==0 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1 & Region==1 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1 & Region==1 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1 & Region==2 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1 & Region==2 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
-    
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0 & Region==0 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0 & Region==0 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0 & Region==1 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0 & Region==1 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0 & Region==2 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0 & Region==2 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
-    
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1 & Region==0 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1 & Region==0 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1 & Region==1 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1 & Region==1 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1 & Region==2 & Senior==0)]=tps.cnt; tps.cnt=tps.cnt+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1 & Region==2 & Senior==1)]=tps.cnt; tps.cnt=tps.cnt+1
-    
-  } else if (TRIAL == "prevent19") {
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==0)]=max.tps+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==0 & Bserostatus==1)]=max.tps+2
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==0)]=max.tps+3
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD21==1 & Trt==1 & Bserostatus==1)]=max.tps+4
-    
-  } else if (study_name %in% c("COVE", "MockCOVE", "ENSEMBLE", "MockENSEMBLE", "AZD1222")) {
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==0)]=max.tps+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==0 & Bserostatus==1)]=max.tps+2
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==0)]=max.tps+3
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD29==1 & Trt==1 & Bserostatus==1)]=max.tps+4
-    
-  } else if (study_name == "NVX_UK302") {
-    # data has only Bserostatus 0
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD35==1 & Trt==0 & Bserostatus==0)]=max.tps+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD35==1 & Trt==1 & Bserostatus==0)]=max.tps+2
+dat_proc$tps.stratum = dat_proc$region
+# 1-4: Non-senior; 5-8: Senior
+# for stage 2, strata 4, 8 etc are empty because there are only three regions
+cond=dat_proc$Senior==1
+dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 4
 
-  } else if (study_name == "PROFISCOV") {
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD43==1 & Trt==0 & Bserostatus==0)]=max.tps+1
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD43==1 & Trt==0 & Bserostatus==1)]=max.tps+2
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD43==1 & Trt==1 & Bserostatus==0)]=max.tps+3
-    dat_proc$Wstratum[with(dat_proc, EventIndPrimaryD43==1 & Trt==1 & Bserostatus==1)]=max.tps+4
-    
-  } else stop("unknown study_name 6")  
-  
-}  
+# make cases 10 in Wstratum
+dat_proc$Wstratum =  dat_proc$tps.stratum
+cond=dat_proc$EventIndPrimaryD22==1
+dat_proc$Wstratum[cond] = 10
 
-if (!is.null(dat_proc$Wstratum)) table(dat_proc$Wstratum) # variables may be named other than Wstratum
+# do the following for both tps.stratum and Wstratum
 
+# 1-10: vaccine; 11-20: placebo
+cond = dat_proc$Trt==0
+dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 10
+dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 10
+# 1-20: stage 1; 51-70: stage 2
+cond = dat_proc$Trialstage==2
+dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 50
+dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 50
+
+# Bserostatus==0: <100
+
+# Bserostatus==1 & RAPDIAG==0: 101-170
+cond = dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="NEGATIVE"
+dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 100
+dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 100
+# Bserostatus==1 & RAPDIAG==1: 201-270
+cond = dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="POSITIVE"
+dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 200
+dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 200
+
+mytable(dat_proc$tps.stratum)
+mytable(dat_proc$Wstratum)
+
+
+with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==1), table.prop(!is.na(Day43bindSpike), Bserostatus))
+with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==1), table.prop(!is.na(Day43bindSpike), Bserostatus))
+
+with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==2), table.prop(!is.na(Day43bindSpike), Bserostatus))
+with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==2), table.prop(!is.na(Day43bindSpike), Bserostatus))
+
+
+with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==1), table.prop(!is.na(Day43bindSpike), RAPDIAG))
+with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==1), table.prop(!is.na(Day43bindSpike), RAPDIAG))
+
+with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==2), table.prop(!is.na(Day43bindSpike), RAPDIAG))
+with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==2), table.prop(!is.na(Day43bindSpike), RAPDIAG))
+
+
+table(dat_proc$tps.stratum) # variables may be named other than Wstratum
+table(dat_proc$Wstratum) # variables may be named other than Wstratum
+
+
+# all strata for cases ends with 01
 
 ################################################################################
 # 4. observation-level weights
