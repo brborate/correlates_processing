@@ -230,7 +230,7 @@ dat_proc$TwophasesampIndC1 = with(dat_proc, TwophasesampIndD35 &
                                   (!is.na(C1pseudoneutid50_D614G) & !is.na(C1pseudoneutid50_Delta) )
 )
 dat_proc$ph2.immuno.C1 = with(dat_proc, ph1.immuno.C1==1 & SubcohortInd & TwophasesampIndC1)
-dat_proc = add.wt(dat_proc, ph1="ph1.immuno.C1", ph2="ph2.immuno.C1", Wstratum="tps.stratum", wt="wt.immuno.C1", verbose=T) 
+dat_proc = add.wt(dat_proc, ph1="ph1.immuno.C1", ph2="ph2.immuno.C1", Wstratum="tps.stratum", wt="wt.immuno.C1", verbose=T)
 
 
 
@@ -293,51 +293,8 @@ for (tp in rev(timepoints)) {
   
 ###############################################################################
 # 6. transformation of the markers
+# e.g. converting binding variables from AU to IU for binding assays
 
-# converting binding variables from AU to IU for binding assays
-# COVE only 
-# moderna_real immune.csv file is not on international scale and other mapped data files are
-
-# some trials have N some don't
-if (is.null(config$assay_metadata)) {
-  includeN = switch(study_name, COVE=1, MockCOVE=1, ENSEMBLE=1, MockENSEMBLE=1, PREVENT19=0, AZD1222=0, VAT08=0, PROFISCOV=1, COVAIL=1, stop("unknown study_name 9"))
-  assays.includeN=c(assays, if(includeN==1) "bindN")
-  
-} else if (TRIAL=="janssen_partA_VL") {
-    assays.includeN = c("bindSpike", "bindRBD", "pseudoneutid50", "bindN")
-    
-} else {
-  assays.includeN = assays
-}
-
-
-if(study_name=="COVE"){
-    # conversion is only done for COVE for backward compatibility
-    convf=c(bindSpike=0.0090, bindRBD=0.0272, bindN=0.0024, pseudoneutid50=0.242, pseudoneutid80=1.502)    
-    for (a in assays.includeN) {
-      for (t in c("B", paste0("Day", config$timepoints)) ) {
-          dat_proc[[t %.% a]] <- dat_proc[[t %.% a]] + log10(convf[a])
-      }
-    }
-}
-
-
-# censoring values below LLOD
-# COVE and mock only
-# after COVE, the mapped data comes censored
-if(study_name %in% c("COVE", "MockCOVE")){
-    for (a in assays.includeN) {
-      for (t in c("B", paste0("Day", config$timepoints)) ) {
-        dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(llods[a]), log10(llods[a] / 2), dat_proc[[t %.% a]])
-      }
-    }
-} else if(study_name %in% c("MockENSEMBLE")){
-    for (a in assays.includeN) {
-      for (t in c("B", paste0("Day", config$timepoints)) ) {
-        dat_proc[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] < log10(lloqs[a]), log10(lloqs[a] / 2), dat_proc[[t %.% a]])
-      }
-    }
-}
 
 
 ###############################################################################
