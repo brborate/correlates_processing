@@ -77,7 +77,7 @@ if (study_name == "MockCOVE") {
 } else if (study_name %in% c("VAT08", "VAT08m", "VAT08b")) { # Sanofi
     inputFile <- inputFile %>%
       mutate(Riskscorecohortflag = ifelse(Perprotocol==1, 1, 0),
-             RiskscoreAUCflag = ifelse(Trt==1 & Perprotocol==1 & EarlyendpointD43==0 & EventTimePrimaryD43>=7, 1, 0))
+             RiskscoreAUCflag = ifelse(Trt==1 & Perprotocol==1 & EarlyinfectionD43==0 & EventTimePrimaryD43>=7, 1, 0))
 } else if (study_name %in% c("PROFISCOV")) {
     # Needs Youyi's check; currently do nothing!
 } else if (study_name %in% c("COVAIL")) {
