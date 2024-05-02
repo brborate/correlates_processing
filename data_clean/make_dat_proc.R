@@ -1423,41 +1423,7 @@ if(study_name == "COVAIL") {
     dat_proc[, t%.%'pseudoneutid50_MDW'] = as.matrix(dat_proc[, t%.%nAb]) %*% mdw.wt.nAb
   }
   
-  
-} else if(TRIAL=="vat08_combined") {
-  # should be the same for vat08_combined and vat08_nAb
-  bAb = setdiff(assays[startsWith(assays, "bindSpike")], c('bindSpike_mdw'))
-  nAb = setdiff(assays[startsWith(assays, "pseudoneutid50")], c('pseudoneutid50_mdw'))
-  
-  # use D43, stage 2, nnaive, vaccine to derive weights
-  kp = dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Trt==1
-  
-  # bAb
-  mdw.wt.bAb=tryCatch({
-    tree.weight(cor(dat_proc[kp, "Day43"%.%bAb], use='complete.obs'))
-  }, error = function(err) {
-    print(err$message)
-    rep(1/length(bAb), length(bAb))
-  })
-  write.csv(mdw.wt.bAb, file = here("data_clean", "csv", TRIAL%.%"_bAb_mdw_weights.csv"))
-  # apply to all time points, to both stages, naive/nnaive, vaccine and placebo
-  for (t in c("B", "Day"%.%timepoints)) { # , "Delta"%.%timepoints%.%"overB", "Delta43over22"
-    dat_proc[, t%.%'bindSpike_mdw'] = as.matrix(dat_proc[, t%.%bAb]) %*% mdw.wt.bAb
-  }
-  
-  # nAb
-  mdw.wt.nAb=tryCatch({
-    tree.weight(cor(dat_proc[kp, "Day43"%.%nAb], use='complete.obs'))
-  }, error = function(err) {
-    print(err$message)
-    rep(1/length(nAb), length(nAb))
-  })
-  write.csv(mdw.wt.nAb, file = here("data_clean", "csv", TRIAL%.%"_nAb_mdw_weights.csv"))
-  # apply to all time points, to both stages, naive/nnaive, vaccine and placebo
-  for (t in c("B", "Day"%.%timepoints)) { # , "Delta"%.%timepoints%.%"overB", "Delta43over22"
-    dat_proc[, t%.%'pseudoneutid50_mdw'] = as.matrix(dat_proc[, t%.%nAb]) %*% mdw.wt.nAb
-  }
-  
+
 }
 
 
@@ -1625,17 +1591,13 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 # do this last so as not to change earlier values
 ###############################################################################
 
-if (TRIAL %in% c("profiscov", "profiscov_lvmn", "vat08_combined", "vat08_nAb")) {
+if (TRIAL %in% c("profiscov", "profiscov_lvmn")) {
     # no risk score for profiscov, but some have missing BMI
     n.imp <- 1
     dat.tmp.impute <- dat_proc
     
     if (TRIAL %in% c("profiscov", "profiscov_lvmn")) {
       imp.markers=c("HighRiskInd", "Sex", "Age", "BMI")
-      
-    } else if (TRIAL %in% c("vat08_combined", "vat08_nAb")) {     
-      imp.markers=c("FOI", "risk_score")
-      
     }
         
     imp <- dat.tmp.impute %>%  select(all_of(imp.markers))         
@@ -1747,24 +1709,7 @@ if(TRIAL == "moderna_real") {
   # add bindSpike data for multivariable modles
   source(here::here("data_clean", "add_bindSpike_to_azd1222ID50_analysisreadydataset.R"))
   
-} else if(TRIAL=="vat08_combined") {
-  # add region variable for regression
-  # Honduras (3), not Honduras for the Stage 1 trial nnaive
-  # Mexico (9), Other/Else country for the Stage 2 trial naive
-  # India (4), Mexico (9), Other/Else country for the Stage 2 trial nnaive
-  dat_proc$Region = NA
-  
-  dat_proc$Region[dat_proc$Trialstage==1 & dat_proc$Bserostatus==0] = "Stage1naive"
-  
-  dat_proc$Region[dat_proc$Trialstage==1 & dat_proc$Bserostatus==1 & dat_proc$Country==3] = "HON_Stage1Nnaive"
-  dat_proc$Region[dat_proc$Trialstage==1 & dat_proc$Bserostatus==1 & dat_proc$Country!=3] = "NotHON_Stage1Nnaive"
-  
-  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Country==9] = "MEX_Stage2"
-  dat_proc$Region[dat_proc$Trialstage==2 & dat_proc$Country==4] = "IND_Stage2"
-  dat_proc$Region[dat_proc$Trialstage==2 & !dat_proc$Country%in%c(4,9)] = "NotMEXIND_Stage2"
-
 }
-
 
 
 
@@ -1784,7 +1729,6 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "9a766566d32dd7cafab6cca804a8dfb3",
-         vat08_combined = "d82e4d1b597215c464002962d9bd01f7", 
          covail = "8c995d5f0b087be17cfc7bb70be62afa", 
          nvx_uk302 = "99a9d33175c7ff52fa008020fff955b4", 
          NA)    

@@ -25,7 +25,7 @@ else ifeq ($(TRIAL),$(filter $(TRIAL), janssen_partA_VL))
 	Rscript data_clean/make_dat_proc.R
 else ifeq ($(TRIAL),$(filter $(TRIAL), vat08_combined))
 	Rscript data_clean/RunhotdeckMI_sanofi_bothtrials_PartA.R
-	Rscript data_clean/make_dat_proc.R
+	Rscript data_clean/make_dat_vat08_combined.R
 else 
 	Rscript data_clean/make_dat_proc.R
 endif
