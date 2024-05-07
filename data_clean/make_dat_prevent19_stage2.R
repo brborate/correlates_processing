@@ -17,7 +17,7 @@ begin=Sys.time()
 ########################################################################################################
 # 1. read mapped data with risk score added
 
-
+{
 dat_raw=read.csv(mapped_data)
 dat_proc = preprocess(dat_raw, study_name)   
 colnames(dat_proc)[colnames(dat_proc)=="Subjectid"] <- "Ptid" 
@@ -36,7 +36,7 @@ dat_proc$standardized_risk_score = inputFile_with_riskscore$standardized_risk_sc
 
 # subset to vaccine and seroneg, necessary for getting weights correctly
 dat_proc = subset(dat_proc, Trt==1 & Bserostatus==0)
-
+}
 
 
 ########################################################################################################
@@ -137,6 +137,7 @@ dat_proc = subset(dat_proc, Trt==1 & Bserostatus==0)
 ###############################################################################
 # 3. stratum variables
 
+{
 # Bstratum: randomization strata
 dat_proc$Bstratum =  with(dat_proc, Senior + 1)
 names(Bstratum.labels) <- Bstratum.labels
@@ -167,13 +168,14 @@ dat_proc$Wstratum[with(dat_proc, KnownOrImputedDeltaCOVIDIndD35_108to21Dec10==1 
 dat_proc$Wstratum[with(dat_proc, SevereCOVIDIndD35_108to21Dec10 ==1 & Trt==1 & Bserostatus==0)]=max.tps+2
 
 table(dat_proc$Wstratum) 
-
+}
 
 
 ################################################################################
 # 4. Define ph1, ph2, and weights
 # Note that Wstratum may have NA if any variables to form strata has NA
 
+{
 tp='35_108'
 
 # ph1
@@ -227,10 +229,31 @@ dat_proc$TwophasesampIndC1 = with(dat_proc, TwophasesampIndD35 &
                                     # bAb is all or none at C1 as well
                                     !is.na(C1bindSpike_D614) & 
                                     # require both ID50s because no imputation is done, so as not to interfere with exposure proximal correlates analysis
-                                  (!is.na(C1pseudoneutid50_D614G) & !is.na(C1pseudoneutid50_Delta) )
+                                    (!is.na(C1pseudoneutid50_D614G) & !is.na(C1pseudoneutid50_Delta) )
 )
 dat_proc$ph2.immuno.C1 = with(dat_proc, ph1.immuno.C1==1 & SubcohortInd & TwophasesampIndC1)
 dat_proc = add.wt(dat_proc, ph1="ph1.immuno.C1", ph2="ph2.immuno.C1", Wstratum="tps.stratum", wt="wt.immuno.C1", verbose=T)
+
+
+
+# weights for BD1 immunogenicity analyses that use subcohort only and are not enriched by cases outside subcohort
+# strictly speaking, BD1 population is different from the original population, but we have to use an approximation
+dat_proc$ph1.immuno.BD1 = with(dat_proc, ph1.immuno.D35)
+dat_proc$TwophasesampIndBD1 = with(dat_proc, TwophasesampIndD35 &
+                                    # bAb is all or none at BD1 as well
+                                    !is.na(BD1bindSpike_D614) & 
+                                    # require both ID50s because no imputation is done, so as not to interfere with exposure proximal correlates analysis
+                                    (!is.na(BD1pseudoneutid50_D614G) & !is.na(BD1pseudoneutid50_Delta) )
+)
+dat_proc$ph2.immuno.BD1 = with(dat_proc, ph1.immuno.BD1==1 & SubcohortInd & TwophasesampIndBD1)
+dat_proc = add.wt(dat_proc, ph1="ph1.immuno.BD1", ph2="ph2.immuno.BD1", Wstratum="tps.stratum", wt="wt.immuno.BD1", verbose=T)
+
+
+# pattern of missingess across time points
+with(dat_proc, table(ph2.immuno.D35, ph2.immuno.C1))
+with(dat_proc, table(ph2.immuno.C1, ph2.immuno.BD1))
+
+}
 
 
 
@@ -336,7 +359,7 @@ dat_proc$tmp = NULL
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         prevent19_stage2 = "71321219fa1afe7dc948e86cf7dca492",
+         prevent19_stage2 = "d49f3d9fec507755ff3747e73e849976",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
       msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
