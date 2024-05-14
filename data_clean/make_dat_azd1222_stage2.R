@@ -281,13 +281,13 @@ assertthat::assert_that(
 # 9. add discrete/trichotomized markers
 
 bAb.assays = subset(assay_metadata, panel=="bindSpike", assay, drop=T)
-dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & get("ph2.D57_120nAb")) 
-dat_proc = add.trichotomized.markers (dat_proc, c("Day57"%.%bAb.assays), ph2.col.name="tmp", wt.col.name="wt.D57_120nAb")
+dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & get("ph2.D57_120bAb")) 
+dat_proc = add.trichotomized.markers (dat_proc, c("Day57"%.%bAb.assays), ph2.col.name="tmp", wt.col.name="wt.D57_120bAb")
 dat_proc$tmp = NULL
   
 nAb.assays = subset(assay_metadata, panel=="id50", assay, drop=T)
-dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & get("ph2.D57_120bAb")) 
-dat_proc = add.trichotomized.markers (dat_proc, c("Day57"%.%nAb.assays), ph2.col.name="tmp", wt.col.name="wt.D57_120bAb")
+dat_proc$tmp = with(dat_proc, Trt==1 & Bserostatus==0 & get("ph2.D57_120nAb")) 
+dat_proc = add.trichotomized.markers (dat_proc, c("Day57"%.%nAb.assays), ph2.col.name="tmp", wt.col.name="wt.D57_120nAb")
 dat_proc$tmp = NULL
 
 
@@ -348,7 +348,7 @@ assertthat::assert_that(
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         azd1222_stage2 = "739d207c1ac5ee2bea34b654a62daf2b",
+         azd1222_stage2 = "e7a30f1c8181df3d85d4b28821026939",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
       msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
