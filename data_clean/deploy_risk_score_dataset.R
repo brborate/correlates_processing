@@ -56,16 +56,22 @@ if (TRIAL %in% c()) {
                           paste0(attr(config, "config"), "nonsenior_data_processed_with_riskscore"))
   
 } else {
-  # c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08_combined", "vat08_nAb", "id27hpv", "covail", "nvx_uk302")) {
+  # c("prevent19", "moderna_real", "moderna_boost", "janssen_partA_VL", "vat08_combined", "id27hpv", "covail", "nvx_uk302")) {
   data_name_amended <- c(paste0(attr(config, "config"), "_data_processed_", format(Sys.Date(), "%Y%m%d")))
 }
-
-cat("Enter reason for updating adata without quotes (this text will be added to adata/changelog): ")
-args <- readLines(con = "stdin", n = 1)
+print(data_name_amended)
 
 
-# Request reason for adata update from deployer!
+
+# get reason for adata update from deployer
+# could come from either command line arg or stdin
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args)==0) {
+  cat("Enter reason for updating adata without quotes (this text will be added to adata/changelog): ")
+  args <- readLines(con = "stdin", n = 1)
+} 
 update_reason <- paste0(Sys.Date(), " ", args[[1]]) 
+
 
 
   

@@ -182,148 +182,148 @@ print("run time: "%.%format(Sys.time()-begin, digits=1))
 
 
 
-
-#######################################################################################
-# Checks on the data set 
-# Note that in make_dat_proc.R, we define EventIndOmicronD##hotdeck## and EventTimeOmicronD##hotdeck## variables
-# EventIndOmicronD22hotdeck1 and EventIndOmicronD22hotdeck10 defined below match the two variables defined in make_dat_proc.R perfectly
-
-
-newdat$EventIndPrimaryD1  = newdat$EventIndFirstInfectionD1
-newdat$EventIndPrimaryD22 = newdat$EventIndFirstInfectionD22
-newdat$EventIndPrimaryD43 = newdat$EventIndFirstInfectionD43
-
-EventIndOmicronD22hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) 
-                                     & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
-                                     & !is.na(newdat[,"EventIndPrimaryD22"]),1,0)
-
-EventIndOmicronD22hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) 
-                                      & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
-                                      & !is.na(newdat[,"EventIndPrimaryD22"]),1,0)
-
-# Need to also define for hotdeck 2, ..., 9
-
-table(newdat[,"seq1.variant.hotdeck1"],EventIndOmicronD22hotdeck1,useNA="ifany")
-table(newdat[,"seq1.variant.hotdeck10"],EventIndOmicronD22hotdeck10,useNA="ifany")
-
-# Checks against original failure indicators:
-table(newdat[,"seq1.variant.hotdeck1"],newdat[,"EventIndKnownLineageOmicronD1"],useNA="ifany")
-table(newdat[,"seq1.variant.hotdeck10"],newdat[,"EventIndKnownLineageOmicronD1"],useNA="ifany")
-table(newdat[,"seq1.variant.hotdeck1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")  #All cases
-table(newdat[,"seq1.variant.hotdeck10"],newdat[,"EventIndPrimaryD1"],useNA="ifany") #All cases
-
-table(newdat[,"EventIndKnownLineageOmicronD1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")
-table(newdat[,"EventIndKnownLineageNonOmicronD1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")
-table(newdat[,"EventIndMissingLineageD1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")
-# Adds up to 703. checks out.
-
-# From hotdeck1, compare calendar time of case between Omicron and non-Omicron
-
-kp1 <- EventIndOmicronD22hotdeck1==1  # Omicron
-kp2 <- EventIndOmicronD22hotdeck1==0 & newdat[,"EventIndPrimaryD22"]==1  # Non-Omicron
-kp <- kp1 | kp2
-grp <- ifelse(kp1[kp],1,0)
-
-boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
-        col = 'steelblue',
-        main = 'Hotdeck imputation 1',
-        xlab = 'Non-Omicron vs. Omicron',
-        ylab = 'No. days to COVID-19'
-)
-
-# Repeat for hotdeck10
-kp1 <- EventIndOmicronD22hotdeck10==1  # Omicron
-kp2 <- EventIndOmicronD22hotdeck10==0 & newdat[,"EventIndPrimaryD22"]==1  # Non-Omicron
-kp <- kp1 | kp2
-grp <- ifelse(kp1[kp],1,0)
-
-boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
-        col = 'steelblue',
-        main = 'Hotdeck imputation 10',
-        xlab = 'Non-Omicron vs. Omicron',
-        ylab = 'No. days to COVID-19'
-)
-
-
-# Checks for D43 correlates (repeat the above)
-EventIndOmicronD43hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) 
-                                     & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
-                                     & !is.na(newdat[,"EventIndPrimaryD43"]),1,0)
-
-EventIndOmicronD43hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) 
-                                      & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
-                                      & !is.na(newdat[,"EventIndPrimaryD43"]),1,0)
-
-# Need to also define for hotdeck 2, ..., 9
-
-table(newdat[,"seq1.variant.hotdeck1"],EventIndOmicronD43hotdeck1,useNA="ifany")
-table(newdat[,"seq1.variant.hotdeck10"],EventIndOmicronD43hotdeck10,useNA="ifany")
-
-# Checks against original failure indicators:
-table(newdat[,"seq1.variant.hotdeck1"],newdat[,"EventIndKnownLineageOmicronD1"],useNA="ifany")
-table(newdat[,"seq1.variant.hotdeck10"],newdat[,"EventIndKnownLineageOmicronD1"],useNA="ifany")
-table(newdat[,"seq1.variant.hotdeck1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")  #All cases
-table(newdat[,"seq1.variant.hotdeck10"],newdat[,"EventIndPrimaryD1"],useNA="ifany") #All cases
-
-table(newdat[,"EventIndKnownLineageOmicronD1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")
-table(newdat[,"EventIndKnownLineageNonOmicronD1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")
-table(newdat[,"EventIndMissingLineageD1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")
-
-# From hotdeck1, compare calendar time of case between Omicron and non-Omicron
-
-kp1 <- EventIndOmicronD43hotdeck1==1  # Omicron
-kp2 <- EventIndOmicronD43hotdeck1==0 & newdat[,"EventIndPrimaryD43"]==1  # Non-Omicron
-kp <- kp1 | kp2
-grp <- ifelse(kp1[kp],1,0)
-
-boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
-        col = 'steelblue',
-        main = 'Hotdeck imputation 1',
-        xlab = 'Non-Omicron vs. Omicron',
-        ylab = 'No. days to COVID-19'
-)
-
-# Repeat for hotdeck10
-kp1 <- EventIndOmicronD43hotdeck10==1  # Omicron
-kp2 <- EventIndOmicronD43hotdeck10==0 & newdat[,"EventIndPrimaryD43"]==1  # Non-Omicron
-kp <- kp1 | kp2
-grp <- ifelse(kp1[kp],1,0)
-
-boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
-        col = 'steelblue',
-        main = 'Hotdeck imputation 10',
-        xlab = 'Non-Omicron vs. Omicron',
-        ylab = 'No. days to COVID-19'
-)
-
-# Everything looks good, a few more checks.
-
-table(dat_mapped[,"EventIndPrimaryD43"],dat_mapped[,"EventIndPrimaryD22"],useNA="ifany")
-table(dat_mapped[,"EventIndPrimaryD43"],useNA="ifany")
-table(dat_mapped[,"EventIndPrimaryD22"],useNA="ifany")
-
-table(newdat[,"EventIndPrimaryD43"],newdat[,"EventIndPrimaryD22"],useNA="ifany")
-table(newdat[,"EventIndKnownLineageOmicronD43"],newdat[,"EventIndKnownLineageOmicronD22"],useNA="ifany")
-table(newdat[,"EventIndKnownLineageNonOmicronD43"],newdat[,"EventIndKnownLineageNonOmicronD22"],useNA="ifany")
-table(newdat[,"EventIndMissingLineageD43"],newdat[,"EventIndMissingLineageD22"],useNA="ifany")
-
-EventInd1 <- ifelse(dat_mapped[,"EventIndKnownLineageOmicronD1"]==1 | 
-                      dat_mapped[,"EventIndMissingLineageD1"]==1 | 
-                      dat_mapped[,"EventIndKnownLineageNonOmicronD1"]==1 ,1,0)
-
-EventInd22 <- ifelse(dat_mapped[,"EventIndKnownLineageOmicronD22"]==1 | 
-                       dat_mapped[,"EventIndMissingLineageD22"]==1 | 
-                       dat_mapped[,"EventIndKnownLineageNonOmicronD22"]==1 ,1,0)
-
-EventInd43 <- ifelse(dat_mapped[,"EventIndKnownLineageOmicronD43"]==1 | 
-                       dat_mapped[,"EventIndMissingLineageD43"]==1 | 
-                       dat_mapped[,"EventIndKnownLineageNonOmicronD43"]==1 ,1,0)
-
-table(EventInd1,EventInd22,EventInd43,useNA="ifany")
-
-table(EventInd1,newdat[,"EventIndPrimaryD1"],useNA="ifany")
-table(EventInd22,newdat[,"EventIndPrimaryD22"],useNA="ifany")
-table(EventInd43,newdat[,"EventIndPrimaryD43"],useNA="ifany")
+# 
+# #######################################################################################
+# # Checks on the data set 
+# # Note that in make_dat_proc.R, we define EventIndOmicronD##hotdeck## and EventTimeOmicronD##hotdeck## variables
+# # EventIndOmicronD22hotdeck1 and EventIndOmicronD22hotdeck10 defined below match the two variables defined in make_dat_proc.R perfectly
+# 
+# 
+# newdat$EventIndPrimaryD1  = newdat$EventIndFirstInfectionD1
+# newdat$EventIndPrimaryD22 = newdat$EventIndFirstInfectionD22
+# newdat$EventIndPrimaryD43 = newdat$EventIndFirstInfectionD43
+# 
+# EventIndOmicronD22hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) 
+#                                      & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
+#                                      & !is.na(newdat[,"EventIndPrimaryD22"]),1,0)
+# 
+# EventIndOmicronD22hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) 
+#                                       & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
+#                                       & !is.na(newdat[,"EventIndPrimaryD22"]),1,0)
+# 
+# # Need to also define for hotdeck 2, ..., 9
+# 
+# table(newdat[,"seq1.variant.hotdeck1"],EventIndOmicronD22hotdeck1,useNA="ifany")
+# table(newdat[,"seq1.variant.hotdeck10"],EventIndOmicronD22hotdeck10,useNA="ifany")
+# 
+# # Checks against original failure indicators:
+# table(newdat[,"seq1.variant.hotdeck1"],newdat[,"EventIndKnownLineageOmicronD1"],useNA="ifany")
+# table(newdat[,"seq1.variant.hotdeck10"],newdat[,"EventIndKnownLineageOmicronD1"],useNA="ifany")
+# table(newdat[,"seq1.variant.hotdeck1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")  #All cases
+# table(newdat[,"seq1.variant.hotdeck10"],newdat[,"EventIndPrimaryD1"],useNA="ifany") #All cases
+# 
+# table(newdat[,"EventIndKnownLineageOmicronD1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")
+# table(newdat[,"EventIndKnownLineageNonOmicronD1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")
+# table(newdat[,"EventIndMissingLineageD1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")
+# # Adds up to 703. checks out.
+# 
+# # From hotdeck1, compare calendar time of case between Omicron and non-Omicron
+# 
+# kp1 <- EventIndOmicronD22hotdeck1==1  # Omicron
+# kp2 <- EventIndOmicronD22hotdeck1==0 & newdat[,"EventIndPrimaryD22"]==1  # Non-Omicron
+# kp <- kp1 | kp2
+# grp <- ifelse(kp1[kp],1,0)
+# 
+# boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
+#         col = 'steelblue',
+#         main = 'Hotdeck imputation 1',
+#         xlab = 'Non-Omicron vs. Omicron',
+#         ylab = 'No. days to COVID-19'
+# )
+# 
+# # Repeat for hotdeck10
+# kp1 <- EventIndOmicronD22hotdeck10==1  # Omicron
+# kp2 <- EventIndOmicronD22hotdeck10==0 & newdat[,"EventIndPrimaryD22"]==1  # Non-Omicron
+# kp <- kp1 | kp2
+# grp <- ifelse(kp1[kp],1,0)
+# 
+# boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
+#         col = 'steelblue',
+#         main = 'Hotdeck imputation 10',
+#         xlab = 'Non-Omicron vs. Omicron',
+#         ylab = 'No. days to COVID-19'
+# )
+# 
+# 
+# # Checks for D43 correlates (repeat the above)
+# EventIndOmicronD43hotdeck1 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck1"]) 
+#                                      & newdat[,"seq1.variant.hotdeck1"]=="Omicron"
+#                                      & !is.na(newdat[,"EventIndPrimaryD43"]),1,0)
+# 
+# EventIndOmicronD43hotdeck10 <- ifelse(!is.na(newdat[,"seq1.variant.hotdeck10"]) 
+#                                       & newdat[,"seq1.variant.hotdeck10"]=="Omicron"
+#                                       & !is.na(newdat[,"EventIndPrimaryD43"]),1,0)
+# 
+# # Need to also define for hotdeck 2, ..., 9
+# 
+# table(newdat[,"seq1.variant.hotdeck1"],EventIndOmicronD43hotdeck1,useNA="ifany")
+# table(newdat[,"seq1.variant.hotdeck10"],EventIndOmicronD43hotdeck10,useNA="ifany")
+# 
+# # Checks against original failure indicators:
+# table(newdat[,"seq1.variant.hotdeck1"],newdat[,"EventIndKnownLineageOmicronD1"],useNA="ifany")
+# table(newdat[,"seq1.variant.hotdeck10"],newdat[,"EventIndKnownLineageOmicronD1"],useNA="ifany")
+# table(newdat[,"seq1.variant.hotdeck1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")  #All cases
+# table(newdat[,"seq1.variant.hotdeck10"],newdat[,"EventIndPrimaryD1"],useNA="ifany") #All cases
+# 
+# table(newdat[,"EventIndKnownLineageOmicronD1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")
+# table(newdat[,"EventIndKnownLineageNonOmicronD1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")
+# table(newdat[,"EventIndMissingLineageD1"],newdat[,"EventIndPrimaryD1"],useNA="ifany")
+# 
+# # From hotdeck1, compare calendar time of case between Omicron and non-Omicron
+# 
+# kp1 <- EventIndOmicronD43hotdeck1==1  # Omicron
+# kp2 <- EventIndOmicronD43hotdeck1==0 & newdat[,"EventIndPrimaryD43"]==1  # Non-Omicron
+# kp <- kp1 | kp2
+# grp <- ifelse(kp1[kp],1,0)
+# 
+# boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
+#         col = 'steelblue',
+#         main = 'Hotdeck imputation 1',
+#         xlab = 'Non-Omicron vs. Omicron',
+#         ylab = 'No. days to COVID-19'
+# )
+# 
+# # Repeat for hotdeck10
+# kp1 <- EventIndOmicronD43hotdeck10==1  # Omicron
+# kp2 <- EventIndOmicronD43hotdeck10==0 & newdat[,"EventIndPrimaryD43"]==1  # Non-Omicron
+# kp <- kp1 | kp2
+# grp <- ifelse(kp1[kp],1,0)
+# 
+# boxplot(as.integer(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)[kp] ~ grp,
+#         col = 'steelblue',
+#         main = 'Hotdeck imputation 10',
+#         xlab = 'Non-Omicron vs. Omicron',
+#         ylab = 'No. days to COVID-19'
+# )
+# 
+# # Everything looks good, a few more checks.
+# 
+# table(dat_mapped[,"EventIndPrimaryD43"],dat_mapped[,"EventIndPrimaryD22"],useNA="ifany")
+# table(dat_mapped[,"EventIndPrimaryD43"],useNA="ifany")
+# table(dat_mapped[,"EventIndPrimaryD22"],useNA="ifany")
+# 
+# table(newdat[,"EventIndPrimaryD43"],newdat[,"EventIndPrimaryD22"],useNA="ifany")
+# table(newdat[,"EventIndKnownLineageOmicronD43"],newdat[,"EventIndKnownLineageOmicronD22"],useNA="ifany")
+# table(newdat[,"EventIndKnownLineageNonOmicronD43"],newdat[,"EventIndKnownLineageNonOmicronD22"],useNA="ifany")
+# table(newdat[,"EventIndMissingLineageD43"],newdat[,"EventIndMissingLineageD22"],useNA="ifany")
+# 
+# EventInd1 <- ifelse(dat_mapped[,"EventIndKnownLineageOmicronD1"]==1 | 
+#                       dat_mapped[,"EventIndMissingLineageD1"]==1 | 
+#                       dat_mapped[,"EventIndKnownLineageNonOmicronD1"]==1 ,1,0)
+# 
+# EventInd22 <- ifelse(dat_mapped[,"EventIndKnownLineageOmicronD22"]==1 | 
+#                        dat_mapped[,"EventIndMissingLineageD22"]==1 | 
+#                        dat_mapped[,"EventIndKnownLineageNonOmicronD22"]==1 ,1,0)
+# 
+# EventInd43 <- ifelse(dat_mapped[,"EventIndKnownLineageOmicronD43"]==1 | 
+#                        dat_mapped[,"EventIndMissingLineageD43"]==1 | 
+#                        dat_mapped[,"EventIndKnownLineageNonOmicronD43"]==1 ,1,0)
+# 
+# table(EventInd1,EventInd22,EventInd43,useNA="ifany")
+# 
+# table(EventInd1,newdat[,"EventIndPrimaryD1"],useNA="ifany")
+# table(EventInd22,newdat[,"EventIndPrimaryD22"],useNA="ifany")
+# table(EventInd43,newdat[,"EventIndPrimaryD43"],useNA="ifany")
 
 
 

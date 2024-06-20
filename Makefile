@@ -1,5 +1,5 @@
 ## data_processed         : create processed data from raw data
-data_processed: check_raw_data risk_analysis make_clean_data check_clean_data deploy_processed_dataset
+data_processed: check_raw_data risk_analysis make_clean_data check_clean_data deploy_processed_dataset_auto
 
 check_raw_data:
 ifeq ($(TRIAL),$(filter $(TRIAL), moderna_boost id27hpv))
@@ -17,15 +17,17 @@ endif
 
 TARGET_FILE := data_clean/make_dat_$(TRIAL).R
 
+
+# put target file second to last 
 make_clean_data: 
-ifneq ($(wildcard $(TARGET_FILE)),)
-	Rscript $(TARGET_FILE)
+ifeq ($(TRIAL),$(filter $(TRIAL), vat08_combined))
+	Rscript data_clean/RunhotdeckMI_sanofi_bothtrials_PartA.R
+	Rscript data_clean/make_dat_vat08_combined.R
 else ifeq ($(TRIAL),$(filter $(TRIAL), janssen_partA_VL))
 	Rscript data_clean/RunhotdeckMI_janssen_partA_VL.R
 	Rscript data_clean/make_dat_proc.R
-else ifeq ($(TRIAL),$(filter $(TRIAL), vat08_combined))
-	Rscript data_clean/RunhotdeckMI_sanofi_bothtrials_PartA.R
-	Rscript data_clean/make_dat_vat08_combined.R
+else ifneq ($(wildcard $(TARGET_FILE)),)
+	Rscript $(TARGET_FILE)
 else 
 	Rscript data_clean/make_dat_proc.R
 endif
@@ -53,9 +55,12 @@ risk_clean:
 
 
 ## deploy risk score processed dataset : Deploy risk score dataset after checking
+## if run Make with nohup, an error will occur b/c deploy takes a message as input. that is why we have deploy_processed_dataset_auto
 deploy_processed_dataset:
 	    Rscript data_clean/deploy_risk_score_dataset.R
 
+deploy_processed_dataset_auto:
+	    Rscript data_clean/deploy_risk_score_dataset.R ""
 
 
 

@@ -213,7 +213,8 @@ dat_proc[["ph2.D"%.%tp%.%"bAb"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["Twophas
 dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp, ph2="ph2.D"%.%tp%.%"bAb", Wstratum="Wstratum", wt="wt.D"%.%tp%.%"bAb", verbose=T) 
 
 mytable(dat_proc$TwophasesampIndD57nAb, dat_proc$TwophasesampIndD57bAb)
-  
+mytable(dat_proc$TwophasesampIndD57nAb, dat_proc$TwophasesampIndD57bAb, dat_proc$AnyInfectionD1)
+
 
 ###############################################################################
 # 5. impute missing biomarkers in ph2 (assay imputation)
