@@ -356,6 +356,39 @@ dat_proc[["TwophasesampIndbAb"]] = dat_proc[["TwophasesampIndbAb"]] & dat_proc[[
 
 
 
+{
+  
+  # generate SubcohortInd for bAb and nAb separately
+  dat_proc$SubcohortIndbAb=0
+  dat_proc$SubcohortIndnAb=0
+  
+  # all non-cases with markers are included
+  dat_proc$SubcohortIndbAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndbAb==1]=1
+  dat_proc$SubcohortIndnAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndnAb==1]=1
+  
+  # pick controls using bAb and use for both SubcohortIndbAb and SubcohortIndnAb
+  tab=mytable(dat_proc$TwophasesampIndbAb, dat_proc$tps.stratum, dat_proc$EventIndFirstInfectionD1)[,,1]
+  px=tab[2,]/(tab[1,]+tab[2,])
+  px
+  
+  tab=mytable(dat_proc$TwophasesampIndbAb, dat_proc$tps.stratum, dat_proc$EventIndFirstInfectionD1)[,,2]
+  tab
+  n.cases.to.sample=round((tab[1,]+tab[2,])*px)
+  
+  # sample cases to include stratum by stratum based on bAb
+  ii = sort(unique(dat_proc$tps.stratum))
+  ii
+  picks=c()
+  for (i in ii) {
+    picks=c(picks, sample(subset(dat_proc, TwophasesampIndbAb==1 & tps.stratum==i & EventIndFirstInfectionD1==1, Ptid, drop=T))[1:n.cases.to.sample[i%.%""]])
+  }
+  
+  dat_proc$SubcohortIndbAb[dat_proc$Ptid %in% picks]=1
+  dat_proc$SubcohortIndnAb[dat_proc$Ptid %in% picks]=1
+  
+  
+}
+
 # a helper function
 get.strata.merge.to = function(strata.to.merge) {
   # check if sorted
@@ -387,140 +420,203 @@ get.strata.merge.to = function(strata.to.merge) {
 #### Define ph2 and wt variables 
 
 
-dat_proc$Wstratum.bAb = dat_proc$Wstratum
-dat_proc$Wstratum.nAb = dat_proc$Wstratum
+# use a single set of strata for bAb and nAb, or correlates and immuno, for sensitivity (stage 2) and main
+if (TRUE) {
 
-for (k in 1:2) { #1: bAb; 2: nAb
-  
-  if (k==1) Ab="bAb"; if (k==2) Ab="nAb"
-  
-  # need to merge Wstratum? 
+  # use bAb instead of nAb because there are less bAb samples
+  Ab="bAb"
   tp=43 # use D43 for this. D22 will also likely be fine
   dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampInd"%.%Ab]]
   wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1, ], table(Wstratum, get("ph2.D"%.%tp%.%"."%.%Ab)))
+  strata.to.merge.1 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
+  print(strata.to.merge.1)
+  
+  # sensitivity study in stage 2
+  tp=43
+  dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndnAb"]] & dat_proc$nAbBatch==2
+  wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1 & dat_proc$Trialstage==2, ], 
+                    table(Wstratum, get("ph2.D"%.%tp%.%".st2.nAb.sen")))
+  strata.to.merge.2 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
+  print(strata.to.merge.2)
+    
+  strata.to.merge = sort(unique(c(strata.to.merge.1, strata.to.merge.2)))
+  strata.merge.to = get.strata.merge.to (strata.to.merge)
+  print(strata.merge.to)
+  
+  # merge Wstratum and tps.stratum. Note that there are no case strata to merge
+  for (i in 1:length(strata.to.merge)) {
+    dat_proc$Wstratum[dat_proc$Wstratum==strata.to.merge[i]] = strata.merge.to[i]
+    dat_proc$tps.stratum[dat_proc$tps.stratum==strata.to.merge[i]] = strata.merge.to[i]
+  }
+  
+  
+  # compute weights
+  
+  # cor weights
+  for (k in 1:2) { #1: bAb; 2: nAb
+    if (k==1) Ab="bAb"; if (k==2) Ab="nAb"
+    # create weights
+    for (tp in timepoints) {
+      dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampInd"%.%Ab]]
+      dat_proc = add.wt(dat_proc, 
+                        ph1="ph1.D"%.%tp, 
+                        ph2="ph2.D"%.%tp%.%"."%.%Ab, 
+                        Wstratum="Wstratum", 
+                        wt="wt.D"%.%tp%.%"."%.%Ab, verbose=F) 
+    }
+  }  
+  
+  # stage 2 sensitivity weights for nAb
+  for (tp in timepoints) {
+    dat_proc[["ph1.D"%.%tp%.%".st2"]]         = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2
+    dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndnAb"]] & dat_proc$nAbBatch==2
+    dat_proc = add.wt(dat_proc, 
+                      ph1="ph1.D"%.%tp%.%".st2", 
+                      ph2="ph2.D"%.%tp%.%".st2.nAb.sen", 
+                      Wstratum="Wstratum", 
+                      wt="wt.D"%.%tp%.%".st2.nAb.sen", verbose=F) 
+  }
+  
+  # immuno
+  dat_proc[["ph1.immuno"]] = with(dat_proc, Perprotocol==1 & EarlyinfectionD43==0)
+  
+  dat_proc[["ph2.immuno.nAb"]] = dat_proc$ph1.D43 & dat_proc$SubcohortIndnAb 
+  dat_proc = add.wt(dat_proc, 
+                    ph1="ph1.immuno", 
+                    ph2="ph2.immuno.nAb", 
+                    Wstratum="tps.stratum", 
+                    wt="wt.immuno.nAb", verbose=F) 
+  
+  dat_proc[["ph2.immuno.bAb"]] = dat_proc$ph1.D43 & dat_proc$SubcohortIndbAb
+  dat_proc = add.wt(dat_proc, 
+                    ph1="ph1.immuno", 
+                    ph2="ph2.immuno.bAb", 
+                    Wstratum="tps.stratum", 
+                    wt="wt.immuno.bAb", verbose=F) 
+  
+
+    
+} else {
+    
+    
+  dat_proc$Wstratum.bAb = dat_proc$Wstratum
+  dat_proc$Wstratum.nAb = dat_proc$Wstratum
+  
+  for (k in 1:2) { #1: bAb; 2: nAb
+    
+    if (k==1) Ab="bAb"; if (k==2) Ab="nAb"
+    
+    # need to merge Wstratum? 
+    tp=43 # use D43 for this. D22 will also likely be fine
+    dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampInd"%.%Ab]]
+    wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1, ], table(Wstratum, get("ph2.D"%.%tp%.%"."%.%Ab)))
+    strata.to.merge = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
+    print(strata.to.merge)
+    strata.merge.to = get.strata.merge.to (strata.to.merge)
+    print(strata.merge.to)
+  
+    # perform merging
+    for (i in 1:length(strata.to.merge)) {
+      if (k==1) {
+        dat_proc$Wstratum.bAb[dat_proc$Wstratum.bAb==strata.to.merge[i]] = strata.merge.to[i]
+      } else {
+        dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb==strata.to.merge[i]] = strata.merge.to[i]
+      }
+    }
+    
+    # create weights
+    for (tp in timepoints) {
+      dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampInd"%.%Ab]]
+      dat_proc = add.wt(dat_proc, 
+                        ph1="ph1.D"%.%tp, 
+                        ph2="ph2.D"%.%tp%.%"."%.%Ab, 
+                        Wstratum="Wstratum."%.%Ab, 
+                        wt="wt.D"%.%tp%.%"."%.%Ab, verbose=F) 
+    }
+  }
+  
+  
+  {#### (2) Define weights for sensitivity study in stage 2 non-naive using batch 2 nAb data only 
+    
+  # need to merge Wstratum? 
+  tp=43
+  dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndnAb"]] & dat_proc$nAbBatch==2
+  wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1 & dat_proc$Trialstage==2, ], 
+                    table(Wstratum, get("ph2.D"%.%tp%.%".st2.nAb.sen")))
   strata.to.merge = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
   print(strata.to.merge)
-  
-  # perform merging
   strata.merge.to = get.strata.merge.to (strata.to.merge)
+  print(strata.merge.to)
+  
+  # yes, perform merging
+  dat_proc$Wstratum.st2.nAb.sen = dat_proc$Wstratum
   for (i in 1:length(strata.to.merge)) {
-    if (k==1) {
-      dat_proc$Wstratum.bAb[dat_proc$Wstratum.bAb==strata.to.merge[i]] = strata.merge.to[i]
-    } else {
-      dat_proc$Wstratum.nAb[dat_proc$Wstratum.nAb==strata.to.merge[i]] = strata.merge.to[i]
-    }
+    dat_proc$Wstratum.st2.nAb.sen[dat_proc$Wstratum.st2.nAb.sen==strata.to.merge[i]] = strata.merge.to[i]
   }
   
   # create weights
   for (tp in timepoints) {
-    dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampInd"%.%Ab]]
+    dat_proc[["ph1.D"%.%tp%.%".st2"]]         = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2
+    dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndnAb"]] & dat_proc$nAbBatch==2
     dat_proc = add.wt(dat_proc, 
-                      ph1="ph1.D"%.%tp, 
-                      ph2="ph2.D"%.%tp%.%"."%.%Ab, 
-                      Wstratum="Wstratum."%.%Ab, 
-                      wt="wt.D"%.%tp%.%"."%.%Ab, verbose=F) 
+                      ph1="ph1.D"%.%tp%.%".st2", 
+                      ph2="ph2.D"%.%tp%.%".st2.nAb.sen", 
+                      Wstratum="Wstratum.st2.nAb.sen", 
+                      wt="wt.D"%.%tp%.%".st2.nAb.sen", verbose=F) 
   }
-}
-
-
-{#### (2) Define weights for sensitivity study in stage 2 non-naive using batch 2 nAb data only 
   
-# need to merge Wstratum? 
-tp=43
-dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndnAb"]] & dat_proc$nAbBatch==2
-wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1 & dat_proc$Trialstage==2, ], 
-                  table(Wstratum, get("ph2.D"%.%tp%.%".st2.nAb.sen")))
-strata.to.merge = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
-print(strata.to.merge)
-
-# yes, perform merging
-strata.merge.to = get.strata.merge.to (strata.to.merge)
-dat_proc$Wstratum.st2.nAb.sen = dat_proc$Wstratum
-for (i in 1:length(strata.to.merge)) {
-  dat_proc$Wstratum.st2.nAb.sen[dat_proc$Wstratum.st2.nAb.sen==strata.to.merge[i]] = strata.merge.to[i]
-}
-
-# create weights
-for (tp in timepoints) {
-  dat_proc[["ph1.D"%.%tp%.%".st2"]]         = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2
-  dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndnAb"]] & dat_proc$nAbBatch==2
+  }
+  
+  # remove Wstratum because it is not used
+  dat_proc$Wstratum = NULL
+  
+  
+  
+  {
+  #### Define weight computation variables for immuno analysis
+    
+  # create weights for bAb and nAb separately
+  tp=43 # use D43 for immuno by our convention
+  
+  # need to merge stratum? 
+  # use SubcohortIndbAb, but same results when using SubcohortIndnAb
+  wts_table <- with(dat_proc[dat_proc$ph1.D43==1, ], table(tps.stratum, SubcohortIndbAb))
+  strata.to.merge = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
+  print(strata.to.merge)
+  
+  # yes, perform merging
+  strata.merge.to = get.strata.merge.to (strata.to.merge)
+  dat_proc$tps.stratum.immuno = dat_proc$tps.stratum
+  for (i in 1:length(strata.to.merge)) {
+    dat_proc$tps.stratum.immuno[dat_proc$tps.stratum.immuno==strata.to.merge[i]] = strata.merge.to[i]
+  }
+  
+  
+  dat_proc[["ph1.immuno"]] = with(dat_proc, Perprotocol==1 & get("EarlyinfectionD"%.%tp)==0)
+  
+  
+  dat_proc[["ph2.immuno.nAb"]] = dat_proc$ph1.D43 & dat_proc$SubcohortIndnAb 
   dat_proc = add.wt(dat_proc, 
-                    ph1="ph1.D"%.%tp%.%".st2", 
-                    ph2="ph2.D"%.%tp%.%".st2.nAb.sen", 
-                    Wstratum="Wstratum.st2.nAb.sen", 
-                    wt="wt.D"%.%tp%.%".st2.nAb.sen", verbose=F) 
-}
-
-}
-
-# remove Wstratum because it is not used
-dat_proc$Wstratum = NULL
-
-
-{
-#### Define weight computation variables for immuno analysis
-
-# generate SubcohortInd for bAb and nAb separately
-dat_proc$SubcohortIndbAb=0
-dat_proc$SubcohortIndnAb=0
-
-# all non-cases with markers are included
-dat_proc$SubcohortIndbAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndbAb==1]=1
-dat_proc$SubcohortIndnAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndnAb==1]=1
-
-# pick controls using bAb and use for both SubcohortIndbAb and SubcohortIndnAb
-tab=mytable(dat_proc$TwophasesampIndbAb, dat_proc$tps.stratum, dat_proc$EventIndFirstInfectionD1)[,,1]
-px=tab[2,]/(tab[1,]+tab[2,])
-px
-
-tab=mytable(dat_proc$TwophasesampIndbAb, dat_proc$tps.stratum, dat_proc$EventIndFirstInfectionD1)[,,2]
-tab
-n.cases.to.sample=round((tab[1,]+tab[2,])*px)
-
-# sample cases to include stratum by stratum based on bAb
-ii = sort(unique(dat_proc$tps.stratum))
-ii
-picks=c()
-for (i in ii) {
-  picks=c(picks, sample(subset(dat_proc, TwophasesampIndbAb==1 & tps.stratum==i & EventIndFirstInfectionD1==1, Ptid, drop=T))[1:n.cases.to.sample[i%.%""]])
-}
-
-dat_proc$SubcohortIndbAb[dat_proc$Ptid %in% picks]=1
-dat_proc$SubcohortIndnAb[dat_proc$Ptid %in% picks]=1
-
-
-# create weights for bAb and nAb separately
-tp=43 # use D43 for immuno by our convention
-
-# need to merge stratum? 
-# use SubcohortIndbAb, but same results when using SubcohortIndnAb
-wts_table <- with(dat_proc[dat_proc$ph1.D43==1, ], table(tps.stratum, SubcohortIndbAb))
-strata.to.merge = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
-print(strata.to.merge)
-
-# yes, perform merging
-strata.merge.to = get.strata.merge.to (strata.to.merge)
-dat_proc$tps.stratum.immuno = dat_proc$tps.stratum
-for (i in 1:length(strata.to.merge)) {
-  dat_proc$tps.stratum.immuno[dat_proc$tps.stratum.immuno==strata.to.merge[i]] = strata.merge.to[i]
+                    ph1="ph1.immuno", 
+                    ph2="ph2.immuno.nAb", 
+                    Wstratum="tps.stratum.immuno", 
+                    wt="wt.immuno.nAb", verbose=F) 
+  
+  dat_proc[["ph2.immuno.bAb"]] = dat_proc$ph1.D43 & dat_proc$SubcohortIndbAb
+  dat_proc = add.wt(dat_proc, 
+                    ph1="ph1.immuno", 
+                    ph2="ph2.immuno.bAb", 
+                    Wstratum="tps.stratum.immuno", 
+                    wt="wt.immuno.bAb", verbose=F) 
+  
+  }
+  
+  
 }
 
 
-dat_proc[["ph2.immuno.nAb"]] = dat_proc$ph1.D43 & dat_proc$SubcohortIndnAb 
-dat_proc = add.wt(dat_proc, 
-                  ph1="ph1.D43", 
-                  ph2="ph2.immuno.nAb", 
-                  Wstratum="tps.stratum.immuno", 
-                  wt="wt.immuno.nAb", verbose=F) 
 
-dat_proc[["ph2.immuno.bAb"]] = dat_proc$ph1.D43 & dat_proc$SubcohortIndbAb
-dat_proc = add.wt(dat_proc, 
-                  ph1="ph1.D43", 
-                  ph2="ph2.immuno.bAb", 
-                  Wstratum="tps.stratum.immuno", 
-                  wt="wt.immuno.bAb", verbose=F) 
 
-}
 
 
 ###############################################################################
@@ -601,6 +697,32 @@ for (step in 1:2) {
 ###############################################################################
 # 6. transformation of the markers
 
+# batch adjustment
+
+nassays=c("pseudoneutid50", "pseudoneutid50_B.1.351", "pseudoneutid50_BA.1", "pseudoneutid50_BA.2", "pseudoneutid50_BA.4.5")
+
+# save copies of markers that need to be corrected: nAb
+for (a in nassays) {
+for (t in c("Day43", "Day22", "B")) {
+  dat_proc[, t%.%a%.%"_save"] = dat_proc[, t%.%a] 
+}
+}    
+    
+chat = cbind(st1=c(0.1, 0.2, 0.25, 0.45, 0.25), st2=c(0.2, 0.35, 0.35, 0.3, 0.25))
+rownames(chat)=nassays
+  
+for (st in 1:2) {
+for (a in nassays) {
+for (t in c("Day43", "Day22", "B")) {
+  # shift by \hat{c}
+  dat_proc[dat_proc$Trialstage==st & dat_proc$Bserostatus==1, t%.%a] = dat_proc[dat_proc$Trialstage==st & dat_proc$Bserostatus==1, t%.%a] - chat[a, st]
+  # censoring by lod
+  dat_proc[dat_proc$Trialstage==st & dat_proc$Bserostatus==1, t%.%a] = ifelse (dat_proc[dat_proc$Trialstage==st & dat_proc$Bserostatus==1, t%.%a] < log10(llods[a]),
+                                                                               log10(llods[a]/2),
+                                                                               dat_proc[dat_proc$Trialstage==st & dat_proc$Bserostatus==1, t%.%a])
+}
+}
+}
 
 
 

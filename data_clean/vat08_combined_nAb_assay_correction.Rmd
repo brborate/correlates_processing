@@ -1,0 +1,762 @@
+---
+title: "VAT08 Stage 1 and 2 nAb Data Batch Adjustment"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  pdf_document:
+    toc: false
+    toc_depth: 3
+    number_sections: true
+  html_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T)
+
+library(survey)
+library(kyotil)
+
+country.codes=c("Colombia", "Ghana", "Honduras", "India", "Japan", "Kenya", "Nepal", "United States", "Mexico", "Uganda", "Ukraine")
+region.1 = c( # stage 1
+  "United States" = 1, "Japan" = 1, 
+  "Colombia" = 2, "Honduras" = 2, 
+  "Ghana" = 3, "Kenya" = 3, 
+  "Nepal" = 4, "India" = 4)
+region.2 = c( # stage 2
+  "Colombia" = 1, "Mexico" = 1, 
+  "Ghana" = 2, "Kenya" = 2, "Uganda" = 2,
+  "Nepal" = 3, "India" = 3)
+
+
+dat_mapped=read.csv('/trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20240620_hotdeck.csv')
+# dat_proc = read.csv('/trials/covpn/p3005/analysis/correlates/Part_A_Blinded_Phase_Data/adata/vat08_combined_data_processed_20240620.csv')
+
+assay_metadata=read.csv('~/correlates_reporting2/assay_metadata/vat08_combined_assay_metadata.csv')
+assays=assay_metadata$assay
+
+bassays=assays[startsWith(assays,"bindSpike")][1:8]
+print(bassays)
+
+nassays=assays[startsWith(assays,"pseudoneutid50")][1:5]
+print(nassays)
+
+col1=1
+col2=2
+```
+
+
+```{r impute_BA45, include=FALSE}
+
+# impute BA45
+
+library(mice)
+
+kp=with(dat_mapped, !is.na(Bpseudoneutid50_BA.1) | !is.na(Bpseudoneutid50_BA.2) | !is.na(Bpseudoneutid50_BA.4.5)
+                                | !is.na(Day22pseudoneutid50_BA.1) | !is.na(Day22pseudoneutid50_BA.2) | !is.na(Day22pseudoneutid50_BA.4.5)
+                                | !is.na(Day43pseudoneutid50_BA.1) | !is.na(Day43pseudoneutid50_BA.2) | !is.na(Day43pseudoneutid50_BA.4.5))
+        
+imp.markers = c("Bpseudoneutid50_BA.1", "Bpseudoneutid50_BA.2", "Bpseudoneutid50_BA.4.5",
+                                "Day22pseudoneutid50_BA.1", "Day22pseudoneutid50_BA.2", "Day22pseudoneutid50_BA.4.5",
+                                "Day43pseudoneutid50_BA.1", "Day43pseudoneutid50_BA.2", "Day43pseudoneutid50_BA.4.5")
+
+imp=dat_mapped[kp, imp.markers]
+# mypairs(imp) # high cor at the same time point
+
+imp <- mice(imp, m = 1, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)         
+
+dat_mapped[kp, imp.markers] <- mice::complete(imp, action = 1)
+
+```
+
+```{r plotting_func, include=FALSE}
+
+# putpairs of markers side by side
+make.boxplots=function(st, .trt, day){
+  tmp=subset(dat_mapped, Trialstage==st & Bserostatus==1 & Trt==.trt)
+  # col=tmp$EventIndFirstInfectionD1+1
+  
+  ncol=10
+  par(mfrow=c(1,ncol), oma=c(0,0,3,0), mar=c(5.1, 0.1, 2.1, 0.1), mgp = c(2, 1, 0))
+  
+  myboxplot(as.formula(day%.%"pseudoneutid50~nAbBatch"), tmp, ylim=c(0,4.5), main="ID50", xlab="nAbBatch", col=col1)
+  myboxplot(as.formula(day%.%"bindSpike~nAbBatch"),      tmp, ylim=c(0,4.5), main="bAb",  xlab="nAbBatch", col=col2) 
+  title(main="Ancestral", outer=T, line=-.5, adj=1/ncol)
+  
+  myboxplot(as.formula(day%.%"pseudoneutid50_B.1.351~nAbBatch"), tmp, ylim=c(0,4.5), main="ID50", xlab="nAbBatch", col=col1)
+  myboxplot(as.formula(day%.%"bindSpike_beta~nAbBatch"),         tmp, ylim=c(0,4.5), main="bAb",  xlab="nAbBatch", col=col2) 
+  title(main="Beta", outer=T, line=-.5, adj=3/ncol)
+  
+  myboxplot(as.formula(day%.%"pseudoneutid50_BA.1~nAbBatch"), tmp, ylim=c(0,4.5), main="ID50", xlab="nAbBatch", col=col1)
+  myboxplot(as.formula(day%.%"bindSpike_omicron~nAbBatch"),   tmp, ylim=c(0,4.5), main="bAb",  xlab="nAbBatch", col=col2) 
+  title(main="BA1-Omicron", outer=T, line=-.5, adj=5/ncol)
+  
+  myboxplot(as.formula(day%.%"pseudoneutid50_BA.2~nAbBatch"), tmp, ylim=c(0,4.5), main="ID50", xlab="nAbBatch", col=col1)
+  myboxplot(as.formula(day%.%"bindSpike_omicron~nAbBatch"),   tmp, ylim=c(0,4.5), main="bAb",  xlab="nAbBatch", col=col2)
+  title(main="BA2-Omicron", outer=T, line=-.5, adj=7/ncol)
+
+  myboxplot(as.formula(day%.%"pseudoneutid50_BA.4.5~nAbBatch"), tmp, ylim=c(0,4.5), main="ID50", xlab="nAbBatch", col=col1)
+  myboxplot(as.formula(day%.%"bindSpike_omicron~nAbBatch"),     tmp, ylim=c(0,4.5), main="bAb",  xlab="nAbBatch", col=col2)
+  title(main="BA45-Omicron", outer=T, line=-.5, adj=9/ncol)
+  
+  title(main="Stage "%.%st%.%" NN, "%.%ifelse(.trt==1, "Vaccine", "Placebo")%.%" Arm, "%.%day, outer=T, line=.5)
+}
+
+# put 3 days side by side
+make.boxplots.1=function(st, .trt, marker.pair){
+  
+  tmp=subset(dat_mapped, Trialstage==st & Bserostatus==1 & Trt==.trt)
+  # col=tmp$EventIndFirstInfectionD1+1
+  
+  par(mfrow=c(1,6), oma=c(0,0,3,0), mar=c(5.1, 1.1, 2.1, 1.1), mgp = c(2, 1, 0))
+  
+  offset=0  
+  for (day in c("Day43","Day22","B")) {
+    if (marker.pair==1) {
+      myboxplot(as.formula(day%.%"pseudoneutid50~nAbBatch"), tmp, ylim=c(0,4.5), main="ID50", xlab="nAbBatch", col=col1)
+      myboxplot(as.formula(day%.%"bindSpike~nAbBatch"),      tmp, ylim=c(0,4.5), main="bAb",  xlab="nAbBatch", col=col2) 
+      
+    } else if (marker.pair==2) {
+      myboxplot(as.formula(day%.%"pseudoneutid50_B.1.351~nAbBatch"), tmp, ylim=c(0,4.5), main="ID50", xlab="nAbBatch", col=col1)
+      myboxplot(as.formula(day%.%"bindSpike_beta~nAbBatch"),         tmp, ylim=c(0,4.5), main="bAb",  xlab="nAbBatch", col=col2) 
+
+    } else if (marker.pair==3) {
+      myboxplot(as.formula(day%.%"pseudoneutid50_BA.1~nAbBatch"), tmp, ylim=c(0,4.5), main="ID50", xlab="nAbBatch", col=col1)
+      myboxplot(as.formula(day%.%"bindSpike_omicron~nAbBatch"),   tmp, ylim=c(0,4.5), main="bAb",  xlab="nAbBatch", col=col2) 
+    }
+    title(main=day, outer=T, line=-.75, adj=(1+offset)/6)
+    offset=offset+2
+  }
+  
+  # myboxplot(as.formula(day%.%"pseudoneutid50_BA.2~nAbBatch"), tmp, ylim=c(0,4.5), main="ID50", xlab="nAbBatch", col=col1)
+  # myboxplot(as.formula(day%.%"bindSpike_omicron~nAbBatch"),   tmp, ylim=c(0,4.5), main="bAb",  xlab="nAbBatch", col=col2) 
+  # title(main="BA2-Omicron", outer=T, line=-.5, adj=7/10)
+  # 
+  # myboxplot(as.formula(day%.%"pseudoneutid50_BA.4.5~nAbBatch"), tmp, ylim=c(0,4.5), main="ID50", xlab="nAbBatch", col=col1)
+  # myboxplot(as.formula(day%.%"bindSpike_omicron~nAbBatch"),     tmp, ylim=c(0,4.5), main="bAb",  xlab="nAbBatch", col=col2) 
+  # title(main="BA45-Omicron", outer=T, line=-.5, adj=9/10)
+  
+  if (marker.pair==1) {
+    title(main="Stage "%.%st%.%" NN, "%.%ifelse(.trt==1, "Vaccine", "Placebo")%.%" Arm, "%.%"Ancestral", outer=T, line=.5)
+  } else if (marker.pair==2) {
+    title(main="Stage "%.%st%.%" NN, "%.%ifelse(.trt==1, "Vaccine", "Placebo")%.%" Arm, "%.%"Beta", outer=T, line=.5)
+  } else if (marker.pair==3) {
+    title(main="Stage "%.%st%.%" NN, "%.%ifelse(.trt==1, "Vaccine", "Placebo")%.%" Arm, "%.%"BA1-Omicron", outer=T, line=.5)
+  }
+}
+```
+
+```{r batch_adj_func, include=FALSE}
+
+rank.corr=function(st, days, trts, loss=c("s","p"), ties=c("rm","none")){
+  loss = match.arg(loss)
+  ties = match.arg(ties)
+  
+  cc=seq(0,0.5,0.05)
+  
+  llox <- lod <- 2.612
+  
+  all.cors=NULL
+  legends=c()
+  
+  for (i in 1:3) {
+  for (day in days) {
+      if (i==1) {
+        nAb=day%.%"pseudoneutid50"; bAb=day%.%"bindSpike"} 
+      else if (i==2){
+        nAb=day%.%"pseudoneutid50_B.1.351"; bAb=day%.%"bindSpike_beta"
+      } else if (i==3) {
+        nAb=day%.%"pseudoneutid50_BA.1"; bAb=day%.%"bindSpike_omicron"
+      }
+      # cat (nAb, bAb, "\n")
+    
+      for(.trt in trts) {
+        tmp=subset(dat_mapped, Trialstage==st & Bserostatus==1 & Trt==.trt & !is.na(get(nAb)) & !is.na(get(bAb)) & !is.na(nAbBatch))
+        
+        # par(mfrow=c(1,2), oma=c(0,0,2,0))
+        # myboxplot(as.formula(nAb%.%"~nAbBatch"), tmp, ylim=c(0,4.5), main=nAb, xlab="nAbBatch", col=col)
+        # myboxplot(as.formula(bAb%.%"~nAbBatch"), tmp, ylim=c(0,4.5), main=bAb, xlab="nAbBatch", col=col)
+        # title(main="Stage 2 NN, "%.%ifelse(.trt==0,"Placebo","Vaccine")%.%" Arm", outer=T, line=1)
+        
+        # remove those nAb < lod to deal with ties
+        if (ties=="rm") {
+          tmp = subset(tmp, get(nAb)>log10(lod))
+        } else if (ties=="none") {
+          # do nothing
+        } else stop("wrong ties methods")
+        
+        par(mfrow=c(3,3), mar=c(1.1, 1.1, 3.1, 1.1), oma=c(0,1,1,0))
+        cors=sapply(cc, function(c) {
+          tmp.1=tmp
+          # shift batch 1 ID50 down by c 
+          tmp.1[[nAb]] [tmp.1$nAbBatch==1] = tmp.1[[nAb]] [tmp.1$nAbBatch==1] - c
+          # censor at lod
+          tmp.1[[nAb]]  = ifelse (tmp.1[[nAb]] < log10(lod), log10(lod/2), tmp.1[[nAb]] )
+          # 
+          if (loss=="s") { #Spearman
+            cor(tmp.1[[nAb]], tmp.1[[bAb]], method="s")
+          } else if (loss=="p") { #Pearson
+            cor(tmp.1[[nAb]], tmp.1[[bAb]], method="p")
+          } else stop ("wrong loss function")
+        })
+        names(cors)=cc
+        # title(main="Stage 2 NN, "%.%ifelse(.trt==0,"Placebo","Vaccine")%.%" Arm", outer=T, line=0)
+        
+        # cat(ifelse(.trt==1,"Vacc","Plac"), " estimated c is ", cc[which.max(cors)], ". ", sep="")
+        all.cors=cbind(all.cors, c(chat=cc[which.max(cors)], cors))
+        legends=c(legends, paste0(sub(day%.%"pseudoneut","",nAb)," v. ",sub(day%.%"bind","",bAb)))
+      }
+      # cat("\n")
+  }
+  }
+  
+  # ylim=c(0.7,0.92)
+  ylim=NULL
+
+  par(mfrow=c(1,3), mar=c(4.1, 2.1, 1.1, 0.1), oma=c(0,2,3,0), mgp = c(2, 1, 0))
+  idx=1:3;   mymatplot(cc, all.cors[-1,idx], xlab="c", legend=days, col=1:3, legend.cex=1, legend.x=7, pch=idx%.%"", ylim=ylim, main=legends[idx[1]], cex.main=1)
+  idx=1:3+3; mymatplot(cc, all.cors[-1,idx], xlab="c", legend=days, col=1:3, legend.cex=1, legend.x=7, pch=idx%.%"", ylim=ylim, main=legends[idx[1]], cex.main=1)
+  idx=1:3+6; mymatplot(cc, all.cors[-1,idx], xlab="c", legend=days, col=1:3, legend.cex=1, legend.x=7, pch=idx%.%"", ylim=ylim, main=legends[idx[1]], cex.main=1)
+  
+  title(main="Stage "%.%st%.%" NN, "%.%ifelse(.trt==0,"Placebo","Vaccine"), outer=T, line=1)
+  
+  if (loss=="s") {
+    label="Spearman correlation"
+  } else if (loss=="p") {
+    label="Pearson correlation"
+  } else stop ("wrong method")
+  
+  if (ties=="rm") {
+    label=paste0(label, ", <lod removed")
+  } else if (ties=="none") {
+    # do nothing
+  }
+  
+  mtext(label, side = 2, line = .8, adj = .5, outer=T)
+
+  print(all.cors, digits=3)
+}
+```
+
+```{r shift_pooled_func, include=F}
+
+shift_pooled = function(st, marker_pair=c("ancestral", "beta", "omicron1", "omicron2", "omicron45"), ties, loss="s") {
+    
+  marker_pair = match.arg(marker_pair)
+  
+  cc=seq(0,0.5,0.05)
+  
+  llox <- lod <- 2.612
+  
+  if (loss=="s") {
+    label="Spearman correlation"
+  } else if (loss=="p") {
+    label="Pearson correlation"
+  } else stop ("wrong method")
+  
+  if (ties=="rm") {
+    label=paste0(label, ", <lod removed")
+  } else if (ties=="none") {
+    # do nothing
+  }
+  
+  ### make data
+  
+  if (marker_pair=="ancestral") {
+    nAb="pseudoneutid50"; bAb="bindSpike"
+  } else if (marker_pair=="beta"){
+    nAb="pseudoneutid50_B.1.351"; bAb="bindSpike_beta"
+  } else if (marker_pair=="omicron1") {
+    nAb="pseudoneutid50_BA.1"; bAb="bindSpike_omicron"
+  } else if (marker_pair=="omicron2") {
+    nAb="pseudoneutid50_BA.2"; bAb="bindSpike_omicron"
+  } else if (marker_pair=="omicron45") {
+    nAb="pseudoneutid50_BA.4.5"; bAb="bindSpike_omicron"
+  } else stop("wrong marker_pair")
+  
+  all.cors=NULL
+  legends=c()
+  
+  tmp1=subset(dat_mapped, Trialstage==st & Bserostatus==1 & !is.na(nAbBatch), select=c(Subjectid, nAbBatch, 
+      get("Day43"%.%nAb), get("Day22"%.%nAb), get("B"%.%nAb)  )  )
+  tmp2=subset(dat_mapped, Trialstage==st & Bserostatus==1 & !is.na(nAbBatch), select=c(Subjectid, nAbBatch, 
+      get("Day43"%.%bAb), get("Day22"%.%bAb), get("B"%.%bAb)  )  )
+  
+  # make separate long data frames for nAb and bAb
+  tmp1long = myreshapelong(tmp1, cols.to.be.stacked=c("Day43","Day22","B")%.%nAb, 
+                           label.cols.to.be.stacked="time", new.col.name=nAb)
+  tmp1long$time = sub(nAb, "", tmp1long$time)
+  tmp2long = myreshapelong(tmp2, cols.to.be.stacked=c("Day43","Day22","B")%.%bAb, 
+                           label.cols.to.be.stacked="time", new.col.name=bAb)
+  tmp2long$time = sub(bAb, "", tmp2long$time)
+  
+  # merge bAb and nAb data frames
+  tmplong = merge(subset(tmp1long, select=-id), subset(tmp2long, select=-id))
+  tmplong = tmplong[complete.cases(tmplong),]
+  
+  # add a quartile indicator based on bindSpike
+  breaks=quantile(tmplong[[bAb]])
+  breaks[1] = breaks[1] - 0.1
+  tmplong$quartile = as.numeric(cut(tmplong[[bAb]], breaks))
+  
+  if (ties=="rm") {
+    # remove those nAb < lod to deal with ties  
+    tmplong = subset(tmplong, get(nAb)>log10(lod))
+  } else if (ties=="none") {
+    # do nothing
+  }
+      
+  # plot data by quartiles
+  par(mfrow=c(2,4), oma=c(0,0,3,0), mar=c(3.1, 2.1, 2.1, 0.1), mgp = c(2, 1, 0))
+  for (i in 4:1) {
+    tmp.1=tmplong[tmplong$quartile==i,]
+    if (ties=="rm" & (nrow(tmp.1)==0 | length(unique(tmp.1[[nAb]]))==1 | length(unique(tmp.1[[bAb]]))==1)) {
+      plot.new(); text(0.5, 0.5, labels=" ", col="white") 
+      plot.new(); text(0.5, 0.5, labels=" ", col="white") 
+      # empty.plot() does not take up any space for some reason
+    } else {
+      myboxplot(get(nAb)~nAbBatch, tmp.1, ylim=c(0,4.5), main=nAb, xlab="nAbBatch", col=1, cex.main=1)
+      myboxplot(get(bAb)~nAbBatch, tmp.1, ylim=c(0,4.5), main=bAb, xlab="nAbBatch", col=2, cex.main=1)
+    }
+  }
+  title(main="Stage "%.%st%.%" NN"%.%", "%.%marker_pair, outer=T, line=1)
+
+
+  
+  # Estimate c using a quarter of data at a time
+  par(mfrow=c(3,2), mar=c(3.1, 2.1, 1.1, 0.1), oma=c(0,2,3,0), mgp = c(2, 1, 0))
+  chats=c()
+  for (i in 4:(-1)) {
+    if (i==0) {
+      tmp.2=tmplong
+    } else if (i==-1) {
+      tmp.2=tmplong[tmplong$quartile==4 | tmplong$quartile==3,]
+    } else {
+      tmp.2=tmplong[tmplong$quartile==i,]
+    }
+    
+    losses=sapply(cc, function(c) {
+      tmp.1=tmp.2
+      # shift batch 1 ID50 down by c 
+      tmp.1[[nAb]] [tmp.1$nAbBatch==1] = tmp.1[[nAb]] [tmp.1$nAbBatch==1] - c
+      # censor at lod
+      tmp.1[[nAb]]  = ifelse (tmp.1[[nAb]] < log10(lod), log10(lod/2), tmp.1[[nAb]] )
+      
+      if (ties=="rm") {
+        # remove those nAb < lod to deal with ties
+        tmp.1 = subset(tmp.1, get(nAb)>log10(lod))
+      } else if (ties=="none") {
+        # do nothing
+      }
+      
+      if (length(unique(tmp.1[[nAb]]))==1 | 
+          length(unique(tmp.1[[bAb]]))==1 | 
+          length(unique(tmp.1$nAbBatch))==1 | # there is only 1 batch left
+          nrow(tmp.1)<50
+          ) {
+        return (0)
+      }
+      
+
+      # compute loss 
+      if (loss=="s") { #Spearman
+        cor(tmp.1[[nAb]], tmp.1[[bAb]], method="s")
+      } else if (loss=="p") { #Pearson
+        cor(tmp.1[[nAb]], tmp.1[[bAb]], method="p")
+      } else stop ("wrong loss function")
+    })
+    names(losses)=cc
+    
+    if (i==0) {
+      main="All"
+    } else if (i==-1) {
+      main="Q4_3"
+    } else {
+      main="Q"%.%i
+    }
+    main=paste0(main, " (n=", nrow(tmp.2), ")")
+
+    # plot losses
+    plot(cc, losses, xlab="c", type="l", main=main)
+    title(main="Stage "%.%st%.%" NN"%.%", "%.%marker_pair, outer=T, line=1)
+    mtext(label, side = 2, line = .8, adj = .5, outer=T)
+    
+    chat=cc[which.max(losses)]
+    #
+    if (loss=="s") {
+      # less than 0.4 spearman, chat is disregarded
+      if (max(losses,na.rm=T)<0.4) chat=NA
+    }
+    chats=c(chats, chat)
+  }  
+  cat("chat: "); print(chats)
+  chats
+}
+```
+
+
+# Methods
+
+We propose a rank-based procedure for batch adjustment. The basic idea is find a transformation for the batch 1 nAb readouts so that when they are mixed with batch 2 nAb readouts and rank together, the ranking is consistent with the ranking of the corresponding bAb. 
+
+Let f(x) be the mapping/correction we will apply to batch 1 nAb. The choice of f(x) is not too important for now - let's just assume it is a truncated linear shift: f(x)=x-c if x-c>=lod, otherwise lod/2. We can solve an optimization problem, 
+
+$\hat{c} = argmin_c L(rank_{bAb}, rank_{nAb}(c)),$
+
+where $rank_{bAb}$ is the rank of each ptid in bAb for all ptids. $rank_{nAb}$ is defined similarly based on nAb. It is obviously a function of c. The loss function $L$ can be L1 norm of the difference or 1 - Spearman correlation coefficient. Optimization can be done by exhaustive search on a grid of candidate values for c.
+
+Appendix contains two experiments that show under conditions we expect no batch effects, $\hat{c}$ is 0 and the variability is around $\pm 0.05$ or 12\%.
+
+**Ties** Ties occur when values dip below LOD. Different methods for handling ties could have a large impact on the results when a large portion of readouts are under LOD. We take two approaches 1) keep all samples, 2) remove samples with nAb below LOD
+
+Some details:
+
+* If there is only one batch, or if there are less than 50 samples, or if there is only one unique nAb or bAb value, Spearman cc is set to 0.
+* If Spearman cc is used as loss, then if the maximum Spearman cc is less than 0.4, $\hat{c}$ is set to NA.
+* We impute BA4.5 from BA.1 and BA.2, which is missing for many ptids in stage 1 before doing batch correction.
+
+In the following, we perform batch correction in two ways. Both ways perform batch correction separately for each marker pair (bAb Omicron is used against three ID50s: BA.1, BA.2, BA4.5) and each trial. The diference is that the first way is done separately within each treatment arm and each time point, while the second way pools over treatment arms and time points, but is done within each quartile of marker distribution. The second approach is preferrable because it is more likely that different adjustment is needed for different marker levels regardless of the treatment arm and time point that samples are from. In the second approach, we recommend $\hat{c}$ esimated using both Q4 and Q3 data.
+
+Estimated $\hat{c}$ are shown in Section 3.3.
+
+For most ptids, all three time points (B, D22 and D43) are in the same batch, but the following 7 ptids are the exceptions. This can be handled in the dataset construction in shift_pooled.
+
+Batch 2
+     Unique.Subject.Identifier Bleed timepoint
+957      VAT008-170-0003-11007     2       D22
+1352     VAT008-288-0001-11353     2       D22
+2036     VAT008-356-0005-10209     3       D43
+2346     VAT008-840-0011-10001     3       D43
+2389     VAT008-840-0012-16001  002A       D22
+2669     VAT008-840-0017-11002     3       D43
+2671     VAT008-840-0017-11005     3       D43
+
+Batch 1
+     Unique.Subject.Identifier Bleed timepoint
+76       VAT008-170-0003-11007  0001         B
+77       VAT008-170-0003-11007  0003       D43
+245      VAT008-288-0001-11353  0001         B
+246      VAT008-288-0001-11353  0003       D43
+770      VAT008-356-0005-10209  0001         B
+771      VAT008-356-0005-10209  0002       D22
+997      VAT008-840-0011-10001  0001         B
+998      VAT008-840-0011-10001  0002       D22
+1005     VAT008-840-0012-16001  001A         B
+1006     VAT008-840-0012-16001  003A       D43
+1031     VAT008-840-0017-11002  0001         B
+1032     VAT008-840-0017-11005  0002       D22
+
+
+
+# Calibration done separately within treatment arms and time points
+
+The bAb levels between the two batches may be similar in vaccine (likely due to saturation), but not in placebo.
+
+
+\newpage
+## Stage 2 NN, Vaccine
+
+```{r,echo=F,fig.height=3}
+make.boxplots.1(st=2, .trt=1, marker.pair=1)
+```
+
+\vspace{10pt}
+
+```{r,echo=F,fig.height=3}
+make.boxplots.1(st=2, .trt=1, marker.pair=2)
+```
+
+\vspace{10pt}
+
+```{r,echo=F,fig.height=3}
+make.boxplots.1(st=2, .trt=1, marker.pair=3)
+```
+
+
+```{r,echo=F}
+rank.corr(st=2, c("Day43","Day22","B"), trts=1, loss="s", ties="none")
+rank.corr(st=2, c("Day43","Day22","B"), trts=1, loss="s", ties="rm")
+```
+
+
+\newpage
+## Stage 2 NN, Placebo
+
+```{r,echo=F,fig.height=3}
+make.boxplots.1(st=2, .trt=0, marker.pair=1)
+```
+
+\vspace{10pt}
+
+```{r,echo=F,fig.height=3}
+make.boxplots.1(st=2, .trt=0, marker.pair=2)
+```
+
+\vspace{10pt}
+
+```{r,echo=F,fig.height=3}
+make.boxplots.1(st=2, .trt=0, marker.pair=3)
+```
+
+
+
+```{r,echo=F}
+rank.corr(st=2, c("Day43","Day22","B"), trts=0, loss="p", ties="none")
+rank.corr(st=2, c("Day43","Day22","B"), trts=0, loss="p", ties="rm")
+```
+
+
+
+
+\newpage
+## Stage 1 NN, Vaccine
+
+```{r,echo=F,fig.height=3}
+make.boxplots.1(st=1, .trt=1, marker.pair=1)
+```
+
+\vspace{10pt}
+
+```{r,echo=F,fig.height=3}
+make.boxplots.1(st=1, .trt=1, marker.pair=2)
+```
+
+\vspace{10pt}
+
+```{r,echo=F,fig.height=3}
+make.boxplots.1(st=1, .trt=1, marker.pair=3)
+```
+
+
+```{r,echo=F}
+rank.corr(st=1, c("Day43","Day22","B"), trts=1, loss="p", ties="none")
+rank.corr(st=1, c("Day43","Day22","B"), trts=1, loss="p", ties="rm")
+```
+
+
+\newpage
+## Stage 1 NN, Placebo
+
+```{r,echo=F,fig.height=3}
+make.boxplots.1(st=1, .trt=0, marker.pair=1)
+```
+
+\vspace{10pt}
+
+```{r,echo=F,fig.height=3}
+make.boxplots.1(st=1, .trt=0, marker.pair=2)
+```
+
+\vspace{10pt}
+
+```{r,echo=F,fig.height=3}
+make.boxplots.1(st=1, .trt=0, marker.pair=3)
+```
+
+
+```{r,echo=F}
+rank.corr(st=1, c("Day43","Day22","B"), trts=0, loss="p", ties="none")
+rank.corr(st=1, c("Day43","Day22","B"), trts=0, loss="p", ties="rm")
+```
+
+
+\newpage
+# Calibration done separately within marker quartiles
+
+The idea is to pool over different time points and treatment arms, but keep it separate for different marker pairs. After pooling, there are more data and we can divide into four quartiles based on marker level.
+
+
+
+## Stage 2 NN
+
+\newpage
+```{r, echo=F}
+res.st2=cbind(
+  shift_pooled (st=2, marker_pair="ancestral", ties="none"),
+  shift_pooled (st=2, marker_pair="ancestral", ties="rm"),
+  shift_pooled (st=2, marker_pair="beta", ties="none"),
+  shift_pooled (st=2, marker_pair="beta", ties="rm"),
+  shift_pooled (st=2, marker_pair="omicron1", ties="none"),
+  shift_pooled (st=2, marker_pair="omicron1", ties="rm"),
+  shift_pooled (st=2, marker_pair="omicron2", ties="none"),
+  shift_pooled (st=2, marker_pair="omicron2", ties="rm"),
+  shift_pooled (st=2, marker_pair="omicron45", ties="none"),
+  shift_pooled (st=2, marker_pair="omicron45", ties="rm")
+)
+```
+
+
+## Stage 1 NN
+
+\newpage
+```{r, echo=F}
+res.st1=cbind(
+  shift_pooled (st=1, marker_pair="ancestral", ties="none"),
+  shift_pooled (st=1, marker_pair="ancestral", ties="rm"),
+  shift_pooled (st=1, marker_pair="beta", ties="none"),
+  shift_pooled (st=1, marker_pair="beta", ties="rm"),
+  shift_pooled (st=1, marker_pair="omicron1", ties="none"),
+  shift_pooled (st=1, marker_pair="omicron1", ties="rm"),
+  shift_pooled (st=1, marker_pair="omicron2", ties="none"),
+  shift_pooled (st=1, marker_pair="omicron2", ties="rm"),
+  shift_pooled (st=1, marker_pair="omicron45", ties="none"),
+  shift_pooled (st=1, marker_pair="omicron45", ties="rm")
+)
+```
+
+
+## Estimated c
+
+Results for stage 2
+```{r, echo=F}
+# pick rm, which are the even columns
+tab = t(res.st2[,seq(2,10,2)])
+rownames(tab)=c("ancestral","beta","omicron1","omicron2","omicron45")
+colnames(tab)=c("Q"%.%4:1, "All", "Q4_3")
+tab
+```
+
+Results for stage 1
+```{r, echo=F}
+# pick rm
+tab = t(res.st1[,seq(2,10,2)])
+rownames(tab)=c("ancestral","beta","omicron1","omicron2","omicron45")
+colnames(tab)=c("Q"%.%4:1, "All", "Q4_3")
+tab
+```
+\newpage
+# Appendix
+
+
+## Negative control experiment I
+
+We test the procedure on two bAb readouts. Since there are no batch effects for bAb, the truth $c$ is 0. $\hat{c}$s are between -0.05 and 0.05.
+
+
+```{r,echo=F}
+cc=seq(-0.2,0.2,0.05)
+
+all.cors=NULL
+legends=c()
+for (i in 1:3) {
+  if (i==1) {
+    nAb="Day43bindSpike_beta"; bAb="Day43bindSpike"
+  } else if (i==2){
+    nAb="Day43bindSpike_omicron"; bAb="Day43bindSpike"
+  } else if (i==3) {
+    nAb="Day43bindSpike_beta"; bAb="Day43bindSpike_omicron"
+  }
+  cat (nAb, bAb, "\n")
+
+  for(.trt in 0:1) {
+    myprint(.trt)
+    tmp=subset(dat_mapped, Trialstage==2 & Bserostatus==1 & Trt==.trt & !is.na(get(nAb)) & !is.na(get(bAb)) & !is.na(nAbBatch))
+    col=tmp$EventIndFirstInfectionD1+1
+
+    # par(mfrow=c(1,2), oma=c(0,0,2,0))
+    # myboxplot(as.formula(nAb%.%"~nAbBatch"), tmp, ylim=c(0,4.5), main=nAb, xlab="nAbBatch", col=col)
+    # myboxplot(as.formula(bAb%.%"~nAbBatch"), tmp, ylim=c(0,4.5), main=bAb, xlab="nAbBatch", col=col)
+    # title(main="Stage 2 NN, "%.%ifelse(.trt==0,"Placebo","Vaccine")%.%" Arm", outer=T, line=1)
+  
+    llox=min(tmp[[nAb]])
+    
+    par(mfrow=c(3,3), mar=c(1.1, 1.1, 3.1, 1.1), oma=c(0,1,2,0))
+    cors=sapply(cc, function(c) {
+      tmp.1=tmp
+      # shift batch 1 ID50 down by c but not lower than llox
+      tmp.1[[nAb]] [tmp.1$nAbBatch==1] = tmp.1[[nAb]] [tmp.1$nAbBatch==1] - c
+      tmp.1[[nAb]]  = ifelse (tmp.1[[nAb]] <llox, llox, tmp.1[[nAb]] )
+      ranks = cbind(id50=rank(tmp.1[[nAb]] ), bind=rank(tmp.1[[bAb]] ))
+      # corplot(ranks[,"bind"], ranks[,"id50"], main=c, method="s", digit.cor=3)
+      cor(ranks[,"bind"], ranks[,"id50"], method="s")
+    })
+    names(cors)=cc
+    # title(main="Stage 2 NN, "%.%ifelse(.trt==0,"Placebo","Vaccine")%.%" Arm", outer=T, line=0)
+    
+    cat("Estimated c is ", cc[which.max(cors)], ".\n", sep="")
+    all.cors=cbind(all.cors, cors)
+    legends=c(legends, paste0(sub("Day43","",nAb)," v. ",sub("Day43","",bAb), ", ", ifelse(.trt==0,"Plac","Vacc")))
+  }
+}
+
+# ylim=c(0.7,0.92)
+ylim=NULL
+par(mfrow=c(1,2), mar=c(5.1, 3.1, 0.1, 0.1), oma=c(0,1,3,0))
+mymatplot(cc, all.cors[,c(1,3,5)],   xlab="c", ylab="Spearman correlation", legend=legends[c(1,3,5)],   col=1:3, legend.cex=.75, legend.x=7, pch=c("1","3","5"), ylim=ylim)
+mymatplot(cc, all.cors[,c(1,3,5)+1], xlab="c", ylab="Spearman correlation", legend=legends[c(1,3,5)+1], col=1:3, legend.cex=.75, legend.x=7, pch=c("2","4","6"), ylim=ylim)
+title(main="Stage 2 NN, Spearman correlation", outer=T, line=0.5)
+
+print(all.cors)
+
+```
+
+
+
+
+## Negative control experiment II
+
+We permute the nAbBatch value so that there are no batch effects. Again, $\hat{c}$s are between -0.05 and 0.05.
+
+
+```{r,echo=F}
+
+# centerend around 0
+cc=seq(-0.2,0.2,0.05)
+
+all.cors=NULL
+legends=c()
+for (i in 1:3) {
+  if (i==1) {
+    nAb="Day43pseudoneutid50";         bAb="Day43bindSpike"} 
+  else if (i==2){
+    nAb="Day43pseudoneutid50_B.1.351"; bAb="Day43bindSpike_beta"
+  } else if (i==3) {
+    nAb="Day43pseudoneutid50_BA.1";    bAb="Day43bindSpike_omicron"
+  }
+  cat (nAb, bAb, "\n")
+
+  for(.trt in 0:1) {
+    myprint(.trt)
+    tmp=subset(dat_mapped, Trialstage==2 & Bserostatus==1 & Trt==.trt & !is.na(get(nAb)) & !is.na(get(bAb)) & !is.na(nAbBatch))
+    col=tmp$EventIndFirstInfectionD1+1
+
+    tmp$nAbBatch = sample(tmp$nAbBatch)
+    
+    # par(mfrow=c(1,2), oma=c(0,0,2,0))
+    # myboxplot(as.formula(nAb%.%"~nAbBatch"), tmp, ylim=c(0,4.5), main=nAb, xlab="nAbBatch", col=col)
+    # myboxplot(as.formula(bAb%.%"~nAbBatch"), tmp, ylim=c(0,4.5), main=bAb, xlab="nAbBatch", col=col)
+    # title(main="Stage 2 NN, "%.%ifelse(.trt==0,"Placebo","Vaccine")%.%" Arm", outer=T, line=1)
+  
+    llox=min(tmp[[nAb]])
+    
+    par(mfrow=c(3,3), mar=c(1.1, 1.1, 3.1, 1.1), oma=c(0,1,2,0))
+    cors=sapply(cc, function(c) {
+      tmp.1=tmp
+      # shift batch 1 ID50 down by c but not lower than llox
+      tmp.1[[nAb]] [tmp.1$nAbBatch==1] = tmp.1[[nAb]] [tmp.1$nAbBatch==1] - c
+      tmp.1[[nAb]]  = ifelse (tmp.1[[nAb]] <llox, llox, tmp.1[[nAb]] )
+      ranks = cbind(id50=rank(tmp.1[[nAb]] ), bind=rank(tmp.1[[bAb]] ))
+      # corplot(ranks[,"bind"], ranks[,"id50"], main=c, method="s", digit.cor=3)
+      cor(ranks[,"bind"], ranks[,"id50"], method="s")
+    })
+    names(cors)=cc
+    # title(main="Stage 2 NN, "%.%ifelse(.trt==0,"Placebo","Vaccine")%.%" Arm", outer=T, line=0)
+    
+    cat("Estimated c is ", cc[which.max(cors)], ".\n", sep="")
+    all.cors=cbind(all.cors, cors)
+    legends=c(legends, paste0(sub("Day43pseudoneut","",nAb)," v. ",sub("Day43","",bAb), ", ", ifelse(.trt==0,"Plac","Vacc")))
+  }
+}
+
+# ylim=c(0.7,0.92)
+ylim=NULL
+par(mfrow=c(1,2), mar=c(5.1, 3.1, 0.1, 0.1), oma=c(0,1,3,0))
+mymatplot(cc, all.cors[,c(1,3,5)],   xlab="c", ylab="Spearman correlation", legend=legends[c(1,3,5)],   col=1:3, legend.cex=.75, legend.x=7, pch=c("1","3","5"), ylim=ylim)
+mymatplot(cc, all.cors[,c(1,3,5)+1], xlab="c", ylab="Spearman correlation", legend=legends[c(1,3,5)+1], col=1:3, legend.cex=.75, legend.x=7, pch=c("2","4","6"), ylim=ylim)
+title(main="Stage 2 NN, Spearman correlation", outer=T, line=0.5)
+
+print(all.cors)
+
+```
+
