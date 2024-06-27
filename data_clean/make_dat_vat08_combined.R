@@ -715,11 +715,12 @@ for (st in 1:2) {
 for (a in nassays) {
 for (t in c("Day43", "Day22", "B")) {
   # shift by \hat{c}
-  dat_proc[dat_proc$Trialstage==st & dat_proc$Bserostatus==1, t%.%a] = dat_proc[dat_proc$Trialstage==st & dat_proc$Bserostatus==1, t%.%a] - chat[a, st]
+  kp = dat_proc$Trialstage==st & dat_proc$Bserostatus==1 & dat_proc$nAbBatch==1 & !is.na(dat_proc$nAbBatch)
+  dat_proc[kp, t%.%a] = dat_proc[kp, t%.%a] - chat[a, st]
   # censoring by lod
-  dat_proc[dat_proc$Trialstage==st & dat_proc$Bserostatus==1, t%.%a] = ifelse (dat_proc[dat_proc$Trialstage==st & dat_proc$Bserostatus==1, t%.%a] < log10(llods[a]),
-                                                                               log10(llods[a]/2),
-                                                                               dat_proc[dat_proc$Trialstage==st & dat_proc$Bserostatus==1, t%.%a])
+  dat_proc[kp, t%.%a] = ifelse (dat_proc[kp, t%.%a] < log10(llods[a]),
+                                log10(llods[a]/2),
+                                dat_proc[kp, t%.%a])
 }
 }
 }
@@ -803,7 +804,7 @@ for (trt in c(0,1)) {
         myprint(trt, sero, tp, stage)
         dat_proc$tmp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus==sero & get("ph2.D"%.%tp%.%".bAb")) 
         dat_proc = add.trichotomized.markers (dat_proc, 
-                                              c("Day"%.%tp%.%bAb.1, "B"%.%bAb.1), 
+                                              c("Day"%.%tp%.%bAb.1, "Delta"%.%tp%.%"overB"%.%bAb.1, "B"%.%bAb.1), 
                                               ph2.col.name="tmp", 
                                               wt.col.name="wt.D"%.%tp%.%".bAb", verbose=T)
         dat_proc$tmp = NULL
@@ -813,7 +814,7 @@ for (trt in c(0,1)) {
       for (stage in c(1,2)) {
         dat_proc$tmp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus==sero & get("ph2.D"%.%tp%.%".nAb")) 
         dat_proc = add.trichotomized.markers (dat_proc, 
-                                              c("Day"%.%tp%.%nAb.1, "B"%.%nAb.1), 
+                                              c("Day"%.%tp%.%nAb.1, "Delta"%.%tp%.%"overB"%.%nAb.1, "B"%.%nAb.1), 
                                               ph2.col.name="tmp", 
                                               wt.col.name="wt.D"%.%tp%.%".nAb", verbose=T)
         dat_proc$tmp = NULL
