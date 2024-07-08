@@ -697,33 +697,34 @@ for (step in 1:2) {
 ###############################################################################
 # 6. transformation of the markers
 
-# batch adjustment
 
-nassays=c("pseudoneutid50", "pseudoneutid50_B.1.351", "pseudoneutid50_BA.1", "pseudoneutid50_BA.2", "pseudoneutid50_BA.4.5")
-
-# save copies of markers that need to be corrected: nAb
-for (a in nassays) {
-for (t in c("Day43", "Day22", "B")) {
-  dat_proc[, t%.%a%.%"_save"] = dat_proc[, t%.%a] 
-}
-}    
-    
-chat = cbind(st1=c(0.1, 0.2, 0.25, 0.45, 0.25), st2=c(0.2, 0.35, 0.35, 0.3, 0.25))
-rownames(chat)=nassays
-  
-for (st in 1:2) {
-for (a in nassays) {
-for (t in c("Day43", "Day22", "B")) {
-  # shift by \hat{c}
-  kp = dat_proc$Trialstage==st & dat_proc$Bserostatus==1 & dat_proc$nAbBatch==1 & !is.na(dat_proc$nAbBatch)
-  dat_proc[kp, t%.%a] = dat_proc[kp, t%.%a] - chat[a, st]
-  # censoring by lod
-  dat_proc[kp, t%.%a] = ifelse (dat_proc[kp, t%.%a] < log10(llods[a]),
-                                log10(llods[a]/2),
-                                dat_proc[kp, t%.%a])
-}
-}
-}
+# # batch normalization/batch correction
+# 
+# nassays=c("pseudoneutid50", "pseudoneutid50_B.1.351", "pseudoneutid50_BA.1", "pseudoneutid50_BA.2", "pseudoneutid50_BA.4.5")
+# 
+# # save copies of markers that need to be corrected: nAb
+# for (a in nassays) {
+# for (t in c("Day43", "Day22", "B")) {
+#   dat_proc[, t%.%a%.%"_save"] = dat_proc[, t%.%a] 
+# }
+# }    
+#     
+# chat = cbind(st1=c(0.1, 0.2, 0.25, 0.45, 0.25), st2=c(0.2, 0.35, 0.35, 0.3, 0.25))
+# rownames(chat)=nassays
+#   
+# for (st in 1:2) {
+# for (a in nassays) {
+# for (t in c("Day43", "Day22", "B")) {
+#   # shift by \hat{c}
+#   kp = dat_proc$Trialstage==st & dat_proc$Bserostatus==1 & dat_proc$nAbBatch==1 & !is.na(dat_proc$nAbBatch)
+#   dat_proc[kp, t%.%a] = dat_proc[kp, t%.%a] - chat[a, st]
+#   # censoring by lod
+#   dat_proc[kp, t%.%a] = ifelse (dat_proc[kp, t%.%a] < log10(llods[a]),
+#                                 log10(llods[a]/2),
+#                                 dat_proc[kp, t%.%a])
+# }
+# }
+# }
 
 
 

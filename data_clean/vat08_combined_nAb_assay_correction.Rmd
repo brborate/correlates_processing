@@ -44,6 +44,14 @@ print(nassays)
 
 col1=1
 col2=2
+
+# define delta
+dat_mapped$Delta43overBpseudoneutid50 = dat_mapped$Day43pseudoneutid50 - dat_mapped$Bpseudoneutid50
+dat_mapped$Delta43overBpseudoneutid50_BA.1 = dat_mapped$Day43pseudoneutid50_BA.1 - dat_mapped$Bpseudoneutid50_BA.1
+
+dat_mapped$Delta43overBbindSpike = dat_mapped$Day43bindSpike - dat_mapped$BbindSpike
+dat_mapped$Delta43overBbindSpike_omicron = dat_mapped$Day43bindSpike_omicron - dat_mapped$BbindSpike_omicron
+
 ```
 
 
@@ -70,9 +78,12 @@ dat_mapped[kp, imp.markers] <- mice::complete(imp, action = 1)
 
 ```
 
+
+
+
 ```{r plotting_func, include=FALSE}
 
-# putpairs of markers side by side
+# put pairs of markers side by side
 make.boxplots=function(st, .trt, day){
   tmp=subset(dat_mapped, Trialstage==st & Bserostatus==1 & Trt==.trt)
   # col=tmp$EventIndFirstInfectionD1+1
@@ -631,7 +642,7 @@ tab
 
 ## Negative control experiment I
 
-We test the procedure on two bAb readouts. Since there are no batch effects for bAb, the truth $c$ is 0. $\hat{c}$s are between -0.05 and 0.05.
+We test the procedure on two bAb readouts in stage 2. Since there are no batch effects for bAb, the truth $c$ is 0. $\hat{c}$s are between -0.05 and 0.05.
 
 
 ```{r,echo=F}
@@ -690,6 +701,132 @@ title(main="Stage 2 NN, Spearman correlation", outer=T, line=0.5)
 print(all.cors)
 
 ```
+
+
+Stage 1
+
+```{r,echo=F}
+cc=seq(-0.2,0.2,0.05)
+
+all.cors=NULL
+legends=c()
+for (i in 1:3) {
+  if (i==1) {
+    nAb="Day43bindSpike_beta"; bAb="Day43bindSpike"
+  } else if (i==2){
+    nAb="Day43bindSpike_omicron"; bAb="Day43bindSpike"
+  } else if (i==3) {
+    nAb="Day43bindSpike_beta"; bAb="Day43bindSpike_omicron"
+  }
+  cat (nAb, bAb, "\n")
+
+  for(.trt in 0:1) {
+    myprint(.trt)
+    tmp=subset(dat_mapped, Trialstage==1 & Bserostatus==1 & Trt==.trt & !is.na(get(nAb)) & !is.na(get(bAb)) & !is.na(nAbBatch))
+    col=tmp$EventIndFirstInfectionD1+1
+
+    # par(mfrow=c(1,2), oma=c(0,0,2,0))
+    # myboxplot(as.formula(nAb%.%"~nAbBatch"), tmp, ylim=c(0,4.5), main=nAb, xlab="nAbBatch", col=col)
+    # myboxplot(as.formula(bAb%.%"~nAbBatch"), tmp, ylim=c(0,4.5), main=bAb, xlab="nAbBatch", col=col)
+    # title(main="Stage 2 NN, "%.%ifelse(.trt==0,"Placebo","Vaccine")%.%" Arm", outer=T, line=1)
+  
+    llox=min(tmp[[nAb]])
+    
+    par(mfrow=c(3,3), mar=c(1.1, 1.1, 3.1, 1.1), oma=c(0,1,2,0))
+    cors=sapply(cc, function(c) {
+      tmp.1=tmp
+      # shift batch 1 ID50 down by c but not lower than llox
+      tmp.1[[nAb]] [tmp.1$nAbBatch==1] = tmp.1[[nAb]] [tmp.1$nAbBatch==1] - c
+      tmp.1[[nAb]]  = ifelse (tmp.1[[nAb]] <llox, llox, tmp.1[[nAb]] )
+      ranks = cbind(id50=rank(tmp.1[[nAb]] ), bind=rank(tmp.1[[bAb]] ))
+      # corplot(ranks[,"bind"], ranks[,"id50"], main=c, method="s", digit.cor=3)
+      cor(ranks[,"bind"], ranks[,"id50"], method="s")
+    })
+    names(cors)=cc
+    # title(main="Stage 2 NN, "%.%ifelse(.trt==0,"Placebo","Vaccine")%.%" Arm", outer=T, line=0)
+    
+    cat("Estimated c is ", cc[which.max(cors)], ".\n", sep="")
+    all.cors=cbind(all.cors, cors)
+    legends=c(legends, paste0(sub("Day43","",nAb)," v. ",sub("Day43","",bAb), ", ", ifelse(.trt==0,"Plac","Vacc")))
+  }
+}
+
+# ylim=c(0.7,0.92)
+ylim=NULL
+par(mfrow=c(1,2), mar=c(5.1, 3.1, 0.1, 0.1), oma=c(0,1,3,0))
+mymatplot(cc, all.cors[,c(1,3,5)],   xlab="c", ylab="Spearman correlation", legend=legends[c(1,3,5)],   col=1:3, legend.cex=.75, legend.x=7, pch=c("1","3","5"), ylim=ylim)
+mymatplot(cc, all.cors[,c(1,3,5)+1], xlab="c", ylab="Spearman correlation", legend=legends[c(1,3,5)+1], col=1:3, legend.cex=.75, legend.x=7, pch=c("2","4","6"), ylim=ylim)
+title(main="Stage 2 NN, Spearman correlation", outer=T, line=0.5)
+
+print(all.cors)
+
+```
+
+
+
+## Negative control experiment I(b)
+
+We test the procedure between a bAb and delta. Stage 1
+
+
+```{r,echo=F}
+cc=seq(0,0.4,0.05)
+
+all.cors=NULL
+legends=c()
+for (i in 1:3) {
+  if (i==1) {
+    nAb="Day43bindSpike"; bAb="Delta43overBbindSpike"
+  } else if (i==2){
+    nAb="Day43pseudoneutid50"; bAb="Delta43overBpseudoneutid50"
+  } else if (i==3) {
+    nAb="Delta43overBbindSpike"; bAb="Delta43overBpseudoneutid50"
+  }
+  cat (nAb, bAb, "\n")
+
+  for(.trt in 0:1) {
+    myprint(.trt)
+    tmp=subset(dat_mapped, Trialstage==1 & Bserostatus==1 & Trt==.trt & !is.na(get(nAb)) & !is.na(get(bAb)) & !is.na(nAbBatch))
+    col=tmp$EventIndFirstInfectionD1+1
+
+    # par(mfrow=c(1,2), oma=c(0,0,2,0))
+    # myboxplot(as.formula(nAb%.%"~nAbBatch"), tmp, ylim=c(0,4.5), main=nAb, xlab="nAbBatch", col=col)
+    # myboxplot(as.formula(bAb%.%"~nAbBatch"), tmp, ylim=c(0,4.5), main=bAb, xlab="nAbBatch", col=col)
+    # title(main="Stage 2 NN, "%.%ifelse(.trt==0,"Placebo","Vaccine")%.%" Arm", outer=T, line=1)
+  
+    llox=min(tmp[[nAb]])
+    
+    par(mfrow=c(3,3), mar=c(1.1, 1.1, 3.1, 1.1), oma=c(0,1,2,0))
+    cors=sapply(cc, function(c) {
+      tmp.1=tmp
+      # shift batch 1 ID50 down by c but not lower than llox
+      tmp.1[[nAb]] [tmp.1$nAbBatch==1] = tmp.1[[nAb]] [tmp.1$nAbBatch==1] - c
+      tmp.1[[nAb]]  = ifelse (tmp.1[[nAb]] <llox, llox, tmp.1[[nAb]] )
+      ranks = cbind(id50=rank(tmp.1[[nAb]] ), bind=rank(tmp.1[[bAb]] ))
+      # corplot(ranks[,"bind"], ranks[,"id50"], main=c, method="s", digit.cor=3)
+      cor(ranks[,"bind"], ranks[,"id50"], method="s")
+    })
+    names(cors)=cc
+    # title(main="Stage 2 NN, "%.%ifelse(.trt==0,"Placebo","Vaccine")%.%" Arm", outer=T, line=0)
+    
+    cat("Estimated c is ", cc[which.max(cors)], ".\n", sep="")
+    all.cors=cbind(all.cors, cors)
+    legends=c(legends, paste0(sub("Day43","",nAb)," v. ",sub("Day43","",bAb), ", ", ifelse(.trt==0,"Plac","Vacc")))
+  }
+}
+
+# ylim=c(0.7,0.92)
+ylim=NULL
+par(mfrow=c(1,2), mar=c(5.1, 3.1, 0.1, 0.1), oma=c(0,1,3,0))
+mymatplot(cc, all.cors[,c(1,3,5)],   xlab="c", ylab="Spearman correlation", legend=legends[c(1,3,5)],   col=1:3, legend.cex=.75, legend.x=7, pch=c("1","3","5"), ylim=ylim)
+mymatplot(cc, all.cors[,c(1,3,5)+1], xlab="c", ylab="Spearman correlation", legend=legends[c(1,3,5)+1], col=1:3, legend.cex=.75, legend.x=7, pch=c("2","4","6"), ylim=ylim)
+title(main="Stage 2 NN, Spearman correlation", outer=T, line=0.5)
+
+print(all.cors)
+
+```
+
+
 
 
 
