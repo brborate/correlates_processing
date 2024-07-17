@@ -80,8 +80,8 @@ for (t in c(1,22,43)) {
 # create event time and indicator variables censored after M6 (instead of M12) post dose 2
 for (t in c(1,22,43)) {
  for (i in 1:10) {
-   dat_proc[[paste0("EventIndOmicronD",t,"M6hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 0,   dat_proc[[paste0("EventIndOmicronD",t,"M12hotdeck",i)]])
-   dat_proc[[paste0("EventTimeOmicronD",t,"M6hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 180-21, dat_proc[[paste0("EventTimeOmicronD",t,"M12hotdeck",i)]])
+   dat_proc[[paste0("EventIndOmicronD",t,"M6hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD",t,"M12hotdeck",i)]]>180-21, 0,   dat_proc[[paste0("EventIndOmicronD",t,"M12hotdeck",i)]])
+   dat_proc[[paste0("EventTimeOmicronD",t,"M6hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD",t,"M12hotdeck",i)]]>180-21, 180-21, dat_proc[[paste0("EventTimeOmicronD",t,"M12hotdeck",i)]])
  }
 }
    
@@ -803,6 +803,7 @@ for (trt in c(0,1)) {
       # bAb + mdw
       for (stage in c(1,2)) {
         myprint(trt, sero, tp, stage)
+        
         dat_proc$tmp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus==sero & get("ph2.D"%.%tp%.%".bAb")) 
         dat_proc = add.trichotomized.markers (dat_proc, 
                                               c("Day"%.%tp%.%bAb.1, "Delta"%.%tp%.%"overB"%.%bAb.1, "B"%.%bAb.1), 
@@ -825,6 +826,36 @@ for (trt in c(0,1)) {
   }
 }
 
+
+# also add dichotomized baseline markers for analysis of peak markers separately within low and high
+
+for (sero in c(0,1)) {  
+  
+  # use D22 because ph2.D43.bAb is part of ph2.D22.bAb
+  tp=22
+  
+  # bAb + mdw
+  for (stage in c(1,2)) {
+    myprint(sero, stage)
+    dat_proc$tmp = with(dat_proc, Trialstage==stage & Bserostatus==sero & get("ph2.D"%.%tp%.%".bAb")) 
+    dat_proc = add.dichotomized.markers (dat_proc, 
+                                          c("B"%.%bAb.1), 
+                                          ph2.col.name="tmp", 
+                                          wt.col.name="wt.D"%.%tp%.%".bAb", verbose=T)
+    dat_proc$tmp = NULL
+  }
+  
+  # nAb + mdw
+  for (stage in c(1,2)) {
+    dat_proc$tmp = with(dat_proc, Trialstage==stage & Bserostatus==sero & get("ph2.D"%.%tp%.%".nAb")) 
+    dat_proc = add.dichotomized.markers (dat_proc, 
+                                          c("B"%.%nAb.1), 
+                                          ph2.col.name="tmp", 
+                                          wt.col.name="wt.D"%.%tp%.%".nAb", verbose=T)
+    dat_proc$tmp = NULL
+  }
+  
+}
 
 
 
@@ -879,7 +910,7 @@ assertthat::assert_that(
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         vat08_combined = "0d9bb40b71e5ab1a8496342c2d68b862", 
+         vat08_combined = "31a25599b7b6dc42db24d6acf1c4975e", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
