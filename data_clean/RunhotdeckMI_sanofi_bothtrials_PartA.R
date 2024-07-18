@@ -127,10 +127,9 @@ Z1discrete <- as.matrix(cbind(dat[,"Trt"],courseregion))
 # Turn off the effect of Z1scalar on the nearest neighbors, as Avscalar is much more relevant and should carry the weight
 Z1scalar <- matrix(rep(1,nrow(dat)),ncol=1)
 #Z2 <- dat[,"Day29pseudoneutid50"]
-Z2 <- rep(1,nrow(dat))  # make it constant so that it does not affect the neighborhoods for hotdeck imputations
-epsilonz <- ifelse(!is.na(Z2),1,0) 
-epsilonz[dat[,"Trt"]==0] <- 0
-Z2[epsilonz==0] <- NA
+Z2 <- rep(NA,nrow(dat))  # make all values of Z2 NA so that the immune marker does not affect the neighborhoods for hotdeck imputations
+                         # that is the hotdeck ignores the immune marker
+epsilonz <- ifelse(!is.na(Z2),1,0)
 
 V <- dat[,"seq1.variant"]
 epsilonv <- rep(1,length(V))

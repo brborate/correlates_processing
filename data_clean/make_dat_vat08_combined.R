@@ -78,13 +78,25 @@ for (t in c(1,22,43)) {
 }
 
 # create event time and indicator variables censored after M6 (instead of M12) post dose 2
-for (t in c(1,22,43)) {
- for (i in 1:10) {
-   dat_proc[[paste0("EventIndOmicronD",t,"M6hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD",t,"M12hotdeck",i)]]>180-21, 0,   dat_proc[[paste0("EventIndOmicronD",t,"M12hotdeck",i)]])
-   dat_proc[[paste0("EventTimeOmicronD",t,"M6hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD",t,"M12hotdeck",i)]]>180-21, 180-21, dat_proc[[paste0("EventTimeOmicronD",t,"M12hotdeck",i)]])
- }
+for (i in 1:10) {
+  # use dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21 for both D22 and D44 variables so that they are consistent
+  # EventTimeOmicronD22M6hotdeck is set to 180 when censored, but this is approximate because the interval between D22 and D43 may not be 21 days for some individuals
+  dat_proc[[paste0("EventIndOmicronD22M6hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 0,      dat_proc[[paste0("EventIndOmicronD22M12hotdeck",i)]])
+  dat_proc[[paste0("EventTimeOmicronD22M6hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 180   , dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]])
+  dat_proc[[paste0("EventIndOmicronD43M6hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 0,      dat_proc[[paste0("EventIndOmicronD43M12hotdeck",i)]])
+  dat_proc[[paste0("EventTimeOmicronD43M6hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 180-21, dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]])
 }
-   
+
+# M12 variables need to be censored at M12
+for (i in 1:10) {
+  # use dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21 for both D22 and D44 variables so that they are consistent
+  # EventTimeOmicronD22M6hotdeck is set to 360 when censored, but this is approximate because the interval between D22 and D43 may not be 21 days for some individuals
+  dat_proc[[paste0("EventIndOmicronD22M12hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>360-21, 0,      dat_proc[[paste0("EventIndOmicronD22M12hotdeck",i)]])
+  dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>360-21, 360   , dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]])
+  dat_proc[[paste0("EventIndOmicronD43M12hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>360-21, 0,      dat_proc[[paste0("EventIndOmicronD43M12hotdeck",i)]])
+  dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>360-21, 360-21, dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]])
+}
+
 }
 
 
@@ -910,7 +922,7 @@ assertthat::assert_that(
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         vat08_combined = "31a25599b7b6dc42db24d6acf1c4975e", 
+         vat08_combined = "1381a6ecf990c605a153e3e5ec72af7a", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }

@@ -527,7 +527,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
   }
   
   
-} else if (TRIAL=="COVAIL" ) {
+} else if (TRIAL=="covail" ) {
   # the whole cohort is treated as ph1 and ph2
   dat_proc$TwophasesampIndD15 = dat_proc$ph1.D15 
   dat_proc$TwophasesampIndD29 = dat_proc$ph1.D29
@@ -566,14 +566,11 @@ if (TRIAL=="covail" ) {
   # PP = no violation + marker available at d1 and d15
   # Immunemarkerset = PP & no infection between enrollment and D15+6
   # ph1.D15 = Immunemarkerset & arm!=3
-  dat_proc[["ph1.D15"]]=dat_proc$ph1.D15 
-  dat_proc[["ph2.D15"]]=dat_proc$ph2.D15
+  dat_proc[["ph2.D15"]]=dat_proc$ph1.D15
   dat_proc[["wt.D15"]] = 1
-  dat_proc[["ph1.D92"]]=dat_proc$ph1.D92
-  dat_proc[["ph2.D92"]]=dat_proc$ph2.D92
+  dat_proc[["ph2.D92"]]=dat_proc$ph1.D92
   dat_proc[["wt.D92"]] = 1
-  dat_proc[["ph1.D29"]]=dat_proc$ph1.D29
-  dat_proc[["ph2.D29"]]=dat_proc$ph2.D29
+  dat_proc[["ph2.D29"]]=dat_proc$ph1.D29
   dat_proc[["wt.D29"]] = 1
   
 
