@@ -54,6 +54,7 @@ dat_proc$region = region.1[dat_proc$cc]
 dat_proc$region = ifelse(dat_proc$Trialstage==2, region.2[dat_proc$cc], dat_proc$region)
 
 
+
 # add risk score
 load(file = paste0('riskscore_baseline/output/vat08_combined/inputFile_with_riskscore.RData'))
 stopifnot(all(inputFile_with_riskscore$Ptid==dat_proc$Ptid))
@@ -918,6 +919,19 @@ assertthat::assert_that(
 ###############################################################################
 
 
+# change region variable to character
+dat_proc$region1 = "US/JPN"
+dat_proc$region1[dat_proc$Trialstage==2 & dat_proc$region==1] = "LatAm"
+dat_proc$region1[dat_proc$Trialstage==1 & dat_proc$region==2] = "LatAm"
+
+dat_proc$region1[dat_proc$Trialstage==2 & dat_proc$region==2] = "Africa"
+dat_proc$region1[dat_proc$Trialstage==1 & dat_proc$region==3] = "Africa"
+
+dat_proc$region1[dat_proc$Trialstage==2 & dat_proc$region==3] = "Asia"
+dat_proc$region1[dat_proc$Trialstage==1 & dat_proc$region==4] = "Asia"
+
+dat_proc$region = dat_proc$region1
+
 
 
 
@@ -928,7 +942,7 @@ assertthat::assert_that(
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         vat08_combined = "5d47268ff33b34ec98d1c67c4b36df5a", 
+         vat08_combined = "9283080fbd369f859f6d5f6dead3a6f4", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
