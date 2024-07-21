@@ -337,7 +337,7 @@ dat_proc$D22.bAb = with(dat_proc,
 with(subset(dat_proc, baseline.bAb & D22.bAb & !D43.bAb & EventIndOmicronD22M12hotdeck1==1), mytable(Trt, Trialstage, Bserostatus))
 
 dat_proc[["TwophasesampIndD22bAb"]] = dat_proc$baseline.bAb & dat_proc$D22.bAb
-dat_proc[["TwophasesampIndD43bAb"]] = dat_proc$baseline.bAb & dat_proc$D43.bAb
+dat_proc[["TwophasesampIndD43bAb"]] = dat_proc$baseline.bAb & dat_proc$D43.bAb & dat_proc$D22.bAb
 
 
 
@@ -365,7 +365,7 @@ dat_proc$D22.nAb = with(dat_proc,
 with(subset(dat_proc, baseline.nAb & D22.nAb & !D43.nAb & EventIndOmicronD22M12hotdeck1==1), mytable(Trt, Trialstage, Bserostatus))
 
 dat_proc[["TwophasesampIndD22nAb"]] = dat_proc$baseline.nAb & dat_proc$D22.nAb
-dat_proc[["TwophasesampIndD43nAb"]] = dat_proc$baseline.nAb & dat_proc$D43.nAb
+dat_proc[["TwophasesampIndD43nAb"]] = dat_proc$baseline.nAb & dat_proc$D43.nAb & dat_proc$D22.nAb
 
 
 # force bAb to be the intersection of bAb and nAb because very few ptids with bAb don't have nAb
@@ -817,34 +817,31 @@ if(two_marker_timepoints) {
 # 9. add discrete/trichotomized markers
 
 for (trt in c(0,1)) {
-  for (sero in c(0,1)) {  
-    # put 43 in front such that that way Bmarkercat will be defined for more ptids
-    for (tp in c("43","22")) {
+for (sero in c(0,1)) {  
+for (stage in c(1,2)) {
+  for (tp in c("43","22")) {
+    
+    # bAb + mdw
+    myprint(trt, sero, tp, stage)
+    
+    dat_proc$tmp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus==sero & get("ph2.D"%.%tp%.%".bAb")) 
+    dat_proc = add.trichotomized.markers (dat_proc, 
+                                          c("Day"%.%tp%.%bAb.1, "Delta"%.%tp%.%"overB"%.%bAb.1, if(tp=="22") "B"%.%bAb.1), 
+                                          ph2.col.name="tmp", 
+                                          wt.col.name="wt.D"%.%tp%.%".bAb", verbose=T)
+    dat_proc$tmp = NULL
+  
+    # nAb + mdw
+    dat_proc$tmp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus==sero & get("ph2.D"%.%tp%.%".nAb")) 
+    dat_proc = add.trichotomized.markers (dat_proc, 
+                                          c("Day"%.%tp%.%nAb.1, "Delta"%.%tp%.%"overB"%.%nAb.1, if(tp=="22") "B"%.%nAb.1), 
+                                          ph2.col.name="tmp", 
+                                          wt.col.name="wt.D"%.%tp%.%".nAb", verbose=T)
+    dat_proc$tmp = NULL
       
-      # bAb + mdw
-      for (stage in c(1,2)) {
-        myprint(trt, sero, tp, stage)
-        
-        dat_proc$tmp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus==sero & get("ph2.D"%.%tp%.%".bAb")) 
-        dat_proc = add.trichotomized.markers (dat_proc, 
-                                              c("Day"%.%tp%.%bAb.1, "Delta"%.%tp%.%"overB"%.%bAb.1, "B"%.%bAb.1), 
-                                              ph2.col.name="tmp", 
-                                              wt.col.name="wt.D"%.%tp%.%".bAb", verbose=T)
-        dat_proc$tmp = NULL
-      }
-      
-      # nAb + mdw
-      for (stage in c(1,2)) {
-        dat_proc$tmp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus==sero & get("ph2.D"%.%tp%.%".nAb")) 
-        dat_proc = add.trichotomized.markers (dat_proc, 
-                                              c("Day"%.%tp%.%nAb.1, "Delta"%.%tp%.%"overB"%.%nAb.1, "B"%.%nAb.1), 
-                                              ph2.col.name="tmp", 
-                                              wt.col.name="wt.D"%.%tp%.%".nAb", verbose=T)
-        dat_proc$tmp = NULL
-      }
-      
-    }
   }
+}
+}
 }
 
 
@@ -931,7 +928,7 @@ assertthat::assert_that(
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         vat08_combined = "caba64338c7f78e14a47ca57f2d6f57f", 
+         vat08_combined = "5d47268ff33b34ec98d1c67c4b36df5a", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
