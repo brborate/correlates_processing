@@ -283,6 +283,8 @@ sort(tmp[tmp%%10==0])
 # 4. Define ph1, ph2, and weights
 # Note that Wstratum may have NA if any variables to form strata has NA
 
+
+# define ph1 variables
 for (tp in timepoints) {
   dat_proc[["ph1.D"%.%tp]] = with(dat_proc, 
                                   Perprotocol==1
@@ -299,7 +301,7 @@ for (tp in timepoints) {
 # }
 
 
-{# bAb, any nAb
+{# bAb, any bAb
   
 # baseline 
 dat_proc$baseline.bAb = with(dat_proc, 
@@ -332,12 +334,14 @@ dat_proc$D22.bAb = with(dat_proc,
                           !is.na(Day22bindSpike_delta3) | 
                           !is.na(Day22bindSpike_omicron)) 
 
-dat_proc[["TwophasesampIndbAb"]] = dat_proc$baseline.bAb & dat_proc$D22.bAb & dat_proc$D43.bAb
-}
+with(subset(dat_proc, baseline.bAb & D22.bAb & !D43.bAb & EventIndOmicronD22M12hotdeck1==1), mytable(Trt, Trialstage, Bserostatus))
+
+dat_proc[["TwophasesampIndD22bAb"]] = dat_proc$baseline.bAb & dat_proc$D22.bAb
+dat_proc[["TwophasesampIndD43bAb"]] = dat_proc$baseline.bAb & dat_proc$D43.bAb
 
 
 
-{# nAb, any variant nAb. don't include ancestral b/c there is a batch 0 for ancestral which we don't want to include
+# nAb, any variant nAb. don't include ancestral b/c there is a batch 0 for ancestral which we don't want to include
 
 # baseline 
 dat_proc$baseline.nAb = with(dat_proc, 
@@ -358,13 +362,18 @@ dat_proc$D22.nAb = with(dat_proc,
                           !is.na(Day22pseudoneutid50_BA.2) | 
                           !is.na(Day22pseudoneutid50_BA.4.5)) 
 
-# require availability of data at all 3 time points
-dat_proc[["TwophasesampIndnAb"]] = dat_proc$baseline.nAb & dat_proc$D43.nAb & dat_proc$D22.nAb
-}
+with(subset(dat_proc, baseline.nAb & D22.nAb & !D43.nAb & EventIndOmicronD22M12hotdeck1==1), mytable(Trt, Trialstage, Bserostatus))
 
-# force TwophasesampIndbAb to be the intersection of TwophasesampIndbAb and TwophasesampIndnAb because very few ptids with bAb don't have nAb
-# this way for multivariate analysis, we just need to use TwophasesampIndbAb and there is no need to define another set of variables
-dat_proc[["TwophasesampIndbAb"]] = dat_proc[["TwophasesampIndbAb"]] & dat_proc[["TwophasesampIndnAb"]]
+dat_proc[["TwophasesampIndD22nAb"]] = dat_proc$baseline.nAb & dat_proc$D22.nAb
+dat_proc[["TwophasesampIndD43nAb"]] = dat_proc$baseline.nAb & dat_proc$D43.nAb
+
+
+# force bAb to be the intersection of bAb and nAb because very few ptids with bAb don't have nAb
+# this way for multivariate analysis, we just need to use bAb and there is no need to define another set of variables
+dat_proc[["TwophasesampIndD22bAb"]] = dat_proc[["TwophasesampIndD22bAb"]] & dat_proc[["TwophasesampIndD22nAb"]]
+dat_proc[["TwophasesampIndD43bAb"]] = dat_proc[["TwophasesampIndD43bAb"]] & dat_proc[["TwophasesampIndD43nAb"]]
+
+}
 
 
 
@@ -375,15 +384,15 @@ dat_proc[["TwophasesampIndbAb"]] = dat_proc[["TwophasesampIndbAb"]] & dat_proc[[
   dat_proc$SubcohortIndnAb=0
   
   # all non-cases with markers are included
-  dat_proc$SubcohortIndbAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndbAb==1]=1
-  dat_proc$SubcohortIndnAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndnAb==1]=1
+  dat_proc$SubcohortIndbAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndD43bAb==1 & dat_proc$TwophasesampIndD22bAb==1]=1
+  dat_proc$SubcohortIndnAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndD43nAb==1 & dat_proc$TwophasesampIndD22nAb==1]=1
   
   # pick controls using bAb and use for both SubcohortIndbAb and SubcohortIndnAb
-  tab=mytable(dat_proc$TwophasesampIndbAb, dat_proc$tps.stratum, dat_proc$EventIndFirstInfectionD1)[,,1]
+  tab=mytable(dat_proc$TwophasesampIndD43bAb, dat_proc$tps.stratum, dat_proc$EventIndFirstInfectionD1)[,,1]
   px=tab[2,]/(tab[1,]+tab[2,])
   px
   
-  tab=mytable(dat_proc$TwophasesampIndbAb, dat_proc$tps.stratum, dat_proc$EventIndFirstInfectionD1)[,,2]
+  tab=mytable(dat_proc$TwophasesampIndD43bAb, dat_proc$tps.stratum, dat_proc$EventIndFirstInfectionD1)[,,2]
   tab
   n.cases.to.sample=round((tab[1,]+tab[2,])*px)
   
@@ -392,7 +401,7 @@ dat_proc[["TwophasesampIndbAb"]] = dat_proc[["TwophasesampIndbAb"]] & dat_proc[[
   ii
   picks=c()
   for (i in ii) {
-    picks=c(picks, sample(subset(dat_proc, TwophasesampIndbAb==1 & tps.stratum==i & EventIndFirstInfectionD1==1, Ptid, drop=T))[1:n.cases.to.sample[i%.%""]])
+    picks=c(picks, sample(subset(dat_proc, TwophasesampIndD43bAb==1 & tps.stratum==i & EventIndFirstInfectionD1==1, Ptid, drop=T))[1:n.cases.to.sample[i%.%""]])
   }
   
   dat_proc$SubcohortIndbAb[dat_proc$Ptid %in% picks]=1
@@ -438,14 +447,14 @@ if (TRUE) {
   # use bAb instead of nAb because there are less bAb samples
   Ab="bAb"
   tp=43 # use D43 for this. D22 will also likely be fine
-  dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampInd"%.%Ab]]
+  dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%Ab]]
   wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1, ], table(Wstratum, get("ph2.D"%.%tp%.%"."%.%Ab)))
   strata.to.merge.1 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
   print(strata.to.merge.1)
   
   # sensitivity study in stage 2
   tp=43
-  dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndnAb"]] & dat_proc$nAbBatch==2
+  dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]] & dat_proc$nAbBatch==2
   wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1 & dat_proc$Trialstage==2, ], 
                     table(Wstratum, get("ph2.D"%.%tp%.%".st2.nAb.sen")))
   strata.to.merge.2 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
@@ -469,7 +478,7 @@ if (TRUE) {
     if (k==1) Ab="bAb"; if (k==2) Ab="nAb"
     # create weights
     for (tp in timepoints) {
-      dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampInd"%.%Ab]]
+      dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%Ab]]
       dat_proc = add.wt(dat_proc, 
                         ph1="ph1.D"%.%tp, 
                         ph2="ph2.D"%.%tp%.%"."%.%Ab, 
@@ -481,7 +490,7 @@ if (TRUE) {
   # stage 2 sensitivity weights for nAb
   for (tp in timepoints) {
     dat_proc[["ph1.D"%.%tp%.%".st2"]]         = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2
-    dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndnAb"]] & dat_proc$nAbBatch==2
+    dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]] & dat_proc$nAbBatch==2
     dat_proc = add.wt(dat_proc, 
                       ph1="ph1.D"%.%tp%.%".st2", 
                       ph2="ph2.D"%.%tp%.%".st2.nAb.sen", 
@@ -509,7 +518,7 @@ if (TRUE) {
 
     
 } else {
-    
+# earlier implementation    
     
   dat_proc$Wstratum.bAb = dat_proc$Wstratum
   dat_proc$Wstratum.nAb = dat_proc$Wstratum
@@ -520,7 +529,7 @@ if (TRUE) {
     
     # need to merge Wstratum? 
     tp=43 # use D43 for this. D22 will also likely be fine
-    dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampInd"%.%Ab]]
+    dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%Ab]]
     wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1, ], table(Wstratum, get("ph2.D"%.%tp%.%"."%.%Ab)))
     strata.to.merge = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
     print(strata.to.merge)
@@ -538,7 +547,7 @@ if (TRUE) {
     
     # create weights
     for (tp in timepoints) {
-      dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampInd"%.%Ab]]
+      dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%Ab]]
       dat_proc = add.wt(dat_proc, 
                         ph1="ph1.D"%.%tp, 
                         ph2="ph2.D"%.%tp%.%"."%.%Ab, 
@@ -552,7 +561,7 @@ if (TRUE) {
     
   # need to merge Wstratum? 
   tp=43
-  dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndnAb"]] & dat_proc$nAbBatch==2
+  dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]] & dat_proc$nAbBatch==2
   wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1 & dat_proc$Trialstage==2, ], 
                     table(Wstratum, get("ph2.D"%.%tp%.%".st2.nAb.sen")))
   strata.to.merge = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
@@ -569,7 +578,7 @@ if (TRUE) {
   # create weights
   for (tp in timepoints) {
     dat_proc[["ph1.D"%.%tp%.%".st2"]]         = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2
-    dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndnAb"]] & dat_proc$nAbBatch==2
+    dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]] & dat_proc$nAbBatch==2
     dat_proc = add.wt(dat_proc, 
                       ph1="ph1.D"%.%tp%.%".st2", 
                       ph2="ph2.D"%.%tp%.%".st2.nAb.sen", 
@@ -922,7 +931,7 @@ assertthat::assert_that(
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         vat08_combined = "1381a6ecf990c605a153e3e5ec72af7a", 
+         vat08_combined = "caba64338c7f78e14a47ca57f2d6f57f", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
