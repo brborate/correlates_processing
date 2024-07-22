@@ -648,8 +648,8 @@ if (TRUE) {
 n.imp <- 1
 
 for (step in 1:2) { 
-  # step 1: bAb, stage 1 and 2
-  # step 2: nAb, stage 1 and 2
+  # step 1: bAb
+  # step 2: nAb
 
   for (tp in c("B","Day22","Day43")) {
     # impute each time point separately
@@ -821,6 +821,7 @@ for (trt in c(0,1)) {
 for (sero in c(0,1)) {  
 for (stage in c(1,2)) {
   for (tp in c("43","22")) {
+    # trt=0; sero=1; stage=1; tp="43"
     
     # bAb + mdw
     myprint(trt, sero, tp, stage)
@@ -919,19 +920,32 @@ assertthat::assert_that(
 ###############################################################################
 
 
-# change region variable to character
-dat_proc$region1 = "US/JPN"
-dat_proc$region1[dat_proc$Trialstage==2 & dat_proc$region==1] = "LatAm"
-dat_proc$region1[dat_proc$Trialstage==1 & dat_proc$region==2] = "LatAm"
+# make new region variables
 
-dat_proc$region1[dat_proc$Trialstage==2 & dat_proc$region==2] = "Africa"
-dat_proc$region1[dat_proc$Trialstage==1 & dat_proc$region==3] = "Africa"
+# , which merges US/JPN with Asia character
 
-dat_proc$region1[dat_proc$Trialstage==2 & dat_proc$region==3] = "Asia"
-dat_proc$region1[dat_proc$Trialstage==1 & dat_proc$region==4] = "Asia"
+dat_proc$Region4 = "NA"
 
-dat_proc$region = dat_proc$region1
+dat_proc$Region4[dat_proc$Trialstage==1 & dat_proc$region==1] = "US/JPN"
+dat_proc$Region4[dat_proc$Trialstage==1 & dat_proc$region==2] = "LatAm"
+dat_proc$Region4[dat_proc$Trialstage==1 & dat_proc$region==3] = "Africa"
+dat_proc$Region4[dat_proc$Trialstage==1 & dat_proc$region==4] = "Asia"
 
+dat_proc$Region4[dat_proc$Trialstage==2 & dat_proc$region==1] = "LatAm"
+dat_proc$Region4[dat_proc$Trialstage==2 & dat_proc$region==2] = "Africa"
+dat_proc$Region4[dat_proc$Trialstage==2 & dat_proc$region==3] = "AsiaPac"
+
+
+dat_proc$Region3 = "NA"
+
+dat_proc$Region3[dat_proc$Trialstage==1 & dat_proc$region==1] = "AsiaPac"
+dat_proc$Region3[dat_proc$Trialstage==1 & dat_proc$region==2] = "LatAm"
+dat_proc$Region3[dat_proc$Trialstage==1 & dat_proc$region==3] = "Africa"
+dat_proc$Region3[dat_proc$Trialstage==1 & dat_proc$region==4] = "AsiaPac"
+
+dat_proc$Region3[dat_proc$Trialstage==2 & dat_proc$region==1] = "LatAm"
+dat_proc$Region3[dat_proc$Trialstage==2 & dat_proc$region==2] = "Africa"
+dat_proc$Region3[dat_proc$Trialstage==2 & dat_proc$region==3] = "AsiaPac"
 
 
 
@@ -942,7 +956,7 @@ dat_proc$region = dat_proc$region1
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         vat08_combined = "9283080fbd369f859f6d5f6dead3a6f4", 
+         vat08_combined = "ea44c7f71c0f733b53fbd2c5cd455108", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
