@@ -138,7 +138,7 @@ epsilonv[!is.na(dat[,"seq1.variant"]) & dat[,"seq1.variant"]=="MissingLineage"] 
 Avdiscrete <- matrix(rep(NA,length(epsilonv)),ncol=1)
 # Note "EventTimeFirstInfectionDate" is the date of the COVID-19 primary endpoint ignoring lineage information;
 # the primary endpoint of the study
-Numberdaysfromfirstpersonenrolleduntilprimaryendpoint <- as.Date(dat[,"EventTimeFirstInfectionDate"]) - as.Date(dat[,"FirstEnrollmentDate"])
+Numberdaysfromfirstpersonenrolleduntilprimaryendpoint <- as.Date(dat[,"EventTimeFirstInfectionDate"]) - min(as.Date(dat[,"FirstEnrollmentDate"]))
 Avscalar <- matrix(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint,ncol=1)
 keep <- Avscalar[,1] <= 189
 Z1discrete[keep,1] <- 99
