@@ -123,7 +123,7 @@ courseregion[TrialStage==2 & (Country==1 | Country==9)] <- 5
 courseregion[TrialStage==2 & (Country==6 | Country==2 | Country==10)] <- 6
 courseregion[TrialStage==2 & (Country==4 | Country==7)] <- 7
 
-Z1discrete <- as.matrix(courseregion)
+Z1discrete <- matrix(courseregion,ncol=1)
 # Turn off the effect of Z1scalar on the nearest neighbors, as Avscalar is much more relevant and should carry the weight
 Z1scalar <- matrix(rep(1,nrow(dat)),ncol=1)
 #Z2 <- dat[,"Day29pseudoneutid50"]
@@ -141,7 +141,7 @@ Avdiscrete <- matrix(rep(NA,length(epsilonv)),ncol=1)
 Numberdaysfromfirstpersonenrolleduntilprimaryendpoint <- as.Date(dat[,"EventTimeFirstInfectionDate"]) - as.Date(dat[,"FirstEnrollmentDate"])
 Avscalar <- matrix(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint,ncol=1)
 keep <- Avscalar[,1] <= 189
-Z1discrete[keep,1] <- "99"
+Z1discrete[keep,1] <- 99
 epsilona <- Delta
 epsilona[is.na(Numberdaysfromfirstpersonenrolleduntilprimaryendpoint)] <- 0
 M <- 10

@@ -956,7 +956,7 @@ dat_proc$Region3[dat_proc$Trialstage==2 & dat_proc$region==3] = "AsiaPac"
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         vat08_combined = "ea44c7f71c0f733b53fbd2c5cd455108", 
+         vat08_combined = "9d05c1e2c20c065f738e778ef036d0a5", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
