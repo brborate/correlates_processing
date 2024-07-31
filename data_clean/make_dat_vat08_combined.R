@@ -227,16 +227,18 @@ dat_proc$Wstratum =  dat_proc$tps.stratum
 cond=dat_proc$EventIndPrimaryD22==1
 dat_proc$Wstratum[cond] = 10
 
-# cross with trt and stage
-
-# 1-10: vaccine; 11-20: placebo
+# 1-10: vaccine;
+# 11-20: placebo
 cond = dat_proc$Trt==0
 dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 10
 dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 10
-# 1-20: stage 1; 51-70: stage 2
+
+# 1-20: stage 1; 
+# 51-70: stage 2
 cond = dat_proc$Trialstage==2
 dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 50
 dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 50
+
 
 # cross with naive status
 
@@ -246,12 +248,13 @@ dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 50
 cond = dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="NEGATIVE"
 dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 100
 dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 100
+
 # Bserostatus==1 & RAPDIAG==1: 201-270
 cond = dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="POSITIVE"
 dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 200
 dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 200
 
-mytable(dat_proc$tps.stratum)
+with (dat_proc, mytable(Trt, tps.stratum, Bserostatus, RAPDIAG))
 mytable(dat_proc$Wstratum)
 
 
@@ -293,13 +296,15 @@ for (tp in timepoints) {
                                   & get("EventTimePrimaryD"%.%tp) >= 7)
 }
 
-# for (tp in timepoints) {
-#   dat_proc[["ph1.D"%.%tp%.%".st2"]] = with(dat_proc, 
-#                                   Perprotocol==1
-#                                   & get("EarlyinfectionD"%.%tp)==0
-#                                   & get("EventTimePrimaryD"%.%tp) >= 7
-#                                   & Trialstage==2)
-# }
+# exclude region 3 for stage 1 nAb analysis using batch 0 and 1
+for (tp in timepoints) {
+  dat_proc[["ph1.D"%.%tp%.%".st1.nAb.batch0and1"]] = with(dat_proc,
+                                  Perprotocol==1
+                                  & get("EarlyinfectionD"%.%tp)==0
+                                  & get("EventTimePrimaryD"%.%tp) >= 7
+                                  & Trialstage==1
+                                  & region!=3)
+}
 
 
 {# bAb, any bAb
@@ -374,12 +379,43 @@ dat_proc[["TwophasesampIndD43nAb"]] = dat_proc$baseline.nAb & dat_proc$D43.nAb &
 dat_proc[["TwophasesampIndD22bAb"]] = dat_proc[["TwophasesampIndD22bAb"]] & dat_proc[["TwophasesampIndD22nAb"]]
 dat_proc[["TwophasesampIndD43bAb"]] = dat_proc[["TwophasesampIndD43bAb"]] & dat_proc[["TwophasesampIndD43nAb"]]
 
+
+
+# corresponds to batch 0 for stage 1. 
+# requires either d22 or d43 ancestral ID50. not permissible to have D1 ancestral ID50 only
+# no variants ID50, no bAb
+dat_proc$batch0 = with(dat_proc, Trialstage==1 &
+                                  !is.na(Bpseudoneutid50) &
+                                 (!is.na(Day22pseudoneutid50) | !is.na(Day43pseudoneutid50)) &
+                                 !nAbBatch %in% c(1,2))
+
+# 29 and 56 have no D22 and D43, respectively
+mytable(dat_proc$batch0, !is.na(dat_proc$Bpseudoneutid50) )
+mytable(dat_proc$batch0, !is.na(dat_proc$Day22pseudoneutid50) )
+mytable(dat_proc$batch0, !is.na(dat_proc$Day43pseudoneutid50) )
+
+
+with(subset(dat_proc, Trialstage==1 & Bserostatus==1), mytable(nAbBatch, batch0))
+with(subset(dat_proc, Trialstage==1 & Bserostatus==1), mytable(TwophasesampIndD22nAb, batch0))
+with(subset(dat_proc, Trialstage==1 & Bserostatus==1), mytable(TwophasesampIndD43nAb, batch0))
+with(subset(dat_proc, Trialstage==1 & Bserostatus==1), mytable(TwophasesampIndD43bAb, batch0))
+
+
+dat_proc$TwophasesampIndD22.st1.nAb.batch0and1 = with(dat_proc, Trialstage==1 &
+                                        !is.na(Bpseudoneutid50) &
+                                        !is.na(Day22pseudoneutid50) &
+                                        (batch0 | nAbBatch==1) )
+dat_proc$TwophasesampIndD43.st1.nAb.batch0and1 = with(dat_proc, Trialstage==1 &
+                                                     !is.na(Bpseudoneutid50) &
+                                                     !is.na(Day22pseudoneutid50) &
+                                                     !is.na(Day43pseudoneutid50) &
+                                                     (batch0 | nAbBatch==1) )
+
 }
 
 
 
 {
-  
   # generate SubcohortInd for bAb and nAb separately
   dat_proc$SubcohortIndbAb=0
   dat_proc$SubcohortIndnAb=0
@@ -460,17 +496,39 @@ if (TRUE) {
                     table(Wstratum, get("ph2.D"%.%tp%.%".st2.nAb.sen")))
   strata.to.merge.2 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
   print(strata.to.merge.2)
-    
+  
+  # combine the two
   strata.to.merge = sort(unique(c(strata.to.merge.1, strata.to.merge.2)))
   strata.merge.to = get.strata.merge.to (strata.to.merge)
   print(strata.merge.to)
   
-  # merge Wstratum and tps.stratum. Note that there are no case strata to merge
+  # before merging Wstratum, save a copy for use with strata.to.merge.3
+  dat_proc$Wstratum.st1.nAb.batch0and1=dat_proc$Wstratum
+  
+  # merge Wstratum and tps.stratum. Note that there are no case strata to merge. Case strata are numbered as multiples of 10.
   for (i in 1:length(strata.to.merge)) {
     dat_proc$Wstratum[dat_proc$Wstratum==strata.to.merge[i]] = strata.merge.to[i]
     dat_proc$tps.stratum[dat_proc$tps.stratum==strata.to.merge[i]] = strata.merge.to[i]
   }
   
+  # in stage 1 using batch 0 and 1
+  tp=43
+  # note that we use ph1.D43.st1.nAb.batch0and1, which removes region 3, to avoid error in get.strata.merge.to from too many empty strata
+  dat_proc[["ph2.D"%.%tp%.%".st1.nAb.batch0and1"]] = dat_proc[["ph1.D"%.%tp%.%".st1.nAb.batch0and1"]] & dat_proc[["TwophasesampIndD"%.%tp%.%".st1.nAb.batch0and1"]]
+  wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp%.%".st1.nAb.batch0and1"]]==1, ],
+                    table(Wstratum.st1.nAb.batch0and1, get("ph2.D"%.%tp%.%".st1.nAb.batch0and1")))
+  strata.to.merge.3 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
+  print(strata.to.merge.3)
+  strata.merge.to.3 = get.strata.merge.to (setdiff(strata.to.merge.3, c(14,18)))
+  # manually change it so that 14 (ASIA) is merged with 11 (US/JPN) and 18 with 15
+  strata.to.merge.3 = c(14, 18, setdiff(strata.to.merge.3, c(14,18)))
+  strata.merge.to.3 = c(11, 15, strata.merge.to.3)         
+  print(strata.to.merge.3)
+  print(strata.merge.to.3)
+  
+  for (i in 1:length(strata.to.merge.3)) {
+    dat_proc$Wstratum.st1.nAb.batch0and1[dat_proc$Wstratum.st1.nAb.batch0and1==strata.to.merge.3[i]] = strata.merge.to.3[i]
+  }
   
   # compute weights
   
@@ -488,7 +546,7 @@ if (TRUE) {
     }
   }  
   
-  # stage 2 sensitivity weights for nAb
+  # stage 2 alternative weights for nAb
   for (tp in timepoints) {
     dat_proc[["ph1.D"%.%tp%.%".st2"]]         = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2
     dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]] & dat_proc$nAbBatch==2
@@ -497,6 +555,16 @@ if (TRUE) {
                       ph2="ph2.D"%.%tp%.%".st2.nAb.sen", 
                       Wstratum="Wstratum", 
                       wt="wt.D"%.%tp%.%".st2.nAb.sen", verbose=F) 
+  }
+  
+  # stage 1 alternative weights for nAb using batch 0 and 1 only
+  for (tp in timepoints) {
+    dat_proc[["ph2.D"%.%tp%.%".st1.nAb.batch0and1"]] = dat_proc[["ph1.D"%.%tp%.%".st1.nAb.batch0and1"]] & dat_proc[["TwophasesampIndD"%.%tp%.%".st1.nAb.batch0and1"]] 
+    dat_proc = add.wt(dat_proc, 
+                      ph1="ph1.D"%.%tp%.%".st1.nAb.batch0and1", 
+                      ph2="ph2.D"%.%tp%.%".st1.nAb.batch0and1", 
+                      Wstratum = "Wstratum.st1.nAb.batch0and1", 
+                      wt = "wt.D"%.%tp%.%".st1.nAb.batch0and1", verbose=F) 
   }
   
   # immuno
@@ -715,7 +783,64 @@ for (step in 1:2) {
 }
 
   
+# Second step, impute variants ID50 for ph2.Dxx.st1.nAb.batch0and1 based on ancestral ID50
+# Pearson correlation between Day43 ancestral and BA.1 is 0.8
+# Pearson correlation between Day22 ancestral and BA.1 is 0.8
+
+n.imp <- 10
+
+for (tp in c("B","Day22","Day43")) {
+  # impute each time point separately
+  # Pearson correlation between Day43 and Day22 ancestral ID50 is 0.6
   
+  # nAb
+  if (tp=="B")     kp = dat_proc$baseline.nAb | dat_proc$batch0
+  if (tp=="Day22") kp = dat_proc$D22.nAb      | dat_proc$batch0
+  if (tp=="Day43") kp = dat_proc$D43.nAb      | dat_proc$batch0
+  
+  imp.markers=tp %.% nAb
+  
+  dat.tmp.impute <- dat_proc[kp==1,]
+  
+  stage = 1
+  
+  for (trt in unique(dat.tmp.impute$Trt)) {
+    for (sero in unique(dat.tmp.impute$Bserostatus)) {  
+      # trt=1; sero=1;
+      imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero & Trialstage==stage) %>% select(all_of(imp.markers))         
+      if(any(is.na(imp))) {
+        # if there is no variability, fill in NA with constant values
+        for (a in names(imp)) {
+          if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
+        }            
+        # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+        imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+        dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero & dat.tmp.impute$Trialstage==stage, 
+                       imp.markers] <- mice::complete(imp, action = 1)
+      }
+    }
+  }
+  
+  # missing markers imputed properly?
+  assertthat::assert_that(
+    all(complete.cases(dat.tmp.impute[, imp.markers])),
+    msg = "missing markers imputed properly?"
+  )    
+  
+  # populate dat_proc imp.markers with the imputed values
+  dat_proc[kp==1, imp.markers] <-
+    dat.tmp.impute[imp.markers][match(dat_proc[kp==1, "Ptid"], dat.tmp.impute$Ptid), ]
+  
+  assertthat::assert_that(
+    all(complete.cases(dat_proc[kp == 1, imp.markers])),
+    msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+  )
+  
+}    
+
+
+
+
 ###############################################################################
 # 6. transformation of the markers
 
