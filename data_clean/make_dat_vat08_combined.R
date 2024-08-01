@@ -296,7 +296,7 @@ for (tp in timepoints) {
                                   & get("EventTimePrimaryD"%.%tp) >= 7)
 }
 
-# exclude region 3 for stage 1 nAb analysis using batch 0 and 1
+# for .st1.nAb.batch0and1, limit to stage 1 and exclude region 3
 for (tp in timepoints) {
   dat_proc[["ph1.D"%.%tp%.%".st1.nAb.batch0and1"]] = with(dat_proc,
                                   Perprotocol==1
@@ -381,30 +381,32 @@ dat_proc[["TwophasesampIndD43bAb"]] = dat_proc[["TwophasesampIndD43bAb"]] & dat_
 
 
 
-# corresponds to batch 0 for stage 1. 
-# requires either d22 or d43 ancestral ID50. not permissible to have D1 ancestral ID50 only
-# no variants ID50, no bAb
+# define stage 1 batch 0 
+
+# requires Bpseudoneutid50 and either d22 or d43 ancestral ID50
+# not in batch 1 or 2
 dat_proc$batch0 = with(dat_proc, Trialstage==1 &
                                   !is.na(Bpseudoneutid50) &
                                  (!is.na(Day22pseudoneutid50) | !is.na(Day43pseudoneutid50)) &
                                  !nAbBatch %in% c(1,2))
 
-# 29 and 56 have no D22 and D43, respectively
+# no variants ID50, no bAb
+mytable(!is.na(dat_proc$Day22pseudoneutid50_B.1.351), dat_proc$batch0)
+mytable(!is.na(dat_proc$Day22bindSpike), dat_proc$batch0)
+
+# all have baseline by definition, 29 and 56 ptids have no D22 and D43, respectively
 mytable(dat_proc$batch0, !is.na(dat_proc$Bpseudoneutid50) )
 mytable(dat_proc$batch0, !is.na(dat_proc$Day22pseudoneutid50) )
 mytable(dat_proc$batch0, !is.na(dat_proc$Day43pseudoneutid50) )
 
-
-with(subset(dat_proc, Trialstage==1 & Bserostatus==1), mytable(nAbBatch, batch0))
 with(subset(dat_proc, Trialstage==1 & Bserostatus==1), mytable(TwophasesampIndD22nAb, batch0))
-with(subset(dat_proc, Trialstage==1 & Bserostatus==1), mytable(TwophasesampIndD43nAb, batch0))
 with(subset(dat_proc, Trialstage==1 & Bserostatus==1), mytable(TwophasesampIndD43bAb, batch0))
 
-
 dat_proc$TwophasesampIndD22.st1.nAb.batch0and1 = with(dat_proc, Trialstage==1 &
-                                        !is.na(Bpseudoneutid50) &
-                                        !is.na(Day22pseudoneutid50) &
-                                        (batch0 | nAbBatch==1) )
+                                                     !is.na(Bpseudoneutid50) &
+                                                     !is.na(Day22pseudoneutid50) &
+                                                     (batch0 | nAbBatch==1) )
+
 dat_proc$TwophasesampIndD43.st1.nAb.batch0and1 = with(dat_proc, Trialstage==1 &
                                                      !is.na(Bpseudoneutid50) &
                                                      !is.na(Day22pseudoneutid50) &
@@ -519,10 +521,9 @@ if (TRUE) {
                     table(Wstratum.st1.nAb.batch0and1, get("ph2.D"%.%tp%.%".st1.nAb.batch0and1")))
   strata.to.merge.3 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
   print(strata.to.merge.3)
-  strata.merge.to.3 = get.strata.merge.to (setdiff(strata.to.merge.3, c(14,18)))
-  # manually change it so that 14 (ASIA) is merged with 11 (US/JPN) and 18 with 15
+  # manually change it so that 14 (ASIA) is merged with 11 (US/JPN) and 18 with 15 because both 14 and 18 are empty
+  strata.merge.to.3 = c(11, 15, get.strata.merge.to (setdiff(strata.to.merge.3, c(14,18))))         
   strata.to.merge.3 = c(14, 18, setdiff(strata.to.merge.3, c(14,18)))
-  strata.merge.to.3 = c(11, 15, strata.merge.to.3)         
   print(strata.to.merge.3)
   print(strata.merge.to.3)
   
@@ -789,53 +790,54 @@ for (step in 1:2) {
 
 n.imp <- 10
 
+# create placeholders for imputed ab markers
+for (i in 1:10) {
+  for (tp in c("B","Day22","Day43")) {
+    for (a in nAb) dat_proc[[tp%.%a%.%"_"%.%i]] = NA
+  }
+}
+
 for (tp in c("B","Day22","Day43")) {
   # impute each time point separately
   # Pearson correlation between Day43 and Day22 ancestral ID50 is 0.6
   
   # nAb
-  if (tp=="B")     kp = dat_proc$baseline.nAb | dat_proc$batch0
-  if (tp=="Day22") kp = dat_proc$D22.nAb      | dat_proc$batch0
-  if (tp=="Day43") kp = dat_proc$D43.nAb      | dat_proc$batch0
+  if (tp=="B")     kp = dat_proc$baseline.nAb | dat_proc$TwophasesampIndD22.st1.nAb.batch0and1
+  if (tp=="Day22") kp = dat_proc$D22.nAb      | dat_proc$TwophasesampIndD22.st1.nAb.batch0and1
+  if (tp=="Day43") kp = dat_proc$D43.nAb      | dat_proc$TwophasesampIndD43.st1.nAb.batch0and1
   
   imp.markers=tp %.% nAb
-  
-  dat.tmp.impute <- dat_proc[kp==1,]
-  
-  stage = 1
   
   for (trt in unique(dat.tmp.impute$Trt)) {
     for (sero in unique(dat.tmp.impute$Bserostatus)) {  
       # trt=1; sero=1;
-      imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero & Trialstage==stage) %>% select(all_of(imp.markers))         
-      if(any(is.na(imp))) {
-        # if there is no variability, fill in NA with constant values
-        for (a in names(imp)) {
-          if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
-        }            
-        # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
-        imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
-        dat.tmp.impute[dat.tmp.impute$Trt == trt & dat.tmp.impute$Bserostatus == sero & dat.tmp.impute$Trialstage==stage, 
-                       imp.markers] <- mice::complete(imp, action = 1)
-      }
+      
+      select = with(dat_proc, Trt == trt & Bserostatus==sero & Trialstage==1 & kp)
+      imp <- dat_proc[select, imp.markers]
+      
+      # if there is no variability, fill in NA with constant values
+      for (a in imp.markers) {
+        if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
+      }            
+      
+      # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+      imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)   
+      # summary(imp)
+      nrow(imp)
+      
+      # add 10 new columns for each of the variants to the dataset
+      for (i in 1:n.imp) {
+        for (a in nAb) {
+          dat_proc[select, tp%.%a%.%"_"%.%i] = mice::complete(imp, action=i)[,tp%.%a]
+        }
+      } 
+      assertthat::assert_that(
+        all(complete.cases(dat_proc[select, tp%.%c("pseudoneutid50_B.1.351"%.%"_"%.%1:10, "pseudoneutid50_BA.1"%.%"_"%.%1:10, 
+                                                   "pseudoneutid50_BA.2"%.%"_"%.%1:10,    "pseudoneutid50_BA.4.5"%.%"_"%.%1:10)])),
+        msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+      )
     }
   }
-  
-  # missing markers imputed properly?
-  assertthat::assert_that(
-    all(complete.cases(dat.tmp.impute[, imp.markers])),
-    msg = "missing markers imputed properly?"
-  )    
-  
-  # populate dat_proc imp.markers with the imputed values
-  dat_proc[kp==1, imp.markers] <-
-    dat.tmp.impute[imp.markers][match(dat_proc[kp==1, "Ptid"], dat.tmp.impute$Ptid), ]
-  
-  assertthat::assert_that(
-    all(complete.cases(dat_proc[kp == 1, imp.markers])),
-    msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
-  )
-  
 }    
 
 
@@ -906,11 +908,12 @@ write.csv(mdw.wt.nAb, file = here("data_clean", "csv", TRIAL%.%"_nAb_mdw_weights
 # apply to all time points, to both stages, naive/nnaive, vaccine and placebo
 for (t in c("B", "Day"%.%timepoints)) { # , "Delta"%.%timepoints%.%"overB", "Delta43over22"
   dat_proc[, t%.%'pseudoneutid50_mdw'] = as.matrix(dat_proc[, t%.%nAb]) %*% mdw.wt.nAb
+  # imputed copies
+  for (i in 1:10) {
+    dat_proc[, t%.%'pseudoneutid50_mdw_'%.%i] = as.matrix(dat_proc[, t%.%nAb%.%"_"%.%i]) %*% mdw.wt.nAb
+  }
 }
   
-
-
-
 
 
 ###############################################################################
@@ -923,18 +926,29 @@ assays1=assays
 
 tmp=list()
 for (a in assays1) {
-  for (t in c("B", paste0("Day", config$timepoints)) ) {
+  for (t in c("B", paste0("Day", timepoints)) ) {
     tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] > log10(uloqs[a]), log10(uloqs[a]), dat_proc[[t %.% a]])
+    if (startsWith(a, "pseudoneutid50")) {
+      for(i in 1:10) {
+        tmp[[t %.% a%.%"_"%.%i]] <- ifelse(dat_proc[[t %.% a%.%"_"%.%i]] > log10(uloqs[a]), log10(uloqs[a]), dat_proc[[t %.% a%.%"_"%.%i]])
+      }
+    }
   }
 }
 tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
 
 for (tp in rev(timepoints)) {
   dat_proc["Delta"%.%tp%.%"overB" %.% assays1] <- tmp["Day"%.%tp %.% assays1] - tmp["B" %.% assays1]
-}   
+  for(i in 1:10) {
+    dat_proc["Delta"%.%tp%.%"overB" %.% assays1[10:15]%.%"_"%.%i] <- tmp["Day"%.%tp %.% assays1[10:15]%.%"_"%.%i] - tmp["B" %.% assays1[10:15]%.%"_"%.%i]
+  }   
+}
 
 if(two_marker_timepoints) {
   dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays1] <- tmp["Day"%.% timepoints[2]%.% assays1] - tmp["Day"%.%timepoints[1] %.% assays1]
+  for(i in 1:10) {
+    dat_proc["Delta"%.%timepoints[2]%.%"over"%.%timepoints[1] %.% assays1[10:15]%.%"_"%.%i] <- tmp["Day"%.% timepoints[2]%.% assays1[10:15]%.%"_"%.%i] - tmp["Day"%.%timepoints[1] %.% assays1[10:15]%.%"_"%.%i]
+  }
 }
 
 
@@ -942,34 +956,72 @@ if(two_marker_timepoints) {
 ###############################################################################
 # 9. add discrete/trichotomized markers
 
-for (trt in c(0,1)) {
+for (tp in c("43","22")) {
+
 for (sero in c(0,1)) {  
 for (stage in c(1,2)) {
-  for (tp in c("43","22")) {
-    # trt=0; sero=1; stage=1; tp="43"
-    
-    # bAb + mdw
-    myprint(trt, sero, tp, stage)
-    
-    dat_proc$tmp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus==sero & get("ph2.D"%.%tp%.%".bAb")) 
-    dat_proc = add.trichotomized.markers (dat_proc, 
-                                          c("Day"%.%tp%.%bAb.1, "Delta"%.%tp%.%"overB"%.%bAb.1, if(tp=="22") "B"%.%bAb.1), 
-                                          ph2.col.name="tmp", 
-                                          wt.col.name="wt.D"%.%tp%.%".bAb", verbose=T)
-    dat_proc$tmp = NULL
+for (trt in c(0,1)) {
+  # trt=0; sero=1; stage=1; tp="43"; iAb=1
   
-    # nAb + mdw
-    dat_proc$tmp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus==sero & get("ph2.D"%.%tp%.%".nAb")) 
+  for(iAb in 1:2) {
+    iLab=ifelse(iAb==1, "nAb", "bAb")
+    markers=c("Day"%.%tp%.%get(iLab%.%".1"), "Delta"%.%tp%.%"overB"%.%get(iLab%.%".1"))
+    dat_proc$tmp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus==sero & get("ph2.D"%.%tp%.%"."%.%iLab)) 
     dat_proc = add.trichotomized.markers (dat_proc, 
-                                          c("Day"%.%tp%.%nAb.1, "Delta"%.%tp%.%"overB"%.%nAb.1, if(tp=="22") "B"%.%nAb.1), 
+                                          markers, 
                                           ph2.col.name="tmp", 
-                                          wt.col.name="wt.D"%.%tp%.%".nAb", verbose=T)
+                                          wt.col.name="wt.D"%.%tp%.%"."%.%iLab, verbose=T)
+    cutpoints=attr(dat_proc, "marker.cutpoints")
+  
+    # cut .st1.nAb.batch0and1
+    if (iAb==1 & stage==1) {
+      for (a in markers) {
+        for (i in 1:10) {
+          dat_proc[dat_proc$tmp, a%.%"_"%.%i%.%"cat"]=as.character( factor(cut(dat_proc[dat_proc$tmp, a%.%"_"%.%i], breaks = c(-Inf, cutpoints[[a]], Inf))) )
+        }
+        
+      }
+    }
     dat_proc$tmp = NULL
-      
   }
+    
 }
 }
 }
+}
+
+
+tp="B"
+for (sero in c(0,1)) {  
+for (stage in c(1,2)) {
+  # sero=1; stage=1; iAb=1
+  
+  for(iAb in 1:2) {
+    iLab=ifelse(iAb==1, "nAb", "bAb")
+    markers="B"%.%get(iLab%.%".1")
+    # do it across trt 1 and 0
+    dat_proc$tmp = with(dat_proc, Trialstage==stage & Bserostatus==sero & get("ph2.D22."%.%iLab)) 
+    dat_proc = add.trichotomized.markers (dat_proc, 
+                                          markers, 
+                                          ph2.col.name="tmp", 
+                                          wt.col.name="wt.D22."%.%iLab, verbose=T)
+    cutpoints=attr(dat_proc, "marker.cutpoints")
+    
+    # cut .st1.nAb.batch0and1
+    if (iAb==1 & stage==1) {
+      for (a in markers) {
+        for (i in 1:10) {
+          dat_proc[dat_proc$tmp, a%.%"_"%.%i%.%"cat"]=as.character(factor(cut(dat_proc[dat_proc$tmp, a%.%"_"%.%i], breaks = c(-Inf, cutpoints[[a]], Inf))))
+        }
+        
+      }
+    }
+    dat_proc$tmp = NULL
+  }
+  
+}
+}
+  
 
 
 # also add dichotomized baseline markers for analysis of peak markers separately within low and high
@@ -1081,7 +1133,7 @@ dat_proc$Region3[dat_proc$Trialstage==2 & dat_proc$region==3] = "AsiaPac"
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         vat08_combined = "f72e0327a0c3ef352281899712d03444", 
+         vat08_combined = "299c745f743ab7054f6bbbd4f4d01b95", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
