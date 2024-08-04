@@ -78,7 +78,7 @@ for (t in c(1,22,43)) {
  }
 }
 
-# create event time and indicator variables censored after M6 (instead of M12) post dose 2
+# create event time and indicator variables censored at M6 post dose 2
 for (i in 1:10) {
   # use dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21 for both D22 and D44 variables so that they are consistent
   # EventTimeOmicronD22M6hotdeck is set to 180 when censored, but this is approximate because the interval between D22 and D43 may not be 21 days for some individuals
@@ -86,6 +86,16 @@ for (i in 1:10) {
   dat_proc[[paste0("EventTimeOmicronD22M6hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 180   , dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]])
   dat_proc[[paste0("EventIndOmicronD43M6hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 0,      dat_proc[[paste0("EventIndOmicronD43M12hotdeck",i)]])
   dat_proc[[paste0("EventTimeOmicronD43M6hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 180-21, dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]])
+}
+
+# create event time and indicator variables censored at 150 days post dose 2
+for (i in 1:10) {
+  # use dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>150-21 for both D22 and D44 variables so that they are consistent
+  # EventTimeOmicronD22M6hotdeck is set to 150 when censored, but this is approximate because the interval between D22 and D43 may not be 21 days for some individuals
+  dat_proc[[paste0("EventIndOmicronD22M5hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>150-21, 0,      dat_proc[[paste0("EventIndOmicronD22M12hotdeck",i)]])
+  dat_proc[[paste0("EventTimeOmicronD22M5hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>150-21, 150   , dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]])
+  dat_proc[[paste0("EventIndOmicronD43M5hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>150-21, 0,      dat_proc[[paste0("EventIndOmicronD43M12hotdeck",i)]])
+  dat_proc[[paste0("EventTimeOmicronD43M5hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>150-21, 150-21, dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]])
 }
 
 # M12 variables need to be censored at M12
@@ -747,7 +757,7 @@ for (step in 1:2) {
       for (sero in unique(dat.tmp.impute$Bserostatus)) {  
         # note that has to use dat.tmp.impute$Trialstage
         for (stage in unique(dat.tmp.impute$Trialstage)) {
-          # trt=1; sero=0; stage=1
+          # trt=1; sero=1; stage=1
           
           imp <- dat.tmp.impute %>% dplyr::filter(Trt == trt & Bserostatus==sero & Trialstage==stage) %>% select(all_of(imp.markers))         
           if(any(is.na(imp))) {
@@ -806,11 +816,11 @@ for (tp in c("B","Day22","Day43")) {
   if (tp=="Day22") kp = dat_proc$D22.nAb      | dat_proc$TwophasesampIndD22.st1.nAb.batch0and1
   if (tp=="Day43") kp = dat_proc$D43.nAb      | dat_proc$TwophasesampIndD43.st1.nAb.batch0and1
   
-  imp.markers=tp %.% nAb
-  
   for (trt in unique(dat.tmp.impute$Trt)) {
     for (sero in unique(dat.tmp.impute$Bserostatus)) {  
       # trt=1; sero=1;
+
+      imp.markers=tp %.% nAb
       
       select = with(dat_proc, Trt == trt & Bserostatus==sero & Trialstage==1 & kp)
       imp <- dat_proc[select, imp.markers]
@@ -820,21 +830,56 @@ for (tp in c("B","Day22","Day43")) {
         if (all(imp[[a]]==min(imp[[a]], na.rm=TRUE), na.rm=TRUE)) imp[[a]]=min(imp[[a]], na.rm=TRUE)
       }            
       
-      # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
-      imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)   
-      # summary(imp)
-      nrow(imp)
       
-      # add 10 new columns for each of the variants to the dataset
+      # # impute with mice      
+      # imp <- imp %>% mice(m = n.imp, method="norm", printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE) # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+      # # summary(imp)
+      # nrow(imp)
+      # for (i in 1:n.imp) {
+      #   for (a in nAb) {
+      #     dat_proc[select, tp%.%a%.%"_"%.%i] = mice::complete(imp, action=i)[,tp%.%a]
+      #   }
+      # }
+      
+      # # impute with linear regression mean prediction
+      # for (i in 1:n.imp) {
+      #   dat_proc[select, tp%.%"pseudoneutid50_"%.%i] = dat_proc[select, tp%.%"pseudoneutid50"]
+      #   for (a in nAb[-1]) {
+      #     lmfit=lm(as.formula(paste0(tp%.%a,"~",tp%.%"pseudoneutid50")), imp)
+      #     newvalue = predict(lmfit, newdata=imp[,tp%.%"pseudoneutid50",drop=F])
+      #     newvalue[!is.na(imp[[tp%.%a]])] = imp[[tp%.%a]][!is.na(imp[[tp%.%a]])]
+      #     dat_proc[select, tp%.%a%.%"_"%.%i] = newvalue
+      #   }
+      # }
+      
+      # impute with total regression
       for (i in 1:n.imp) {
-        for (a in nAb) {
-          dat_proc[select, tp%.%a%.%"_"%.%i] = mice::complete(imp, action=i)[,tp%.%a]
+        # dummy copies for ancestral id50
+        dat_proc[select, tp%.%"pseudoneutid50_"%.%i] = dat_proc[select, tp%.%"pseudoneutid50"]
+        
+        for (a in nAb[-1]) {
+          x=imp[[tp%.%"pseudoneutid50"]]
+          y=imp[[tp%.%a]]
+          # the cond removes outliers and focus on where the new x will be
+          fit = kyotil::Deming(x[x>3 & x-y<2], y[x>3 & x-y<2], boot=F)
+          # add a perturbation to the mean
+          newvalue = predict(fit, newdata=imp[,tp%.%"pseudoneutid50"]) + rnorm(mean=0,sd=fit$coef[3],n=nrow(imp))
+          newvalue[!is.na(imp[[tp%.%a]])] = imp[[tp%.%a]][!is.na(imp[[tp%.%a]])]
+          if (any(is.na(newvalue))) {
+            # imputation failed, just fill it with median
+            newvalue=y
+            newvalue[is.na(newvalue)]  = median(y,na.rm=T)
+          }
+          # censor at lod
+          newvalue[newvalue<log10(40)] = log10(20)
+          dat_proc[select, tp%.%a%.%"_"%.%i] = newvalue
         }
-      } 
+      }
+
       assertthat::assert_that(
         all(complete.cases(dat_proc[select, tp%.%c("pseudoneutid50_B.1.351"%.%"_"%.%1:10, "pseudoneutid50_BA.1"%.%"_"%.%1:10, 
                                                    "pseudoneutid50_BA.2"%.%"_"%.%1:10,    "pseudoneutid50_BA.4.5"%.%"_"%.%1:10)])),
-        msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+        msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?" %.% tp
       )
     }
   }
@@ -973,11 +1018,15 @@ for (trt in c(0,1)) {
                                           wt.col.name="wt.D"%.%tp%.%"."%.%iLab, verbose=T)
     cutpoints=attr(dat_proc, "marker.cutpoints")
   
-    # cut .st1.nAb.batch0and1
+    # use the same cutpoints to cut imputed copies for .st1.nAb.batch0and1
+    dat_proc$tmp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus==sero & get("ph2.D"%.%tp%.%".st1.nAb.batch0and1"))
     if (iAb==1 & stage==1) {
       for (a in markers) {
+        # 1.3 needs to be replaced by log10(20) otherwise when cutting, log10(20) > 1.3
+        cutpoints[[a]][cutpoints[[a]]==1.3]=log10(20)
         for (i in 1:10) {
-          dat_proc[dat_proc$tmp, a%.%"_"%.%i%.%"cat"]=as.character( factor(cut(dat_proc[dat_proc$tmp, a%.%"_"%.%i], breaks = c(-Inf, cutpoints[[a]], Inf))) )
+          dat_proc[dat_proc$tmp, a%.%"_"%.%i%.%"cat"]=
+            as.character( factor(cut(dat_proc[dat_proc$tmp, a%.%"_"%.%i], breaks = c(-Inf, cutpoints[[a]], Inf))) )
         }
         
       }
@@ -1007,11 +1056,16 @@ for (stage in c(1,2)) {
                                           wt.col.name="wt.D22."%.%iLab, verbose=T)
     cutpoints=attr(dat_proc, "marker.cutpoints")
     
-    # cut .st1.nAb.batch0and1
+    # use the same cutpoints to cut imputed copies for .st1.nAb.batch0and1
+    dat_proc$tmp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus==sero & get("ph2.D22.st1.nAb.batch0and1"))
+    
     if (iAb==1 & stage==1) {
       for (a in markers) {
+        # 1.3 needs to be replaced by log10(20) otherwise when cutting, log10(20) > 1.3
+        cutpoints[[a]][cutpoints[[a]]==1.3]=log10(20)
         for (i in 1:10) {
-          dat_proc[dat_proc$tmp, a%.%"_"%.%i%.%"cat"]=as.character(factor(cut(dat_proc[dat_proc$tmp, a%.%"_"%.%i], breaks = c(-Inf, cutpoints[[a]], Inf))))
+          dat_proc[dat_proc$tmp, a%.%"_"%.%i%.%"cat"]=
+            as.character(factor(cut(dat_proc[dat_proc$tmp, a%.%"_"%.%i], breaks = c(-Inf, cutpoints[[a]], Inf))))
         }
         
       }
