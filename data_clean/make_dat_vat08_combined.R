@@ -938,7 +938,7 @@ mdw.wt.bAb=tryCatch({
 })
 write.csv(mdw.wt.bAb, file = here("data_clean", "csv", TRIAL%.%"_bAb_mdw_weights.csv"))
 # apply to all time points, to both stages, naive/nnaive, vaccine and placebo
-for (t in c("B", "Day"%.%timepoints)) { # , "Delta"%.%timepoints%.%"overB", "Delta43over22"
+for (t in c("B", "Day"%.%c(22,43,78,134,202,292,387) )) { # mdw_delta is computed as delta of mdw
   dat_proc[, t%.%'bindSpike_mdw'] = as.matrix(dat_proc[, t%.%bAb]) %*% mdw.wt.bAb
 }
 
@@ -951,14 +951,18 @@ mdw.wt.nAb=tryCatch({
 })
 write.csv(mdw.wt.nAb, file = here("data_clean", "csv", TRIAL%.%"_nAb_mdw_weights.csv"))
 # apply to all time points, to both stages, naive/nnaive, vaccine and placebo
-for (t in c("B", "Day"%.%timepoints)) { # , "Delta"%.%timepoints%.%"overB", "Delta43over22"
+for (t in c("B", "Day"%.% c(22,43) )) { # mdw_delta is computed as delta of mdw
   dat_proc[, t%.%'pseudoneutid50_mdw'] = as.matrix(dat_proc[, t%.%nAb]) %*% mdw.wt.nAb
   # imputed copies
   for (i in 1:10) {
     dat_proc[, t%.%'pseudoneutid50_mdw_'%.%i] = as.matrix(dat_proc[, t%.%nAb%.%"_"%.%i]) %*% mdw.wt.nAb
   }
 }
-  
+for (t in c("B", "Day"%.% c(78,134,202,292,387) )) { # mdw_delta is computed as delta of mdw
+  dat_proc[, t%.%'pseudoneutid50_mdw'] = as.matrix(dat_proc[, t%.%nAb]) %*% mdw.wt.nAb
+  # no need for imputed copies
+}
+
 
 
 ###############################################################################
@@ -1177,6 +1181,12 @@ dat_proc$Region3[dat_proc$Trialstage==1 & dat_proc$region==4] = "AsiaPac"
 dat_proc$Region3[dat_proc$Trialstage==2 & dat_proc$region==1] = "LatAm"
 dat_proc$Region3[dat_proc$Trialstage==2 & dat_proc$region==2] = "Africa"
 dat_proc$Region3[dat_proc$Trialstage==2 & dat_proc$region==3] = "AsiaPac"
+
+
+
+# define a new binary baseline variable based on baseline ancestral ID50
+# cut point is lod/2
+dat_proc$Bhigh = ifelse(dat_proc$Bpseudoneutid50>log10(20+0.1), 1, 0)
 
 
 
