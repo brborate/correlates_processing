@@ -929,6 +929,8 @@ for (tp in c("B","Day22","Day43")) {
 
 kp = dat_proc$Trialstage==2 & dat_proc$Bserostatus==1 & dat_proc$Trt==1
 
+if (!file.exists(here::here("data_clean", "csv"))) dir.create(here::here("data_clean", "csv"))
+
 # bAb
 mdw.wt.bAb=tryCatch({
   tree.weight(cor(dat_proc[kp, "Day43"%.%bAb], use='complete.obs'))
