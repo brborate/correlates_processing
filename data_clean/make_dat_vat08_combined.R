@@ -303,7 +303,7 @@ for (tp in timepoints) {
   dat_proc[["ph1.D"%.%tp]] = with(dat_proc, 
                                   Perprotocol==1
                                   & get("EarlyinfectionD"%.%tp)==0
-                                  & get("EventTimePrimaryD"%.%tp) >= 7)
+                                  & get("EventTimePrimaryD"%.%tp) >= 7) # EventTimeFirstInfectionD43
 }
 
 # for .st1.nAb.batch0and1, limit to stage 1 and exclude region 3

@@ -663,7 +663,7 @@ preprocess=function(dat_raw, study_name) {
     if (study_name=='COVAIL') {
       dat_proc$EarlyinfectionD15=dat_proc$EarlyendpointD15
       
-    } else if (TRIAL %in% c("prevent19", "azd1222_bAb", "azd1222")) {
+    } else if (TRIAL %in% c("prevent19", "azd1222_bAb", "azd1222", "janssen_partA_VL")) {
       for(tp in timepoints) {
         dat_proc[["EarlyendpointD"%.%tp]] <- with(dat_proc, 
           ifelse(get("EarlyinfectionD"%.%tp)==1 | (EventIndPrimaryD1==1 & EventTimePrimaryD1 < get("NumberdaysD1toD"%.%tp) + 7),1,0))

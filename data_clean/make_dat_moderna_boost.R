@@ -24,7 +24,7 @@ mywrite.csv(dat_stage2_mapped, file=paste0("/trials/covpn/p3001/analysis/mapping
 print(paste0("write /trials/covpn/p3001/analysis/mapping_immune_correlates/Part_C_Unblinded_Phase_Data/adata/COVID_Moderna_stage2_", format(Sys.Date(), "%Y%m%d"), "_withRiskScores"))
 
 # read stage1 analysis ready data
-dat_stage1_adata = read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/moderna_real_data_processed_with_riskscore.csv")
+dat_stage1_adata = read.csv("/trials/covpn/p3001/analysis/correlates/Part_A_Blinded_Phase_Data/adata/moderna_real_data_processed_20230919.csv")
 # remove two risk-related columns that are from stage 1 since we are only need one risk-related column from stage 2
 dat_stage1_adata= subset(dat_stage1_adata, select=-c(Riskscorecohortflag,standardized_risk_score))
 

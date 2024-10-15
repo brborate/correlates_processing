@@ -912,6 +912,25 @@ if (study_name%in%c("COVAIL")) {
   } 
   
   
+  # finally, for exposure proximal work, add a step to impute Day71bindSpike based on Day71bindSpike_D614 
+  # do this after other steps so as not to change the values of other imputation results
+  n.imp = 1
+  select = with(dat_proc, TwophasesampIndD29==1 & (!is.na(Day71bindSpike_D614) | !is.na(Day71bindSpike)))
+  imp.markers = c("Day71bindSpike", "Day71bindSpike_D614")
+  imp <- dat_proc[select,] %>% select(all_of(imp.markers)) 
+  summary(imp)
+  nrow(tmp)
+  imp = imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+  dat_proc[select, "Day71bindSpike"] = mice::complete(imp, action=1)[,"Day71bindSpike"]
+  assertthat::assert_that(
+    all(complete.cases(dat_proc[select, "Day71bindSpike"])),
+    msg = "janssen_partA_VL: imputed values of missing markers merged properly for all individuals in the two phase sample?"
+  )
+  
+  # remove Day71bindSpike_D614 from dataset so that there is only one ancestral bAb variable in the dataset
+  dat_proc = subset(dat_proc, select=-Day71bindSpike_D614)
+  
+  
 } else if (TRIAL=="nvx_uk302") {
   # nothing to be done since we don't need to impute baseline and there is only one marker at D35
   
@@ -1366,7 +1385,7 @@ if(Sys.getenv ("NOCHECK")=="") {
          janssen_pooled_mock = "f3e286effecf1581eec34707fc4d468f",
          janssen_pooled_EUA = "c38fb43e2c87cf2d392757840af68bba",
          janssen_pooled_partA = "335d2628adb180d3d07745304d7bf603",
-         janssen_partA_VL = "be70e58897d461c242f930d09bbbcd0a", 
+         janssen_partA_VL = "1f5a0b62115acb8531aeb5f94eb1aef0", 
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "9a766566d32dd7cafab6cca804a8dfb3",
