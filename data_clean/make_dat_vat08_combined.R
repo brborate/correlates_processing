@@ -264,7 +264,14 @@ cond = dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="POSITIVE"
 dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 200
 dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 200
 
-with (dat_proc, mytable(Trt, tps.stratum, Bserostatus, RAPDIAG))
+
+# with(dat_proc[dat_proc[["ph1.immuno"]]==1 & dat_proc$Trialstage==1, ],
+#                   table(Senior, get("ph2.D"%.%tp%.%".st1.nAb.batch0and1"), region))
+# 
+# with (dat_proc, mytable(Trt, tps.stratum, Bserostatus, RAPDIAG))
+
+
+
 mytable(dat_proc$Wstratum)
 
 
@@ -432,9 +439,22 @@ dat_proc$TwophasesampIndD43.st1.nAb.batch0and1 = with(dat_proc, Trialstage==1 &
   dat_proc$SubcohortIndbAb=0
   dat_proc$SubcohortIndnAb=0
   
-  # all non-cases with markers are included
-  dat_proc$SubcohortIndbAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndD43bAb==1 & dat_proc$TwophasesampIndD22bAb==1]=1
-  dat_proc$SubcohortIndnAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndD43nAb==1 & dat_proc$TwophasesampIndD22nAb==1]=1
+  # all non-cases with appropriate markers are included
+  
+  # bAb
+  dat_proc$SubcohortIndbAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndD43bAb==1]=1
+  
+  # nAb
+  # stage 2
+  dat_proc$SubcohortIndnAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndD43nAb==1 
+                           & dat_proc$Trialstage==2]=1
+  # stage 1
+  dat_proc$SubcohortIndnAb[dat_proc$EventIndFirstInfectionD1==0 & dat_proc$TwophasesampIndD43.st1.nAb.batch0and1==1
+                           & dat_proc$Trialstage==1]=1
+  # verify stage 1 subcohort has ancestral id50 at both D22 and D43
+  stopifnot(
+    all(with(subset(dat_proc, SubcohortIndnAb==1 & Trialstage==1), !is.na(Day22pseudoneutid50) & !is.na(Day43pseudoneutid50)))
+  )
   
   # pick controls using bAb and use for both SubcohortIndbAb and SubcohortIndnAb
   tab=mytable(dat_proc$TwophasesampIndD43bAb, dat_proc$tps.stratum, dat_proc$EventIndFirstInfectionD1)[,,1]
@@ -493,6 +513,10 @@ get.strata.merge.to = function(strata.to.merge) {
 # use a single set of strata for bAb and nAb, or correlates and immuno, for sensitivity (stage 2) and main
 if (TRUE) {
 
+  # immuno
+  dat_proc[["ph1.immuno.bAb"]] = with(dat_proc, Perprotocol==1 & EarlyinfectionD43==0)
+  dat_proc[["ph1.immuno.nAb"]] = with(dat_proc, Perprotocol==1 & EarlyinfectionD43==0 & (Trialstage==2 | Trialstage==1 & region!=3))
+  
   # use bAb instead of nAb because there are less bAb samples
   Ab="bAb"
   tp=43 # use D43 for this. D22 will also likely be fine
@@ -541,6 +565,22 @@ if (TRUE) {
     dat_proc$Wstratum.st1.nAb.batch0and1[dat_proc$Wstratum.st1.nAb.batch0and1==strata.to.merge.3[i]] = strata.merge.to.3[i]
   }
   
+  # in stage 1 using batch 0 and 1, tps.stratum
+  dat_proc$tps.stratum.st1.nAb.batch0and1=dat_proc$tps.stratum
+  tp=43
+  # note that we use ph1.D43.st1.nAb.batch0and1, which removes region 3, to avoid error in get.strata.merge.to from too many empty strata
+  wts_table <- with(dat_proc[dat_proc[["ph1.immuno.nAb"]]==1 & dat_proc$Trialstage==1, ],
+                    table(tps.stratum.st1.nAb.batch0and1, get("ph2.D"%.%tp%.%".st1.nAb.batch0and1")))
+  
+  strata.to.merge.4 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
+  strata.merge.to.4 = get.strata.merge.to (strata.to.merge.4)
+  print(strata.to.merge.4)
+  print(strata.merge.to.4)
+  
+  for (i in 1:length(strata.to.merge.4)) {
+    dat_proc$tps.stratum.st1.nAb.batch0and1[dat_proc$tps.stratum.st1.nAb.batch0and1==strata.to.merge.4[i]] = strata.merge.to.4[i]
+  }
+  
   # compute weights
   
   # cor weights
@@ -579,18 +619,19 @@ if (TRUE) {
   }
   
   # immuno
-  dat_proc[["ph1.immuno"]] = with(dat_proc, Perprotocol==1 & EarlyinfectionD43==0)
   
   dat_proc[["ph2.immuno.nAb"]] = dat_proc$ph1.D43 & dat_proc$SubcohortIndnAb 
+  # create a tps stratum that is tps.stratum.st1.nAb.batch0and1 for stage 1 and tps.stratum for stage 2
+  dat_proc$tps.stratum.tmp = ifelse(dat_proc$Trialstage==1, dat_proc$tps.stratum.st1.nAb.batch0and1, dat_proc$tps.stratum)
   dat_proc = add.wt(dat_proc, 
-                    ph1="ph1.immuno", 
+                    ph1="ph1.immuno.nAb", 
                     ph2="ph2.immuno.nAb", 
-                    Wstratum="tps.stratum", 
-                    wt="wt.immuno.nAb", verbose=F) 
+                    Wstratum="tps.stratum.tmp", 
+                    wt="wt.immuno.nAb", verbose=T) 
   
   dat_proc[["ph2.immuno.bAb"]] = dat_proc$ph1.D43 & dat_proc$SubcohortIndbAb
   dat_proc = add.wt(dat_proc, 
-                    ph1="ph1.immuno", 
+                    ph1="ph1.immuno.bAb", 
                     ph2="ph2.immuno.bAb", 
                     Wstratum="tps.stratum", 
                     wt="wt.immuno.bAb", verbose=F) 
@@ -1199,7 +1240,7 @@ dat_proc$Bhigh = ifelse(dat_proc$Bpseudoneutid50>log10(20+0.1), 1, 0)
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         vat08_combined = "299c745f743ab7054f6bbbd4f4d01b95", 
+         vat08_combined = "efa3bc810a469d241927ee6bfcefe912", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
