@@ -78,12 +78,14 @@ for (t in c(1,22,43)) {
  }
 }
 
+# VAT00008-484-0006-20012 has two Omicron events in hotdeck10
+
 # create event time and indicator variables censored at M6 post dose 2
 for (i in 1:10) {
   # use dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21 for both D22 and D44 variables so that they are consistent
   # EventTimeOmicronD22M6hotdeck is set to 180 when censored, but this is approximate because the interval between D22 and D43 may not be 21 days for some individuals
-  dat_proc[[paste0("EventIndOmicronD22M6hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 0,      dat_proc[[paste0("EventIndOmicronD22M12hotdeck",i)]])
-  dat_proc[[paste0("EventTimeOmicronD22M6hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 180   , dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]])
+  dat_proc[[paste0("EventIndOmicronD22M6hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]]>180, 0,      dat_proc[[paste0("EventIndOmicronD22M12hotdeck",i)]])
+  dat_proc[[paste0("EventTimeOmicronD22M6hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]]>180, 180   , dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]])
   dat_proc[[paste0("EventIndOmicronD43M6hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 0,      dat_proc[[paste0("EventIndOmicronD43M12hotdeck",i)]])
   dat_proc[[paste0("EventTimeOmicronD43M6hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21, 180-21, dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]])
 }
@@ -92,8 +94,8 @@ for (i in 1:10) {
 for (i in 1:10) {
   # use dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>150-21 for both D22 and D44 variables so that they are consistent
   # EventTimeOmicronD22M6hotdeck is set to 150 when censored, but this is approximate because the interval between D22 and D43 may not be 21 days for some individuals
-  dat_proc[[paste0("EventIndOmicronD22M5hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>150-21, 0,      dat_proc[[paste0("EventIndOmicronD22M12hotdeck",i)]])
-  dat_proc[[paste0("EventTimeOmicronD22M5hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>150-21, 150   , dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]])
+  dat_proc[[paste0("EventIndOmicronD22M5hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]]>150, 0,      dat_proc[[paste0("EventIndOmicronD22M12hotdeck",i)]])
+  dat_proc[[paste0("EventTimeOmicronD22M5hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]]>150, 150   , dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]])
   dat_proc[[paste0("EventIndOmicronD43M5hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>150-21, 0,      dat_proc[[paste0("EventIndOmicronD43M12hotdeck",i)]])
   dat_proc[[paste0("EventTimeOmicronD43M5hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>150-21, 150-21, dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]])
 }
@@ -102,12 +104,17 @@ for (i in 1:10) {
 for (i in 1:10) {
   # use dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>180-21 for both D22 and D44 variables so that they are consistent
   # EventTimeOmicronD22M6hotdeck is set to 360 when censored, but this is approximate because the interval between D22 and D43 may not be 21 days for some individuals
-  dat_proc[[paste0("EventIndOmicronD22M12hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>360-21, 0,      dat_proc[[paste0("EventIndOmicronD22M12hotdeck",i)]])
-  dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>360-21, 360   , dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]])
+  dat_proc[[paste0("EventIndOmicronD22M12hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]]>360, 0,      dat_proc[[paste0("EventIndOmicronD22M12hotdeck",i)]])
+  dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]]>360, 360   , dat_proc[[paste0("EventTimeOmicronD22M12hotdeck",i)]])
   dat_proc[[paste0("EventIndOmicronD43M12hotdeck",i)]]  = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>360-21, 0,      dat_proc[[paste0("EventIndOmicronD43M12hotdeck",i)]])
   dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]] = ifelse (dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]]>360-21, 360-21, dat_proc[[paste0("EventTimeOmicronD43M12hotdeck",i)]])
 }
 
+
+# checking to see if D22 and D44 variables are consistent
+mytable(dat_proc$EventIndOmicronD22M12hotdeck10, dat_proc$EventIndOmicronD43M12hotdeck10)
+
+# subset(dat_proc, EventIndOmicronD22M12hotdeck10==0 & EventIndOmicronD43M12hotdeck10==1)
 }
 
 
