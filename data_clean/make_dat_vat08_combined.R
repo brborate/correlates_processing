@@ -114,7 +114,7 @@ for (i in 1:10) {
 # checking to see if D22 and D44 variables are consistent
 mytable(dat_proc$EventIndOmicronD22M12hotdeck10, dat_proc$EventIndOmicronD43M12hotdeck10)
 
-# subset(dat_proc, EventIndOmicronD22M12hotdeck10==0 & EventIndOmicronD43M12hotdeck10==1)
+subset(dat_proc, EventIndOmicronD22M12hotdeck10==0 & EventIndOmicronD43M12hotdeck10==1, Ptid)
 }
 
 
@@ -1247,7 +1247,7 @@ dat_proc$Bhigh = ifelse(dat_proc$Bpseudoneutid50>log10(20+0.1), 1, 0)
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         vat08_combined = "5f4147a0d963e0bcc3c35deab373216c", 
+         vat08_combined = "c77d948072f19dbb87b12a4407529716", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
