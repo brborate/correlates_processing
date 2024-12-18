@@ -100,8 +100,8 @@ table(xx9)
 table(xx10)
 
 # hotdeck1 is the modal result: 5 Delta, 111 Omicron
-> sort(calendartimetoCOVID[xx1==1])
-> sort(calendartimetoCOVID[xx1==1])
+ sort(calendartimetoCOVID[xx1==1])
+ sort(calendartimetoCOVID[xx1==1])
   [1] 191 197 205 211 212 214 218 218 219 219 221 221 222 222 222 222 222 222 223 223 223
  [22] 226 227 227 227 227 227 227 228 229 230 230 230 230 230 231 231 231 232 232 232 233
  [43] 233 233 233 233 235 235 235 235 236 236 236 236 236 236 236 237 238 239 239 239 239
