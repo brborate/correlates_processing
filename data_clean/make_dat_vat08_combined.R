@@ -41,19 +41,25 @@ dat_proc$cc = country.codes[dat_proc$Country]
 dat_proc$continent = continents[dat_proc$cc]
 table(dat_proc$continent, dat_proc$cc)
 region.1 = c( # stage 1
- "United States" = 1, "Japan" = 1, 
- "Colombia" = 2, "Honduras" = 2, 
- "Ghana" = 3, "Kenya" = 3, 
- "Nepal" = 4, "India" = 4)
+  "United States" = 1, "Japan" = 1, 
+  "Colombia" = 2, "Honduras" = 2, 
+  "Ghana" = 3, "Kenya" = 3, 
+  "Nepal" = 4, "India" = 4)
+region.1a = c( # stage 1, Honduras 1, else 2
+  "United States" = 2, "Japan" = 2, 
+  "Colombia" = 2, "Honduras" = 1, 
+  "Ghana" = 2, "Kenya" = 2, 
+  "Nepal" = 2, "India" = 2)
 region.2 = c( # stage 2
  "Colombia" = 1, "Mexico" = 1, 
  "Ghana" = 2, "Kenya" = 2, "Uganda" = 2,
  "Nepal" = 3, "India" = 3)
-# first set it to stage 1 region, then change the region for stage 2 countries
-dat_proc$region = region.1[dat_proc$cc] 
-dat_proc$region = ifelse(dat_proc$Trialstage==2, region.2[dat_proc$cc], dat_proc$region)
 
+dat_proc$region = ifelse(dat_proc$Trialstage==2, region.2[dat_proc$cc], region.1[dat_proc$cc])
+dat_proc$region_for_tps_stratum = ifelse(dat_proc$Trialstage==2, region.2[dat_proc$cc], region.1a[dat_proc$cc])
 
+dat_proc$immune_history = ifelse(dat_proc$Bserostatus==0, "naive", "prev_vacc")
+dat_proc$immune_history[dat_proc$prev_inf==1] = "prev_infected"
 
 # add risk score
 load(file = paste0('riskscore_baseline/output/vat08_combined/inputFile_with_riskscore.RData'))
@@ -233,9 +239,10 @@ dat_proc$demo.stratum = dat_proc$region
 # Differs from tps stratum in that cases are separated out
 # A case will have a Wstratum even if its tps.stratum is NA
 
-dat_proc$tps.stratum = dat_proc$region
+dat_proc$tps.stratum = dat_proc$region_for_tps_stratum
 # 1-4: Non-senior; 5-8: Senior
-# for stage 2, strata 4, 8 etc are empty because there are only three regions
+# for stage 1, strata 3,4,7,8 are empty because there are only two regions
+# for stage 2, strata 4,8 are empty because there are only three regions
 cond=dat_proc$Senior==1
 dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 4
 
@@ -259,34 +266,35 @@ dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 50
 
 # cross with naive status
 
-# Bserostatus==0: <100
+# prev_inf==0: <100
 
-# Bserostatus==1 & RAPDIAG==0: 101-170
-cond = dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="NEGATIVE"
+# prev_inf==1 & RAPDIAG==0: 101-170
+cond = dat_proc$prev_inf==1 & dat_proc$RAPDIAG=="NEGATIVE"
+# for stage 1, still use Bserostatus
+cond = ifelse(dat_proc$Trialstage==1, dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="NEGATIVE", cond)
 dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 100
 dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 100
 
-# Bserostatus==1 & RAPDIAG==1: 201-270
-cond = dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="POSITIVE"
+# prev_inf==1 & RAPDIAG==1: 201-270
+cond = dat_proc$prev_inf==1 & dat_proc$RAPDIAG=="POSITIVE"
+# for stage 1, still use Bserostatus
+cond = ifelse(dat_proc$Trialstage==1, dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="POSITIVE", cond)
 dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 200
 dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 200
 
 
 # with(dat_proc[dat_proc[["ph1.immuno"]]==1 & dat_proc$Trialstage==1, ],
 #                   table(Senior, get("ph2.D"%.%tp%.%".st1.nAb.batch0and1"), region))
-# 
-# with (dat_proc, mytable(Trt, tps.stratum, Bserostatus, RAPDIAG))
-
 
 
 mytable(dat_proc$Wstratum)
 
 
-with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==1), table.prop(!is.na(Day43bindSpike), Bserostatus))
-with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==1), table.prop(!is.na(Day43bindSpike), Bserostatus))
+with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==1), table.prop(!is.na(Day43bindSpike), prev_inf))
+with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==1), table.prop(!is.na(Day43bindSpike), prev_inf))
 
-with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==2), table.prop(!is.na(Day43bindSpike), Bserostatus))
-with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==2), table.prop(!is.na(Day43bindSpike), Bserostatus))
+with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==2), table.prop(!is.na(Day43bindSpike), prev_inf))
+with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==2), table.prop(!is.na(Day43bindSpike), prev_inf))
 
 with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==1), table.prop(!is.na(Day43bindSpike), RAPDIAG))
 with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==1), table.prop(!is.na(Day43bindSpike), RAPDIAG))
@@ -319,6 +327,8 @@ for (tp in timepoints) {
                                   & get("EarlyinfectionD"%.%tp)==0
                                   & get("EventTimePrimaryD"%.%tp) >= 7) # EventTimeFirstInfectionD43
 }
+
+
 
 # for .st1.nAb.batch0and1, limit to stage 1 and exclude region 3
 for (tp in timepoints) {
@@ -364,7 +374,7 @@ dat_proc$D22.bAb = with(dat_proc,
                           !is.na(Day22bindSpike_delta3) | 
                           !is.na(Day22bindSpike_omicron)) 
 
-with(subset(dat_proc, baseline.bAb & D22.bAb & !D43.bAb & EventIndOmicronD22M12hotdeck1==1), mytable(Trt, Trialstage, Bserostatus))
+with(subset(dat_proc, baseline.bAb & D22.bAb & !D43.bAb & EventIndOmicronD22M12hotdeck1==1), mytable(Trt, Trialstage, prev_inf))
 
 dat_proc[["TwophasesampIndD22bAb"]] = dat_proc$baseline.bAb & dat_proc$D22.bAb
 dat_proc[["TwophasesampIndD43bAb"]] = dat_proc$baseline.bAb & dat_proc$D43.bAb & dat_proc$D22.bAb
@@ -392,7 +402,7 @@ dat_proc$D22.nAb = with(dat_proc,
                           !is.na(Day22pseudoneutid50_BA.2) | 
                           !is.na(Day22pseudoneutid50_BA.4.5)) 
 
-with(subset(dat_proc, baseline.nAb & D22.nAb & !D43.nAb & EventIndOmicronD22M12hotdeck1==1), mytable(Trt, Trialstage, Bserostatus))
+with(subset(dat_proc, baseline.nAb & D22.nAb & !D43.nAb & EventIndOmicronD22M12hotdeck1==1), mytable(Trt, Trialstage, prev_inf))
 
 dat_proc[["TwophasesampIndD22nAb"]] = dat_proc$baseline.nAb & dat_proc$D22.nAb
 dat_proc[["TwophasesampIndD43nAb"]] = dat_proc$baseline.nAb & dat_proc$D43.nAb & dat_proc$D22.nAb
@@ -423,8 +433,8 @@ mytable(dat_proc$batch0, !is.na(dat_proc$Bpseudoneutid50) )
 mytable(dat_proc$batch0, !is.na(dat_proc$Day22pseudoneutid50) )
 mytable(dat_proc$batch0, !is.na(dat_proc$Day43pseudoneutid50) )
 
-with(subset(dat_proc, Trialstage==1 & Bserostatus==1), mytable(TwophasesampIndD22nAb, batch0))
-with(subset(dat_proc, Trialstage==1 & Bserostatus==1), mytable(TwophasesampIndD43bAb, batch0))
+with(subset(dat_proc, Trialstage==1 & prev_inf==1), mytable(TwophasesampIndD22nAb, batch0))
+with(subset(dat_proc, Trialstage==1 & prev_inf==1), mytable(TwophasesampIndD43bAb, batch0))
 
 dat_proc$TwophasesampIndD22.st1.nAb.batch0and1 = with(dat_proc, Trialstage==1 &
                                                      !is.na(Bpseudoneutid50) &
@@ -532,16 +542,21 @@ if (TRUE) {
   strata.to.merge.1 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
   print(strata.to.merge.1)
   
-  # sensitivity study in stage 2
-  tp=43
-  dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]] & dat_proc$nAbBatch==2
-  wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1 & dat_proc$Trialstage==2, ], 
-                    table(Wstratum, get("ph2.D"%.%tp%.%".st2.nAb.sen")))
-  strata.to.merge.2 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
-  print(strata.to.merge.2)
+  # with (subset(dat_proc, prev_inf==1 & ph1.D43 & Trialstage==2 & Trt==1 & ph2.D43.bAb), mytable(RAPDIAG, region, Senior, EventIndPrimaryD22))
   
-  # combine the two
-  strata.to.merge = sort(unique(c(strata.to.merge.1, strata.to.merge.2)))
+  # skip considering this
+  # # sensitivity study in stage 2
+  # tp=43
+  # dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]] & dat_proc$nAbBatch==2
+  # wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1 & dat_proc$Trialstage==2, ], 
+  #                   table(Wstratum, get("ph2.D"%.%tp%.%".st2.nAb.sen")))
+  # strata.to.merge.2 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
+  # print(strata.to.merge.2)
+  # 
+  # # combine the two
+  # strata.to.merge = sort(unique(c(strata.to.merge.1, strata.to.merge.2)))
+  
+  strata.to.merge=strata.to.merge.1
   strata.merge.to = get.strata.merge.to (strata.to.merge)
   print(strata.merge.to)
   
@@ -584,7 +599,7 @@ if (TRUE) {
   print(strata.to.merge.4)
   print(strata.merge.to.4)
   
-  for (i in 1:length(strata.to.merge.4)) {
+  for (i in seq_along(strata.to.merge.4)) {
     dat_proc$tps.stratum.st1.nAb.batch0and1[dat_proc$tps.stratum.st1.nAb.batch0and1==strata.to.merge.4[i]] = strata.merge.to.4[i]
   }
   
@@ -604,25 +619,25 @@ if (TRUE) {
     }
   }  
   
-  # stage 2 alternative weights for nAb
-  for (tp in timepoints) {
-    dat_proc[["ph1.D"%.%tp%.%".st2"]]         = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2
-    dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]] & dat_proc$nAbBatch==2
-    dat_proc = add.wt(dat_proc, 
-                      ph1="ph1.D"%.%tp%.%".st2", 
-                      ph2="ph2.D"%.%tp%.%".st2.nAb.sen", 
-                      Wstratum="Wstratum", 
-                      wt="wt.D"%.%tp%.%".st2.nAb.sen", verbose=F) 
-  }
+  # # stage 2 alternative weights for nAb
+  # for (tp in timepoints) {
+  #   dat_proc[["ph1.D"%.%tp%.%".st2"]]         = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2
+  #   dat_proc[["ph2.D"%.%tp%.%".st2.nAb.sen"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc$Trialstage==2 & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]] & dat_proc$nAbBatch==2
+  #   dat_proc = add.wt(dat_proc, 
+  #                     ph1="ph1.D"%.%tp%.%".st2", 
+  #                     ph2="ph2.D"%.%tp%.%".st2.nAb.sen", 
+  #                     Wstratum="Wstratum", 
+  #                     wt="wt.D"%.%tp%.%".st2.nAb.sen", verbose=F) 
+  # }
   
   # stage 1 alternative weights for nAb using batch 0 and 1 only
   for (tp in timepoints) {
-    dat_proc[["ph2.D"%.%tp%.%".st1.nAb.batch0and1"]] = dat_proc[["ph1.D"%.%tp%.%".st1.nAb.batch0and1"]] & dat_proc[["TwophasesampIndD"%.%tp%.%".st1.nAb.batch0and1"]] 
-    dat_proc = add.wt(dat_proc, 
-                      ph1="ph1.D"%.%tp%.%".st1.nAb.batch0and1", 
-                      ph2="ph2.D"%.%tp%.%".st1.nAb.batch0and1", 
-                      Wstratum = "Wstratum.st1.nAb.batch0and1", 
-                      wt = "wt.D"%.%tp%.%".st1.nAb.batch0and1", verbose=F) 
+    dat_proc[["ph2.D"%.%tp%.%".st1.nAb.batch0and1"]] = dat_proc[["ph1.D"%.%tp%.%".st1.nAb.batch0and1"]] & dat_proc[["TwophasesampIndD"%.%tp%.%".st1.nAb.batch0and1"]]
+    dat_proc = add.wt(dat_proc,
+                      ph1="ph1.D"%.%tp%.%".st1.nAb.batch0and1",
+                      ph2="ph2.D"%.%tp%.%".st1.nAb.batch0and1",
+                      Wstratum = "Wstratum.st1.nAb.batch0and1",
+                      wt = "wt.D"%.%tp%.%".st1.nAb.batch0and1", verbose=F)
   }
   
   # immuno
