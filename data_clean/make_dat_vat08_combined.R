@@ -263,6 +263,9 @@ cond = dat_proc$Trialstage==2
 dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 50
 dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 50
 
+# make a copy of Wstratum to use for  stage 1 nAb
+dat_proc$Wstratum.st1.nAb.batch0and1=dat_proc$Wstratum
+dat_proc$tps.stratum.st1.nAb.batch0and1=dat_proc$tps.stratum
 
 # cross with naive status
 
@@ -270,24 +273,28 @@ dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 50
 
 # prev_inf==1 & RAPDIAG==0: 101-170
 cond = dat_proc$prev_inf==1 & dat_proc$RAPDIAG=="NEGATIVE"
-# for stage 1, still use Bserostatus
+dat_proc$Wstratum.st1.nAb.batch0and1[cond] = dat_proc$Wstratum[cond] + 100
+dat_proc$tps.stratum.st1.nAb.batch0and1[cond] = dat_proc$tps.stratum[cond] + 100
+
+# modify cond so that for stage 1, still use Bserostatus
 cond = ifelse(dat_proc$Trialstage==1, dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="NEGATIVE", cond)
 dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 100
-dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 100
+dat_proc$Wstratum[cond]    = dat_proc$Wstratum[cond] + 100
 
 # prev_inf==1 & RAPDIAG==1: 201-270
 cond = dat_proc$prev_inf==1 & dat_proc$RAPDIAG=="POSITIVE"
-# for stage 1, still use Bserostatus
+dat_proc$Wstratum.st1.nAb.batch0and1[cond] = dat_proc$Wstratum[cond] + 200
+dat_proc$tps.stratum.st1.nAb.batch0and1[cond] = dat_proc$tps.stratum[cond] + 200
+
+# modify cond so that for stage 1, still use Bserostatus
 cond = ifelse(dat_proc$Trialstage==1, dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="POSITIVE", cond)
 dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 200
-dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 200
+dat_proc$Wstratum[cond]    = dat_proc$Wstratum[cond] + 200
 
 
 # with(dat_proc[dat_proc[["ph1.immuno"]]==1 & dat_proc$Trialstage==1, ],
 #                   table(Senior, get("ph2.D"%.%tp%.%".st1.nAb.batch0and1"), region))
 
-
-mytable(dat_proc$Wstratum)
 
 
 with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==1), table.prop(!is.na(Day43bindSpike), prev_inf))
@@ -304,6 +311,7 @@ with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==2), table.pro
 
 table(dat_proc$tps.stratum) 
 table(dat_proc$Wstratum)
+table(dat_proc$Wstratum.st1.nAb.batch0and1)
 
 
 # all strata for cases ends with 10
@@ -345,7 +353,7 @@ for (tp in timepoints) {
   
 # baseline 
 dat_proc$baseline.bAb = with(dat_proc, 
-                             !is.na(BbindSpike) | 
+                               !is.na(BbindSpike) |
                                !is.na(BbindSpike_beta) | 
                                !is.na(BbindSpike_alpha) | 
                                !is.na(BbindSpike_gamma) | 
@@ -355,7 +363,7 @@ dat_proc$baseline.bAb = with(dat_proc,
                                !is.na(BbindSpike_omicron)) 
 # D43 
 dat_proc$D43.bAb = with(dat_proc, 
-                        !is.na(Day43bindSpike) | 
+                          !is.na(Day43bindSpike) |
                           !is.na(Day43bindSpike_beta) | 
                           !is.na(Day43bindSpike_alpha) | 
                           !is.na(Day43bindSpike_gamma) | 
@@ -365,7 +373,7 @@ dat_proc$D43.bAb = with(dat_proc,
                           !is.na(Day43bindSpike_omicron)) 
 # D22 
 dat_proc$D22.bAb = with(dat_proc, 
-                        !is.na(Day22bindSpike) | 
+                          !is.na(Day22bindSpike) |
                           !is.na(Day22bindSpike_beta) | 
                           !is.na(Day22bindSpike_alpha) | 
                           !is.na(Day22bindSpike_gamma) | 
@@ -385,18 +393,21 @@ dat_proc[["TwophasesampIndD43bAb"]] = dat_proc$baseline.bAb & dat_proc$D43.bAb &
 
 # baseline 
 dat_proc$baseline.nAb = with(dat_proc, 
+                             # !is.na(Bpseudoneutid50) | 
                                !is.na(Bpseudoneutid50_B.1.351) | 
                                !is.na(Bpseudoneutid50_BA.1) | 
                                !is.na(Bpseudoneutid50_BA.2) | 
                                !is.na(Bpseudoneutid50_BA.4.5)) 
 # D43 
 dat_proc$D43.nAb = with(dat_proc, 
+                        # !is.na(Day43pseudoneutid50) | 
                           !is.na(Day43pseudoneutid50_B.1.351) | 
                           !is.na(Day43pseudoneutid50_BA.1) | 
                           !is.na(Day43pseudoneutid50_BA.2) | 
                           !is.na(Day43pseudoneutid50_BA.4.5)) 
 # D22 
 dat_proc$D22.nAb = with(dat_proc, 
+                        # !is.na(Day22pseudoneutid50) | 
                           !is.na(Day22pseudoneutid50_B.1.351) | 
                           !is.na(Day22pseudoneutid50_BA.1) | 
                           !is.na(Day22pseudoneutid50_BA.2) | 
@@ -451,8 +462,8 @@ dat_proc$TwophasesampIndD43.st1.nAb.batch0and1 = with(dat_proc, Trialstage==1 &
 
 
 
+# generate SubcohortInd for bAb and nAb separately
 {
-  # generate SubcohortInd for bAb and nAb separately
   dat_proc$SubcohortIndbAb=0
   dat_proc$SubcohortIndnAb=0
   
@@ -501,6 +512,9 @@ get.strata.merge.to = function(strata.to.merge) {
   # check if sorted
   if(!all(strata.to.merge==sort(strata.to.merge))) stop("strata.to.merge needs to be sorted")
   
+  # stop if a case stratum needs to be merged, has not happened
+  stopifnot(all(sapply(strata.to.merge, function (x) x %% 10 != 0)))
+  
   # first try merging senior and non-senior strata, which differ by 4
   # luckily, this is all we have to do, i.e. stop is never triggered
   strata.merge.to=sapply (strata.to.merge, function(x) {
@@ -534,15 +548,19 @@ if (TRUE) {
   dat_proc[["ph1.immuno.bAb"]] = with(dat_proc, Perprotocol==1 & EarlyinfectionD43==0)
   dat_proc[["ph1.immuno.nAb"]] = with(dat_proc, Perprotocol==1 & EarlyinfectionD43==0 & (Trialstage==2 | Trialstage==1 & region!=3))
   
-  # use bAb instead of nAb because there are less bAb samples
-  Ab="bAb"
+  
+  
   tp=43 # use D43 for this. D22 will also likely be fine
-  dat_proc[["ph2.D"%.%tp%.%"."%.%Ab]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%Ab]]
-  wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1, ], table(Wstratum, get("ph2.D"%.%tp%.%"."%.%Ab)))
+  dat_proc[["ph2.D"%.%tp%.%"."%.%"bAb"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"bAb"]]
+  dat_proc[["ph2.D"%.%tp%.%"."%.%"nAb"]] = dat_proc[["ph1.D"%.%tp]] & dat_proc[["TwophasesampIndD"%.%tp%.%"nAb"]]
+  # use bAb instead of nAb because there are less bAb samples
+  wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1, ], table(Wstratum, get("ph2.D"%.%tp%.%"."%.%"bAb")))
   strata.to.merge.1 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
   print(strata.to.merge.1)
   
-  # with (subset(dat_proc, prev_inf==1 & ph1.D43 & Trialstage==2 & Trt==1 & ph2.D43.bAb), mytable(RAPDIAG, region, Senior, EventIndPrimaryD22))
+  with (subset(dat_proc, ph1.D43 & EventIndPrimaryD43==0 & Trt==1), mytable(immune_history, ph2.D43.bAb, Trialstage))  
+  with (subset(dat_proc, ph1.D43 & EventIndPrimaryD43==0 & Trt==1), mytable(immune_history, ph2.D43.nAb, Trialstage))  
+  with (subset(dat_proc, prev_inf==1 & ph1.D43 & Trialstage==1 & Trt==1 & ph2.D43.bAb), mytable(RAPDIAG, region, Senior, EventIndPrimaryD22))
   
   # skip considering this
   # # sensitivity study in stage 2
@@ -560,14 +578,13 @@ if (TRUE) {
   strata.merge.to = get.strata.merge.to (strata.to.merge)
   print(strata.merge.to)
   
-  # before merging Wstratum, save a copy for use with strata.to.merge.3
-  dat_proc$Wstratum.st1.nAb.batch0and1=dat_proc$Wstratum
-  
-  # merge Wstratum and tps.stratum. Note that there are no case strata to merge. Case strata are numbered as multiples of 10.
+  # merge Wstratum and tps.stratum, because we check for case strata in get.strata.merge.to
   for (i in 1:length(strata.to.merge)) {
     dat_proc$Wstratum[dat_proc$Wstratum==strata.to.merge[i]] = strata.merge.to[i]
     dat_proc$tps.stratum[dat_proc$tps.stratum==strata.to.merge[i]] = strata.merge.to[i]
   }
+  
+  
   
   # in stage 1 using batch 0 and 1
   tp=43
@@ -575,33 +592,33 @@ if (TRUE) {
   dat_proc[["ph2.D"%.%tp%.%".st1.nAb.batch0and1"]] = dat_proc[["ph1.D"%.%tp%.%".st1.nAb.batch0and1"]] & dat_proc[["TwophasesampIndD"%.%tp%.%".st1.nAb.batch0and1"]]
   wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp%.%".st1.nAb.batch0and1"]]==1, ],
                     table(Wstratum.st1.nAb.batch0and1, get("ph2.D"%.%tp%.%".st1.nAb.batch0and1")))
-  strata.to.merge.3 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
-  print(strata.to.merge.3)
-  # manually change it so that 14 (ASIA) is merged with 11 (US/JPN) and 18 with 15 because both 14 and 18 are empty
-  strata.merge.to.3 = c(11, 15, get.strata.merge.to (setdiff(strata.to.merge.3, c(14,18))))         
-  strata.to.merge.3 = c(14, 18, setdiff(strata.to.merge.3, c(14,18)))
-  print(strata.to.merge.3)
-  print(strata.merge.to.3)
-  
+  strata.to.merge.3 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F]))); print(strata.to.merge.3)
+  strata.merge.to.3 = get.strata.merge.to (strata.to.merge.3); print(strata.merge.to.3)
+  # # manually change it so that 14 (ASIA) is merged with 11 (US/JPN) and 18 with 15 because both 14 and 18 are empty
+  # strata.merge.to.3 = c(11, 15, get.strata.merge.to (setdiff(strata.to.merge.3, c(14,18))))         
+  # strata.to.merge.3 = c(14, 18, setdiff(strata.to.merge.3, c(14,18)))
+
+  # merge Wstratum and tps.stratum, because we check for case strata in get.strata.merge.to
   for (i in 1:length(strata.to.merge.3)) {
     dat_proc$Wstratum.st1.nAb.batch0and1[dat_proc$Wstratum.st1.nAb.batch0and1==strata.to.merge.3[i]] = strata.merge.to.3[i]
+    dat_proc$tps.stratum.st1.nAb.batch0and1[dat_proc$tps.stratum.st1.nAb.batch0and1==strata.to.merge.3[i]] = strata.merge.to.3[i]
   }
   
-  # in stage 1 using batch 0 and 1, tps.stratum
-  dat_proc$tps.stratum.st1.nAb.batch0and1=dat_proc$tps.stratum
-  tp=43
-  # note that we use ph1.D43.st1.nAb.batch0and1, which removes region 3, to avoid error in get.strata.merge.to from too many empty strata
-  wts_table <- with(dat_proc[dat_proc[["ph1.immuno.nAb"]]==1 & dat_proc$Trialstage==1, ],
-                    table(tps.stratum.st1.nAb.batch0and1, get("ph2.D"%.%tp%.%".st1.nAb.batch0and1")))
-  
-  strata.to.merge.4 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
-  strata.merge.to.4 = get.strata.merge.to (strata.to.merge.4)
-  print(strata.to.merge.4)
-  print(strata.merge.to.4)
-  
-  for (i in seq_along(strata.to.merge.4)) {
-    dat_proc$tps.stratum.st1.nAb.batch0and1[dat_proc$tps.stratum.st1.nAb.batch0and1==strata.to.merge.4[i]] = strata.merge.to.4[i]
-  }
+  # # in stage 1 using batch 0 and 1, tps.stratum
+  # dat_proc$tps.stratum.st1.nAb.batch0and1=dat_proc$tps.stratum
+  # tp=43
+  # # note that we use ph1.D43.st1.nAb.batch0and1, which removes region 3, to avoid error in get.strata.merge.to from too many empty strata
+  # wts_table <- with(dat_proc[dat_proc[["ph1.immuno.nAb"]]==1 & dat_proc$Trialstage==1, ],
+  #                   table(tps.stratum.st1.nAb.batch0and1, get("ph2.D"%.%tp%.%".st1.nAb.batch0and1")))
+  # 
+  # strata.to.merge.4 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
+  # strata.merge.to.4 = get.strata.merge.to (strata.to.merge.4)
+  # print(strata.to.merge.4)
+  # print(strata.merge.to.4)
+  # 
+  # for (i in seq_along(strata.to.merge.4)) {
+  #   dat_proc$tps.stratum.st1.nAb.batch0and1[dat_proc$tps.stratum.st1.nAb.batch0and1==strata.to.merge.4[i]] = strata.merge.to.4[i]
+  # }
   
   # compute weights
   
