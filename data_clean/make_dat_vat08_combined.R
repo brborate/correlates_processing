@@ -1393,7 +1393,7 @@ dat_proc$Bhigh = ifelse(dat_proc$Bpseudoneutid50>log10(20+0.1), 1, 0)
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         vat08_combined = "ec808cd4249222dea6128e45393dadf5", 
+         vat08_combined = "32b55ebed6aea35b885a27a688fbd97e", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }
