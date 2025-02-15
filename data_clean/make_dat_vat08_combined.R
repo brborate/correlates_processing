@@ -221,104 +221,220 @@ subset(dat_proc, EventIndOmicronD22M12hotdeck10==0 & EventIndOmicronD43M12hotdec
 ###############################################################################
 # 3. stratum variables
 
-{
 # Bstratum: randomization strata
 dat_proc$Bstratum =  with(dat_proc, Senior + 1)
 names(Bstratum.labels) <- Bstratum.labels
-
 # demographics
 dat_proc$demo.stratum = dat_proc$region
 
-
 # tps stratum, used in tps regression and to define Wstratum
-
 # Wstratum
 # Used to compute sampling weights. 
 # Differs from tps stratum in that cases are separated out
 # A case will have a Wstratum even if its tps.stratum is NA
 
-dat_proc$tps.stratum = dat_proc$region_for_tps_stratum
-# 1-4: Non-senior; 5-8: Senior
-# for stage 1, strata 3,4,7,8 are empty because there are only two regions
-# for stage 2, strata 4,8 are empty because there are only three regions
-cond=dat_proc$Senior==1
-dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 4
+# define strata separately for stage 1 and stage 2, Bserostatus 1 (further stratify by RAPDIAG) or 0
 
-# make cases 10 in Wstratum
-dat_proc$Wstratum =  dat_proc$tps.stratum
-cond=dat_proc$EventIndPrimaryD22==1
-dat_proc$Wstratum[cond] = 10
+{
+  # first do stage 2 nnaive
+  
+  dat_tmp_st2_nnaive = subset(dat_proc, Trialstage==2 & Bserostatus==1)
+  
+  dat_tmp_st2_nnaive$tps.stratum = dat_tmp_st2_nnaive$region_for_tps_stratum
+  
+  # 1-4: Non-senior; 5-8: Senior
+  # for stage 1, strata 3,4,7,8 are empty because there are only two regions
+  # for stage 2, strata 4,8 are empty because there are only three regions
+  cond=dat_tmp_st2_nnaive$Senior==1
+  dat_tmp_st2_nnaive$tps.stratum[cond] = dat_tmp_st2_nnaive$tps.stratum[cond] + 4
+  
+  # make D01_S_pos_only_in_non_naive_group 9, i.e. 
+  cond=dat_tmp_st2_nnaive$D01_S_pos_only_in_non_naive_group==1
+  dat_tmp_st2_nnaive$tps.stratum[cond] = 9
+  
+  # make cases 10 in Wstratum
+  dat_tmp_st2_nnaive$Wstratum =  dat_tmp_st2_nnaive$tps.stratum
+  cond=dat_tmp_st2_nnaive$EventIndPrimaryD22==1
+  dat_tmp_st2_nnaive$Wstratum[cond] = 10
+  
+  # 1-10: vaccine;
+  # 11-20: placebo
+  cond = dat_tmp_st2_nnaive$Trt==0
+  dat_tmp_st2_nnaive$tps.stratum[cond] = dat_tmp_st2_nnaive$tps.stratum[cond] + 10
+  dat_tmp_st2_nnaive$Wstratum[cond] = dat_tmp_st2_nnaive$Wstratum[cond] + 10
+  
+  # 1-20: stage 1; 
+  # 31-40: stage 2
+  cond = dat_tmp_st2_nnaive$Trialstage==2
+  dat_tmp_st2_nnaive$tps.stratum[cond] = dat_tmp_st2_nnaive$tps.stratum[cond] + 20
+  dat_tmp_st2_nnaive$Wstratum[cond] = dat_tmp_st2_nnaive$Wstratum[cond] + 20
+  
+  # created dummy variables for merging
+  dat_tmp_st2_nnaive$Wstratum.st1.nAb.batch0and1=1
+  dat_tmp_st2_nnaive$tps.stratum.st1.nAb.batch0and1=1
+  
+  # raise by 100 b/c it is Bserostatus==1
+  dat_tmp_st2_nnaive$tps.stratum = dat_tmp_st2_nnaive$tps.stratum + 100
+  dat_tmp_st2_nnaive$Wstratum = dat_tmp_st2_nnaive$Wstratum + 100
+  
+  is.case = dat_tmp_st2_nnaive$EventIndPrimaryD22==1 & !is.na(dat_tmp_st2_nnaive$EventIndPrimaryD22)
 
-# 1-10: vaccine;
-# 11-20: placebo
-cond = dat_proc$Trt==0
-dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 10
-dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 10
+  # split cases into two: RAPDIAG == 1 or 0
+  cond = dat_tmp_st2_nnaive$RAPDIAG=="POSITIVE" & is.case
+  dat_tmp_st2_nnaive$Wstratum[cond] = dat_tmp_st2_nnaive$Wstratum[cond] + 100
 
-# 1-20: stage 1; 
-# 51-70: stage 2
-cond = dat_proc$Trialstage==2
-dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 50
-dat_proc$Wstratum[cond] = dat_proc$Wstratum[cond] + 50
+  # split non-cases into three: D01_S_pos_only_in_non_naive_group==1, D01_S_pos_only_in_non_naive_group==0 & RAPDIAG==1, D01_S_pos_only_in_non_naive_group==0 & RAPDIAG==0
+  # since D01_S_pos_only_in_non_naive_group==1 has strata ending with 9, no need to do anything for that. just split by RAPDIAG within D01_S_pos_only_in_non_naive_group==0
+  cond = dat_tmp_st2_nnaive$D01_S_pos_only_in_non_naive_group==0 & dat_tmp_st2_nnaive$RAPDIAG=="POSITIVE" & !is.case
+  dat_tmp_st2_nnaive$tps.stratum[cond] = dat_tmp_st2_nnaive$tps.stratum[cond] + 100
+  dat_tmp_st2_nnaive$Wstratum[cond] = dat_tmp_st2_nnaive$Wstratum[cond] + 100
+  
+  # mytable(dat_tmp_st2_nnaive$ph2.D43.bAb, dat_tmp_st2_nnaive$Wstratum)
+  
+}
 
-# make a copy of Wstratum to use for  stage 1 nAb
-dat_proc$Wstratum.st1.nAb.batch0and1=dat_proc$Wstratum
-dat_proc$tps.stratum.st1.nAb.batch0and1=dat_proc$tps.stratum
+{
+  # next do stage 1 nnaive
+  dat_tmp_st1_nnaive = subset(dat_proc, Trialstage==1 & Bserostatus==1)
+  
+  dat_tmp_st1_nnaive$tps.stratum = dat_tmp_st1_nnaive$region_for_tps_stratum
+  
+  # 1-4: Non-senior; 5-8: Senior
+  # for stage 1, strata 3,4,7,8 are empty because there are only two regions
+  # for stage 2, strata 4,8 are empty because there are only three regions
+  cond=dat_tmp_st1_nnaive$Senior==1
+  dat_tmp_st1_nnaive$tps.stratum[cond] = dat_tmp_st1_nnaive$tps.stratum[cond] + 4
+  
+  # make D01_S_pos_only_in_non_naive_group 9, i.e. 
+  cond=dat_tmp_st1_nnaive$D01_S_pos_only_in_non_naive_group==1
+  dat_tmp_st1_nnaive$tps.stratum[cond] = 9
+  
+  # make cases 10 in Wstratum
+  dat_tmp_st1_nnaive$Wstratum =  dat_tmp_st1_nnaive$tps.stratum
+  cond=dat_tmp_st1_nnaive$EventIndPrimaryD22==1
+  dat_tmp_st1_nnaive$Wstratum[cond] = 10
+  
+  # 1-10: vaccine;
+  # 11-20: placebo
+  cond = dat_tmp_st1_nnaive$Trt==0
+  dat_tmp_st1_nnaive$tps.stratum[cond] = dat_tmp_st1_nnaive$tps.stratum[cond] + 10
+  dat_tmp_st1_nnaive$Wstratum[cond] = dat_tmp_st1_nnaive$Wstratum[cond] + 10
+  
+  # 1-20: stage 1; 
+  # 31-40: stage 2
+  cond = dat_tmp_st1_nnaive$Trialstage==2
+  dat_tmp_st1_nnaive$tps.stratum[cond] = dat_tmp_st1_nnaive$tps.stratum[cond] + 20
+  dat_tmp_st1_nnaive$Wstratum[cond] = dat_tmp_st1_nnaive$Wstratum[cond] + 20
+  
+  # make a copy of Wstratum to use for  stage 1 nAb
+  dat_tmp_st1_nnaive$Wstratum.st1.nAb.batch0and1=dat_tmp_st1_nnaive$Wstratum
+  dat_tmp_st1_nnaive$tps.stratum.st1.nAb.batch0and1=dat_tmp_st1_nnaive$tps.stratum
+  
 
-# cross with naive status
-
-# Bserostatus==0: <100
-
-# Bserostatus==1 & RAPDIAG==0: 101-170
-cond = dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="NEGATIVE"
-dat_proc$Wstratum.st1.nAb.batch0and1[cond] = dat_proc$Wstratum[cond] + 100
-dat_proc$tps.stratum.st1.nAb.batch0and1[cond] = dat_proc$tps.stratum[cond] + 100
-
-# modify cond so that for stage 1, still use Bserostatus
-cond = ifelse(dat_proc$Trialstage==1, dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="NEGATIVE", cond)
-dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 100
-dat_proc$Wstratum[cond]    = dat_proc$Wstratum[cond] + 100
-
-# Bserostatus==1 & RAPDIAG==1: 201-270
-cond = dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="POSITIVE"
-dat_proc$Wstratum.st1.nAb.batch0and1[cond] = dat_proc$Wstratum[cond] + 200
-dat_proc$tps.stratum.st1.nAb.batch0and1[cond] = dat_proc$tps.stratum[cond] + 200
-
-# modify cond so that for stage 1, still use Bserostatus
-cond = ifelse(dat_proc$Trialstage==1, dat_proc$Bserostatus==1 & dat_proc$RAPDIAG=="POSITIVE", cond)
-dat_proc$tps.stratum[cond] = dat_proc$tps.stratum[cond] + 200
-dat_proc$Wstratum[cond]    = dat_proc$Wstratum[cond] + 200
-
-
-# with(dat_proc[dat_proc[["ph1.immuno"]]==1 & dat_proc$Trialstage==1, ],
-#                   table(Senior, get("ph2.D"%.%tp%.%".st1.nAb.batch0and1"), region))
-
-
-
-with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==1), table.prop(!is.na(Day43bindSpike), Bserostatus))
-with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==1), table.prop(!is.na(Day43bindSpike), Bserostatus))
-
-with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==2), table.prop(!is.na(Day43bindSpike), Bserostatus))
-with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==2), table.prop(!is.na(Day43bindSpike), Bserostatus))
-
-with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==1), table.prop(!is.na(Day43bindSpike), RAPDIAG))
-with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==1), table.prop(!is.na(Day43bindSpike), RAPDIAG))
-
-with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==0 & Trialstage==2), table.prop(!is.na(Day43bindSpike), RAPDIAG))
-with(subset(dat_proc, EventIndPrimaryD22==1 & Trt==1 & Trialstage==2), table.prop(!is.na(Day43bindSpike), RAPDIAG))
-
-table(dat_proc$tps.stratum) 
-table(dat_proc$Wstratum)
-table(dat_proc$Wstratum.st1.nAb.batch0and1)
-
-
-# all strata for cases ends with 10
-# there are 12 of them: Stage (2) x Trt (2) x neg/pos (3)
-tmp=unique(dat_proc$Wstratum)
-sort(tmp[tmp%%10==0])
+  # raise by 100 b/c it is Bserostatus==1
+  dat_tmp_st1_nnaive$tps.stratum.st1.nAb.batch0and1 = dat_tmp_st1_nnaive$tps.stratum.st1.nAb.batch0and1 + 100
+  dat_tmp_st1_nnaive$Wstratum.st1.nAb.batch0and1 = dat_tmp_st1_nnaive$Wstratum.st1.nAb.batch0and1 + 100
+  
+  # mytable(dat_tmp_st1_nnaive$ph2.D43.nAb, dat_tmp_st1_nnaive$Wstratum.st1.nAb.batch0and1)
+  
+  # not enough data to split by RAPDIAG
 
 }
 
+
+
+{
+  # next do stage 2 naive
+  dat_tmp_st2_naive = subset(dat_proc, Trialstage==2 & Bserostatus==0)
+  
+  dat_tmp_st2_naive$tps.stratum = dat_tmp_st2_naive$region_for_tps_stratum
+  
+  # 1-4: Non-senior; 5-8: Senior
+  # for stage 1, strata 3,4,7,8 are empty because there are only two regions
+  # for stage 2, strata 4,8 are empty because there are only three regions
+  cond=dat_tmp_st2_naive$Senior==1
+  dat_tmp_st2_naive$tps.stratum[cond] = dat_tmp_st2_naive$tps.stratum[cond] + 4
+  
+  # make D01_S_pos_only_in_non_naive_group 9, i.e. 
+  cond=dat_tmp_st2_naive$D01_S_pos_only_in_non_naive_group==1
+  dat_tmp_st2_naive$tps.stratum[cond] = 9
+  
+  # make cases 10 in Wstratum
+  dat_tmp_st2_naive$Wstratum =  dat_tmp_st2_naive$tps.stratum
+  cond=dat_tmp_st2_naive$EventIndPrimaryD22==1
+  dat_tmp_st2_naive$Wstratum[cond] = 10
+  
+  # 1-10: vaccine;
+  # 11-20: placebo
+  cond = dat_tmp_st2_naive$Trt==0
+  dat_tmp_st2_naive$tps.stratum[cond] = dat_tmp_st2_naive$tps.stratum[cond] + 10
+  dat_tmp_st2_naive$Wstratum[cond] = dat_tmp_st2_naive$Wstratum[cond] + 10
+  
+  # 1-20: stage 1; 
+  # 31-40: stage 2
+  cond = dat_tmp_st2_naive$Trialstage==2
+  dat_tmp_st2_naive$tps.stratum[cond] = dat_tmp_st2_naive$tps.stratum[cond] + 20
+  dat_tmp_st2_naive$Wstratum[cond] = dat_tmp_st2_naive$Wstratum[cond] + 20
+  
+  # make a copy of Wstratum to use for  stage 1 nAb
+  dat_tmp_st2_naive$Wstratum.st1.nAb.batch0and1=dat_tmp_st2_naive$Wstratum
+  dat_tmp_st2_naive$tps.stratum.st1.nAb.batch0and1=dat_tmp_st2_naive$tps.stratum
+  
+  # mytable(dat_tmp_st2_naive$ph2.D43.nAb, dat_tmp_st2_naive$Wstratum)
+  # mytable(dat_tmp_st2_naive$ph2.D43.bAb, dat_tmp_st2_naive$Wstratum)
+  
+
+}
+
+
+
+{
+  # next do stage 1 naive
+  dat_tmp_st1_naive = subset(dat_proc, Trialstage==1 & Bserostatus==0)
+  
+  dat_tmp_st1_naive$tps.stratum = dat_tmp_st1_naive$region_for_tps_stratum
+  
+  # 1-4: Non-senior; 5-8: Senior
+  # for stage 1, strata 3,4,7,8 are empty because there are only two regions
+  # for stage 2, strata 4,8 are empty because there are only three regions
+  cond=dat_tmp_st1_naive$Senior==1
+  dat_tmp_st1_naive$tps.stratum[cond] = dat_tmp_st1_naive$tps.stratum[cond] + 4
+  
+  # make D01_S_pos_only_in_non_naive_group 9, i.e. 
+  cond=dat_tmp_st1_naive$D01_S_pos_only_in_non_naive_group==1
+  dat_tmp_st1_naive$tps.stratum[cond] = 9
+  
+  # make cases 10 in Wstratum
+  dat_tmp_st1_naive$Wstratum =  dat_tmp_st1_naive$tps.stratum
+  cond=dat_tmp_st1_naive$EventIndPrimaryD22==1
+  dat_tmp_st1_naive$Wstratum[cond] = 10
+  
+  # 1-10: vaccine;
+  # 11-20: placebo
+  cond = dat_tmp_st1_naive$Trt==0
+  dat_tmp_st1_naive$tps.stratum[cond] = dat_tmp_st1_naive$tps.stratum[cond] + 10
+  dat_tmp_st1_naive$Wstratum[cond] = dat_tmp_st1_naive$Wstratum[cond] + 10
+  
+  # 1-20: stage 1; 
+  # 31-40: stage 2
+  cond = dat_tmp_st1_naive$Trialstage==2
+  dat_tmp_st1_naive$tps.stratum[cond] = dat_tmp_st1_naive$tps.stratum[cond] + 20
+  dat_tmp_st1_naive$Wstratum[cond] = dat_tmp_st1_naive$Wstratum[cond] + 20
+  
+  # make a copy of Wstratum to use for  stage 1 nAb
+  dat_tmp_st1_naive$Wstratum.st1.nAb.batch0and1=dat_tmp_st1_naive$Wstratum
+  dat_tmp_st1_naive$tps.stratum.st1.nAb.batch0and1=dat_tmp_st1_naive$tps.stratum
+  
+  # mytable(dat_tmp_st1_naive$ph2.D43.nAb, dat_tmp_st1_naive$Wstratum.st1.nAb.batch0and1)
+  # mytable(dat_tmp_st1_naive$ph2.D43.bAb, dat_tmp_st1_naive$Wstratum.st1.nAb.batch0and1)
+  
+}
+
+
+dat_proc=rbind(dat_tmp_st1_naive,
+              dat_tmp_st1_nnaive,
+              dat_tmp_st2_naive,
+              dat_tmp_st2_nnaive)
 
 
 ###############################################################################
