@@ -1385,6 +1385,12 @@ dat_proc$Region3[dat_proc$Trialstage==2 & dat_proc$region==3] = "AsiaPac"
 dat_proc$Bhigh = ifelse(dat_proc$Bpseudoneutid50>log10(20+0.1), 1, 0)
 
 
+dat_proc$baseline_immune_history = NULL
+dat_proc$prev_vac = dat_proc$D01_S_pos_only_in_non_naive_group==1
+dat_proc$prev_inf = ifelse(dat_proc$D01_S_pos_only_in_non_naive_group==0 & dat_proc$Bserostatus==1, 1, 0)
+# cannot use this line to define prev_inf
+# dat_proc$prev_inf=ifelse(dat_proc$baseline_immune_history=="baseline_RNA_or_antiN_pos", 1, 0)
+
 
 ###############################################################################
 # digest check
@@ -1393,7 +1399,7 @@ dat_proc$Bhigh = ifelse(dat_proc$Bpseudoneutid50>log10(20+0.1), 1, 0)
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         vat08_combined = "32b55ebed6aea35b885a27a688fbd97e", 
+         vat08_combined = "95859552ad2efa61a02bb353f84bba1c", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
 }

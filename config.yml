@@ -41,7 +41,7 @@ moderna_mock: &moderna_mock
 # sanofi vat08_combined and vat08_nAb both includes both Stage 1 monovalent and 2 bivalent trials
 vat08_combined: &vat08_combined
   <<: *ows_trial
-  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20250212.csv
+  mapped_data: /trials/covpn/p3005/analysis/mapping_immune_correlates/combined/adata/COVID_Sanofi_stage1and2_mapped_20250312.csv
   assay_metadata: ../correlates_reporting2/assay_metadata/vat08_combined_assay_metadata.csv
   two_marker_timepoints: yes
   timepoints: [22, 43]
