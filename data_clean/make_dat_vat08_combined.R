@@ -283,8 +283,9 @@ dat_proc$demo.stratum = dat_proc$region
   cond = dat_tmp_st2_nnaive$RAPDIAG=="POSITIVE" & is.case
   dat_tmp_st2_nnaive$Wstratum[cond] = dat_tmp_st2_nnaive$Wstratum[cond] + 100
 
-  # split non-cases into three: D01_S_pos_only_in_non_naive_group==1, D01_S_pos_only_in_non_naive_group==0 & RAPDIAG==1, D01_S_pos_only_in_non_naive_group==0 & RAPDIAG==0
-  # since D01_S_pos_only_in_non_naive_group==1 has strata ending with 9, no need to do anything for that. just split by RAPDIAG within D01_S_pos_only_in_non_naive_group==0
+  # split non-cases: 
+  # since D01_S_pos_only_in_non_naive_group==1 has strata ending with 9, no need to do anything for that. 
+  # just split by RAPDIAG within D01_S_pos_only_in_non_naive_group==0
   cond = dat_tmp_st2_nnaive$D01_S_pos_only_in_non_naive_group==0 & dat_tmp_st2_nnaive$RAPDIAG=="POSITIVE" & !is.case
   dat_tmp_st2_nnaive$tps.stratum[cond] = dat_tmp_st2_nnaive$tps.stratum[cond] + 100
   dat_tmp_st2_nnaive$Wstratum[cond] = dat_tmp_st2_nnaive$Wstratum[cond] + 100
@@ -670,6 +671,8 @@ if (TRUE) {
   # use bAb instead of nAb because there are less bAb samples
   wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1, ], table(Wstratum, get("ph2.D"%.%tp%.%"."%.%"bAb")))
   strata.to.merge.1 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
+  # manually add 132 because it has 1 single ptid and weights over 200
+  strata.to.merge.1 = c(strata.to.merge.1, 132)
   print(strata.to.merge.1)
   
   with (subset(dat_proc, ph1.D43 & EventIndPrimaryD43==0 & Trt==1), mytable(baseline_immune_history, ph2.D43.bAb, Trialstage))  
