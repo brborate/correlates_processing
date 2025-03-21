@@ -16,7 +16,13 @@ conflict_prefer("summarise", "dplyr")
 print("TEST_RISK_SCORES.R")
 
 if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
-  load(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/inputFile_with_riskscore.RData"))
+  output_path = paste0("output/", Sys.getenv("TRIAL"), "/", args[1])
+} else {
+  output_path = paste0("output/", Sys.getenv("TRIAL"), "/")
+}
+
+if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
+  load(paste0(output_path, "/inputFile_with_riskscore.RData"))
   if(args[1] == "bseroneg"){
     dat = inputFile_with_riskscore %>% 
       filter(Bserostatus == 0) 
@@ -24,19 +30,18 @@ if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
     dat = inputFile_with_riskscore %>% 
       filter(Bserostatus == 1) 
   }
-} else if (study_name %in% c("COVAIL") | (study_name == "ENSEMBLE" & Sys.getenv("TRIAL") == "janssen_sa_partA_3008")){
-  load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
 } else {
-  load(paste0("output/", Sys.getenv("TRIAL"), "/", "inputFile_with_riskscore.RData"))
+  load(paste0(output_path, "/inputFile_with_riskscore.RData"))
+  dat = inputFile_with_riskscore 
 }
 
 # Density plot: risk scores & standardized risk scores grouped by Trt
 options(bitmapType = "cairo")
 if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
-  png(file = here("output", Sys.getenv("TRIAL"), args[1], paste0("density_plot_riskscores_", args[1], ".png")),
+  png(file = here(output_path, paste0("density_plot_riskscores_", args[1], ".png")),
       width = 1000, height = 1000)
 }else{
-  png(file = here("output", Sys.getenv("TRIAL"), "density_plot_riskscores.png"),
+  png(file = here(output_path, "density_plot_riskscores.png"),
       width = 1000, height = 500)
 }
 
@@ -62,4 +67,15 @@ p1 <- grid.arrange(dat %>%
  
 print(p1)
 dev.off()
+
+
+# Ask user to check the created density plots! 
+# Convert input to numeric (since readline() returns a string)
+user_input <- as.numeric(readline(prompt = "Check the density plots created in ", output_path, ". Input 1 to confirm they look good, or input 2 if they look problematic: "))
+
+# Use ifelse to perform actions based on input
+result <- ifelse(user_input == 1, "Great! Proceed further with using the risk scores.", 
+                 ifelse(user_input == 2, "Report the issue!", "Invalid input"))
+
+
 
