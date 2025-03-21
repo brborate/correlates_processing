@@ -102,34 +102,34 @@ table(xx10)
 # hotdeck1 is the modal result: 5 Delta, 111 Omicron
  sort(calendartimetoCOVID[xx1==1])
  sort(calendartimetoCOVID[xx1==1])
-  [1] 191 197 205 211 212 214 218 218 219 219 221 221 222 222 222 222 222 222 223 223 223
- [22] 226 227 227 227 227 227 227 228 229 230 230 230 230 230 231 231 231 232 232 232 233
- [43] 233 233 233 233 235 235 235 235 236 236 236 236 236 236 236 237 238 239 239 239 239
- [64] 239 239 239 239 239 239 240 240 240 240 240 240 240 240 240 240 241 241 241 241 241
- [85] 241 242 242 242 243 244 244 245 245 245 245 246 247 247 247 247 248 249 249 250 250
-[106] 259 261 266 271 272
+#  [1] 191 197 205 211 212 214 218 218 219 219 221 221 222 222 222 222 222 222 223 223 223
+# [22] 226 227 227 227 227 227 227 228 229 230 230 230 230 230 231 231 231 232 232 232 233
+# [43] 233 233 233 233 235 235 235 235 236 236 236 236 236 236 236 237 238 239 239 239 239
+# [64] 239 239 239 239 239 239 240 240 240 240 240 240 240 240 240 240 241 241 241 241 241
+# [85] 241 242 242 242 243 244 244 245 245 245 245 246 247 247 247 247 248 249 249 250 250
+#[106] 259 261 266 271 272
 
 
 sort(calendartimetoCOVID[xx7==1])
-  [1] 191 197 205 207 211 212 214 218 218 219 219 221 221 222 222 222 222 222 222 223 223
- [22] 223 226 227 227 227 227 227 227 228 229 230 230 230 230 230 231 231 231 232 232 232
- [43] 233 233 233 233 233 235 235 235 235 236 236 236 236 236 236 236 237 238 239 239 239
- [64] 239 239 239 239 239 239 239 240 240 240 240 240 240 240 240 240 240 241 241 241 241
- [85] 241 241 242 242 242 243 244 244 245 245 245 245 246 247 247 247 247 248 249 249 250
-[106] 250 259 261 266 271 272
+#  [1] 191 197 205 207 211 212 214 218 218 219 219 221 221 222 222 222 222 222 222 223 223
+# [22] 223 226 227 227 227 227 227 227 228 229 230 230 230 230 230 231 231 231 232 232 232
+# [43] 233 233 233 233 233 235 235 235 235 236 236 236 236 236 236 236 237 238 239 239 239
+# [64] 239 239 239 239 239 239 239 240 240 240 240 240 240 240 240 240 240 241 241 241 241
+# [85] 241 241 242 242 242 243 244 244 245 245 245 245 246 247 247 247 247 248 249 249 250
+#[106] 250 259 261 266 271 272
 # Resolve by moving to hotdeck 7, also with 5 Delta and 111 Omicron
 
-1,2,4,5,6,7,10 candidate hotdecks because earliest Omicron event is >= 191 days
-3,6,10 are 5 Delta, 111 Omicron
+#1,2,4,5,6,7,10 candidate hotdecks because earliest Omicron event is >= 191 days
+#3,6,10 are 5 Delta, 111 Omicron
 
 # So choose hotdeck 6 or 10
 
 # 191 days is December 3, 2021
 
 # Numbers with known lineage
-table(dat$seq1.variant)
-Delta MissingLineage        Omicron 
-             4             58             54 
+#table(dat$seq1.variant)
+#Delta MissingLineage        Omicron 
+#             4             58             54 
 
 # So the L=5-nearest neighbors are always defined from the
 # 54 known Omicron and 4 known Delta and filling in 58 cases with missing values.
@@ -138,19 +138,19 @@ Delta MissingLineage        Omicron
 # What are the calendar times of the 4 observed Delta viruses?
 
 calendartimetoCOVID[dat$seq1.variant=="Delta"]
-[1] 216 217 217 217
+#[1] 216 217 217 217
 
 # What are the calendar times of the 58 with missing lineages?
 
 sort(calendartimetoCOVID[dat$seq1.variant=="MissingLineage"])
- [1] 147 191 197 207 214 218 219 222 222 223 227 227 227 227 227 227 228 230 231 231 231 232 232 232 233 233 233 235 235 235 236 236
-[33] 236 238 239 239 239 239 239 239 239 239 240 240 240 240 241 241 241 242 243 247 247 248 249 261 266 272
+# [1] 147 191 197 207 214 218 219 222 222 223 227 227 227 227 227 227 228 230 231 231 231 232 232 232 233 233 233 235 235 235 236 236
+#[33] 236 238 239 239 239 239 239 239 239 239 240 240 240 240 241 241 241 242 243 247 247 248 249 261 266 272
 
 # What are the calendar times of the 54 with known Omicron?
 sort(calendartimetoCOVID[dat$seq1.variant=="Omicron"])
 
- [1] 205 211 212 218 219 221 221 222 222 222 222 223 223 226 229 230 230 230 230 233 233 235 236 236 236 236 237 239 239 240 240 240
-[33] 240 240 240 241 241 241 242 242 244 244 245 245 245 245 246 247 247 249 250 250 259 271
+# [1] 205 211 212 218 219 221 221 222 222 222 222 223 223 226 229 230 230 230 230 233 233 235 236 236 236 236 237 239 239 240 240 240
+#[33] 240 240 240 241 241 241 242 242 244 244 245 245 245 245 246 247 247 249 250 250 259 271
 
 # So, the 147, 191, 197, 207, 214 missing ones all have closer known Omicron cases then the known Deltas.
 # The 218 missing one would likely select Omicron.  The 214 missing one could select Delta or Omicron.
@@ -179,18 +179,18 @@ sort(calendartimetoCOVID[xx10==1])
 
 
 # Note: For a given subject i that is a case with missing lineage, a lineage from a nearest neighbor is randomly sampled,
-but the values of this subject i's other variables are retained.  That is, subject i does NOT have its variable values 
-(like calendar time from first person enrolled until COVID-19) changed to be those values from the selected nearest neighbor.
+#but the values of this subject i's other variables are retained.  That is, subject i does NOT have its variable values 
+#(like calendar time from first person enrolled until COVID-19) changed to be those values from the selected nearest neighbor.
 
 # Average number omicron
 mean(c(table(xx1)[2],table(xx2)[2],table(xx3)[2],table(xx4)[2],table(xx5)[2],
 table(xx6)[2],table(xx7)[2],table(xx8)[2],table(xx9)[2],table(xx10)[2]))
-110.4
+#110.4
 # So average Not Omicron = 5.6
 # Range number Omicron
 range(c(table(xx1)[2],table(xx2)[2],table(xx3)[2],table(xx4)[2],table(xx5)[2],
 table(xx6)[2],table(xx7)[2],table(xx8)[2],table(xx9)[2],table(xx10)[2]))
-109 to 112
+#109 to 112
 
 # Percentage agreement across all 45 pairs
 
@@ -204,7 +204,7 @@ mean(xx6==xx8),mean(xx6==xx9),mean(xx6==xx10),mean(xx7==xx8),mean(xx7==xx9),mean
 mean(xx8==xx9),mean(xx8==xx10),mean(xx9==xx10))
 
 mean(vect)
-0.9842912 concordance in lineage calls averaging across all pairs of the 10 vectors (each of length 116) of lineage imputations
+#0.9842912 concordance in lineage calls averaging across all pairs of the 10 vectors (each of length 116) of lineage imputations
 
 # Create side-by-side violin plots
 pdf("T:/covpn/p3005/analysis/correlates/Part_A_Blinded_Phase_Data/reports/TablesFigures/Stage1HotdeckcalendartimesFINAL.pdf")
@@ -418,14 +418,13 @@ sort(dat[keep3,"EventTimeFirstInfectionDate"])
 # Observed Delta times
 keep3 <- dat$seq1.variant=="Delta"
 sort(dat[keep3,"EventTimeFirstInfectionDate"])
-> sort(dat[keep3,"EventTimeFirstInfectionDate"])
-[1] "2022-02-24" "2022-02-24"
+#[1] "2022-02-24" "2022-02-24"
 
 # Numbers with known lineage
 table(dat$seq1.variant)
 
-         Delta MissingLineage        Omicron 
-             2             30             45 
+#         Delta MissingLineage        Omicron 
+#             2             30             45 
 
 # So the L=5-nearest neighbors are always defined from the
 # 45 known Omicron and 2 known Delta and filling in 30 cases with missing values.
@@ -434,12 +433,12 @@ table(dat$seq1.variant)
 # Average number omicron
 mean(c(table(xx1)[2],table(xx2)[2],table(xx3)[2],table(xx4)[2],table(xx5)[2],
 table(xx6)[2],table(xx7)[2],table(xx8)[2],table(xx9)[2],table(xx10)[2]))
-74.5
+#74.5
 # So average Not Omicron = 2.5
 # Range number Omicron
 range(c(table(xx1)[2],table(xx2)[2],table(xx3)[2],table(xx4)[2],table(xx5)[2],
 table(xx6)[2],table(xx7)[2],table(xx8)[2],table(xx9)[2],table(xx10)[2]))
-74 to 75
+#74 to 75
 
 # Percentage agreement across all 45 pairs
 
@@ -453,7 +452,7 @@ mean(xx6==xx8),mean(xx6==xx9),mean(xx6==xx10),mean(xx7==xx8),mean(xx7==xx9),mean
 mean(xx8==xx9),mean(xx8==xx10),mean(xx9==xx10))
 
 mean(vect)
-0.992785 concordance in lineage calls averaging across all pairs of the 10 vectors (each of length 116) of lineage imputations
+#0.992785 concordance in lineage calls averaging across all pairs of the 10 vectors (each of length 116) of lineage imputations
 
 # Create side-by-side violin plots
 pdf("T:/covpn/p3005/analysis/correlates/Part_A_Blinded_Phase_Data/reports/TablesFigures/Stage2HotdeckcalendartimesFINAL.pdf")

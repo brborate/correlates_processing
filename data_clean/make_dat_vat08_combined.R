@@ -264,7 +264,7 @@ dat_proc$demo.stratum = dat_proc$region
   dat_tmp_st2_nnaive$Wstratum[cond] = dat_tmp_st2_nnaive$Wstratum[cond] + 10
   
   # 1-20: stage 1; 
-  # 31-40: stage 2
+  # 21-40: stage 2
   cond = dat_tmp_st2_nnaive$Trialstage==2
   dat_tmp_st2_nnaive$tps.stratum[cond] = dat_tmp_st2_nnaive$tps.stratum[cond] + 20
   dat_tmp_st2_nnaive$Wstratum[cond] = dat_tmp_st2_nnaive$Wstratum[cond] + 20
@@ -671,8 +671,8 @@ if (TRUE) {
   # use bAb instead of nAb because there are less bAb samples
   wts_table <- with(dat_proc[dat_proc[["ph1.D"%.%tp]]==1, ], table(Wstratum, get("ph2.D"%.%tp%.%"."%.%"bAb")))
   strata.to.merge.1 = sort(as.integer(rownames(wts_table[wts_table[,2]==0, ,drop=F])))
-  # manually add 132 because it has 1 single ptid and weights over 200
-  strata.to.merge.1 = c(strata.to.merge.1, 132)
+  # manually add some strata to merge so that we don't have weights over 200
+  strata.to.merge.1 = c(strata.to.merge.1, 122, 132, 222, 232)
   print(strata.to.merge.1)
   
   with (subset(dat_proc, ph1.D43 & EventIndPrimaryD43==0 & Trt==1), mytable(baseline_immune_history, ph2.D43.bAb, Trialstage))  
