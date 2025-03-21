@@ -71,11 +71,8 @@ dev.off()
 
 # Ask user to check the created density plots! 
 # Convert input to numeric (since readline() returns a string)
-user_input <- as.numeric(readline(prompt = "Check the density plots created in ", output_path, ". Input 1 to confirm they look good, or input 2 if they look problematic: "))
 
-# Use ifelse to perform actions based on input
-result <- ifelse(user_input == 1, "Great! Proceed further with using the risk scores.", 
-                 ifelse(user_input == 2, "Report the issue!", "Invalid input"))
+cat(paste0("CHECK THE DENSITY PLOTS CREATED IN riskscore_baseline/", output_path, "\n"))
 
 
 
