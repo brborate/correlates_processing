@@ -153,7 +153,7 @@ if(study_name %in% c("COVAIL")){
   X_covars2adjust_scaled_plac_noattr <- X_covars2adjust_scaled_plac
   attr(X_covars2adjust_scaled_plac_noattr, "scaled:center") <- NULL
   attr(X_covars2adjust_scaled_plac_noattr, "scaled:scale") <- NULL
- 
+  
   # # Scale X_covars2adjust to have mean 0, sd 1 for all vars
   # for (a in colnames(X_covars2adjust)) {
   #   X_covars2adjust[[a]] <- scale(X_covars2adjust[[a]],
@@ -168,10 +168,9 @@ if(study_name %in% c("COVAIL")){
     X_riskVars <- plac_bseroneg %>% select(-c(Ptid, Bserostatus, Trt, all_of(endpoint)))
     Y <- dat.ph1 %>% filter(Bserostatus == 0) %>% pull(endpoint) 
   } else {
-    X_riskVars <- X_covars2adjust
+    X_riskVars <- data.frame(X_covars2adjust_scaled_plac_noattr)
     Y <- dat.ph1 %>% pull(endpoint)
   }
-  
   
   # set up outer folds for cv variable importance; do stratified sampling
   V_outer <- 5
@@ -238,6 +237,12 @@ if(study_name %in% c("COVAIL")){
     cvsl_args %>% write.csv(paste0("output/", Sys.getenv("TRIAL"), "/", args[1], "/", "cvsl_args.csv"))
   }else{
     cvsl_args %>% write.csv(paste0("output/", Sys.getenv("TRIAL"), "/", "cvsl_args.csv"))
+  }
+  
+  if (!check_standardized(X_riskVars)) {
+    stop("Error: Predictor variables are not standardized. Ensure mean ≈ 0 and sd ≈ 1 for all columns.")
+  } else {
+    print("Dataframe is standardized.")
   }
 
   # run super learner ensemble

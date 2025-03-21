@@ -275,6 +275,8 @@ if(study_name %in% c("VAT08", "VAT08m")){
       "Country.ind.India", "Country.ind.Mexico", "Country.ind.NotHonduras", "Country.ind.Other", 
       #"USAInd",  
       "CalDtEnrollIND.X1", "CalDtEnrollIND.X2", "CalDtEnrollIND.X3", "CalDtEnrollIND.X4", "CalDtEnrollIND.X5"
+      # ,
+      # "FOI"  # added FOI and generated new risk scores upon Michal's request for MV vs BV manuscript!
     )
   }
   
@@ -286,7 +288,7 @@ if(study_name %in% c("VAT08", "VAT08m")){
     "Sex", "Age", "pooled.age.grp", "BMI", #"BMI.group", "Height", "Weight", 
     "Country", 
     #"USAInd", 
-    "CalendarDateEnrollment"
+    "CalendarDateEnrollment"#, "FOI"
   )
   
   endpoint <- "EventIndPrimaryD22rscore"

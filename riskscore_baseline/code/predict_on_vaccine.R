@@ -90,6 +90,12 @@ attr(X_covars2adjust_scaled_vacc_noattr, "scaled:scale") <- NULL
 
 X_riskVars_vacc <- data.frame(X_covars2adjust_scaled_vacc_noattr)
 
+if (!check_standardized(X_riskVars_vacc)) {
+  stop("Error: Predictor variables are not standardized. Ensure mean ≈ 0 and sd ≈ 1 for all columns.")
+} else {
+  print("Dataframe is standardized.")
+}
+
 pred_on_vaccine <- predict(sl_riskscore_slfits, newdata = X_riskVars_vacc, onlySL = TRUE)$pred %>%
   as.data.frame()
 
@@ -136,14 +142,36 @@ if(!any(sapply(c("COVE", "ENSEMBLE", "VAT08"), grepl, study_name))){
     filter(RiskscoreAUCflag == 1) %>%
     mutate(AUCchar = format(round(fast.auc(pred, get(paste0(sub("22rscore", "", endpoint), paste0(vaccAUC_timepoint, "rauc")))), 3), nsmall = 3)) %>%
     distinct(AUCchar)
+  
+  #get 95% CI using pROC library
+  dat = vacc %>% filter(RiskscoreAUCflag == 1) 
+  library(pROC)
+  # Calculate AUC
+  roc_obj <- roc(dat$EventIndPrimaryD43rauc, dat$pred)
+  # Get AUC value
+  auc_value <- auc(roc_obj)
+  # Get 95% CI for AUC
+  ci <- ci.auc(roc_obj)
+  if(identical(as.numeric(AUCvacc$AUCchar), round(as.numeric(auc_value), 3))){
+    AUCvacc = paste0(round(as.numeric(auc_value), 3), 
+                     " [", 
+                     round(as.numeric(ci[1]), 3),
+                     ", ",
+                     round(as.numeric(ci[3]), 3),
+                     "]")
+  }
 } else {
   AUCvacc <- vacc %>% 
     mutate(AUCchar = format(round(fast.auc(pred, get(endpoint)), 3), nsmall = 3)) %>%
     distinct(AUCchar)
 }
 
+if(study_name != "VAT08"){
+  vacc <- vacc %>% mutate(AUCchar = AUCvacc$AUCchar) 
+} else if(study_name == "VAT08"){
+  vacc <- vacc %>% mutate(AUCchar = AUCvacc) 
+}
 
-vacc <- vacc %>% mutate(AUCchar = AUCvacc$AUCchar) 
 
 if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   write.csv(vacc, here("output", Sys.getenv("TRIAL"), args[1], "vaccine_ptids_with_riskscores.csv"), row.names = FALSE)
@@ -155,3 +183,4 @@ if(study_name == "COVE"){
   write.csv(plac_bseropos, here("output", Sys.getenv("TRIAL"), "plac_bseropos_ptids_with_riskscores.csv"), row.names = FALSE)
   save(X_covars2adjust_scaled_vacc, file = here("output", Sys.getenv("TRIAL"), "X_covars2adjust_scaled_vacc.rda"))
 }
+

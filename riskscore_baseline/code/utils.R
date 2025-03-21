@@ -730,3 +730,43 @@ get_scaleParams_scaledData <- function(inputdat, groupStr){
   # These params are accessed for scaling the extra 15 subjects from COVEBoost!
   scaled_inputdat
 }
+
+
+
+
+
+
+#' Check if a DataFrame is Standardized
+#'
+#' This function checks whether all columns in a dataframe are standardized,
+#' meaning they have a mean close to 0 and a standard deviation close to 1.
+#'
+#' @param df A numeric dataframe to check.
+#' @param tol A numeric tolerance level for checking if mean is approximately 0 and standard deviation is approximately 1. Default is `1e-6`.
+#'
+#' @return A logical value: `TRUE` if all columns are standardized, `FALSE` otherwise.
+#' @examples
+#' set.seed(123)
+#' df <- data.frame(
+#'   A = rnorm(1000, mean = 0, sd = 1),
+#'   B = rnorm(1000, mean = 0, sd = 1),
+#'   C = rnorm(1000, mean = 0, sd = 1)
+#' )
+#' check_standardized(df)  # Should return TRUE
+#'
+#' df_non_standardized <- data.frame(
+#'   A = rnorm(1000, mean = 5, sd = 2),
+#'   B = rnorm(1000, mean = 0, sd = 1)
+#' )
+#' check_standardized(df_non_standardized)  # Should return FALSE
+#'
+#' @export
+check_standardized <- function(df, tol = 1e-6) {
+  means <- colMeans(df)
+  stds <- apply(df, 2, sd)
+  
+  mean_check <- all(abs(means) < tol)
+  std_check <- all(abs(stds - 1) < tol)
+  
+  return(mean_check && std_check)
+}

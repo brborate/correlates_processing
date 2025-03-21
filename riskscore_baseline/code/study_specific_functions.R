@@ -125,7 +125,7 @@ get_defs_comments_riskVars <- function(data){
     data <- data %>%
       mutate(Definition = case_when(
         `Variable Name` == "Age" ~ "Age at enrollment in years",
-        `Variable Name` == "pooled.age.grp" ~ "Pooled age group",
+        `Variable Name` == "pooled.age.grp" ~ "Pooled age group (1 if age >= 60 years, else 0)",
         `Variable Name` == "Sex" ~ "Sex assigned at birth (1=female, 0=male)",
         `Variable Name` == "BMI" ~ "BMI at enrollment (kg/m^2)",
         #`Variable Name` == "MinorityInd" ~ "Baseline covariate underrepresented minority status (1=minority, 0=non-minority)",
@@ -139,23 +139,28 @@ get_defs_comments_riskVars <- function(data){
         #`Variable Name` == "WhiteNonHispanic" ~ "Indicator race = White or Caucasian (1 = White)",
         #`Variable Name` == "Multiracial" ~ "Indicator race = Multiracial (0 = White)",
         #`Variable Name` == "Other" ~ "Indicator race = Other (0 = White)",
-        #`Variable Name` == "Notreported" ~ "Indicator race = Not reported (0 = White)",
-        #`Variable Name` == "Unknown" ~ "Indicator race = unknown (0 = White)",
-        `Variable Name` == "URMforsubcohortsampling" ~ "URMforsubcohortsampling = ",
+        `Variable Name` == "Notreported" ~ "Indicator race = Not reported (0 = White)",
+        `Variable Name` == "Unknown" ~ "Indicator race = unknown (0 = White)",
+        `Variable Name` == "URMforsubcohortsampling" ~ "Indicator of underrepresented minority (Hispanic or Latino) or (Black) or (NatAmer) or (PacIsl): (1=yes, 0=no)",
         `Variable Name` == "HighRiskInd" ~ "Baseline covariate high risk pre-existing condition (1=yes, 0=no)",
         #`Variable Name` == "HIVinfection" ~ "HIV infection (1=yes, 0=no)"
         #`Variable Name` == "Country.X1" ~ "Indicator country =  ",
-        `Variable Name` == "Country.X2" ~ "Indicator country = ",
-        `Variable Name` == "Country.X3" ~ "Indicator country = ",
-        `Variable Name` == "Country.X4" ~ "Indicator country = ",
-        `Variable Name` == "Country.X5" ~ "Indicator country = ",
+        # `Variable Name` == "Country.X2" ~ "Indicator country = ",
+        # `Variable Name` == "Country.X3" ~ "Indicator country = ",
+        # `Variable Name` == "Country.X4" ~ "Indicator country = ",
+        # `Variable Name` == "Country.X5" ~ "Indicator country = ",
         #`Variable Name` == "Country.X6" ~ "Indicator country = ",
-        `Variable Name` == "Country.X7" ~ "Indicator country = ",
-        `Variable Name` == "CalDtEnrollIND.X1" ~ "Indicator Calendar Date Enrollment = ",
-        `Variable Name` == "CalDtEnrollIND.X2" ~ "Indicator Calendar Date Enrollment = ",
-        `Variable Name` == "CalDtEnrollIND.X3" ~ "Indicator Calendar Date Enrollment = ",
-        `Variable Name` == "CalDtEnrollIND.X4" ~ "Indicator Calendar Date Enrollment = "
-        #`Variable Name` == "CalDtEnrollIND.X5" ~ "Indicator Calendar Date Enrollment = "
+        # `Variable Name` == "Country.X7" ~ "Indicator country = ",
+        `Variable Name` == "Country.ind.Honduras" ~ "Indicator country = Honduras",
+        `Variable Name` == "Country.ind.NotHonduras" ~ "Indicator country = NotHonduras",
+        `Variable Name` == "Country.ind.Mexico" ~ "Indicator country = Mexico",
+        `Variable Name` == "Country.ind.India" ~ "Indicator country = India",
+        `Variable Name` == "Country.ind.Other" ~ "Indicator country = Other",
+        `Variable Name` == "CalDtEnrollIND.X1" ~ "Indicator Calendar Date Enrollment >= 28 and <56",
+        `Variable Name` == "CalDtEnrollIND.X2" ~ "Indicator Calendar Date Enrollment >= 56 and <84",
+        `Variable Name` == "CalDtEnrollIND.X3" ~ "Indicator Calendar Date Enrollment >= 84 and <112",
+        `Variable Name` == "CalDtEnrollIND.X4" ~ "Indicator Calendar Date Enrollment >= 112 and <140",
+        `Variable Name` == "CalDtEnrollIND.X5" ~ "Indicator Calendar Date Enrollment >= 140 and <168"
         #`Variable Name` == "CalDtEnrollIND.X6" ~ "Indicator Calendar Date Enrollment = "
       ),
       Comments = "")
