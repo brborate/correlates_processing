@@ -46,6 +46,12 @@ blas_set_num_threads(1)
 #print(blas_get_num_procs())
 stopifnot(blas_get_num_procs() == 1)
 
+if (!check_standardized(X_riskVars)) {
+  stop("Error: Predictor variables are not standardized. Ensure mean ≈ 0 and sd ≈ 1 for all columns.")
+} else {
+  print("Dataframe is standardized.")
+}
+
 ## construct superlearner on placebo arm-----------------------
 set.seed(20210216)
 sl_riskscore_slfits <- SuperLearner(

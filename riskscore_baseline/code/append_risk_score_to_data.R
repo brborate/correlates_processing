@@ -62,7 +62,7 @@ if(study_name == "COVE"){
   inputFile_with_riskscore <- left_join(inputFile, risk_scores, by = "Ptid")
   
 } else {
-  risk_scores <- bind_rows(placebos_risk, vaccinees_risk) %>%
+  risk_scores <- bind_rows(placebos_risk, vaccinees_risk %>% select(Ptid, risk_score, standardized_risk_score)) %>%
     select(Ptid, risk_score, standardized_risk_score) 
   
   inputFile_with_riskscore <- left_join(inputFile, risk_scores, by = "Ptid") 
