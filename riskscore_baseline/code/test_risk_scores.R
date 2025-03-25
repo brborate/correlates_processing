@@ -10,6 +10,7 @@ source(here::here("..", "_common.R"))
 library(here)
 library(tidyverse)
 library(conflicted)
+library(gridExtra)
 conflicted::conflict_prefer("filter", "dplyr")
 conflict_prefer("summarise", "dplyr")
 
@@ -21,7 +22,7 @@ if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
   output_path = paste0("output/", Sys.getenv("TRIAL"), "/")
 }
 
-if(study_name %in% c("VAT08m", "VAT08", "PREVENT19")){
+if(study_name %in% c("VAT08m", "VAT08")){
   load(paste0(output_path, "/inputFile_with_riskscore.RData"))
   if(args[1] == "bseroneg"){
     dat = inputFile_with_riskscore %>% 
