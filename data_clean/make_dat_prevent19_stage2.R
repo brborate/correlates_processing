@@ -359,7 +359,7 @@ dat_proc$tmp = NULL
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         prevent19_stage2 = "d49f3d9fec507755ff3747e73e849976",
+         prevent19_stage2 = "20eb92580ea168951248a61be299ddc5",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
       msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
