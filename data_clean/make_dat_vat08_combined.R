@@ -1395,6 +1395,37 @@ dat_proc$prev_inf = ifelse(dat_proc$D01_S_pos_only_in_non_naive_group==0 & dat_p
 # dat_proc$prev_inf=ifelse(dat_proc$baseline_immune_history=="baseline_RNA_or_antiN_pos", 1, 0)
 
 
+# make a new indicator for plotting to reduce the influence of previously vaccinated
+dat_proc$plot_deletion_nAb = F
+dat_proc$plot_deletion_bAb = F
+
+mytable(dat_proc$prev_vac, dat_proc$Trt, dat_proc$Trialstage)
+mytable(dat_proc$prev_vac[dat_proc$ph2.D43.bAb], dat_proc$Trt[dat_proc$ph2.D43.bAb], dat_proc$Trialstage[dat_proc$ph2.D43.bAb])
+
+for (stage in 2) {
+  for (trt in 0:1) {
+    kp = with(dat_proc, Trialstage==stage & Trt==trt & Bserostatus & ph1.D43)
+    n1nn = sum(kp)
+    n1Sp = sum(kp & dat_proc$prev_vac)
+    
+    # nAb
+    dat = dat_proc[kp & dat_proc$SubcohortIndnAb==1, ]
+    n2nn = nrow(dat)
+    n2Sp = nrow(subset(dat, prev_vac))
+    n_nAb = round((n2nn*n1Sp - n2Sp*n1nn)/(n1Sp - n1nn))
+    # draw without replacement from SubcohortIndnAb n_nAb samples to delete
+    dat_proc$plot_deletion_nAb[which(kp & dat_proc$SubcohortIndnAb==1)[sample(1:n2nn, n_nAb, replace=F)]]=T
+    
+    # bAb
+    dat = dat_proc[kp & dat_proc$SubcohortIndbAb==1, ]
+    n2nn = nrow(dat)
+    n2Sp = nrow(subset(dat, prev_vac))
+    n_bAb = round((n2nn*n1Sp - n2Sp*n1nn)/(n1Sp - n1nn))
+    # draw without replacement from SubcohortIndnAb n_nAb samples to delete
+    dat_proc$plot_deletion_bAb[which(kp & dat_proc$SubcohortIndbAb==1)[sample(1:n2nn, n_bAb, replace=F)]]=T
+  }
+}
+
 ###############################################################################
 # digest check
 ###############################################################################
