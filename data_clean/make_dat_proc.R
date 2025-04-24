@@ -1,6 +1,5 @@
 #Sys.setenv(TRIAL = "prevent19")
 #Sys.setenv(TRIAL = "nvx_uk302")
-#Sys.setenv(TRIAL = "covail")
 #Sys.setenv(TRIAL = "janssen_partA_VL")
 #Sys.setenv(TRIAL = "janssen_pooled_partA")
 #Sys.setenv(TRIAL = "moderna_real")
@@ -73,39 +72,6 @@ if (TRIAL=="janssen_partA_VL") {
     # remove delta_markers
     for (a in delta_markers) dat_proc[, t%.%a] = NULL
   }
-  
- } else if (TRIAL == "covail") {
-  # # load risk score from running risk analysis
-  # load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
-  # dat_proc <- inputFile_with_riskscore    
-  
-  # load risk score from a file
-  dat.risk = read.csv("/trials/covpn/COVAILcorrelates/analysis/correlates/adata/risk_score.csv")
-  # read mapped data
-  dat_raw = read.csv(mapped_data)
-  dat_proc = preprocess(dat_raw, study_name)   
-  names(dat_proc)[[1]]="Ptid"
-  dat_proc$risk_score = dat.risk$risk_score[match(dat_proc$Pti, dat.risk$Ptid)]
-  dat_proc$standardized_risk_score = dat.risk$standardized_risk_score[match(dat_proc$Ptid, dat.risk$Ptid)]
-  
-  # bring in imputed variant column
-  dat.lineage = read.csv('/trials/covpn/COVAILcorrelates/analysis/correlates/adata/lineages/covail_lineages_export_v1.csv')
-  dat_proc$COVIDlineage = dat.lineage$inf1.lineage[match(dat_proc$Ptid, dat.lineage$ptid)]
-  dat_proc$COVIDlineageObserved = !dat.lineage$inf1.imputed[match(dat_proc$Ptid, dat.lineage$ptid)]
-  # check NA
-  stopifnot(!any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D15==1 & dat_proc$COVIDIndD22toD181==1])))
-  stopifnot(!any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D29==1 & dat_proc$COVIDIndD36toD181==1])))
-  # this is not true: !any(is.na(dat_proc$COVIDlineage[dat_proc$ph1.D15==1 & dat_proc$AsympInfectIndD15to181==1]))
-  
-  # bring in FOI
-  dat.foi = read.csv('/trials/covpn/COVAILcorrelates/analysis/correlates/adata/covail_foi_v2.csv')
-  dat_proc$FOIoriginal = dat.foi$foi[match(dat_proc$Ptid, dat.foi$ptid)]
-  dat_proc$FOIstandardized = scale(dat_proc$FOIoriginal)
-  # check NA
-  stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D15==1])))
-  stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D29==1])))
-  
-
 
 } else if (TRIAL == "prevent19") {
   load(file = paste0('riskscore_baseline/output/',TRIAL,'/inputFile_with_riskscore.RData'))
@@ -190,7 +156,7 @@ if (TRIAL=="janssen_partA_VL") {
         race = factor(race, levels = labels.race)
       )
     
-  } else if (study_name %in% c("PROFISCOV", "VAT08", "COVAIL", "NVX_UK302")) {
+  } else if (study_name %in% c("PROFISCOV", "VAT08", "NVX_UK302")) {
     dat_proc$race = 0 # not applicable, but has to define a value so that the next chunk of code can run
     
   } else stop("unknown study_name 2")
@@ -216,7 +182,7 @@ if (TRIAL=="janssen_partA_VL") {
   dat_proc$MinorityInd[is.na(dat_proc$MinorityInd)] = 0
   
   # set MinorityInd to 0 for latin america and south africa
-  if (study_name %in% c("COVE", "MockCOVE", "PROFISCOV", "VAT08", "COVAIL", "NVX_UK302")) {
+  if (study_name %in% c("COVE", "MockCOVE", "PROFISCOV", "VAT08", "NVX_UK302")) {
     # nothing to do
     # COVE only has US data
     
@@ -255,7 +221,7 @@ if (study_name=="COVE" | study_name=="MockCOVE" ) {
 } else if (study_name %in% c("PREVENT19", "AZD1222", "NVX_UK302")) {
   dat_proc$Bstratum =  with(dat_proc, Senior + 1)
   
-} else if (TRIAL %in% c("profiscov", "profiscov_lvmn", "covail")) {
+} else if (TRIAL %in% c("profiscov", "profiscov_lvmn")) {
   # there are no demographics stratum for subcohort sampling
   dat_proc$Bstratum =  1 
   
@@ -453,11 +419,6 @@ if (study_name %in% c("COVE", "MockCOVE")) {
 } else if (TRIAL=="profiscov_lvmn") {
   must_have_assays <- c("bindSpike")
   
-} else if (TRIAL %in% c("covail")) {
-  # will implement twophase indicators specifically
-  must_have_assays <- NULL
-  
-  
 } else stop("unknown study_name 7")
 
 
@@ -527,12 +488,6 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
   }
   
   
-} else if (TRIAL=="covail" ) {
-  # the whole cohort is treated as ph1 and ph2
-  dat_proc$TwophasesampIndD15 = dat_proc$ph1.D15 
-  dat_proc$TwophasesampIndD29 = dat_proc$ph1.D29
-  
-  
 } else if (TRIAL %in% c("azd1222", "azd1222_bAb", "profiscov")) {
   # does not require baseline or time point 1
   dat_proc[["TwophasesampIndD"%.%timepoints[2]]] = 
@@ -562,19 +517,7 @@ if (study_name %in% c("COVE", "MockCOVE", "MockENSEMBLE")) {
 
 
 # weights 
-if (TRIAL=="covail" ) {
-  # PP = no violation + marker available at d1 and d15
-  # Immunemarkerset = PP & no infection between enrollment and D15+6
-  # ph1.D15 = Immunemarkerset & arm!=3
-  dat_proc[["ph2.D15"]]=dat_proc$ph1.D15
-  dat_proc[["wt.D15"]] = 1
-  dat_proc[["ph2.D92"]]=dat_proc$ph1.D92
-  dat_proc[["wt.D92"]] = 1
-  dat_proc[["ph2.D29"]]=dat_proc$ph1.D29
-  dat_proc[["wt.D29"]] = 1
-  
-
-} else if (TRIAL=="janssen_partA_VL") {
+if (TRIAL=="janssen_partA_VL") {
   tp=29
   tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7)
   wts_table <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
@@ -688,43 +631,40 @@ if (TRIAL=="covail" ) {
 
 
 # immunogenicity weights and intercurrent weights
-if (!TRIAL %in% c('covail')) {
-  
-  # weights for immunogenicity analyses that use subcohort only and are not enriched by cases outside subcohort
-  tp=timepoints[ifelse(two_marker_timepoints, 2, 1)]
-  tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1)
-  wts_table <- with(dat_proc[tmp,], table(tps.stratum, get("TwophasesampIndD"%.%tp) & SubcohortInd))
-  wts_norm <- rowSums(wts_table) / wts_table[, 2]
-  dat_proc$wt.subcohort <- wts_norm[dat_proc$tps.stratum %.% ""]
-  dat_proc$wt.subcohort = ifelse(tmp, dat_proc$wt.subcohort, NA)
-  dat_proc$ph1.immuno=!is.na(dat_proc$wt.subcohort)
-  dat_proc$ph2.immuno=with(dat_proc, ph1.immuno & SubcohortInd & get("TwophasesampIndD"%.%tp))
+# weights for immunogenicity analyses that use subcohort only and are not enriched by cases outside subcohort
+tp=timepoints[ifelse(two_marker_timepoints, 2, 1)]
+tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1)
+wts_table <- with(dat_proc[tmp,], table(tps.stratum, get("TwophasesampIndD"%.%tp) & SubcohortInd))
+wts_norm <- rowSums(wts_table) / wts_table[, 2]
+dat_proc$wt.subcohort <- wts_norm[dat_proc$tps.stratum %.% ""]
+dat_proc$wt.subcohort = ifelse(tmp, dat_proc$wt.subcohort, NA)
+dat_proc$ph1.immuno=!is.na(dat_proc$wt.subcohort)
+dat_proc$ph2.immuno=with(dat_proc, ph1.immuno & SubcohortInd & get("TwophasesampIndD"%.%tp))
+
+assertthat::assert_that(
+  all(!is.na(subset(dat_proc, tmp & !is.na(tps.stratum), select=wt.subcohort, drop=T))), 
+  msg = "missing wt.subcohort for immuno analyses ph1 subjects")
+
+
+# weights for intercurrent cases
+if(two_marker_timepoints) {
+  tp=timepoints[1]
+  tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7 & get("EventIndPrimaryD"%.%tp)==1 
+             & get("EventTimePrimaryD"%.%tp) <= 6 + get("NumberdaysD1toD"%.%timepoints[2]) - get("NumberdaysD1toD"%.%tp))
+  wts_table2 <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
+  wts_norm2 <- rowSums(wts_table2) / wts_table2[, 2]
+  dat_proc$wt.intercurrent.cases <- wts_norm2[dat_proc$Wstratum %.% ""]
+  dat_proc$wt.intercurrent.cases = ifelse(tmp, 
+                                          dat_proc$wt.intercurrent.cases, 
+                                          NA)
+  dat_proc$ph1.intercurrent.cases=!is.na(dat_proc$wt.intercurrent.cases)
+  dat_proc$ph2.intercurrent.cases=with(dat_proc, ph1.intercurrent.cases & get("TwophasesampIndD"%.%tp))    
   
   assertthat::assert_that(
-    all(!is.na(subset(dat_proc, tmp & !is.na(tps.stratum), select=wt.subcohort, drop=T))), 
-    msg = "missing wt.subcohort for immuno analyses ph1 subjects")
-
-  
-  # weights for intercurrent cases
-  if(two_marker_timepoints) {
-    tp=timepoints[1]
-    tmp = with(dat_proc, get("EarlyendpointD"%.%tp)==0 & Perprotocol==1 & get("EventTimePrimaryD"%.%tp) >= 7 & get("EventIndPrimaryD"%.%tp)==1 
-               & get("EventTimePrimaryD"%.%tp) <= 6 + get("NumberdaysD1toD"%.%timepoints[2]) - get("NumberdaysD1toD"%.%tp))
-    wts_table2 <- with(dat_proc[tmp,], table(Wstratum, get("TwophasesampIndD"%.%tp)))
-    wts_norm2 <- rowSums(wts_table2) / wts_table2[, 2]
-    dat_proc$wt.intercurrent.cases <- wts_norm2[dat_proc$Wstratum %.% ""]
-    dat_proc$wt.intercurrent.cases = ifelse(tmp, 
-                                            dat_proc$wt.intercurrent.cases, 
-                                            NA)
-    dat_proc$ph1.intercurrent.cases=!is.na(dat_proc$wt.intercurrent.cases)
-    dat_proc$ph2.intercurrent.cases=with(dat_proc, ph1.intercurrent.cases & get("TwophasesampIndD"%.%tp))    
-    
-    assertthat::assert_that(
-      all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum), select=wt.intercurrent.cases, drop=T))),
-      msg = "missing wt.intercurrent.cases for intercurrent analyses ph1 subjects")
-  }
-  
+    all(!is.na(subset(dat_proc, tmp & !is.na(Wstratum), select=wt.intercurrent.cases, drop=T))),
+    msg = "missing wt.intercurrent.cases for intercurrent analyses ph1 subjects")
 }
+  
 
 
 ###############################################################################
@@ -1122,21 +1062,6 @@ if (TRIAL %in% c("janssen_partA_VL", "nvx_uk302", "azd1222_stage2")) {
   }
   
   
-  if (TRIAL=="covail") {
-  # also need D29 delta for sanofi arms
-    assays1=setdiff(assays, "pseudoneutid50Duke_BA.2.12.1")
-    
-    tmp=list()
-    for (a in assays1) {
-      for (t in c("B", "Day29") ) {
-        tmp[[t %.% a]] <- ifelse(dat_proc[[t %.% a]] > log10(uloqs[a]), log10(uloqs[a]), dat_proc[[t %.% a]])
-      }
-    }
-    tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
-    
-    dat_proc["Delta29overB" %.% assays1] <- tmp["Day29" %.% assays1] - tmp["B" %.% assays1]
-  }
-  
 }
 
 
@@ -1153,23 +1078,6 @@ if (TRIAL %in% c("nvx_uk302")) {
 } else if (TRIAL %in% c("prevent19")) {
   # do nothing, to be backward compatible
   
-  
-} else if (TRIAL=="covail") {
-  # mRNA arms
-  dat_proc$tmp = with(dat_proc, ph1.D15 & TrtonedosemRNA==1) 
-  assays = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
-  all.markers = c("B"%.%assays, "Day15"%.%assays, "Delta15overB"%.%assays)
-  dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15")
-  
-  # # Sanofi arms
-  dat_proc$tmp = with(dat_proc, ph1.D29 & TrtSanofi==1)
-  assays = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
-  all.markers = c("Day29"%.%assays, "Delta29overB"%.%assays)
-  dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D29")
-  
-  # remove the temp ph2 column
-  dat_proc$tmp = NULL
-
   
 } else if (TRIAL=="janssen_partA_VL") {
   
@@ -1389,7 +1297,6 @@ if(Sys.getenv ("NOCHECK")=="") {
          azd1222 = "f573e684800003485094c18120361663",
          azd1222_bAb = "fc3851aff1482901f079fb311878c172",
          prevent19 = "72250553eccd6d96a88b37a6f30eafa5",
-         covail = "8c995d5f0b087be17cfc7bb70be62afa", 
          nvx_uk302 = "99a9d33175c7ff52fa008020fff955b4", 
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
