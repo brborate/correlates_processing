@@ -4,6 +4,7 @@ source(here::here("_common.R"))
 
 {
 library(tidyverse)
+library(glue)
 library(Hmisc) # wtd.quantile, cut2
 library(mice)
 library(dplyr)
@@ -48,6 +49,15 @@ begin=Sys.time()
   stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D15==1])))
   stopifnot(!any(is.na(dat_proc$FOI[dat_proc$ph1.D29==1])))
   
+  assay_metadata=read.csv(config$assay_metadata)
+  assays=assay_metadata$assay
+  tmp=assay_metadata$assay[8:nrow(assay_metadata)]
+  tcellsubsets = sub("_Wuhan.N", "", tmp[endsWith(tmp, ".N")]); tcellsubsets
+  S1=c(tcellsubsets%.%"_COV2.CON.S1", tcellsubsets%.%"_BA.4.5.S1")
+  S2=c(tcellsubsets%.%"_COV2.CON.S2", tcellsubsets%.%"_BA.4.5.S2")
+  N=tcellsubsets%.%"_Wuhan.N"
+  
+  nAb = setdiff(assays[startsWith(assays, "pseudoneutid50_")], c('pseudoneutid50_MDW'))
 }
 
 
@@ -90,18 +100,15 @@ begin=Sys.time()
 
 ###############################################################################
 # 3. stratum variables
-
-# there are no demographics stratum for subcohort sampling
-dat_proc$Bstratum =  1 
-
+{
+dat_proc$Bstratum = 1 # there are no demographics stratum for subcohort sampling
 names(Bstratum.labels) <- Bstratum.labels
   
-
-# demo.stratum: correlates sampling strata
-# Moderna: 1 ~ 6 defines the 6 baseline strata within trt/serostatus
-# may have NA b/c URMforsubcohortsampling may be NA
 dat_proc$demo.stratum = 1 # # there are no demographics stratum for subcohort sampling
+
+# Stratum 1-17 nnaive, 51-67 naive
 dat_proc <- dat_proc %>% mutate(tps.stratum = arm)
+dat_proc <- dat_proc %>% mutate(tps.stratum.tcell = arm + strtoi(paste0(naive), base = 2) * 50)
 if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
 
 
@@ -112,21 +119,30 @@ if (!is.null(dat_proc$tps.stratum)) table(dat_proc$tps.stratum)
 # The case is defined using EventIndPrimaryD29
 dat_proc$Wstratum = dat_proc$tps.stratum
 
-if (!is.null(dat_proc$Wstratum)) table(dat_proc$Wstratum) # variables may be named other than Wstratum
+# cases are stratified by stage and vaccine-proximal/vaccine-distal. cases post D181 are sampled as controls
+# 91-98 case strata
+dat_proc$Wstratum.tcell = dat_proc$tps.stratum.tcell
+dat_proc$Wstratum.tcell[with(dat_proc, COVIDIndD22toD91 ==1 & stage==1)]=91 
+dat_proc$Wstratum.tcell[with(dat_proc, COVIDIndD92toD181==1 & stage==1)]=92
+dat_proc$Wstratum.tcell[with(dat_proc, COVIDIndD22toD91 ==1 & stage==2)]=93 
+dat_proc$Wstratum.tcell[with(dat_proc, COVIDIndD92toD181==1 & stage==2)]=94
+dat_proc$Wstratum.tcell[with(dat_proc, COVIDIndD22toD91 ==1 & stage==3)]=95 
+dat_proc$Wstratum.tcell[with(dat_proc, COVIDIndD92toD181==1 & stage==3)]=96
+dat_proc$Wstratum.tcell[with(dat_proc, COVIDIndD22toD91 ==1 & stage==4)]=97 
+dat_proc$Wstratum.tcell[with(dat_proc, COVIDIndD92toD181==1 & stage==4)]=98
 
+if (!is.null(dat_proc$Wstratum.tcell)) table(dat_proc$Wstratum.tcell) # variables may be named other than Wstratum
+}
 
 
 ################################################################################
 # 4. Define ph1, ph2, and weights
 # Note that Wstratum may have NA if any variables to form strata has NA
-
-# define must_have_assays for ph2 definition
-must_have_assays <- NULL
+{
 # the whole cohort is treated as ph1 and ph2
 dat_proc$TwophasesampIndD15 = dat_proc$ph1.D15 
 dat_proc$TwophasesampIndD29 = dat_proc$ph1.D29
   
-
 # PP = no violation + marker available at d1 and d15
 # Immunemarkerset = PP & no infection between enrollment and D15+6
 # ph1.D15 = Immunemarkerset & arm!=3
@@ -137,7 +153,23 @@ dat_proc[["wt.D92"]] = 1
 dat_proc[["ph2.D29"]]=dat_proc$ph1.D29
 dat_proc[["wt.D29"]] = 1
 
+# N is not included in the def of TwophasesampInd b/c ptids with S also have N, at almost all time points
+dat_proc$TwophasesampIndD15.tcell  = apply(dat_proc, 1, function (x) any(!is.na(x[glue("Day15{c(S1,S2)}")])))
+dat_proc$TwophasesampIndB.tcell  = apply(dat_proc, 1, function (x) any(!is.na(x[glue("B{c(S1,S2)}")])))
+mytable(dat_proc$TwophasesampIndB.tcell, dat_proc$TwophasesampIndD15.tcell, dat_proc$COVIDIndD22toend)
 
+
+# this shows that cases from D182 on are sampled like controls 
+dat_proc$case.period=NA
+dat_proc$case.period[dat_proc$COVIDIndD22toend==1]=3
+dat_proc$case.period[dat_proc$COVIDIndD92toD181==1]=2
+dat_proc$case.period[dat_proc$COVIDIndD22toD91 ==1]=1
+
+with(dat_proc[dat_proc$ph1.D15==1,], mytable(case.period, TwophasesampIndB.tcell))
+with(dat_proc[dat_proc$ph1.D15==1,], mytable(case.period, TwophasesampIndD15.tcell))
+
+with(subset(dat_proc, ph1.D15==1), mytable(TwophasesampIndD15.tcell, Wstratum.tcell))
+}
 
 
 ###############################################################################
@@ -146,10 +178,10 @@ dat_proc[["wt.D29"]] = 1
 #     use all assays (not bindN)
 #     use baseline, each time point, but not Delta
 
+{
 # loop through the time points
 # first impute (B, D29, D57) among TwophasesampIndD57==1
 # next impute (B, D29) among TwophasesampIndD29==1
-
 
 #### impute D15 BA.4/BA.5 nAb among ph1.D15
 
@@ -192,19 +224,65 @@ with(dat.tmp.impute, print(table(!is.na(get("Day91"%.%assays[1])), !is.na(get("D
 dat.tmp.impute <- subset(dat_proc, ph1.D15==1 & COVIDtimeD22toD181>NumberdaysD15toD181 & AsympInfectIndD15to181==0)
 with(dat.tmp.impute, print(table(!is.na(get("Day181"%.%assays[1])), !is.na(get("Day15"%.%assays[1])))))
 # thus, no missingness actually
+}
 
 
+{
+# impute S1, S2, and N-stim T cell markers at B and D15 together. not impute markers at Day91 or D181
+# impute different arms and naive/nnaive together, but pass arm and naive as covariates
+# before imputation, log transform markers because distributions are skewed. we want models for imputation work on transformed variables
+
+tcellvv=c(S1, S2, N)
+dat_proc[c("B", "Day15", "Day91", "Day181") %.% tcellvv] = log10 (dat_proc[c("B", "Day15", "Day91", "Day181") %.% tcellvv])
+summary(dat_proc[c("B", "Day15", "Day91", "Day181") %.% tcellvv])
+
+n.imp=1
+tp=15
+imp.markers=c(outer(c("B", "Day"%.%tp), tcellvv, "%.%"))
+# add arm and naive to the imputation dataset
+dat_proc$arm.factor = as.factor(dat_proc$arm)
+imp.markers =  c(imp.markers, "arm.factor", "naive")
+dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD"%.%tp) == 1)
+
+imp <- dat.tmp.impute %>% select(all_of(imp.markers))         
+if(any(is.na(imp))) {
+  # diagnostics = FALSE , remove_collinear=F are needed to avoid errors due to collinearity
+  imp <- imp %>% mice(m = n.imp, printFlag = FALSE, seed=1, diagnostics = FALSE , remove_collinear = FALSE)            
+  dat.tmp.impute[, imp.markers] <- mice::complete(imp, action = 1)
+}                
+
+# missing markers imputed properly?
+assertthat::assert_that(
+  all(complete.cases(dat.tmp.impute[, imp.markers])),
+  msg = "missing markers imputed properly?"
+)    
+
+# populate dat_proc imp.markers with the imputed values
+dat_proc[dat_proc[["TwophasesampIndD"%.%tp]]==1, imp.markers] <-
+  dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD"%.%tp]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+
+assertthat::assert_that(
+  all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD"%.%tp]] == 1, imp.markers])),
+  msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+)
+
+
+}
 
 ###############################################################################
 # 6. transformation of the markers
-# e.g. converting binding variables from AU to IU for binding assays
+# create S-stimulated markers by summing up S1 and S2 on the anti log scale
 
-assays.includeN = assays
+for (a in c(tcellsubsets%.%"_COV2.CON.S", tcellsubsets%.%"_BA.4.5.S")) {
+  for (tp in c("B","Day15","Day91","Day181")) {
+    dat_proc[[tp%.%a]] = log10 (10^dat_proc[[tp%.%a%.%"1"]] + 10^dat_proc[[tp%.%a%.%"2"]])
+  }
+}
 
 
 ###############################################################################
-# 7. add mdw scores
-
+# 7. add mdw scores for nAb
+{
 kp = dat_proc$ph1.D15==1
 
 # myboxplot(dat_proc[kp, c("B"%.%assays[1:5], "Day15"%.%assays[1:5])], names=sub("pseudoneutid50_", "", rep(assays[1:5],2)))
@@ -213,7 +291,6 @@ kp = dat_proc$ph1.D15==1
 # corplot(Day15pseudoneutid50_D614G~Bpseudoneutid50_D614G, dat_proc)
 # sapply(dat_proc[kp, c("B"%.%assays[1:5], "Day15"%.%assays[1:5])], sd)
 
-nAb = setdiff(assays[startsWith(assays, "pseudoneutid50_")], c('pseudoneutid50_MDW'))
 
 # use Day15 to derive weights
 mdw.wt.nAb=tryCatch({
@@ -230,6 +307,7 @@ write.csv(mdw.wt.nAb, file = here("data_clean", "csv", TRIAL%.%"_nAb_mdw_weights
 for (t in c("B", "Day15", "Day29", "Day91", "Day181")) {
   dat_proc[, t%.%'pseudoneutid50_MDW'] = as.matrix(dat_proc[, t%.%nAb]) %*% mdw.wt.nAb
 }
+}
 
 
 ###############################################################################
@@ -237,10 +315,8 @@ for (t in c("B", "Day15", "Day29", "Day91", "Day181")) {
 # assuming data has been censored at the lower limit
 # thus no need to do, say, lloq censoring
 # but there is a need to do uloq censoring before computing delta
-
-assays1=assays
-# mdw scores delta are computed as weighted average of delta, not as delta of mdw
-# assays1 = assays.includeN[!endsWith(assays.includeN, "_mdw")]
+{
+assays1=assays # here, mdw scores delta are computed as weighted average of delta, not as delta of mdw
 
 tmp=list()
 for (a in assays1) {
@@ -260,7 +336,7 @@ if(two_marker_timepoints) {
 
 
 # also need D29 delta for sanofi arms
-assays1=setdiff(assays, "pseudoneutid50Duke_BA.2.12.1")
+assays1=c(setdiff(nAb, "pseudoneutid50Duke_BA.2.12.1"), "pseudoneutid50_MDW")
 
 tmp=list()
 for (a in assays1) {
@@ -271,23 +347,23 @@ for (a in assays1) {
 tmp=as.data.frame(tmp) # cannot subtract list from list, but can subtract data frame from data frame
 
 dat_proc["Delta29overB" %.% assays1] <- tmp["Day29" %.% assays1] - tmp["B" %.% assays1]
-
+}
 
 
 ###############################################################################
 # 9. add discrete/trichotomized markers
-
+{
 # mRNA arms
 dat_proc$tmp = with(dat_proc, ph1.D15 & TrtonedosemRNA==1) 
-assays = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
-all.markers = c("B"%.%assays, "Day15"%.%assays, "Delta15overB"%.%assays)
-dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15")
+# assays = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
+all.markers = c("B"%.%assays1, "Day15"%.%assays, "Delta15overB"%.%assays)
+dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D15", verbose=T)
 
 # # Sanofi arms
 dat_proc$tmp = with(dat_proc, ph1.D29 & TrtSanofi==1)
-assays = c("pseudoneutid50_D614G", "pseudoneutid50_Delta", "pseudoneutid50_Beta", "pseudoneutid50_BA.1", "pseudoneutid50_BA.4.BA.5", "pseudoneutid50_MDW")
-all.markers = c("Day29"%.%assays, "Delta29overB"%.%assays)
-dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D29")
+assays1 = c(nAb, "pseudoneutid50_MDW")
+all.markers = c("Day29"%.%assays1, "Delta29overB"%.%assays1)
+dat_proc = add.trichotomized.markers (dat_proc, all.markers, ph2.col.name="tmp", wt.col.name="wt.D29", verbose=F)
 
 # remove the temp ph2 column
 dat_proc$tmp = NULL
@@ -300,7 +376,7 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
     dat_proc <- dat_proc[include_in_subset, , drop = FALSE]
   }
 }
-
+}
 
 ###############################################################################
 # 10. impute covariates if necessary
@@ -319,7 +395,7 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         covail = "bc72cec5055c250ba9bfca8513ab3344",
+         covail = "ef995e8cf31ff1303f6a7b2a45ba20b6",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
       msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    
