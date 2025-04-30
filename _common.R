@@ -1,3 +1,4 @@
+{
 library(kyotil)
 library(copcor)
 library(methods)
@@ -27,7 +28,7 @@ verbose=Sys.getenv("VERBOSE")=="1"
 # if this flag is true, then the N IgG binding antibody is reported 
 # in the immuno report (but is not analyzed in the cor or cop reports).
 include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08")
-
+}
 
 
 ################################################################################
@@ -40,16 +41,6 @@ include_bindN <- !study_name %in% c("PREVENT19","AZD1222","VAT08")
 if (!is.null(config$assay_metadata)) {
   # use metadata file for assay when exists
   assay_metadata = read.csv(paste0(dirname(attr(config,"file")),"/",config$assay_metadata))
-  
-  if (TRIAL=="covail") {
-    # add S1 and S2
-    tmp=assay_metadata$assay[8:nrow(assay_metadata)]
-    S=tmp[endsWith(tmp, ".S") & startsWith(tmp, "c")]
-    tmp = subset(assay_metadata, assay %in% S)
-    tmp1 = tmp; tmp1$assay = paste0(tmp1$assay, "1")
-    tmp2 = tmp; tmp2$assay = paste0(tmp2$assay, "2")
-    assay_metadata = rbind(assay_metadata, tmp1, tmp2)
-  }
   
   assays=assay_metadata$assay
   

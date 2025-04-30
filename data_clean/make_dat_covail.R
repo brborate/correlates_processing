@@ -53,6 +53,7 @@ begin=Sys.time()
   assays=assay_metadata$assay
   tmp=assay_metadata$assay[8:nrow(assay_metadata)]
   tcellsubsets = sub("_Wuhan.N", "", tmp[endsWith(tmp, ".N")]); tcellsubsets
+  S=tmp[endsWith(tmp, ".S") & startsWith(tmp, "c")]
   S1=c(tcellsubsets%.%"_COV2.CON.S1", tcellsubsets%.%"_BA.4.5.S1")
   S2=c(tcellsubsets%.%"_COV2.CON.S2", tcellsubsets%.%"_BA.4.5.S2")
   N=tcellsubsets%.%"_Wuhan.N"
@@ -153,11 +154,19 @@ dat_proc[["wt.D92"]] = 1
 dat_proc[["ph2.D29"]]=dat_proc$ph1.D29
 dat_proc[["wt.D29"]] = 1
 
+# filter out arm 15 and 17
+dat_proc$ph1.D15.tcell = ifelse (dat_proc$ph1.D15==1 & dat_proc$arm<=15, 1, 0)
+dat_proc$ph1.D92.tcell = ifelse (dat_proc$ph1.D92==1 & dat_proc$arm<=15, 1, 0)
+
 # N is not included in the def of TwophasesampInd b/c ptids with S also have N, at almost all time points
 dat_proc$TwophasesampIndD15.tcell  = apply(dat_proc, 1, function (x) any(!is.na(x[glue("Day15{c(S1,S2)}")])))
 dat_proc$TwophasesampIndB.tcell  = apply(dat_proc, 1, function (x) any(!is.na(x[glue("B{c(S1,S2)}")])))
 mytable(dat_proc$TwophasesampIndB.tcell, dat_proc$TwophasesampIndD15.tcell, dat_proc$COVIDIndD22toend)
 
+# make two phase indicator 1 if either B or D15 are present
+dat_proc$TwophasesampIndD15.tcell = dat_proc$TwophasesampIndB.tcell | dat_proc$TwophasesampIndD15.tcell
+# remove TwophasesampIndB.tcell
+dat_proc$TwophasesampIndB.tcell = NULL
 
 # this shows that cases from D182 on are sampled like controls 
 dat_proc$case.period=NA
@@ -165,10 +174,14 @@ dat_proc$case.period[dat_proc$COVIDIndD22toend==1]=3
 dat_proc$case.period[dat_proc$COVIDIndD92toD181==1]=2
 dat_proc$case.period[dat_proc$COVIDIndD22toD91 ==1]=1
 
-with(dat_proc[dat_proc$ph1.D15==1,], mytable(case.period, TwophasesampIndB.tcell))
-with(dat_proc[dat_proc$ph1.D15==1,], mytable(case.period, TwophasesampIndD15.tcell))
+with(dat_proc[dat_proc$ph1.D15.tcell==1,], mytable(case.period, TwophasesampIndD15.tcell))
 
-with(subset(dat_proc, ph1.D15==1), mytable(TwophasesampIndD15.tcell, Wstratum.tcell))
+# use TwophasesampIndD15.tcell for both 
+for (tp in c(15,92)) {
+  dat_proc[["ph2.D"%.%tp%.%".tcell"]] = dat_proc[["ph1.D"%.%tp%.%".tcell"]] & dat_proc[["TwophasesampIndD15.tcell"]]
+  dat_proc = add.wt(dat_proc, ph1="ph1.D"%.%tp%.%".tcell", ph2="ph2.D"%.%tp%.%".tcell", Wstratum="Wstratum", wt="wt.D"%.%tp%.%".tcell", verbose=T) 
+}
+
 }
 
 
@@ -233,8 +246,9 @@ with(dat.tmp.impute, print(table(!is.na(get("Day181"%.%assays[1])), !is.na(get("
 # before imputation, log transform markers because distributions are skewed. we want models for imputation work on transformed variables
 
 tcellvv=c(S1, S2, N)
-dat_proc[c("B", "Day15", "Day91", "Day181") %.% tcellvv] = log10 (dat_proc[c("B", "Day15", "Day91", "Day181") %.% tcellvv])
-summary(dat_proc[c("B", "Day15", "Day91", "Day181") %.% tcellvv])
+tmp=c(outer(c("B", "Day15", "Day91", "Day181"), tcellvv, "%.%"))
+dat_proc[tmp] = log10 (dat_proc[tmp])
+summary(dat_proc[tmp])
 
 n.imp=1
 tp=15
@@ -386,6 +400,20 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 ###############################################################################
 # special handling 
 
+# add pos call columns for S markers as the OR of S1 and S2
+tmp=c(outer(c("B", "Day15", "Day91", "Day181"), S, "%.%"))
+for (a in tmp) dat_proc[[glue("{a}_resp")]] = pmax(dat_proc[[glue("{a}1_resp")]], dat_proc[[glue("{a}2_resp")]])
+
+# at 20% threshold, pos calls for BA.4.5.S and COV2.CON.S markers are identical
+COV2.CON.S = S[endsWith(S, "COV2.CON.S")]
+BA.4.5.S = S[endsWith(S, "BA.4.5.S")]
+stopifnot(all(sub("COV2.CON.S","",COV2.CON.S) == sub("BA.4.5.S","",BA.4.5.S))) # make sure ordering is the same
+
+tmp=c(outer(c("B", "Day15", "Day91", "Day181"), COV2.CON.S, "%.%"))
+pos1 = sapply(tmp%.%"_resp", function(x) mean(dat_proc[[x]], na.rm=T))
+tmp=c(outer(c("B", "Day15", "Day91", "Day181"), BA.4.5.S, "%.%"))
+pos2 = sapply(tmp%.%"_resp", function(x) mean(dat_proc[[x]], na.rm=T))
+all((pos1>=0.2) == (pos2>=0.2))
 
 
 
