@@ -2,13 +2,10 @@
 
 source(here::here("_common.R"))
 
-if (endsWith(attr(config, "config"), "mock")) {
-    if(attr(config, "config")=="moderna_mock") {
-      path_to_data <- here::here(".", paste0("data_raw/moderna/", mapped_data))
-    } else {
-        # janssen pooled or regions
-      path_to_data <- here::here(".", paste0("data_raw/janssen/", mapped_data))
-    } 
+if(TRIAL=="moderna_mock") {
+  path_to_data <- here::here(".", paste0("data_raw/moderna/", mapped_data))
+} else if(startsWith(TRIAL, "janssen"))  {
+  path_to_data <- here::here(".", paste0("data_raw/janssen/", mapped_data))
 } else {
     path_to_data <- mapped_data
 }

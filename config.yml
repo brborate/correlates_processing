@@ -10,6 +10,16 @@ ows_trial: &ows_trial
   make_riskscore: yes
 
 
+nextgen_mock: &nextgen_mock
+  mapped_data: /trials/barda/NextGen_mock/analysis/adata/COVID_NextGen_mock_mapped_20250503.csv
+  assay_metadata: ../correlates_reporting2/assay_metadata/nextgen_mock_assay_metadata.csv
+  two_marker_timepoints: no
+  timepoints: [31] 
+  times: [B, Day31, Delta31overB]
+  time_labels: [Day 1, Day 31, D31 fold-rise over D1]
+  study_name: NextGen_Mock
+
+
 moderna_trial: &moderna_trial
   <<: *ows_trial
   two_marker_timepoints: yes

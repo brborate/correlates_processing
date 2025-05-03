@@ -192,6 +192,8 @@ for (tp in c(15,92)) {
 #     use baseline, each time point, but not Delta
 
 {
+# nAb data
+  
 # loop through the time points
 # first impute (B, D29, D57) among TwophasesampIndD57==1
 # next impute (B, D29) among TwophasesampIndD29==1
@@ -241,22 +243,23 @@ with(dat.tmp.impute, print(table(!is.na(get("Day181"%.%assays[1])), !is.na(get("
 
 
 {
+# T cell data
+  
 # impute S1, S2, and N-stim T cell markers at B and D15 together. not impute markers at Day91 or D181
 # impute different arms and naive/nnaive together, but pass arm and naive as covariates
 # before imputation, log transform markers because distributions are skewed. we want models for imputation work on transformed variables
 
 tcellvv=c(S1, S2, N)
-tmp=c(outer(c("B", "Day15", "Day91", "Day181"), tcellvv, "%.%"))
-dat_proc[tmp] = log10 (dat_proc[tmp])
-summary(dat_proc[tmp])
 
 n.imp=1
 tp=15
+# impute both markers and resp calls
 imp.markers=c(outer(c("B", "Day"%.%tp), tcellvv, "%.%"))
 # add arm and naive to the imputation dataset
 dat_proc$arm.factor = as.factor(dat_proc$arm)
 imp.markers =  c(imp.markers, "arm.factor", "naive")
-dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD"%.%tp) == 1)
+
+dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD15.tcell") == 1)
 
 imp <- dat.tmp.impute %>% select(all_of(imp.markers))         
 if(any(is.na(imp))) {
@@ -272,16 +275,49 @@ assertthat::assert_that(
 )    
 
 # populate dat_proc imp.markers with the imputed values
-dat_proc[dat_proc[["TwophasesampIndD"%.%tp]]==1, imp.markers] <-
-  dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD"%.%tp]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, imp.markers] <-
+  dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
 
 assertthat::assert_that(
-  all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD"%.%tp]] == 1, imp.markers])),
+  all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]] == 1, imp.markers])),
+  msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
+)
+}
+
+
+
+
+# imputing 0/1 variables with mice is extremely slow
+
+imp.markers=c(outer(c("B", "Day"%.%tp), tcellvv, "%.%")) %.%"_resp"
+
+dat.tmp.impute <- subset(dat_proc, get("TwophasesampIndD15.tcell") == 1)
+
+for (a in imp.markers) {
+  kp = is.na(dat.tmp.impute[[a]])
+  if (any(kp)) {
+    f=as.formula(glue("{a} ~ {sub('_resp','',a)} + arm.factor + naive"))
+    fit = glm(f, dat.tmp.impute, family=binomial)
+    dat.tmp.impute[[a]][kp] = rbinom(sum(kp), 1, prob=predict(fit, dat.tmp.impute[kp,], type="response"))
+  } else next
+}  
+
+# missing markers imputed properly?
+assertthat::assert_that(
+  all(complete.cases(dat.tmp.impute[, imp.markers])),
+  msg = "missing markers imputed properly?"
+)    
+
+# populate dat_proc imp.markers with the imputed values
+dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, imp.markers] <-
+  dat.tmp.impute[imp.markers][match(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]]==1, "Ptid"], dat.tmp.impute$Ptid), ]
+
+assertthat::assert_that(
+  all(complete.cases(dat_proc[dat_proc[["TwophasesampIndD15.tcell"]] == 1, imp.markers])),
   msg = "imputed values of missing markers merged properly for all individuals in the two phase sample?"
 )
 
 
-}
 
 ###############################################################################
 # 6. transformation of the markers
@@ -292,6 +328,23 @@ for (a in c(tcellsubsets%.%"_COV2.CON.S", tcellsubsets%.%"_BA.4.5.S")) {
     dat_proc[[tp%.%a]] = log10 (10^dat_proc[[tp%.%a%.%"1"]] + 10^dat_proc[[tp%.%a%.%"2"]])
   }
 }
+
+# add pos call columns for S markers as the OR of S1 and S2
+tmp=c(outer(c("B", "Day15", "Day91", "Day181"), S, "%.%"))
+for (a in tmp) dat_proc[[glue("{a}_resp")]] = pmax(dat_proc[[glue("{a}1_resp")]], dat_proc[[glue("{a}2_resp")]])
+
+# at 20% threshold, pos calls for BA.4.5.S and COV2.CON.S markers are identical
+COV2.CON.S = S[endsWith(S, "COV2.CON.S")]
+BA.4.5.S = S[endsWith(S, "BA.4.5.S")]
+stopifnot(all(sub("COV2.CON.S","",COV2.CON.S) == sub("BA.4.5.S","",BA.4.5.S))) # make sure ordering is the same
+
+tmp=c(outer(c("B", "Day15", "Day91", "Day181"), COV2.CON.S, "%.%"))
+pos1 = sapply(tmp%.%"_resp", function(x) mean(dat_proc[[x]], na.rm=T))
+tmp=c(outer(c("B", "Day15", "Day91", "Day181"), BA.4.5.S, "%.%"))
+pos2 = sapply(tmp%.%"_resp", function(x) mean(dat_proc[[x]], na.rm=T))
+all((pos1>=0.2) == (pos2>=0.2))
+
+
 
 
 ###############################################################################
@@ -400,20 +453,6 @@ if(!is.null(config$subset_variable) & !is.null(config$subset_value)){
 ###############################################################################
 # special handling 
 
-# add pos call columns for S markers as the OR of S1 and S2
-tmp=c(outer(c("B", "Day15", "Day91", "Day181"), S, "%.%"))
-for (a in tmp) dat_proc[[glue("{a}_resp")]] = pmax(dat_proc[[glue("{a}1_resp")]], dat_proc[[glue("{a}2_resp")]])
-
-# at 20% threshold, pos calls for BA.4.5.S and COV2.CON.S markers are identical
-COV2.CON.S = S[endsWith(S, "COV2.CON.S")]
-BA.4.5.S = S[endsWith(S, "BA.4.5.S")]
-stopifnot(all(sub("COV2.CON.S","",COV2.CON.S) == sub("BA.4.5.S","",BA.4.5.S))) # make sure ordering is the same
-
-tmp=c(outer(c("B", "Day15", "Day91", "Day181"), COV2.CON.S, "%.%"))
-pos1 = sapply(tmp%.%"_resp", function(x) mean(dat_proc[[x]], na.rm=T))
-tmp=c(outer(c("B", "Day15", "Day91", "Day181"), BA.4.5.S, "%.%"))
-pos2 = sapply(tmp%.%"_resp", function(x) mean(dat_proc[[x]], na.rm=T))
-all((pos1>=0.2) == (pos2>=0.2))
 
 
 
@@ -423,7 +462,7 @@ all((pos1>=0.2) == (pos2>=0.2))
 library(digest)
 if(Sys.getenv ("NOCHECK")=="") {    
     tmp = switch(TRIAL,
-         covail = "ef995e8cf31ff1303f6a7b2a45ba20b6",
+         covail = "a6331ba037f48bebf626e4c961689f37",
          NA)    
     if (!is.na(tmp)) assertthat::validate_that(digest(dat_proc[order(names(dat_proc))])==tmp, 
       msg = "--------------- WARNING: failed make_dat_proc digest check. new digest "%.%digest(dat_proc[order(names(dat_proc))])%.%' ----------------')    

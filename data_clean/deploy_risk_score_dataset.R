@@ -40,6 +40,7 @@ deploy_path <- switch(study_name,
 deploy_path <- switch(TRIAL,
                       azd1222_stage2 =   "/trials/covpn/p3002/analysis/correlates/stage2/adata/",
                       prevent19_stage2 = "/trials/covpn/p3004/analysis/correlates/stage2/adata/",
+                      nextgen_mock =     "/trials/barda/NextGen_mock/analysis/correlates/adata/",
                       deploy_path
 )  
 
