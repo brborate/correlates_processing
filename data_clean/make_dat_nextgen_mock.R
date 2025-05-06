@@ -33,20 +33,6 @@ begin=Sys.time()
 
 
 {
-# # Youyi's quick fix
-# kp = which(dat_proc$ph2.AB.immuno==0 & dat_proc$ph2.immuno==1 & dat_proc$ph2.D31_7==1 & dat_proc$COVIDIndD31_7toM12==1 & dat_proc$Track!="A")#[sample.int(268)[1:240]]
-# dat_proc[kp,"ph2.immuno"]=0
-# # dat_proc[kp,"ph2.D31_7"]=0
-# 
-# kp = which(dat_proc$ph2.AB.immuno==0 & dat_proc$ph2.AB.D31_7==1 & dat_proc$COVIDIndD31_7toM12==1)
-# dat_proc[kp,"ph2.AB.immuno"]=1
-# dat_proc[kp,"ph2.AB.D31_7"]=1
-# 
-# kp = which(dat_proc$ph2.AB.immuno==1 & dat_proc$ph2.immuno==0) # all cases
-# dat_proc[kp, "ph2.AB.immuno"] = 0
-# dat_proc[kp, "ph2.AB.D31_7"] = 0
-
-
 mytable(dat_proc$Track, dat_proc$ph1.AB.D31_7)
 mytable(dat_proc$Track, dat_proc$ph1.D31_7)
 table.prop(dat_proc$ph2.immuno, dat_proc$Track)
@@ -58,31 +44,6 @@ mytable(dat_proc$ph2.AB.trackA, dat_proc$ph2.AB.immuno)
 
 mytable(dat_proc$COVIDIndD31_7toM12, dat_proc$ph1.AB.D31_7)
 
-# shift the distribution of markers for each marker
-
-# bindSpike, id50, Tcell
-for (i in 1:38) {
-  floor=min(dat_proc[["B"%.%assays[i]]], na.rm=T)
-  kp=dat_proc$COVIDIndD31_7toM12==1
-  tmp = dat_proc[kp,"B"%.%assays[i]] - 0.5
-  dat_proc[kp,"B"%.%assays[i]] = ifelse(tmp<floor, floor, tmp)
-  tmp = dat_proc[kp,"Day31"%.%assays[i]] - 0.5
-  dat_proc[kp,"Day31"%.%assays[i]] = ifelse(tmp<floor, floor, tmp)
-}
-
-# 
-# {
-#   i=35
-#   ylim=c(1,6)# Ab
-#   ylim=c(-3,1)
-#   par(mfrow=c(2,2)); reduce_margin()
-#   myboxplot(as.formula("B"%.%assays[i]%.%" ~ COVIDIndD31_7toM6"), dat_proc[dat_proc$Trt==1,], main="Trt=1", ylim=ylim)
-#   myboxplot(as.formula("B"%.%assays[i]%.%" ~ COVIDIndD31_7toM6"), dat_proc[dat_proc$Trt==0,], main="Trt=0", ylim=ylim)
-#   myboxplot(as.formula("Day31"%.%assays[i]%.%" ~ COVIDIndD31_7toM6"), dat_proc[dat_proc$Trt==1,], main="Trt=1", ylim=ylim)
-#   myboxplot(as.formula("Day31"%.%assays[i]%.%" ~ COVIDIndD31_7toM6"), dat_proc[dat_proc$Trt==0,], main="Trt=0", ylim=ylim)
-# }
-# 
-# 
 
 }
 
@@ -132,8 +93,8 @@ dat_proc = add.wt(dat_proc, ph1="ph1.AB.D"%.%tp, ph2="ph2.AB.D"%.%tp, Wstratum="
 #     use baseline, each time point, but not Delta
 
 {
-tcellvv=assays[35:38]
-abmarkers=assays[1:34]
+abmarkers=assays[startsWith(assays,"bind") | startsWith(assays,"pseudo")]
+tcellvv=setdiff(assays, abmarkers)
 
 n.imp=1
 tp=31
@@ -156,14 +117,6 @@ any(is.na(imp))
 
 ###############################################################################
 # 6. transformation of the markers
-# put T cell markers on log10 scale
-
-tcellvv=assays[startsWith(assays, "T")]
-for (a in tcellvv) {
-  for (t in c("B", paste0("Day", config$timepoints)) ) {
-    dat_proc[[t %.% a]] <- log10(dat_proc[[t %.% a]])
-  }
-}
 
 
 ###############################################################################
